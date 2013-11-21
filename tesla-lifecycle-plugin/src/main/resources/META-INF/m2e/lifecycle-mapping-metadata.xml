@@ -1,0 +1,17 @@
+<lifecycleMappingMetadata>
+  <pluginExecutions>
+    <pluginExecution>
+      <pluginExecutionFilter>
+        <groupId>io.tesla.maven.plugin</groupId>
+        <artifactId>tesla-plugin-plugin</artifactId>
+        <versionRange>[0.0.4,)</versionRange>
+        <goals>
+          <goal>descriptor</goal>
+        </goals>
+      </pluginExecutionFilter>
+      <action>
+        <ignore></ignore>
+      </action>
+    </pluginExecution>
+  </pluginExecutions>
+</lifecycleMappingMetadata>

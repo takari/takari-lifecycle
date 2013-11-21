@@ -1,0 +1,4 @@
+#!/bin/sh
+
+version=1.0.0-SNAPSHOT
+mvn io.tesla.maven.plugins:tesla-lifecycle-plugin:${version}:dot -e

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>io.tesla</groupId>
+    <artifactId>tesla</artifactId>
+    <version>5</version>
+  </parent>
+
+  <groupId>io.tesla.maven.plugins</groupId>
+  <artifactId>tesla-lifecycle</artifactId>
+  <version>1.0.3-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <prerequisites>
+    <maven>[3.1.0,)</maven>
+  </prerequisites>
+
+  <properties>
+    <mavenVersion>3.1.1</mavenVersion>
+    <aetherVersion>0.9.0.M2</aetherVersion>
+    <teslaPluginApiVersion>0.0.6-SNAPSHOT</teslaPluginApiVersion>
+  </properties>
+
+  <scm>
+    <connection>scm:git:git@github.com/tesla/tesla-lifecycle-plugin.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/tesla/tesla-lifecycle-plugin.git</developerConnection>
+    <url>http://github.com/tesla/tesla-lifecycle-plugin</url>
+  </scm>
+
+  <modules>
+    <module>tesla-lifecycle-plugin</module>
+    <module>tesla-lifecycle-plugin-its</module>
+  </modules>
+</project>

@@ -1,0 +1,8 @@
+#!/bin/sh
+
+version=1.0.3-SNAPSHOT
+mvn io.tesla.maven.plugins:tesla-lifecycle-plugin:${version}:jar -e
+
+# 21416b10fbf7e6f4476393d7b4ef8c5a0ae481c03a
+# 21416b10fbf7e6f4476393d7b4ef8c5a0ae481c03a
+
