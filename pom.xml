@@ -20,7 +20,7 @@
   </prerequisites>
 
   <properties>
-    <mavenVersion>3.1.1</mavenVersion>
+    <mavenVersion>3.1.2-SNAPSHOT</mavenVersion>
     <aetherVersion>0.9.0.M2</aetherVersion>
     <teslaPluginApiVersion>0.0.6-SNAPSHOT</teslaPluginApiVersion>
   </properties>
@@ -35,4 +35,19 @@
     <module>tesla-lifecycle-plugin</module>
     <module>tesla-lifecycle-plugin-its</module>
   </modules>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <configuration>
+            <source>1.6</source>
+            <target>1.6</target>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
 </project>

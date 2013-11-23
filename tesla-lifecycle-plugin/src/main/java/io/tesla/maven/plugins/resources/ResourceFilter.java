@@ -23,10 +23,9 @@ public class ResourceFilter {
     mf = new NoEncodingMustacheFactory();
   }
 
-  public void filter(Reader reader, Map<Object,Object> properties) throws IOException {
+  public void filter(Reader reader, Writer writer, Map<Object,Object> properties) throws IOException {
     Mustache maven = mf.compile(reader, "maven", "${", "}");
-    StringWriter sw = new StringWriter();
-    maven.execute(sw, properties).close();
+    maven.execute(writer, properties).close();
   }
 
   private static class NoEncodingMustacheFactory extends DefaultMustacheFactory {

@@ -1,19 +1,29 @@
 package io.tesla.maven.plugins.resources;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-
 import io.tesla.maven.plugins.TeslaLifecycleMojo;
+
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.Writer;
+import java.util.List;
+import java.util.Properties;
+
+import javax.inject.Inject;
 
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.codehaus.plexus.util.FileUtils;
+import org.eclipse.tesla.incremental.BuildContext;
+import org.eclipse.tesla.incremental.DefaultFileSet;
+import org.eclipse.tesla.incremental.FileSetBuilder;
 import org.sonatype.maven.plugin.Conf;
 import org.sonatype.maven.plugin.LifecycleGoal;
 import org.sonatype.maven.plugin.LifecyclePhase;
 
-import com.google.common.base.Joiner;
+import com.google.common.io.CharStreams;
+import com.google.common.io.Closer;
 
 @LifecycleGoal(goal = "process-resources", phase = LifecyclePhase.PROCESS_RESOURCES)
 public class Resources extends TeslaLifecycleMojo {
@@ -21,33 +31,65 @@ public class Resources extends TeslaLifecycleMojo {
   @Conf(defaultValue = "${project.build.outputDirectory}", property = "resources.outputDirectory")
   private File outputDirectory;
 
-  private static Joiner joiner = Joiner.on(",").skipNulls();
-  
+  @Conf(defaultValue = "${basedir}")
+  private File basedir;
+
+  @Conf(defaultValue = "${project.properties}")
+  private Properties properties;
+
+  @Inject
+  private BuildContext buildContext;
+
+  private final ResourceFilter resourceFilter;
+
+  public Resources() {
+    resourceFilter = new ResourceFilter();
+  }
+
   @Override
   protected void executeMojo() throws MojoExecutionException {
     List<Resource> resourceDirectories = project.getBuild().getResources();
-    for (Resource resourceDirectory : resourceDirectories) {
-      try {
-        List<File> resources = FileUtils.getFiles(new File(resourceDirectory.getDirectory()), joiner.join(resourceDirectory.getIncludes()), joiner.join(resourceDirectory.getExcludes()));
-        if (Boolean.parseBoolean(resourceDirectory.getFiltering())) {
-          //
-          // The resources need to be filtered 
-          //
-          for (File resource : resources) {
-
-          }
+    for (Resource resource : resourceDirectories) {
+      boolean filter = Boolean.parseBoolean(resource.getFiltering());
+      // Resource directories are already pre-pended with ${project.basedir}
+      File inputDir = new File(resource.getDirectory());
+      List<String> includes = resource.getIncludes();
+      if(includes.isEmpty()) {
+        includes.add("**/**");
+      }
+      DefaultFileSet fileSet = new FileSetBuilder(inputDir) //
+          .addIncludes(includes) //
+          .addExcludes(resource.getExcludes()) //
+          .build();
+      for (File inputFile : buildContext.registerInputs(fileSet)) {
+        buildContext.addProcessedInput(inputFile);
+        File outputFile;
+        if (resource.getTargetPath() != null) {
+          // A custom location within the outputDirectory, the targetPath is relative to the outputDirectory
+          outputFile = fileSet.relativize(new File(outputDirectory, resource.getTargetPath()), inputFile);
         } else {
-          //
-          // Just copy the resources in the outputDirectory
-          //
-          for (File resource : resources) {
-
-          }
+          // Use the default output directory
+          outputFile = fileSet.relativize(outputDirectory, inputFile);
         }
-      } catch (IOException e) {
-        throw new MojoExecutionException(e.getMessage(), e);
+        Closer closer = Closer.create();
+        try {
+          try {
+            Reader reader = closer.register(new FileReader(inputFile));
+            Writer writer = closer.register(new OutputStreamWriter(buildContext.newOutputStream(inputFile, outputFile)));
+            if (filter) {
+              resourceFilter.filter(reader, writer, properties);
+            } else {
+              CharStreams.copy(reader, writer);
+            }
+          } catch (IOException e) {
+            throw new MojoExecutionException(e.getMessage(), e);
+          } finally {
+            closer.close();
+          }
+        } catch (IOException e) {
+          throw new MojoExecutionException(e.getMessage(), e);
+        }
       }
     }
   }
-
 }
