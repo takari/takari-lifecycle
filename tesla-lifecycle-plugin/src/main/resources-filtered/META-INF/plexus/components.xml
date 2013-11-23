@@ -27,7 +27,7 @@
             <!-- START SNIPPET: tesla-jar-lifecycle -->
             <phases>
               <process-resources>
-                org.apache.maven.plugins:maven-resources-plugin:2.5:resources
+                io.tesla.maven.plugins:tesla-lifecycle-plugin:${project.version}:process-resources
               </process-resources>
               <compile>
                 org.apache.maven.plugins:maven-compiler-plugin:2.3.2:compile
@@ -36,7 +36,7 @@
                 org.sonatype.plugins:sisu-maven-plugin:1.1:main-index
               </process-classes>
               <process-test-resources>
-                org.apache.maven.plugins:maven-resources-plugin:2.5:testResources
+                io.tesla.maven.plugins:tesla-lifecycle-plugin:${project.version}:process-test-resources
               </process-test-resources>
               <test-compile>
                 org.apache.maven.plugins:maven-compiler-plugin:2.3.2:testCompile
