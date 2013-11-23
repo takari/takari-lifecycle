@@ -16,10 +16,10 @@ import org.sonatype.maven.plugin.LifecycleGoal;
 import org.sonatype.maven.plugin.LifecyclePhase;
 
 @LifecycleGoal(goal = "process-resources", phase = LifecyclePhase.PROCESS_RESOURCES)
-public class Resources extends TeslaLifecycleMojo {
+public class ProcessResources extends TeslaLifecycleMojo {
 
   @Conf(defaultValue = "${project.build.outputDirectory}", property = "resources.outputDirectory")
-  private File outputDirectory;
+  protected File outputDirectory;
 
   @Conf(defaultValue = "${basedir}")
   private File basedir;
@@ -29,13 +29,13 @@ public class Resources extends TeslaLifecycleMojo {
 
   @Inject
   private ResourcesProcessor processor;
-  
+
   @Override
   protected void executeMojo() throws MojoExecutionException {
-    process(project.getBuild().getResources());
+    process(project.getBuild().getResources(), outputDirectory);
   }
 
-  protected void process(List<Resource> resources) throws MojoExecutionException {
+  protected void process(List<Resource> resources, File outputDirectory) throws MojoExecutionException {
     for (Resource resource : resources) {
       boolean filter = Boolean.parseBoolean(resource.getFiltering());
       File inputDir = new File(resource.getDirectory());
@@ -46,10 +46,14 @@ public class Resources extends TeslaLifecycleMojo {
         outputDir = outputDirectory;
       }
       try {
-        processor.process(inputDir, outputDir, resource.getIncludes(), resource.getExcludes(), filter, properties);
+        if (filter) {
+          processor.process(inputDir, outputDir, resource.getIncludes(), resource.getExcludes(), properties);
+        } else {
+          processor.process(inputDir, outputDir, resource.getIncludes(), resource.getExcludes());
+        }
       } catch (IOException e) {
         throw new MojoExecutionException(e.getMessage(), e);
       }
-    }    
-  }  
+    }
+  }
 }

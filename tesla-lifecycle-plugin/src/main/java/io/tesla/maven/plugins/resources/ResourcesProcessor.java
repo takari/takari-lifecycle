@@ -36,9 +36,12 @@ public class ResourcesProcessor {
     this.buildContext = buildContext;
     this.mustacheFactory = new NoEncodingMustacheFactory();
   }
-  
-  //TODO: don't need boolean flag and properties for filtering
-  protected void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes, boolean filter, Properties filterProperties) throws IOException {
+    
+  public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes) throws IOException {
+    process(sourceDirectory, targetDirectory, includes, excludes, null);
+  }
+    
+  public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes, Properties filterProperties) throws IOException {
     if (includes.isEmpty()) {
       includes.add("**/**");
     }
@@ -53,7 +56,7 @@ public class ResourcesProcessor {
       try {
         Reader reader = closer.register(new FileReader(inputFile));
         Writer writer = closer.register(new OutputStreamWriter(buildContext.newOutputStream(inputFile, outputFile)));
-        if (filter) {
+        if (filterProperties != null) {
           filter(reader, writer, filterProperties);
         } else {
           CharStreams.copy(reader, writer);

@@ -7,30 +7,30 @@ import org.eclipse.tesla.incremental.maven.testing.AbstractBuildAvoidanceTest;
 
 import com.google.common.io.Files;
 
-public class ResourcesBuildAvoidanceTest extends AbstractBuildAvoidanceTest {
+public class TestResourcesBuildAvoidanceTest extends AbstractBuildAvoidanceTest {
   
   public void testResources() throws Exception {
-    File basedir = getBasedir("src/test/projects/project-with-resources");
-    executeMojo(basedir, "process-resources");
-    File resource = new File(basedir, "target/classes/resource.txt");
+    File basedir = getBasedir("src/test/projects/project-with-test-resources");
+    executeMojo(basedir, "process-test-resources");
+    File resource = new File(basedir, "target/test-classes/resource.txt");
     assertTrue(resource.exists());
     String line = Files.readFirstLine(resource, Charset.defaultCharset());
     assertTrue(line.contains("resource.txt"));
   }
 
   public void testResourcesWithTargetPath() throws Exception {
-    File basedir = getBasedir("src/test/projects/project-with-resources-with-target-path");
-    executeMojo(basedir, "process-resources");
-    File resource = new File(basedir, "target/classes/resources/targetPath/resource.txt");
+    File basedir = getBasedir("src/test/projects/project-with-test-resources-with-target-path");
+    executeMojo(basedir, "process-test-resources");
+    File resource = new File(basedir, "target/test-classes/resources/targetPath/resource.txt");
     assertTrue(resource.exists());
     String line = Files.readFirstLine(resource, Charset.defaultCharset());
     assertTrue(line.contains("resource.txt"));
   }
 
   public void testResourcesWithFiltering() throws Exception {
-    File basedir = getBasedir("src/test/projects/project-with-resources-filtered");
-    executeMojo(basedir, "process-resources");
-    File resource = new File(basedir, "target/classes/resource.txt");
+    File basedir = getBasedir("src/test/projects/project-with-test-resources-filtered");
+    executeMojo(basedir, "process-test-resources");
+    File resource = new File(basedir, "target/test-classes/resource.txt");
     assertTrue(resource.exists());
     String line = Files.readFirstLine(resource, Charset.defaultCharset());
     assertTrue(line.contains("resource.txt with takari"));
