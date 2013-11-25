@@ -8,7 +8,7 @@ import org.eclipse.tesla.incremental.maven.testing.AbstractBuildAvoidanceTest;
 import com.google.common.io.Files;
 
 public class ResourcesBuildAvoidanceTest extends AbstractBuildAvoidanceTest {
-  
+
   public void testResources() throws Exception {
     File basedir = getBasedir("src/test/projects/project-with-resources");
     executeMojo(basedir, "process-resources");
@@ -34,5 +34,5 @@ public class ResourcesBuildAvoidanceTest extends AbstractBuildAvoidanceTest {
     assertTrue(resource.exists());
     String line = Files.readFirstLine(resource, Charset.defaultCharset());
     assertTrue(line.contains("resource.txt with takari"));
-  }  
+  }
 }

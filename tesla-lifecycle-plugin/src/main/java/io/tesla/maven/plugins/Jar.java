@@ -32,8 +32,8 @@ public class Jar extends TeslaLifecycleMojo {
   protected void executeMojo() throws MojoExecutionException {
 
     Archiver archiver = Archiver.builder() //
-      .useRoot(false) // Step into the classes/ directory
-      .build();
+        .useRoot(false) // Step into the classes/ directory
+        .build();
 
     //
     // type = test-jar
@@ -50,8 +50,8 @@ public class Jar extends TeslaLifecycleMojo {
     if (testJar && testClassesDirectory.exists()) {
 
       Archiver testArchiver = Archiver.builder() //
-        .useRoot(false) // Step into the classes/ directory
-        .build();
+          .useRoot(false) // Step into the classes/ directory
+          .build();
 
       //
       // type = test-jar

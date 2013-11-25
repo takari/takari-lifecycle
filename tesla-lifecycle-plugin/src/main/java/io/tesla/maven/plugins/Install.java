@@ -26,7 +26,9 @@ public class Install extends TeslaLifecycleMojo {
         installProject(reactorProject);
       }
     } else {
-      getLog().info("Installing " + project.getGroupId() + ":" + project.getArtifactId() + ":" + project.getVersion() + " at end");
+      getLog().info(
+          "Installing " + project.getGroupId() + ":" + project.getArtifactId() + ":"
+              + project.getVersion() + " at end");
     }
   }
 

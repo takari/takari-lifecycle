@@ -21,40 +21,42 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 
-//  [
-//   {"title": "Item 1"},
-//   {"title": "Folder 2", "isFolder": true, "key": "folder2",
-//     "children": [
-//       {"title": "Sub-item 2.1"},
-//       {"title": "Sub-item 2.2"}
-//       ]
-//     },
-//   {"title": "Folder 3", "isFolder": true, "key": "folder3",
-//     "children": [
-//       {"title": "Sub-item 3.1"},
-//       {"title": "Sub-item 3.2"}
-//       ]
-//     },
-//   {"title": "Item 5"}
-//  ]
+// [
+// {"title": "Item 1"},
+// {"title": "Folder 2", "isFolder": true, "key": "folder2",
+// "children": [
+// {"title": "Sub-item 2.1"},
+// {"title": "Sub-item 2.2"}
+// ]
+// },
+// {"title": "Folder 3", "isFolder": true, "key": "folder3",
+// "children": [
+// {"title": "Sub-item 3.1"},
+// {"title": "Sub-item 3.2"}
+// ]
+// },
+// {"title": "Item 5"}
+// ]
 
 public class JsTreeRenderer implements TreeRenderer {
 
   private StringWriter out = new StringWriter();
 
   public void render(DependencyNode root) {
-    
+
     out.write("[");
     renderNode(root);
     out.write("]");
-    
+
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
     JsonParser jp = new JsonParser();
     JsonElement je = jp.parse(out.toString());
     String prettyJsonString = gson.toJson(je);
 
     try {
-      InputStream assetsIn = Thread.currentThread().getContextClassLoader().getResourceAsStream("dependency/tree/resources.txt");
+      InputStream assetsIn =
+          Thread.currentThread().getContextClassLoader()
+              .getResourceAsStream("dependency/tree/resources.txt");
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       ByteStreams.copy(assetsIn, baos);
 
@@ -64,11 +66,14 @@ public class JsTreeRenderer implements TreeRenderer {
           .split(baos.toString());
 
       File tmpdir = new File(System.getProperty("java.io.tmpdir"));
-      File outputDirectory = new File(tmpdir.getAbsolutePath() + "/" + UUID.randomUUID().toString());
+      File outputDirectory =
+          new File(tmpdir.getAbsolutePath() + "/" + UUID.randomUUID().toString());
       outputDirectory.mkdirs();
 
       for (String asset : assets) {
-        InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("dependency/tree/" + asset);
+        InputStream in =
+            Thread.currentThread().getContextClassLoader()
+                .getResourceAsStream("dependency/tree/" + asset);
         if (in != null) {
           File f = new File(outputDirectory, asset);
           f.getParentFile().mkdirs();
@@ -107,7 +112,9 @@ public class JsTreeRenderer implements TreeRenderer {
     if (node.getDependency() == null) {
       return node.toString();
     } else {
-      return node.getDependency().getArtifact().getArtifactId() + " : " + node.getDependency().getArtifact().getVersion() + " [" + node.getDependency().getScope() + "]";
+      return node.getDependency().getArtifact().getArtifactId() + " : "
+          + node.getDependency().getArtifact().getVersion() + " ["
+          + node.getDependency().getScope() + "]";
     }
   }
 }

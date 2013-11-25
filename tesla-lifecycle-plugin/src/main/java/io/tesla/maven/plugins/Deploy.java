@@ -38,7 +38,9 @@ public class Deploy extends TeslaLifecycleMojo {
         installProject(reactorProject);
       }
     } else {
-      getLog().info("Installing " + project.getGroupId() + ":" + project.getArtifactId() + ":" + project.getVersion() + " at end");
+      getLog().info(
+          "Installing " + project.getGroupId() + ":" + project.getArtifactId() + ":"
+              + project.getVersion() + " at end");
     }
   }
 
@@ -91,16 +93,18 @@ public class Deploy extends TeslaLifecycleMojo {
     } else {
       deploymentRepository = project.getDistributionManagement().getRepository();
     }
-    
-    Builder remoteRepositoryBuilder = new RemoteRepository.Builder(deploymentRepository.getId(), "default", deploymentRepository.getUrl());
-    
+
+    Builder remoteRepositoryBuilder =
+        new RemoteRepository.Builder(deploymentRepository.getId(), "default",
+            deploymentRepository.getUrl());
+
     Server server = settings.getServer(deploymentRepository.getId());
     if (server != null) {
       if (server.getUsername() != null && server.getPassword() != null) {
         Authentication authentication = new AuthenticationBuilder() //
             .addUsername(server.getUsername()) //
             .addPassword(server.getPassword()) //
-            .build();        
+            .build();
         remoteRepositoryBuilder.setAuthentication(authentication);
       }
     }

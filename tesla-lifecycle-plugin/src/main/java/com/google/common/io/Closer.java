@@ -1,26 +1,20 @@
 /*
  * Copyright (C) 2012 The Guava Authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package com.google.common.io;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-
-import com.google.common.annotations.Beta;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -31,17 +25,22 @@ import java.util.logging.Level;
 
 import javax.annotation.Nullable;
 
+import com.google.common.annotations.Beta;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
+
 /**
  * A {@link Closeable} that collects {@code Closeable} resources and closes them all when it is
- * {@linkplain #close closed}. This is intended to approximately emulate the behavior of Java 7's
- * <a href="http://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html">
+ * {@linkplain #close closed}. This is intended to approximately emulate the behavior of Java 7's <a
+ * href="http://docs.oracle.com/javase/tutorial/essential/exceptions/tryResourceClose.html">
  * try-with-resources</a> statement in JDK6-compatible code. Running on Java 7, code using this
  * should be approximately equivalent in behavior to the same code written with try-with-resources.
  * Running on Java 6, exceptions that cannot be thrown must be logged rather than being added to the
  * thrown exception as a suppressed exception.
- *
- * <p>This class is intended to be used in the following pattern:
- *
+ * 
+ * <p>
+ * This class is intended to be used in the following pattern:
+ * 
  * <pre>   {@code
  *   Closer closer = Closer.create();
  *   try {
@@ -55,34 +54,37 @@ import javax.annotation.Nullable;
  *   } finally {
  *     closer.close();
  *   }}</pre>
- *
- * <p>Note that this try-catch-finally block is not equivalent to a try-catch-finally block using
+ * 
+ * <p>
+ * Note that this try-catch-finally block is not equivalent to a try-catch-finally block using
  * try-with-resources. To get the equivalent of that, you must wrap the above code in <i>another</i>
  * try block in order to catch any exception that may be thrown (including from the call to
  * {@code close()}).
- *
- * <p>This pattern ensures the following:
- *
+ * 
+ * <p>
+ * This pattern ensures the following:
+ * 
  * <ul>
- *   <li>Each {@code Closeable} resource that is successfully registered will be closed later.</li>
- *   <li>If a {@code Throwable} is thrown in the try block, no exceptions that occur when attempting
- *   to close resources will be thrown from the finally block. The throwable from the try block will
- *   be thrown.</li>
- *   <li>If no exceptions or errors were thrown in the try block, the <i>first</i> exception thrown
- *   by an attempt to close a resource will be thrown.</li>
- *   <li>Any exception caught when attempting to close a resource that is <i>not</i> thrown
- *   (because another exception is already being thrown) is <i>suppressed</i>.</li>
+ * <li>Each {@code Closeable} resource that is successfully registered will be closed later.</li>
+ * <li>If a {@code Throwable} is thrown in the try block, no exceptions that occur when attempting
+ * to close resources will be thrown from the finally block. The throwable from the try block will
+ * be thrown.</li>
+ * <li>If no exceptions or errors were thrown in the try block, the <i>first</i> exception thrown by
+ * an attempt to close a resource will be thrown.</li>
+ * <li>Any exception caught when attempting to close a resource that is <i>not</i> thrown (because
+ * another exception is already being thrown) is <i>suppressed</i>.</li>
  * </ul>
- *
- * <p>An exception that is suppressed is not thrown. The method of suppression used depends on the
+ * 
+ * <p>
+ * An exception that is suppressed is not thrown. The method of suppression used depends on the
  * version of Java the code is running on:
- *
+ * 
  * <ul>
- *   <li><b>Java 7+:</b> Exceptions are suppressed by adding them to the exception that <i>will</i>
- *   be thrown using {@code Throwable.addSuppressed(Throwable)}.</li>
- *   <li><b>Java 6:</b> Exceptions are suppressed by logging them instead.</li>
+ * <li><b>Java 7+:</b> Exceptions are suppressed by adding them to the exception that <i>will</i> be
+ * thrown using {@code Throwable.addSuppressed(Throwable)}.</li>
+ * <li><b>Java 6:</b> Exceptions are suppressed by logging them instead.</li>
  * </ul>
- *
+ * 
  * @author Colin Decker
  * @since 14.0
  */
@@ -104,20 +106,22 @@ public final class Closer implements Closeable {
     return new Closer(SUPPRESSOR);
   }
 
-  @VisibleForTesting final Suppressor suppressor;
+  @VisibleForTesting
+  final Suppressor suppressor;
 
   // only need space for 2 elements in most cases, so try to use the smallest array possible
   private final Deque<Closeable> stack = new ArrayDeque<Closeable>(4);
   private Throwable thrown;
 
-  @VisibleForTesting Closer(Suppressor suppressor) {
+  @VisibleForTesting
+  Closer(Suppressor suppressor) {
     this.suppressor = checkNotNull(suppressor); // checkNotNull to satisfy null tests
   }
 
   /**
    * Registers the given {@code closeable} to be closed when this {@code Closer} is
    * {@linkplain #close closed}.
-   *
+   * 
    * @return the given {@code closeable}
    */
   // close. this word no longer has any meaning to me.
@@ -135,10 +139,11 @@ public final class Closer implements Closeable {
    * wrapped in a {@code RuntimeException}. <b>Note:</b> Be sure to declare all of the checked
    * exception types your try block can throw when calling an overload of this method so as to avoid
    * losing the original exception type.
-   *
-   * <p>This method always throws, and as such should be called as
-   * {@code throw closer.rethrow(e);} to ensure the compiler knows that it will throw.
-   *
+   * 
+   * <p>
+   * This method always throws, and as such should be called as {@code throw closer.rethrow(e);} to
+   * ensure the compiler knows that it will throw.
+   * 
    * @return this method does not return; it always throws
    * @throws IOException when the given throwable is an IOException
    */
@@ -155,16 +160,17 @@ public final class Closer implements Closeable {
    * given type. Otherwise, it will be rethrown wrapped in a {@code RuntimeException}. <b>Note:</b>
    * Be sure to declare all of the checked exception types your try block can throw when calling an
    * overload of this method so as to avoid losing the original exception type.
-   *
-   * <p>This method always throws, and as such should be called as
+   * 
+   * <p>
+   * This method always throws, and as such should be called as
    * {@code throw closer.rethrow(e, ...);} to ensure the compiler knows that it will throw.
-   *
+   * 
    * @return this method does not return; it always throws
    * @throws IOException when the given throwable is an IOException
    * @throws X when the given throwable is of the declared type X
    */
-  public <X extends Exception> RuntimeException rethrow(Throwable e,
-      Class<X> declaredType) throws IOException, X {
+  public <X extends Exception> RuntimeException rethrow(Throwable e, Class<X> declaredType)
+      throws IOException, X {
     checkNotNull(e);
     thrown = e;
     Throwables.propagateIfPossible(e, IOException.class);
@@ -178,17 +184,18 @@ public final class Closer implements Closeable {
    * of the given types. Otherwise, it will be rethrown wrapped in a {@code RuntimeException}.
    * <b>Note:</b> Be sure to declare all of the checked exception types your try block can throw
    * when calling an overload of this method so as to avoid losing the original exception type.
-   *
-   * <p>This method always throws, and as such should be called as
+   * 
+   * <p>
+   * This method always throws, and as such should be called as
    * {@code throw closer.rethrow(e, ...);} to ensure the compiler knows that it will throw.
-   *
+   * 
    * @return this method does not return; it always throws
    * @throws IOException when the given throwable is an IOException
    * @throws X1 when the given throwable is of the declared type X1
    * @throws X2 when the given throwable is of the declared type X2
    */
-  public <X1 extends Exception, X2 extends Exception> RuntimeException rethrow(
-      Throwable e, Class<X1> declaredType1, Class<X2> declaredType2) throws IOException, X1, X2 {
+  public <X1 extends Exception, X2 extends Exception> RuntimeException rethrow(Throwable e,
+      Class<X1> declaredType1, Class<X2> declaredType2) throws IOException, X1, X2 {
     checkNotNull(e);
     thrown = e;
     Throwables.propagateIfPossible(e, IOException.class);
@@ -230,7 +237,8 @@ public final class Closer implements Closeable {
   /**
    * Suppression strategy interface.
    */
-  @VisibleForTesting interface Suppressor {
+  @VisibleForTesting
+  interface Suppressor {
     /**
      * Suppresses the given exception ({@code suppressed}) which was thrown when attempting to close
      * the given closeable. {@code thrown} is the exception that is actually being thrown from the
@@ -242,7 +250,8 @@ public final class Closer implements Closeable {
   /**
    * Suppresses exceptions by logging them.
    */
-  @VisibleForTesting static final class LoggingSuppressor implements Suppressor {
+  @VisibleForTesting
+  static final class LoggingSuppressor implements Suppressor {
 
     static final LoggingSuppressor INSTANCE = new LoggingSuppressor();
 
@@ -258,7 +267,8 @@ public final class Closer implements Closeable {
    * Suppresses exceptions by adding them to the exception that will be thrown using JDK7's
    * addSuppressed(Throwable) mechanism.
    */
-  @VisibleForTesting static final class SuppressingSuppressor implements Suppressor {
+  @VisibleForTesting
+  static final class SuppressingSuppressor implements Suppressor {
 
     static final SuppressingSuppressor INSTANCE = new SuppressingSuppressor();
 

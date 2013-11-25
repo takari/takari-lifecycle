@@ -12,5 +12,5 @@ public abstract class AbstractRenderer implements TreeRenderer {
 
   public AbstractRenderer(PrintStream out) {
     this.out = (out != null) ? out : System.out;
-  }  
+  }
 }

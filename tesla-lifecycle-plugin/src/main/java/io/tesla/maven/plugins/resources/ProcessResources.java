@@ -35,12 +35,13 @@ public class ProcessResources extends TeslaLifecycleMojo {
     process(project.getBuild().getResources(), outputDirectory);
   }
 
-  protected void process(List<Resource> resources, File outputDirectory) throws MojoExecutionException {
+  protected void process(List<Resource> resources, File outputDirectory)
+      throws MojoExecutionException {
     for (Resource resource : resources) {
       boolean filter = Boolean.parseBoolean(resource.getFiltering());
       File sourceDirectory = new File(resource.getDirectory());
       // Ensure the sourceDirectory is actually present before attempting to process any resources
-      if(!sourceDirectory.exists()) {
+      if (!sourceDirectory.exists()) {
         continue;
       }
       File targetDirectory;
@@ -51,9 +52,11 @@ public class ProcessResources extends TeslaLifecycleMojo {
       }
       try {
         if (filter) {
-          processor.process(sourceDirectory, targetDirectory, resource.getIncludes(), resource.getExcludes(), properties);
+          processor.process(sourceDirectory, targetDirectory, resource.getIncludes(),
+              resource.getExcludes(), properties);
         } else {
-          processor.process(sourceDirectory, targetDirectory, resource.getIncludes(), resource.getExcludes());
+          processor.process(sourceDirectory, targetDirectory, resource.getIncludes(),
+              resource.getExcludes());
         }
       } catch (IOException e) {
         throw new MojoExecutionException(e.getMessage(), e);

@@ -8,7 +8,7 @@ import org.eclipse.aether.graph.DefaultDependencyNode;
 import org.eclipse.aether.graph.DependencyNode;
 
 public class TreeUtils {
-  
+
   public static DependencyNode node(String coordinate) {
     return new DefaultDependencyNode(new DefaultArtifact(coordinate));
   }

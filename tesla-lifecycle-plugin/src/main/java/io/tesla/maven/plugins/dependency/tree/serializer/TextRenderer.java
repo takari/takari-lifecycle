@@ -10,7 +10,7 @@ public class TextRenderer extends AbstractRenderer {
   public void render(DependencyNode root) {
     root.accept(new Serializer());
   }
-  
+
   private class Serializer implements DependencyVisitor {
 
     public boolean visitEnter(DependencyNode node) {
@@ -27,5 +27,5 @@ public class TextRenderer extends AbstractRenderer {
       currentIndent = currentIndent.substring(3, currentIndent.length());
       return true;
     }
-  }  
+  }
 }
