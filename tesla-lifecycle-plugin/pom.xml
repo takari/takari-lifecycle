@@ -109,6 +109,7 @@
       <version>1.7.4</version>
     </dependency>
 
+    <!-- test dependencies -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
