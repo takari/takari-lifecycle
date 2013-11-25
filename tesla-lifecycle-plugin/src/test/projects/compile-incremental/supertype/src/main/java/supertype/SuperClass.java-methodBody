@@ -1,0 +1,9 @@
+package supertype;
+
+public class SuperClass
+{
+    public void method()
+    {
+        method(); // does not have to make sense
+    }
+}

@@ -1,0 +1,11 @@
+package supertype;
+
+public class SuperClass
+{
+    public void method()
+    {
+    }
+    public void anotherMethod()
+    {
+    }
+}

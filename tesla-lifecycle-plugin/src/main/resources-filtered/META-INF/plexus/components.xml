@@ -30,7 +30,7 @@
                 io.tesla.maven.plugins:tesla-lifecycle-plugin:${project.version}:process-resources
               </process-resources>
               <compile>
-                org.apache.maven.plugins:maven-compiler-plugin:2.3.2:compile
+                io.tesla.maven.plugins:tesla-lifecycle-plugin:${project.version}:compile
               </compile>
               <process-classes>
                 org.sonatype.plugins:sisu-maven-plugin:1.1:main-index
@@ -39,7 +39,7 @@
                 io.tesla.maven.plugins:tesla-lifecycle-plugin:${project.version}:process-test-resources
               </process-test-resources>
               <test-compile>
-                org.apache.maven.plugins:maven-compiler-plugin:2.3.2:testCompile
+                io.tesla.maven.plugins:tesla-lifecycle-plugin:${project.version}:testCompile
               </test-compile>
               <process-test-classes>
                 org.sonatype.plugins:sisu-maven-plugin:1.1:test-index
@@ -91,7 +91,7 @@
                 org.apache.maven.plugins:maven-resources-plugin:2.5:resources
               </process-resources>
               <compile>
-                org.apache.maven.plugins:maven-compiler-plugin:2.3.2:compile
+                io.tesla.maven.plugins:tesla-lifecycle-plugin:${project.version}:compile
               </compile>
               <process-classes>
                 io.tesla.maven.plugins:tesla-plugin-plugin:${version.tesla-plugin-api}:descriptor,
@@ -101,7 +101,7 @@
                 org.apache.maven.plugins:maven-resources-plugin:2.5:testResources
               </process-test-resources>
               <test-compile>
-                org.apache.maven.plugins:maven-compiler-plugin:2.3.2:testCompile
+                io.tesla.maven.plugins:tesla-lifecycle-plugin:${project.version}:testCompile
               </test-compile>
               <process-test-classes>
                 org.sonatype.plugins:sisu-maven-plugin:1.1:test-index

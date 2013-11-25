@@ -1,0 +1,9 @@
+package reference;
+
+// comment
+public class Parameter
+{
+    public void setValue()
+    {
+    }
+}

@@ -1,0 +1,9 @@
+package supertype;
+
+// comment
+public class SuperClass
+{
+    public void method()
+    {
+    }
+}

@@ -1,0 +1,11 @@
+package reference;
+
+public class Parameter
+{
+    public void setValue()
+    {
+    }
+    public void setAnotherValue()
+    {
+    }
+}
