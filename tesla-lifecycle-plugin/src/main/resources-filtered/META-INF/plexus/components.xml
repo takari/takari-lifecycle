@@ -32,18 +32,21 @@
               <compile>
                 io.tesla.maven.plugins:tesla-lifecycle-plugin:${project.version}:compile
               </compile>
+              <!--
               <process-classes>
                 org.sonatype.plugins:sisu-maven-plugin:1.1:main-index
-              </process-classes>
+              </process-classes>               -->
               <process-test-resources>
                 io.tesla.maven.plugins:tesla-lifecycle-plugin:${project.version}:process-test-resources
               </process-test-resources>
               <test-compile>
                 io.tesla.maven.plugins:tesla-lifecycle-plugin:${project.version}:testCompile
               </test-compile>
+              <!--
               <process-test-classes>
                 org.sonatype.plugins:sisu-maven-plugin:1.1:test-index
               </process-test-classes>
+              -->
               <test>
                 org.apache.maven.plugins:maven-surefire-plugin:2.12.1:test
               </test>
