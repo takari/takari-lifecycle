@@ -5,19 +5,18 @@ import java.util.List;
 import java.util.Set;
 
 // XXX do we need both InternalCompilerConfiguration and AbstractInternalCompiler?
-public interface InternalCompilerConfiguration
-{
-    List<String> getSourceRoots();
+public interface InternalCompilerConfiguration {
+  List<String> getSourceRoots();
 
-    Set<String> getSourceIncludes();
+  Set<String> getSourceIncludes();
 
-    Set<String> getSourceExcludes();
+  Set<String> getSourceExcludes();
 
-    File getOutputDirectory();
+  File getOutputDirectory();
 
-    List<String> getClasspathElements();
+  List<String> getClasspathElements();
 
-    String getSource();
+  String getSource();
 
-    String getTarget();
+  String getTarget();
 }
