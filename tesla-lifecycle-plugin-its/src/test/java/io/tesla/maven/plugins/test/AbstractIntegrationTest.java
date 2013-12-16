@@ -42,7 +42,8 @@ public abstract class AbstractIntegrationTest {
   }
 
   protected Verifier getVerifier(File basedir) throws VerificationException, IOException {
-    File mavenHome = new File("target/dependency/apache-maven-3.1.2-SNAPSHOT");
+    // TODO: this needs to be extracted from the environment
+    File mavenHome = new File("target/dependency/apache-maven-3.1.2-sfdc-06");
     Assert.assertTrue("Can't locate maven home, make sure to run 'mvn generate-test-resources'",
         mavenHome.isDirectory());
     // XXX somebody needs to fix this in maven-verifier already

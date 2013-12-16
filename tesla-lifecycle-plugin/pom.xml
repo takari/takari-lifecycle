@@ -18,12 +18,6 @@
   </prerequisites>
 
   <dependencies>
-    <!-- Same version used in Maven 3.1.2 -->
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>11.0.2</version>
-    </dependency>  
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-plugin-api</artifactId>
@@ -58,13 +52,13 @@
     <dependency>
       <groupId>io.tesla</groupId>
       <artifactId>tesla-build-avoidance-maven</artifactId>
-      <version>0.0.1-SNAPSHOT</version>
+      <version>${build.avoidance.version}</version>
     </dependency>
     <!-- Build Avoidance Testing -->
     <dependency>
       <groupId>io.tesla</groupId>
       <artifactId>tesla-build-avoidance-maven-testing</artifactId>
-      <version>0.0.1-SNAPSHOT</version>
+      <version>${build.avoidance.version}</version>
       <scope>test</scope>
     </dependency>
     <!-- JDT compiler and matching APT support -->
@@ -90,11 +84,22 @@
       <artifactId>compiler</artifactId>
       <version>0.8.13</version>
     </dependency>
+    <!--
+    We can use 15.0 at runtime because of the classloader isolation in Maven, but we cannot
+    use 15.0 during testing because sisu will not work with Guava 15.0 because they
+    are incompatible. The eventual solution is to have the realms for testing created
+    in the same way that the core is.
+    -->
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>11.0.2</version> <!-- Would like 15.0 -->
+    </dependency>      
     <!-- JAR -->
     <dependency>
       <groupId>io.provis</groupId>
       <artifactId>provisio-archive</artifactId>
-      <version>0.0.8-SNAPSHOT</version>
+      <version>0.0.9</version>
     </dependency>
     <!-- Dependency -->
     <dependency>

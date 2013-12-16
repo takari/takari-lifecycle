@@ -7,7 +7,7 @@
   <parent>
     <groupId>io.tesla</groupId>
     <artifactId>tesla</artifactId>
-    <version>5</version>
+    <version>7</version>
   </parent>
 
   <groupId>io.tesla.maven.plugins</groupId>
@@ -20,9 +20,10 @@
   </prerequisites>
 
   <properties>
-    <mavenVersion>3.1.2-SNAPSHOT</mavenVersion>
+    <mavenVersion>3.1.2-sfdc-06</mavenVersion>
     <aetherVersion>0.9.0.M2</aetherVersion>
-    <teslaPluginApiVersion>0.0.6-SNAPSHOT</teslaPluginApiVersion>
+    <teslaPluginApiVersion>0.0.6</teslaPluginApiVersion>
+    <build.avoidance.version>0.0.2</build.avoidance.version>
   </properties>
 
   <scm>
@@ -50,4 +51,16 @@
       </plugins>
     </pluginManagement>
   </build>
+  
+  <distributionManagement>
+    <repository>
+      <id>nexus</id>
+      <url>https://nexus.soma.salesforce.com/nexus/service/local/staging/deploy/maven2/</url>
+    </repository>
+    <snapshotRepository>
+      <id>nexus</id>
+      <url>https://nexus.soma.salesforce.com/nexus/content/repositories/snapshots/</url>
+    </snapshotRepository>
+  </distributionManagement>
+  
 </project>

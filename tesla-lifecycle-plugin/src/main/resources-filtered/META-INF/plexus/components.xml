@@ -32,21 +32,12 @@
               <compile>
                 io.tesla.maven.plugins:tesla-lifecycle-plugin:${project.version}:compile
               </compile>
-              <!--
-              <process-classes>
-                org.sonatype.plugins:sisu-maven-plugin:1.1:main-index
-              </process-classes>               -->
               <process-test-resources>
                 io.tesla.maven.plugins:tesla-lifecycle-plugin:${project.version}:process-test-resources
               </process-test-resources>
               <test-compile>
                 io.tesla.maven.plugins:tesla-lifecycle-plugin:${project.version}:testCompile
               </test-compile>
-              <!--
-              <process-test-classes>
-                org.sonatype.plugins:sisu-maven-plugin:1.1:test-index
-              </process-test-classes>
-              -->
               <test>
                 org.apache.maven.plugins:maven-surefire-plugin:2.12.1:test
               </test>
@@ -65,6 +56,86 @@
         </lifecycles>
       </configuration>
     </component>        
+    
+    <!-- Maven JAR lifecycle with only the JAR plugin changed -->
+    <component>                                                                                                                                                    
+      <role>org.apache.maven.lifecycle.mapping.LifecycleMapping</role>                                                                                             
+      <role-hint>tesla-jar-00</role-hint>                                                                                                                                   
+      <implementation>org.apache.maven.lifecycle.mapping.DefaultLifecycleMapping</implementation>                                                                  
+      <configuration>                                                                                                                                              
+        <lifecycles>                                                                                                                                               
+          <lifecycle>                                                                                                                                              
+            <id>default</id>                                                                                                                                                                                                                                                                                                          
+            <phases>                                                                                                                                               
+              <process-resources>                                                                                                                                  
+                org.apache.maven.plugins:maven-resources-plugin:2.6:resources                                                                                      
+              </process-resources>                                                                                                                                 
+              <compile>                                                                                                                                            
+                org.apache.maven.plugins:maven-jar-plugin:2.4:jar                                                                                       
+              </compile>                                                                                                                                           
+              <process-test-resources>                                                                                                                             
+                org.apache.maven.plugins:maven-resources-plugin:2.6:testResources                                                                                  
+              </process-test-resources>                                                                                                                            
+              <test-compile>                                                                                                                                       
+                org.apache.maven.plugins:maven-compiler-plugin:2.5.1:testCompile                                                                                   
+              </test-compile>                                                                                                                                      
+              <test>                                                                                                                                               
+                org.apache.maven.plugins:maven-surefire-plugin:2.12.4:test                                                                                         
+              </test>                                                                                                                                              
+              <package>                                                                                                                                            
+                io.tesla.maven.plugins:tesla-lifecycle-plugin:${project.version}:jar                                                                                                  
+              </package>                                                                                                                                           
+              <install>                                                                                                                                            
+                org.apache.maven.plugins:maven-install-plugin:2.4:install                                                                                          
+              </install>                                                                                                                                           
+              <deploy>                                                                                                                                             
+                org.apache.maven.plugins:maven-deploy-plugin:2.7:deploy                                                                                            
+              </deploy>                                                                                                                                            
+            </phases>                                                                                                                                                                                                                                                                                                                 
+          </lifecycle>                                                                                                                                             
+        </lifecycles>                                                                                                                                              
+      </configuration>                                                                                                                                             
+    </component>          
+    
+    <!-- Maven JAR lifecycle with only the JAR and compiler plugin changed -->
+    <component>                                                                                                                                                    
+      <role>org.apache.maven.lifecycle.mapping.LifecycleMapping</role>                                                                                             
+      <role-hint>tesla-jar-01</role-hint>                                                                                                                                   
+      <implementation>org.apache.maven.lifecycle.mapping.DefaultLifecycleMapping</implementation>                                                                  
+      <configuration>                                                                                                                                              
+        <lifecycles>                                                                                                                                               
+          <lifecycle>                                                                                                                                              
+            <id>default</id>                                                                                                                                                                                                                                                                                                          
+            <phases>                                                                                                                                               
+              <process-resources>                                                                                                                                  
+                org.apache.maven.plugins:maven-resources-plugin:2.6:resources                                                                                      
+              </process-resources>                                                                                                                                 
+              <compile>                                                                                                                                            
+                io.tesla.maven.plugins:tesla-lifecycle-plugin:${project.version}:compile                                                                                       
+              </compile>                                                                                                                                           
+              <process-test-resources>                                                                                                                             
+                org.apache.maven.plugins:maven-resources-plugin:2.6:testResources                                                                                  
+              </process-test-resources>                                                                                                                            
+              <test-compile>                                                                                                                                       
+                io.tesla.maven.plugins:tesla-lifecycle-plugin:${project.version}:testCompile                                                                                   
+              </test-compile>                                                                                                                                      
+              <test>                                                                                                                                               
+                org.apache.maven.plugins:maven-surefire-plugin:2.12.4:test                                                                                         
+              </test>                                                                                                                                              
+              <package>                                                                                                                                            
+                io.tesla.maven.plugins:tesla-lifecycle-plugin:${project.version}:jar                                                                                                  
+              </package>                                                                                                                                           
+              <install>                                                                                                                                            
+                org.apache.maven.plugins:maven-install-plugin:2.4:install                                                                                          
+              </install>                                                                                                                                           
+              <deploy>                                                                                                                                             
+                org.apache.maven.plugins:maven-deploy-plugin:2.7:deploy                                                                                            
+              </deploy>                                                                                                                                            
+            </phases>                                                                                                                                                                                                                                                                                                                 
+          </lifecycle>                                                                                                                                             
+        </lifecycles>                                                                                                                                              
+      </configuration>                                                                                                                                             
+    </component>                       
     
     <!--
      | TESLA PLUGIN
