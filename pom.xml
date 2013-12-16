@@ -22,7 +22,7 @@
   <properties>
     <mavenVersion>3.1.2-sfdc-06</mavenVersion>
     <aetherVersion>0.9.0.M2</aetherVersion>
-    <teslaPluginApiVersion>0.0.6</teslaPluginApiVersion>
+    <teslaPluginApiVersion>0.0.7</teslaPluginApiVersion>
     <build.avoidance.version>0.0.2</build.avoidance.version>
   </properties>
 
@@ -50,6 +50,19 @@
         </plugin>
       </plugins>
     </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+        <extensions>true</extensions>
+        <inherited>true</inherited>
+        <configuration>
+          <serverId>nexus</serverId>
+          <nexusUrl>https://nexus.soma.salesforce.com/nexus/</nexusUrl>
+          <stagingProfileId>7a74670f41f92</stagingProfileId>
+        </configuration>
+      </plugin>    
+    </plugins>
   </build>
   
   <distributionManagement>
