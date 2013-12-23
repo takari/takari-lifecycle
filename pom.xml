@@ -19,10 +19,10 @@
   </prerequisites>
 
   <properties>
-    <mavenVersion>3.1.2-sfdc-06</mavenVersion>
+    <mavenVersion>3.1.2-SNAPSHOT</mavenVersion>
     <aetherVersion>0.9.0.M2</aetherVersion>
-    <teslaPluginApiVersion>0.0.7</teslaPluginApiVersion>
-    <build.avoidance.version>0.0.2</build.avoidance.version>
+    <teslaPluginApiVersion>0.0.8-SNAPSHOT</teslaPluginApiVersion>
+    <build.avoidance.version>0.0.5-SNAPSHOT</build.avoidance.version>
   </properties>
 
   <scm>

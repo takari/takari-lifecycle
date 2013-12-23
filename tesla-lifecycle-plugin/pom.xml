@@ -11,6 +11,10 @@
 
   <artifactId>tesla-lifecycle-plugin</artifactId>
 
+  <properties>
+    <guava.version>11.0.2</guava.version>
+  </properties>
+
   <!-- not inherited, IIRC -->
   <prerequisites>
     <maven>[3.1.0,)</maven>
@@ -92,7 +96,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>11.0.2</version> <!-- Would like 15.0 -->
+      <version>${guava.version}</version> <!-- Would like 15.0 -->
     </dependency>      
     <!-- JAR -->
     <dependency>
