@@ -50,7 +50,7 @@ public abstract class TeslaLifecycleMojo extends AbstractMojo {
   @Parameter(defaultValue = "${project.remoteRepositories}")
   protected List<RemoteRepository> remoteRepositories;
 
-  @Parameter(defaultValue = "${mojoDescriptor}")
+  @Parameter(defaultValue = "${mojoExecution.mojoDescriptor}")
   protected MojoDescriptor mojoDescriptor;
 
   @Parameter(defaultValue = "${settings}")
