@@ -5,43 +5,41 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.sonatype.maven.plugin.ClasspathType;
-import org.sonatype.maven.plugin.Conf;
-import org.sonatype.maven.plugin.LifecycleGoal;
-import org.sonatype.maven.plugin.LifecyclePhase;
-import org.sonatype.maven.plugin.RequiresDependencyResolution;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
 
-@LifecycleGoal(goal = "compile", phase = LifecyclePhase.COMPILE, requireProject = true)
-@RequiresDependencyResolution(ClasspathType.COMPILE)
+@Mojo(name = "compile", defaultPhase = LifecyclePhase.COMPILE, requiresProject = true, requiresDependencyResolution = ResolutionScope.COMPILE)
 public class CompileMojo extends AbstractCompileMojo {
   /**
    * The source directories containing the sources to be compiled.
    */
-  @Conf(defaultValue = "${project.compileSourceRoots}", readOnly = true, required = true)
+  @Parameter(defaultValue = "${project.compileSourceRoots}", readonly = true, required = true)
   private List<String> compileSourceRoots;
 
   /**
    * A list of inclusion filters for the compiler.
    */
-  @Conf
+  @Parameter
   private Set<String> includes = new HashSet<String>();
 
   /**
    * A list of exclusion filters for the compiler.
    */
-  @Conf
+  @Parameter
   private Set<String> excludes = new HashSet<String>();
 
   /**
    * Project classpath.
    */
-  @Conf(defaultValue = "${project.compileClasspathElements}", readOnly = true, required = true)
+  @Parameter(defaultValue = "${project.compileClasspathElements}", readonly = true, required = true)
   private List<String> classpathElements;
 
   /**
    * The directory for compiled classes.
    */
-  @Conf(defaultValue = "${project.build.outputDirectory}", required = true, readOnly = true)
+  @Parameter(defaultValue = "${project.build.outputDirectory}", required = true, readonly = true)
   private File outputDirectory;
 
   @Override

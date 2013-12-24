@@ -6,26 +6,26 @@ import java.io.File;
 import java.io.IOException;
 
 import org.apache.maven.plugin.MojoExecutionException;
-import org.sonatype.maven.plugin.Conf;
-import org.sonatype.maven.plugin.LifecycleGoal;
-import org.sonatype.maven.plugin.LifecyclePhase;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 
-@LifecycleGoal(goal = "jar", phase = LifecyclePhase.PACKAGE)
+@Mojo(name = "jar", defaultPhase = LifecyclePhase.PACKAGE)
 public class Jar extends TeslaLifecycleMojo {
 
-  @Conf(defaultValue = "${project.build.outputDirectory}")
+  @Parameter(defaultValue = "${project.build.outputDirectory}")
   private File classesDirectory;
 
-  @Conf(defaultValue = "${project.build.finalName}")
+  @Parameter(defaultValue = "${project.build.finalName}")
   private String finalName;
 
-  @Conf(defaultValue = "${project.build.directory}")
+  @Parameter(defaultValue = "${project.build.directory}")
   private File outputDirectory;
 
-  @Conf(defaultValue = "false", property = "testJar")
+  @Parameter(defaultValue = "false", property = "testJar")
   private boolean testJar;
 
-  @Conf(defaultValue = "${project.build.testOutputDirectory}")
+  @Parameter(defaultValue = "${project.build.testOutputDirectory}")
   private File testClassesDirectory;
 
   @Override

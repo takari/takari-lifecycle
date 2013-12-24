@@ -3,9 +3,9 @@ package io.tesla.maven.plugins.dependency;
 import io.tesla.maven.plugins.dependency.tree.serializer.TextRenderer;
 import io.tesla.maven.plugins.dependency.tree.serializer.TreeRenderer;
 
-import org.sonatype.maven.plugin.Goal;
+import org.apache.maven.plugins.annotations.Mojo;
 
-@Goal("text")
+@Mojo(name = "text")
 public class TextTree extends AbstractTree {
 
   @Override

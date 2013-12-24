@@ -3,9 +3,9 @@ package io.tesla.maven.plugins.dependency;
 import io.tesla.maven.plugins.dependency.tree.serializer.JsTreeRenderer;
 import io.tesla.maven.plugins.dependency.tree.serializer.TreeRenderer;
 
-import org.sonatype.maven.plugin.Goal;
+import org.apache.maven.plugins.annotations.Mojo;
 
-@Goal("jstree")
+@Mojo(name = "jstree")
 public class JsTree extends AbstractTree {
 
   @Override

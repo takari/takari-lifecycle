@@ -11,20 +11,20 @@ import javax.inject.Inject;
 
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.sonatype.maven.plugin.Conf;
-import org.sonatype.maven.plugin.LifecycleGoal;
-import org.sonatype.maven.plugin.LifecyclePhase;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 
-@LifecycleGoal(goal = "process-resources", phase = LifecyclePhase.PROCESS_RESOURCES)
+@Mojo(name = "process-resources", defaultPhase = LifecyclePhase.PROCESS_RESOURCES)
 public class ProcessResources extends TeslaLifecycleMojo {
 
-  @Conf(defaultValue = "${project.build.outputDirectory}", property = "resources.outputDirectory")
+  @Parameter(defaultValue = "${project.build.outputDirectory}", property = "resources.outputDirectory")
   protected File outputDirectory;
 
-  @Conf(defaultValue = "${basedir}")
+  @Parameter(defaultValue = "${basedir}")
   private File basedir;
 
-  @Conf(defaultValue = "${project.properties}")
+  @Parameter(defaultValue = "${project.properties}")
   private Properties properties;
 
   @Inject

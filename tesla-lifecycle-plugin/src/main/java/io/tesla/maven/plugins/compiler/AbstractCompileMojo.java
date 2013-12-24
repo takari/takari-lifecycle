@@ -9,8 +9,8 @@ import javax.inject.Provider;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.eclipse.tesla.incremental.BuildContext;
-import org.sonatype.maven.plugin.Conf;
 
 public abstract class AbstractCompileMojo extends AbstractMojo
     implements
@@ -21,19 +21,19 @@ public abstract class AbstractCompileMojo extends AbstractMojo
   /**
    * The compiler id of the compiler to use, {@code javac} or {@code incremental-jdt}.
    */
-  @Conf(property = "maven.compiler.compilerId", defaultValue = "incremental-jdt")
+  @Parameter(property = "maven.compiler.compilerId", defaultValue = "incremental-jdt")
   private String compilerId;
 
   /**
    * The -source argument for the Java compiler.
    */
-  @Conf(property = "maven.compiler.source", defaultValue = "1.5")
+  @Parameter(property = "maven.compiler.source", defaultValue = "1.5")
   protected String source;
 
   /**
    * The -target argument for the Java compiler.
    */
-  @Conf(property = "maven.compiler.target", defaultValue = "1.5")
+  @Parameter(property = "maven.compiler.target", defaultValue = "1.5")
   protected String target;
 
   @Override

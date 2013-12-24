@@ -5,6 +5,8 @@ import io.tesla.maven.plugins.util.AetherUtils;
 import org.apache.maven.artifact.ArtifactUtils;
 import org.apache.maven.model.DeploymentRepository;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.settings.Server;
 import org.eclipse.aether.artifact.Artifact;
@@ -15,13 +17,11 @@ import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.repository.RemoteRepository.Builder;
 import org.eclipse.aether.util.artifact.SubArtifact;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
-import org.sonatype.maven.plugin.LifecycleGoal;
-import org.sonatype.maven.plugin.LifecyclePhase;
 
 /**
  * @author Jason van Zyl
  */
-@LifecycleGoal(goal = "deploy", phase = LifecyclePhase.DEPLOY)
+@Mojo(name = "deploy", defaultPhase = LifecyclePhase.DEPLOY)
 public class Deploy extends TeslaLifecycleMojo {
 
   // deploy at the end to prevent corruption

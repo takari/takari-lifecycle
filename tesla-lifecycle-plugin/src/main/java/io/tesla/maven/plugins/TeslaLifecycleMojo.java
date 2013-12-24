@@ -7,6 +7,7 @@ import javax.inject.Inject;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.descriptor.MojoDescriptor;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.MavenProjectHelper;
 import org.apache.maven.settings.Settings;
@@ -14,7 +15,6 @@ import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.slf4j.Logger;
-import org.sonatype.maven.plugin.Conf;
 
 // integrate buildinfo: really this can't be packaged up in the JAR as it will prevent being
 // idempotent
@@ -38,25 +38,25 @@ public abstract class TeslaLifecycleMojo extends AbstractMojo {
   @Inject
   protected MavenProjectHelper projectHelper;
 
-  @Conf(defaultValue = "${project}")
+  @Parameter(defaultValue = "${project}")
   protected MavenProject project;
 
-  @Conf(defaultValue = "${reactorProjects}")
+  @Parameter(defaultValue = "${reactorProjects}")
   protected List<MavenProject> reactorProjects;
 
-  @Conf(defaultValue = "${repositorySystemSession}")
+  @Parameter(defaultValue = "${repositorySystemSession}")
   protected RepositorySystemSession repositorySystemSession;
 
-  @Conf(defaultValue = "${project.remoteRepositories}")
+  @Parameter(defaultValue = "${project.remoteRepositories}")
   protected List<RemoteRepository> remoteRepositories;
 
-  @Conf(defaultValue = "${mojoDescriptor}")
+  @Parameter(defaultValue = "${mojoDescriptor}")
   protected MojoDescriptor mojoDescriptor;
 
-  @Conf(defaultValue = "${settings}")
+  @Parameter(defaultValue = "${settings}")
   protected Settings settings;
 
-  @Conf(defaultValue = "false", property = "skip")
+  @Parameter(defaultValue = "false", property = "skip")
   protected boolean skip;
 
   protected abstract void executeMojo() throws MojoExecutionException;

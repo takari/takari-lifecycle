@@ -5,9 +5,9 @@ import io.tesla.maven.plugins.dependency.tree.serializer.TreeRenderer;
 
 import java.io.File;
 
-import org.sonatype.maven.plugin.Goal;
+import org.apache.maven.plugins.annotations.Mojo;
 
-@Goal("dot")
+@Mojo(name = "dot")
 public class DotTree extends AbstractTree {
 
   @Override

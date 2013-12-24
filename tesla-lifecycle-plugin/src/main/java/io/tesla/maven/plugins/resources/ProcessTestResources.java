@@ -3,14 +3,14 @@ package io.tesla.maven.plugins.resources;
 import java.io.File;
 
 import org.apache.maven.plugin.MojoExecutionException;
-import org.sonatype.maven.plugin.Conf;
-import org.sonatype.maven.plugin.LifecycleGoal;
-import org.sonatype.maven.plugin.LifecyclePhase;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 
-@LifecycleGoal(goal = "process-test-resources", phase = LifecyclePhase.PROCESS_TEST_RESOURCES)
+@Mojo(name = "process-test-resources", defaultPhase = LifecyclePhase.PROCESS_TEST_RESOURCES)
 public class ProcessTestResources extends ProcessResources {
 
-  @Conf(defaultValue = "${project.build.testOutputDirectory}", property = "resources.testOutputDirectory")
+  @Parameter(defaultValue = "${project.build.testOutputDirectory}", property = "resources.testOutputDirectory")
   protected File testOutputDirectory;
 
   @Override

@@ -3,18 +3,18 @@ package io.tesla.maven.plugins;
 import io.tesla.maven.plugins.util.AetherUtils;
 
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.installation.InstallRequest;
 import org.eclipse.aether.installation.InstallationException;
 import org.eclipse.aether.util.artifact.SubArtifact;
-import org.sonatype.maven.plugin.LifecycleGoal;
-import org.sonatype.maven.plugin.LifecyclePhase;
 
 /**
  * @author Jason van Zyl
  */
-@LifecycleGoal(goal = "install", phase = LifecyclePhase.INSTALL)
+@Mojo(name = "install", defaultPhase = LifecyclePhase.INSTALL)
 public class Install extends TeslaLifecycleMojo {
 
   @Override

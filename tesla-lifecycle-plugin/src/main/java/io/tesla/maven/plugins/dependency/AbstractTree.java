@@ -9,6 +9,7 @@ import javax.inject.Inject;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystem;
@@ -23,23 +24,22 @@ import org.eclipse.aether.resolution.ArtifactDescriptorRequest;
 import org.eclipse.aether.resolution.ArtifactDescriptorResult;
 import org.eclipse.aether.util.graph.manager.DependencyManagerUtils;
 import org.eclipse.aether.util.graph.transformer.ConflictResolver;
-import org.sonatype.maven.plugin.Conf;
 
 public abstract class AbstractTree extends AbstractMojo {
 
   @Inject
   private RepositorySystem repositorySystem;
 
-  @Conf(defaultValue = "${project}", readOnly = true)
+  @Parameter(defaultValue = "${project}", readonly = true)
   private MavenProject project;
 
-  @Conf(defaultValue = "${reactorProjects}", readOnly = true)
+  @Parameter(defaultValue = "${reactorProjects}", readonly = true)
   private List<MavenProject> reactorProjects;
 
-  @Conf(defaultValue = "${repositorySystemSession}", readOnly = true)
+  @Parameter(defaultValue = "${repositorySystemSession}", readonly = true)
   private DefaultRepositorySystemSession repositorySystemSession;
 
-  @Conf(defaultValue = "${project.remoteProjectRepositories}", readOnly = true)
+  @Parameter(defaultValue = "${project.remoteProjectRepositories}", readonly = true)
   private List<RemoteRepository> remoteRepos;
 
   public void execute() throws MojoExecutionException, MojoFailureException {
