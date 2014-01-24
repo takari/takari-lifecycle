@@ -42,6 +42,8 @@ public abstract class AbstractCompileMojo extends AbstractMojo
       new IncrementalCompiler(this, context.get()).compile();
     } else if ("javac".equals(compilerId)) {
       new PlexusJavacCompiler(this).compile();
+    } else {
+      throw new MojoExecutionException("Unsupported compilerId " + compilerId);
     }
   }
 

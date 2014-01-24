@@ -82,6 +82,12 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
         new Compiler(namingEnvironment, errorHandlingPolicy, compilerOptions, this, problemFactory);
     compiler.options.produceReferenceInfo = true;
 
+    // TODO optimize full build.
+    // there is no need to track processed inputs during full build,
+    // which saves memory and GC cycles
+    // also, if number of sources in the previous build is known, it may be more efficient to
+    // rebuild everything after certain % of sources is modified
+
     for (String sourceRoot : getSourceRoots()) {
       enqueue(context.registerInputs(getSourceFileSet(sourceRoot)));
     }
@@ -200,16 +206,15 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
     }
 
     // track references
-    final DependencyTracker dependencies = tracker;
     final File input = new File(new String(result.getFileName()));
     if (result.qualifiedReferences != null) {
       for (char[][] reference : result.qualifiedReferences) {
-        dependencies.addReferencedType(input, CharOperation.toString(reference));
+        tracker.addReferencedType(input, CharOperation.toString(reference));
       }
     }
     if (result.simpleNameReferences != null) {
       for (char[] reference : result.simpleNameReferences) {
-        dependencies.addReferencedSimpleName(input, new String(reference));
+        tracker.addReferencedSimpleName(input, new String(reference));
       }
     }
   }
