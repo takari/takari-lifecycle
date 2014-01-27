@@ -1,12 +1,13 @@
 package io.tesla.maven.plugins.compiler;
 
 import java.io.File;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.maven.plugin.MojoExecutionException;
-import org.eclipse.tesla.incremental.FileSet;
-import org.eclipse.tesla.incremental.FileSetBuilder;
+import org.codehaus.plexus.util.DirectoryScanner;
 
 public abstract class AbstractInternalCompiler {
   private final InternalCompilerConfiguration mojo;
@@ -43,16 +44,29 @@ public abstract class AbstractInternalCompiler {
     return mojo.getTarget();
   }
 
-  protected final FileSet getSourceFileSet(String sourceRoot) {
-    final FileSetBuilder builder = new FileSetBuilder(new File(sourceRoot));
+  protected final Set<File> getSourceFileSet(String sourceRoot) {
+    File basedir = new File(sourceRoot);
+    DirectoryScanner scanner = new DirectoryScanner();
+    scanner.setBasedir(basedir);
+    scanner.setIncludes(null);
     Set<String> includes = getSourceIncludes();
     Set<String> excludes = getSourceExcludes();
     if (includes.isEmpty() && excludes.isEmpty()) {
-      builder.addIncludes("**/*.java");
+      scanner.setIncludes(new String[] {"**/*.java"});
     } else {
-      builder.addIncludes(includes).addExcludes(excludes);
+      scanner.setIncludes(toArray(includes));
+      scanner.setExcludes(toArray(excludes));
     }
-    return builder.build();
+    scanner.scan();
+    Set<File> result = new LinkedHashSet<File>();
+    for (String path : scanner.getIncludedFiles()) {
+      result.add(new File(basedir, path));
+    }
+    return result;
+  }
+
+  private String[] toArray(Collection<String> collection) {
+    return collection.toArray(new String[collection.size()]);
   }
 
   public abstract void compile() throws MojoExecutionException;

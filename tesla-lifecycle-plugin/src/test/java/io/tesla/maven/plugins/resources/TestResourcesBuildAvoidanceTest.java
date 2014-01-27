@@ -1,38 +1,52 @@
 package io.tesla.maven.plugins.resources;
 
+import io.takari.incrementalbuild.maven.testing.BuildAvoidanceRule;
+
 import java.io.File;
 import java.nio.charset.Charset;
 
-import org.eclipse.tesla.incremental.maven.testing.AbstractBuildAvoidanceTest;
+import org.apache.maven.plugin.testing.resources.TestResources;
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
 
 import com.google.common.io.Files;
 
-public class TestResourcesBuildAvoidanceTest extends AbstractBuildAvoidanceTest {
+public class TestResourcesBuildAvoidanceTest {
 
+  @Rule
+  public final TestResources resources = new TestResources();
+
+  @Rule
+  public final BuildAvoidanceRule mojos = new BuildAvoidanceRule();
+
+  @Test
   public void testResources() throws Exception {
-    File basedir = getBasedir("src/test/projects/project-with-test-resources");
-    executeMojo(basedir, "process-test-resources");
+    File basedir = resources.getBasedir("project-with-test-resources");
+    mojos.executeMojo(basedir, "process-test-resources");
     File resource = new File(basedir, "target/test-classes/resource.txt");
-    assertTrue(resource.exists());
+    Assert.assertTrue(resource.exists());
     String line = Files.readFirstLine(resource, Charset.defaultCharset());
-    assertTrue(line.contains("resource.txt"));
+    Assert.assertTrue(line.contains("resource.txt"));
   }
 
+  @Test
   public void testResourcesWithTargetPath() throws Exception {
-    File basedir = getBasedir("src/test/projects/project-with-test-resources-with-target-path");
-    executeMojo(basedir, "process-test-resources");
+    File basedir = resources.getBasedir("project-with-test-resources-with-target-path");
+    mojos.executeMojo(basedir, "process-test-resources");
     File resource = new File(basedir, "target/test-classes/resources/targetPath/resource.txt");
-    assertTrue(resource.exists());
+    Assert.assertTrue(resource.exists());
     String line = Files.readFirstLine(resource, Charset.defaultCharset());
-    assertTrue(line.contains("resource.txt"));
+    Assert.assertTrue(line.contains("resource.txt"));
   }
 
+  @Test
   public void testResourcesWithFiltering() throws Exception {
-    File basedir = getBasedir("src/test/projects/project-with-test-resources-filtered");
-    executeMojo(basedir, "process-test-resources");
+    File basedir = resources.getBasedir("project-with-test-resources-filtered");
+    mojos.executeMojo(basedir, "process-test-resources");
     File resource = new File(basedir, "target/test-classes/resource.txt");
-    assertTrue(resource.exists());
+    Assert.assertTrue(resource.exists());
     String line = Files.readFirstLine(resource, Charset.defaultCharset());
-    assertTrue(line.contains("resource.txt with takari"));
+    Assert.assertTrue(line.contains("resource.txt with takari"));
   }
 }

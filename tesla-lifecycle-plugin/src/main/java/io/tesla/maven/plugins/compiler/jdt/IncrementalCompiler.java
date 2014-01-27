@@ -1,5 +1,9 @@
 package io.tesla.maven.plugins.compiler.jdt;
 
+import io.takari.incrementalbuild.BuildContext;
+import io.takari.incrementalbuild.spi.DefaultBuildContext;
+import io.takari.incrementalbuild.spi.DefaultInput;
+import io.takari.incrementalbuild.spi.DefaultOutput;
 import io.tesla.maven.plugins.compiler.AbstractInternalCompiler;
 import io.tesla.maven.plugins.compiler.InternalCompilerConfiguration;
 
@@ -7,7 +11,6 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -17,6 +20,7 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
+import org.apache.maven.plugin.MojoExecutionException;
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ClassFile;
@@ -33,14 +37,16 @@ import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
 import org.eclipse.jdt.internal.compiler.env.INameEnvironment;
 import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
+import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.eclipse.jdt.internal.compiler.util.SuffixConstants;
 import org.eclipse.jdt.internal.core.builder.ProblemFactory;
-import org.eclipse.tesla.incremental.BuildContext;
 
 public class IncrementalCompiler extends AbstractInternalCompiler implements ICompilerRequestor {
-  private final BuildContext context;
 
-  private final DependencyTracker tracker;
+  private static final String CAPABILITY_TYPE = "jdt.type";
+  private static final String CAPABILITY_SIMPLE_TYPE = "jdt.type";
+
+  private final DefaultBuildContext<?> context;
 
   /**
    * Set of ICompilationUnit to be compiled.
@@ -56,18 +62,11 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
   public IncrementalCompiler(InternalCompilerConfiguration mojo, BuildContext context) {
     super(mojo);
 
-    this.context = context;
-
-    DependencyTracker tracker = context.getValue(DependencyTracker.KEY, DependencyTracker.class);
-    if (tracker == null) {
-      tracker = new DependencyTracker();
-      context.setValue(DependencyTracker.KEY, tracker);
-    }
-    this.tracker = tracker;
+    this.context = (DefaultBuildContext<?>) context;
   }
 
   @Override
-  public void compile() {
+  public void compile() throws MojoExecutionException {
     INameEnvironment namingEnvironment = getClassPath();
     IErrorHandlingPolicy errorHandlingPolicy = DefaultErrorHandlingPolicies.exitAfterAllProblems();
     Map<String, String> args = new HashMap<String, String>();
@@ -88,32 +87,55 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
     // also, if number of sources in the previous build is known, it may be more efficient to
     // rebuild everything after certain % of sources is modified
 
-    for (String sourceRoot : getSourceRoots()) {
-      enqueue(context.registerInputs(getSourceFileSet(sourceRoot)));
-    }
-
-    // remove stale outputs and rebuild all sources that reference them
-    for (File output : context.deleteStaleOutputs()) {
-      enqueue(tracker.removeOutput(output));
-    }
-
-    while (!compileQueue.isEmpty()) {
-      ICompilationUnit[] sourceFiles =
-          compileQueue.toArray(new ICompilationUnit[compileQueue.size()]);
-      compileQueue.clear();
-      compiler.compile(sourceFiles);
-      for (File output : context.deleteStaleOutputs()) {
-        enqueue(tracker.removeOutput(output));
+    try {
+      for (String sourceRoot : getSourceRoots()) {
+        enqueue(context.processInputs(getSourceFileSet(sourceRoot)));
       }
-      namingEnvironment.cleanup();
+
+      // remove stale outputs and rebuild all sources that reference them
+      for (DefaultOutput output : context.deleteStaleOutputs(false)) {
+        enqueueAffectedInputs(output);
+      }
+
+      while (!compileQueue.isEmpty()) {
+        ICompilationUnit[] sourceFiles =
+            compileQueue.toArray(new ICompilationUnit[compileQueue.size()]);
+        compileQueue.clear();
+        compiler.compile(sourceFiles);
+        // TODO this is not necessary, I think
+        for (DefaultOutput output : context.deleteStaleOutputs(false)) {
+          enqueueAffectedInputs(output);
+        }
+        namingEnvironment.cleanup();
+      }
+    } catch (IOException e) {
+      throw new MojoExecutionException("Unexpected IOException during compilation", e);
     }
   }
 
-  private void enqueue(Collection<File> sources) {
-    for (File source : sources) {
-      if (source.exists() && processedSources.add(source)) {
-        compileQueue.add(newSourceFile(source));
+  private void enqueueAffectedInputs(DefaultOutput output) {
+    for (String type : output.getCapabilities(CAPABILITY_TYPE)) {
+      for (DefaultInput input : context.getDependentInputs(CAPABILITY_TYPE, type)) {
+        enqueue(input);
       }
+    }
+    for (String type : output.getCapabilities(CAPABILITY_SIMPLE_TYPE)) {
+      for (DefaultInput input : context.getDependentInputs(CAPABILITY_SIMPLE_TYPE, type)) {
+        enqueue(input);
+      }
+    }
+  }
+
+  private void enqueue(Iterable<DefaultInput> sources) {
+    for (DefaultInput source : sources) {
+      enqueue(source);
+    }
+  }
+
+  private void enqueue(DefaultInput source) {
+    File sourceFile = source.getResource();
+    if (sourceFile.exists() && processedSources.add(sourceFile)) {
+      compileQueue.add(newSourceFile(sourceFile));
     }
   }
 
@@ -176,7 +198,28 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
 
     processedSources.add(sourceFile);
 
-    context.addProcessedInput(sourceFile);
+    DefaultInput input = context.registerInput(sourceFile);
+
+    if (result.hasProblems()) {
+      for (CategorizedProblem problem : result.getProblems()) {
+        input.addMessage(problem.getSourceLineNumber(), ((DefaultProblem) problem).column, problem
+            .getMessage(), problem.isError()
+            ? BuildContext.SEVERITY_ERROR
+            : BuildContext.SEVERITY_WARNING, null);
+      }
+    }
+
+    // track references
+    if (result.qualifiedReferences != null) {
+      for (char[][] reference : result.qualifiedReferences) {
+        input.addRequirement(CAPABILITY_TYPE, CharOperation.toString(reference));
+      }
+    }
+    if (result.simpleNameReferences != null) {
+      for (char[] reference : result.simpleNameReferences) {
+        input.addRequirement(CAPABILITY_SIMPLE_TYPE, new String(reference));
+      }
+    }
 
     if (!result.hasErrors()) {
       for (ClassFile classFile : result.getClassFiles()) {
@@ -188,40 +231,17 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
           System.arraycopy(SuffixConstants.SUFFIX_class, 0, relativeName, length, 6);
           CharOperation.replace(relativeName, '/', File.separatorChar);
           String relativeStringName = new String(relativeName);
-          writeClassFile(sourceName, relativeStringName, classFile);
+          writeClassFile(input, relativeStringName, classFile);
         } catch (IOException e) {
           // TODO Auto-generated catch block
           e.printStackTrace();
         }
       }
     }
-
-    if (result.hasProblems()) {
-      for (CategorizedProblem problem : result.getProblems()) {
-        context.addMessage(sourceFile, problem.getSourceLineNumber(), problem.getSourceStart(),
-            problem.getMessage(), problem.isError()
-                ? BuildContext.SEVERITY_ERROR
-                : BuildContext.SEVERITY_WARNING, null);
-      }
-    }
-
-    // track references
-    final File input = new File(new String(result.getFileName()));
-    if (result.qualifiedReferences != null) {
-      for (char[][] reference : result.qualifiedReferences) {
-        tracker.addReferencedType(input, CharOperation.toString(reference));
-      }
-    }
-    if (result.simpleNameReferences != null) {
-      for (char[] reference : result.simpleNameReferences) {
-        tracker.addReferencedSimpleName(input, new String(reference));
-      }
-    }
   }
 
-  private void writeClassFile(String sourceFileName, String relativeStringName, ClassFile classFile)
+  private void writeClassFile(DefaultInput input, String relativeStringName, ClassFile classFile)
       throws IOException {
-    final File sourceFile = new File(sourceFileName);
     final byte[] bytes = classFile.getBytes();
     final File outputFile = new File(getOutputDirectory(), relativeStringName);
     boolean significantChange = true;
@@ -236,16 +256,17 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
       }
     }
 
+    final char[][] compoundName = classFile.getCompoundName();
+    DefaultOutput output = input.associateOutput(outputFile);
+    output.addCapability(CAPABILITY_TYPE, CharOperation.toString(compoundName));
+    output.addCapability(CAPABILITY_SIMPLE_TYPE, new String(compoundName[compoundName.length - 1]));
+
     if (significantChange) {
       // find all classes that reference this one and put them into work queue
-      final char[][] compoundName = classFile.getCompoundName();
-      final String providedType = CharOperation.toString(compoundName);
-      final String providedSimpleType = new String(compoundName[compoundName.length - 1]);
-      enqueue(tracker.addOutput(sourceFile, outputFile, providedType, providedSimpleType));
+      enqueueAffectedInputs(output);
     }
 
-    final BufferedOutputStream os =
-        new BufferedOutputStream(context.newOutputStream(sourceFile, outputFile));
+    final BufferedOutputStream os = new BufferedOutputStream(output.newOutputStream());
     try {
       os.write(bytes);
       os.flush();

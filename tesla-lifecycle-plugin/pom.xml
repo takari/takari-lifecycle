@@ -54,16 +54,9 @@
     </dependency>
     <!-- Build Avoidance -->
     <dependency>
-      <groupId>io.tesla</groupId>
-      <artifactId>tesla-build-avoidance-maven</artifactId>
+      <groupId>io.takari</groupId>
+      <artifactId>incrementalbuild</artifactId>
       <version>${build.avoidance.version}</version>
-    </dependency>
-    <!-- Build Avoidance Testing -->
-    <dependency>
-      <groupId>io.tesla</groupId>
-      <artifactId>tesla-build-avoidance-maven-testing</artifactId>
-      <version>${build.avoidance.version}</version>
-      <scope>test</scope>
     </dependency>
     <!-- JDT compiler and matching APT support -->
     <dependency>
@@ -129,6 +122,12 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
       <version>1.7.5</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-compat</artifactId>
+      <version>${mavenVersion}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

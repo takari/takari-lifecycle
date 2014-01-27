@@ -12,7 +12,6 @@ import org.codehaus.plexus.compiler.CompilerConfiguration;
 import org.codehaus.plexus.compiler.CompilerException;
 import org.codehaus.plexus.compiler.CompilerResult;
 import org.codehaus.plexus.compiler.javac.JavacCompiler;
-import org.eclipse.tesla.incremental.FileSet.FileSetVisitor;
 
 public class PlexusJavacCompiler extends AbstractInternalCompiler {
   public PlexusJavacCompiler(InternalCompilerConfiguration mojo) {
@@ -50,12 +49,9 @@ public class PlexusJavacCompiler extends AbstractInternalCompiler {
   private Set<File> getSourceFiles() {
     final Set<File> sources = new LinkedHashSet<File>();
     for (String sourceRoot : getSourceRoots()) {
-      getSourceFileSet(sourceRoot).accept(new FileSetVisitor() {
-        @Override
-        public void onItem(File item) {
-          sources.add(item);
-        }
-      });
+      for (File file : getSourceFileSet(sourceRoot)) {
+        sources.add(file);
+      }
     }
     return sources;
   }
