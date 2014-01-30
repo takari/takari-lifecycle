@@ -1,6 +1,7 @@
 package io.tesla.maven.plugins.resources;
 
 import io.takari.incrementalbuild.BuildContext;
+import io.takari.incrementalbuild.BuildContext.ResourceStatus;
 
 import java.io.File;
 import java.io.FileReader;
@@ -44,6 +45,10 @@ public class ResourcesProcessor {
 
   public void process(File sourceDirectory, File targetDirectory, List<String> includes,
       List<String> excludes, Properties filterProperties) throws IOException {
+    if (!sourceDirectory.isDirectory()) {
+      // DirectoryScanner chokes on directories that do not exist
+      return;
+    }
     if (includes.isEmpty()) {
       includes.add("**/**");
     }
@@ -53,8 +58,10 @@ public class ResourcesProcessor {
     scanner.setExcludes(excludes.toArray(new String[0]));
     scanner.scan();
     for (String path : scanner.getIncludedFiles()) {
-      BuildContext.Input<File> input = buildContext.processInput(new File(sourceDirectory, path));
-      if (input != null) {
+      BuildContext.Input<File> input =
+          buildContext.registerInput(new File(sourceDirectory, path)).process();
+      // XXX output status
+      if (input.getStatus() != ResourceStatus.UNMODIFIED) {
         File outputFile = relativize(sourceDirectory, targetDirectory, input.getResource());
         BuildContext.Output<File> output = input.associateOutput(outputFile);
         Closer closer = Closer.create();

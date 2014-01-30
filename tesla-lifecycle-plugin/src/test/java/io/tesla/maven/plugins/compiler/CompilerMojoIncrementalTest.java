@@ -130,12 +130,15 @@ public class CompilerMojoIncrementalTest extends AbstractCompileMojoTest {
     // no change rebuild
     compile(basedir);
     mojos.assertBuildOutputs(basedir, new String[0]);
+    Assert.assertTrue(new File(basedir, "target/classes/reference/Parameter.class").canRead());
+    Assert.assertTrue(new File(basedir, "target/classes/reference/Type.class").canRead());
 
     // insignificant change
     cp(basedir, "src/main/java/reference/Parameter.java-comment",
         "src/main/java/reference/Parameter.java");
     compile(basedir);
     mojos.assertBuildOutputs(basedir, "target/classes/reference/Parameter.class");
+    Assert.assertTrue(new File(basedir, "target/classes/reference/Type.class").canRead());
 
     // significant change
     cp(basedir, "src/main/java/reference/Parameter.java-method",

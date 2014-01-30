@@ -2,6 +2,7 @@ package io.tesla.maven.plugins.compiler;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -46,6 +47,9 @@ public abstract class AbstractInternalCompiler {
 
   protected final Set<File> getSourceFileSet(String sourceRoot) {
     File basedir = new File(sourceRoot);
+    if (!basedir.isDirectory()) {
+      return Collections.emptySet();
+    }
     DirectoryScanner scanner = new DirectoryScanner();
     scanner.setBasedir(basedir);
     scanner.setIncludes(null);

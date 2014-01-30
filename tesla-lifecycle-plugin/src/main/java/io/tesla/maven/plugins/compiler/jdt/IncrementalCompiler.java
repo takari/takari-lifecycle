@@ -1,9 +1,12 @@
 package io.tesla.maven.plugins.compiler.jdt;
 
 import io.takari.incrementalbuild.BuildContext;
+import io.takari.incrementalbuild.BuildContext.InputMetadata;
+import io.takari.incrementalbuild.spi.CapabilitiesProvider;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.incrementalbuild.spi.DefaultInput;
 import io.takari.incrementalbuild.spi.DefaultOutput;
+import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
 import io.tesla.maven.plugins.compiler.AbstractInternalCompiler;
 import io.tesla.maven.plugins.compiler.InternalCompilerConfiguration;
 
@@ -89,11 +92,11 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
 
     try {
       for (String sourceRoot : getSourceRoots()) {
-        enqueue(context.processInputs(getSourceFileSet(sourceRoot)));
+        enqueue(context.registerAndProcessInputs(getSourceFileSet(sourceRoot)));
       }
 
       // remove stale outputs and rebuild all sources that reference them
-      for (DefaultOutput output : context.deleteStaleOutputs(false)) {
+      for (DefaultOutputMetadata output : context.deleteStaleOutputs(false)) {
         enqueueAffectedInputs(output);
       }
 
@@ -103,7 +106,7 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
         compileQueue.clear();
         compiler.compile(sourceFiles);
         // TODO this is not necessary, I think
-        for (DefaultOutput output : context.deleteStaleOutputs(false)) {
+        for (DefaultOutputMetadata output : context.deleteStaleOutputs(false)) {
           enqueueAffectedInputs(output);
         }
         namingEnvironment.cleanup();
@@ -113,28 +116,27 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
     }
   }
 
-  private void enqueueAffectedInputs(DefaultOutput output) {
+  private void enqueueAffectedInputs(CapabilitiesProvider output) {
     for (String type : output.getCapabilities(CAPABILITY_TYPE)) {
-      for (DefaultInput input : context.getDependentInputs(CAPABILITY_TYPE, type)) {
-        enqueue(input);
+      for (InputMetadata<File> input : context.getDependentInputs(CAPABILITY_TYPE, type)) {
+        enqueue(input.getResource());
       }
     }
     for (String type : output.getCapabilities(CAPABILITY_SIMPLE_TYPE)) {
-      for (DefaultInput input : context.getDependentInputs(CAPABILITY_SIMPLE_TYPE, type)) {
-        enqueue(input);
+      for (InputMetadata<File> input : context.getDependentInputs(CAPABILITY_SIMPLE_TYPE, type)) {
+        enqueue(input.getResource());
       }
     }
   }
 
   private void enqueue(Iterable<DefaultInput> sources) {
     for (DefaultInput source : sources) {
-      enqueue(source);
+      enqueue(source.getResource());
     }
   }
 
-  private void enqueue(DefaultInput source) {
-    File sourceFile = source.getResource();
-    if (sourceFile.exists() && processedSources.add(sourceFile)) {
+  private void enqueue(File sourceFile) {
+    if (processedSources.add(sourceFile)) {
       compileQueue.add(newSourceFile(sourceFile));
     }
   }
@@ -198,7 +200,9 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
 
     processedSources.add(sourceFile);
 
-    DefaultInput input = context.registerInput(sourceFile);
+    // JDT may decide to compile more sources than it was asked to in some cases
+    // always register and process sources with build context
+    DefaultInput input = context.registerInput(sourceFile).process();
 
     if (result.hasProblems()) {
       for (CategorizedProblem problem : result.getProblems()) {
