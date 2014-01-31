@@ -1,7 +1,6 @@
 package io.tesla.maven.plugins.resources;
 
 import io.takari.incrementalbuild.BuildContext;
-import io.takari.incrementalbuild.BuildContext.ResourceStatus;
 
 import java.io.File;
 import java.io.FileReader;
@@ -9,9 +8,11 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -57,26 +58,25 @@ public class ResourcesProcessor {
     scanner.setIncludes(includes.toArray(new String[0]));
     scanner.setExcludes(excludes.toArray(new String[0]));
     scanner.scan();
+    Set<File> files = new LinkedHashSet<File>();
     for (String path : scanner.getIncludedFiles()) {
-      BuildContext.Input<File> input =
-          buildContext.registerInput(new File(sourceDirectory, path)).process();
-      // XXX output status
-      if (input.getStatus() != ResourceStatus.UNMODIFIED) {
-        File outputFile = relativize(sourceDirectory, targetDirectory, input.getResource());
-        BuildContext.Output<File> output = input.associateOutput(outputFile);
-        Closer closer = Closer.create();
-        try {
-          // FIXME decide how to handle encoding, system default most likely not it
-          Reader reader = closer.register(new FileReader(input.getResource()));
-          Writer writer = closer.register(new OutputStreamWriter(output.newOutputStream()));
-          if (filterProperties != null) {
-            filter(reader, writer, filterProperties);
-          } else {
-            CharStreams.copy(reader, writer);
-          }
-        } finally {
-          closer.close();
+      files.add(new File(sourceDirectory, path));
+    }
+    for (BuildContext.Input<File> input : buildContext.registerAndProcessInputs(files)) {
+      File outputFile = relativize(sourceDirectory, targetDirectory, input.getResource());
+      BuildContext.Output<File> output = input.associateOutput(outputFile);
+      Closer closer = Closer.create();
+      try {
+        // FIXME decide how to handle encoding, system default most likely not it
+        Reader reader = closer.register(new FileReader(input.getResource()));
+        Writer writer = closer.register(new OutputStreamWriter(output.newOutputStream()));
+        if (filterProperties != null) {
+          filter(reader, writer, filterProperties);
+        } else {
+          CharStreams.copy(reader, writer);
         }
+      } finally {
+        closer.close();
       }
     }
   }
