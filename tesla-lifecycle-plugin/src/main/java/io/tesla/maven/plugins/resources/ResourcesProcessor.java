@@ -1,6 +1,7 @@
 package io.tesla.maven.plugins.resources;
 
 import io.takari.incrementalbuild.BuildContext;
+import io.takari.incrementalbuild.maven.DirectoryScannerAdapter;
 
 import java.io.File;
 import java.io.FileReader;
@@ -8,11 +9,9 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -57,11 +56,7 @@ public class ResourcesProcessor {
     scanner.setBasedir(sourceDirectory);
     scanner.setIncludes(includes.toArray(new String[0]));
     scanner.setExcludes(excludes.toArray(new String[0]));
-    scanner.scan();
-    Set<File> files = new LinkedHashSet<File>();
-    for (String path : scanner.getIncludedFiles()) {
-      files.add(new File(sourceDirectory, path));
-    }
+    DirectoryScannerAdapter files = new DirectoryScannerAdapter(scanner);
     for (BuildContext.Input<File> input : buildContext.registerAndProcessInputs(files)) {
       File outputFile = relativize(sourceDirectory, targetDirectory, input.getResource());
       BuildContext.Output<File> output = input.associateOutput(outputFile);
