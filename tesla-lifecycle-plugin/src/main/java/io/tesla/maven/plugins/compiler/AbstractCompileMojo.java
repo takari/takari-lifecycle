@@ -1,6 +1,6 @@
 package io.tesla.maven.plugins.compiler;
 
-import io.takari.incrementalbuild.BuildContext;
+import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.tesla.maven.plugins.compiler.jdt.IncrementalCompiler;
 import io.tesla.maven.plugins.compiler.plexus.PlexusJavacCompiler;
 
@@ -16,7 +16,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo
     implements
       InternalCompilerConfiguration {
   @Inject
-  private Provider<BuildContext> context;
+  private Provider<DefaultBuildContext<?>> context;
 
   /**
    * The compiler id of the compiler to use, {@code javac} or {@code incremental-jdt}.

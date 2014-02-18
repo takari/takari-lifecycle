@@ -62,7 +62,7 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
   private final Set<File> processedSources = new LinkedHashSet<File>();
 
   @Inject
-  public IncrementalCompiler(InternalCompilerConfiguration mojo, BuildContext context) {
+  public IncrementalCompiler(InternalCompilerConfiguration mojo, DefaultBuildContext<?> context) {
     super(mojo);
 
     this.context = (DefaultBuildContext<?>) context;
