@@ -10,7 +10,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class CompilerMojoIncrementalTest extends AbstractCompileMojoTest {
+public class CompileMojoIncrementalTest extends AbstractCompileMojoTest {
 
   @Test
   public void testBasic() throws Exception {
