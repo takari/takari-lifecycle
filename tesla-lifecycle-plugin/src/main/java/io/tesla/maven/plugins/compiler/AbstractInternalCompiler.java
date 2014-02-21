@@ -45,6 +45,10 @@ public abstract class AbstractInternalCompiler {
     return mojo.getTarget();
   }
 
+  protected File getPom() {
+    return mojo.getPom();
+  }
+
   protected final Set<File> getSourceFileSet(String sourceRoot) {
     File basedir = new File(sourceRoot);
     if (!basedir.isDirectory()) {

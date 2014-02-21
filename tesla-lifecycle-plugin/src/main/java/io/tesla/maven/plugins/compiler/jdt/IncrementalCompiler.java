@@ -1,6 +1,7 @@
 package io.tesla.maven.plugins.compiler.jdt;
 
 import io.takari.incrementalbuild.BuildContext;
+import io.takari.incrementalbuild.BuildContext.Input;
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
 import io.takari.incrementalbuild.spi.CapabilitiesProvider;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
@@ -14,7 +15,11 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -44,10 +49,17 @@ import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.eclipse.jdt.internal.compiler.util.SuffixConstants;
 import org.eclipse.jdt.internal.core.builder.ProblemFactory;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+
 public class IncrementalCompiler extends AbstractInternalCompiler implements ICompilerRequestor {
 
   private static final String CAPABILITY_TYPE = "jdt.type";
-  private static final String CAPABILITY_SIMPLE_TYPE = "jdt.type";
+  private static final String CAPABILITY_SIMPLE_TYPE = "jdt.simpleType";
+
+  private static final String KEY_TYPE = "jdt.type";
+  private static final String KEY_HASH = "jdt.hash";
+  private static final String KEY_CLASSPATH_DIGEST = "jdt.classpath.digest";
 
   private final DefaultBuildContext<?> context;
 
@@ -60,6 +72,8 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
    * Set of File that have already been added to the compile queue.
    */
   private final Set<File> processedSources = new LinkedHashSet<File>();
+
+  private final ClassPathDigester digester = new ClassPathDigester();
 
   @Inject
   public IncrementalCompiler(InternalCompilerConfiguration mojo, DefaultBuildContext<?> context) {
@@ -95,6 +109,12 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
         enqueue(context.registerAndProcessInputs(getSourceFileSet(sourceRoot)));
       }
 
+      for (String type : getChangedDependencyTypes()) {
+        for (InputMetadata<File> input : context.getDependentInputs(CAPABILITY_TYPE, type)) {
+          enqueue(input.getResource());
+        }
+      }
+
       // remove stale outputs and rebuild all sources that reference them
       for (DefaultOutputMetadata output : context.deleteStaleOutputs(false)) {
         enqueueAffectedInputs(output);
@@ -111,9 +131,88 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
         }
         namingEnvironment.cleanup();
       }
+
+      // write type index file
+      Multimap<String, byte[]> index = ArrayListMultimap.create();
+      for (BuildContext.OutputMetadata<File> output : context.getProcessedOutputs(File.class)) {
+        String type = output.getValue(KEY_TYPE, String.class);
+        byte[] hash = output.getValue(KEY_HASH, byte[].class);
+        index.put(type, hash);
+      }
+      digester.writeIndex(getOutputDirectory(), index);
     } catch (IOException e) {
       throw new MojoExecutionException("Unexpected IOException during compilation", e);
     }
+  }
+
+  /**
+   * Returns set of dependency types that changed structurally compared to the previous build,
+   * including new and deleted dependency types.
+   */
+  private Set<String> getChangedDependencyTypes() throws IOException {
+    ArrayListMultimap<String, byte[]> newDigest = ArrayListMultimap.create();
+    List<String> cp = getClasspathElements();
+    for (int i = 1; i < cp.size(); i++) {
+      newDigest.putAll(digester.readIndex(new File(cp.get(i))));
+    }
+
+    // XXX it is better to track type index for each dependency individually
+    // for jar/zip dependencies this will allow index caching
+
+    // little bit hacky, but pom.xml is where classpath is defined, so kinda makes sense
+    Input<File> input = context.registerInput(getPom()).process();
+    @SuppressWarnings("unchecked")
+    Multimap<String, byte[]> oldDigest =
+        (Multimap<String, byte[]>) input.setValue(KEY_CLASSPATH_DIGEST, newDigest);
+
+    if (oldDigest == null || oldDigest.isEmpty()) {
+      return Collections.emptySet();
+    }
+
+    Set<String> result = new HashSet<String>();
+    for (Map.Entry<String, Collection<byte[]>> entry : newDigest.asMap().entrySet()) {
+      String type = entry.getKey();
+      if (!equals(entry.getValue(), oldDigest.get(type))) {
+        result.add(type);
+      }
+    }
+    for (Map.Entry<String, Collection<byte[]>> entry : oldDigest.asMap().entrySet()) {
+      String type = entry.getKey();
+      if (!newDigest.containsKey(type)) {
+        result.add(type);
+      }
+    }
+
+    return result;
+  }
+
+  private static boolean equals(Collection<byte[]> a, Collection<byte[]> b) {
+    if (a == null) {
+      return b == null;
+    }
+    if (b == null) {
+      return false;
+    }
+    if (a.size() != b.size()) {
+      return false;
+    }
+    // it is exceptionally rare to have more than one hash per type
+    // and nested loop is most efficient way to compare two size==1 collections
+    for (byte[] value : a) {
+      if (!contains(b, value)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static boolean contains(Collection<byte[]> collection, byte[] value) {
+    for (byte[] other : collection) {
+      if (Arrays.equals(value, other)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void enqueueAffectedInputs(CapabilitiesProvider output) {
@@ -248,21 +347,27 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
       throws IOException {
     final byte[] bytes = classFile.getBytes();
     final File outputFile = new File(getOutputDirectory(), relativeStringName);
-    boolean significantChange = true;
-    if (outputFile.canRead()) {
-      try {
-        ClassFileReader reader = ClassFileReader.read(outputFile);
-        // XXX add unit tests for local, anonymous and structural changes
-        significantChange =
-            !reader.isLocal() && !reader.isAnonymous() && reader.hasStructuralChanges(bytes);
-      } catch (ClassFormatException e) {
-        significantChange = true;
-      }
-    }
+    final DefaultOutput output = input.associateOutput(outputFile);
 
     final char[][] compoundName = classFile.getCompoundName();
-    DefaultOutput output = input.associateOutput(outputFile);
-    output.addCapability(CAPABILITY_TYPE, CharOperation.toString(compoundName));
+    final String type = CharOperation.toString(compoundName);
+
+    boolean significantChange = true;
+    try {
+      ClassFileReader reader =
+          new ClassFileReader(bytes, outputFile.getAbsolutePath().toCharArray());
+      byte[] hash = digester.digestClass(reader);
+      if (hash != null) {
+        output.setValue(KEY_TYPE, type);
+        byte[] oldHash = (byte[]) output.setValue(KEY_HASH, hash);
+        significantChange = oldHash == null || !Arrays.equals(hash, oldHash);
+      }
+    } catch (ClassFormatException e) {
+      // this is a bug in jdt compiler if it can't parse class files it just generated
+      throw new IllegalStateException("Could not calculate .class file digest", e);
+    }
+
+    output.addCapability(CAPABILITY_TYPE, type);
     output.addCapability(CAPABILITY_SIMPLE_TYPE, new String(compoundName[compoundName.length - 1]));
 
     if (significantChange) {

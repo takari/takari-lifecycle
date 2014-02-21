@@ -4,6 +4,8 @@ import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.tesla.maven.plugins.compiler.jdt.IncrementalCompiler;
 import io.tesla.maven.plugins.compiler.plexus.PlexusJavacCompiler;
 
+import java.io.File;
+
 import javax.inject.Inject;
 import javax.inject.Provider;
 
@@ -36,6 +38,9 @@ public abstract class AbstractCompileMojo extends AbstractMojo
   @Parameter(property = "maven.compiler.target", defaultValue = "1.5")
   protected String target;
 
+  @Parameter(defaultValue = "${project.file}", readonly = true)
+  protected File pom;
+
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
     if ("incremental-jdt".equals(compilerId)) {
@@ -55,5 +60,10 @@ public abstract class AbstractCompileMojo extends AbstractMojo
   @Override
   public final String getTarget() {
     return target;
+  }
+
+  @Override
+  public final File getPom() {
+    return pom;
   }
 }
