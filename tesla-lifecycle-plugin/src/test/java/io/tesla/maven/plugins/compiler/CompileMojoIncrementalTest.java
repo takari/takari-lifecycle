@@ -157,6 +157,7 @@ public class CompileMojoIncrementalTest extends AbstractCompileMojoTest {
     File basedir = resources.getBasedir("compile-incremental/missing");
     try {
       compile(basedir);
+      Assert.fail();
     } catch (MojoExecutionException expected) {
       Assert.assertEquals("2 error(s) encountered, see previous message(s) for details",
           expected.getMessage());
@@ -169,6 +170,7 @@ public class CompileMojoIncrementalTest extends AbstractCompileMojoTest {
     // no change rebuild
     try {
       compile(basedir);
+      Assert.fail();
     } catch (MojoExecutionException expected) {
       Assert.assertEquals("2 error(s) encountered, see previous message(s) for details",
           expected.getMessage());
@@ -186,6 +188,7 @@ public class CompileMojoIncrementalTest extends AbstractCompileMojoTest {
     rm(basedir, "src/main/java/missing/Missing.java");
     try {
       compile(basedir);
+      Assert.fail();
     } catch (MojoExecutionException expected) {
       Assert.assertEquals("2 error(s) encountered, see previous message(s) for details",
           expected.getMessage());
@@ -205,6 +208,7 @@ public class CompileMojoIncrementalTest extends AbstractCompileMojoTest {
         "src/main/java/multifile/ClassB.java");
     try {
       compile(basedir);
+      Assert.fail();
     } catch (MojoExecutionException expected) {
       Assert.assertEquals("1 error(s) encountered, see previous message(s) for details",
           expected.getMessage());
