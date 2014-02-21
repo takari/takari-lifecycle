@@ -125,10 +125,6 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
             compileQueue.toArray(new ICompilationUnit[compileQueue.size()]);
         compileQueue.clear();
         compiler.compile(sourceFiles);
-        // TODO this is not necessary, I think
-        for (DefaultOutputMetadata output : context.deleteStaleOutputs(false)) {
-          enqueueAffectedInputs(output);
-        }
         namingEnvironment.cleanup();
       }
 
