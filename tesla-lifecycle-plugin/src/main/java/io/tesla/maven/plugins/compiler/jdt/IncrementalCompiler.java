@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -113,6 +112,14 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
         for (InputMetadata<File> input : context.getDependentInputs(CAPABILITY_TYPE, type)) {
           enqueue(input.getResource());
         }
+        int idx = type.lastIndexOf('.');
+        if (idx > 0) {
+          String simpleType = type.substring(idx + 1);
+          for (InputMetadata<File> input : context.getDependentInputs(CAPABILITY_SIMPLE_TYPE,
+              simpleType)) {
+            enqueue(input.getResource());
+          }
+        }
       }
 
       // remove stale outputs and rebuild all sources that reference them
@@ -162,7 +169,7 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
         (Multimap<String, byte[]>) input.setValue(KEY_CLASSPATH_DIGEST, newDigest);
 
     if (oldDigest == null || oldDigest.isEmpty()) {
-      return Collections.emptySet();
+      return newDigest.keySet();
     }
 
     Set<String> result = new HashSet<String>();

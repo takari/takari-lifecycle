@@ -10,7 +10,9 @@ import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class CompileIncrementalClasspathTest extends AbstractCompileMojoTest {
@@ -37,6 +39,54 @@ public class CompileIncrementalClasspathTest extends AbstractCompileMojoTest {
         "ModuleB.java");
     compileReactor(parent);
     mojos.assertBuildOutputs(parent, "module-a/target/classes/reactor/modulea/ModuleA.class");
+  }
+
+  @Test
+  public void testReactor_missingType() throws Exception {
+    File parent = resources.getBasedir("compile-incremental-classpath/reactor-missing");
+
+    try {
+      compileReactor(parent);
+      Assert.fail();
+    } catch (MojoExecutionException e) {
+      Assert.assertEquals("3 error(s) encountered, see previous message(s) for details",
+          e.getMessage());
+    }
+    mojos.assertBuildOutputs(parent, new String[0]);
+    mojos.assertMessages(parent, "module-a/src/main/java/modulea/Error.java",
+        "ERROR Error.java [3:8] The import moduleb cannot be resolved",
+        "ERROR Error.java [8:12] Missing cannot be resolved to a type",
+        "ERROR Error.java [10:20] Missing cannot be resolved to a type");
+
+    // fix the problem and rebuild
+    cp(parent, "module-b/src/main/java/moduleb/Missing.java-missing",
+        "module-b/src/main/java/moduleb/Missing.java");
+    compileReactor(parent);
+    mojos.assertBuildOutputs(parent, "module-a/target/classes/modulea/Error.class");
+  }
+
+  @Test
+  public void testReactor_missingType_splitpackage() throws Exception {
+    File parent =
+        resources.getBasedir("compile-incremental-classpath/reactor-missing-splitpackage");
+
+    try {
+      compileReactor(parent);
+      Assert.fail();
+    } catch (MojoExecutionException e) {
+      Assert.assertEquals("2 error(s) encountered, see previous message(s) for details",
+          e.getMessage());
+    }
+    mojos.assertBuildOutputs(parent, new String[0]);
+    mojos.assertMessages(parent, "module-a/src/main/java/missing/Error.java",
+        "ERROR Error.java [6:12] Missing cannot be resolved to a type",
+        "ERROR Error.java [8:20] Missing cannot be resolved to a type");
+
+    // fix the problem and rebuild
+    cp(parent, "module-b/src/main/java/missing/Missing.java-missing",
+        "module-b/src/main/java/missing/Missing.java");
+    compileReactor(parent);
+    mojos.assertBuildOutputs(parent, "module-a/target/classes/missing/Error.class");
   }
 
   private void compileReactor(File parent) throws Exception {
