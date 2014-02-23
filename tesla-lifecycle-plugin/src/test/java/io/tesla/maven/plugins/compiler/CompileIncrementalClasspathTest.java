@@ -89,6 +89,28 @@ public class CompileIncrementalClasspathTest extends AbstractCompileMojoTest {
     mojos.assertBuildOutputs(parent, "module-a/target/classes/missing/Error.class");
   }
 
+  @Test
+  public void testRepository() throws Exception {
+    File parent = resources.getBasedir("compile-incremental-classpath/repo-basic");
+
+    MavenProject moduleA = mojos.readMavenProject(new File(parent, "module-a"));
+    addDependency(moduleA, "module-b", new File(parent, "module-b/module-b.jar"));
+    compile(moduleA);
+    mojos.assertBuildOutputs(parent, "module-a/target/classes/reactor/modulea/ModuleA.class");
+
+    // dependency changed non-structurally
+    moduleA = mojos.readMavenProject(new File(parent, "module-a"));
+    addDependency(moduleA, "module-b-2", new File(parent, "module-b/module-b-comment.jar"));
+    compile(moduleA);
+    mojos.assertBuildOutputs(parent, new String[0]);
+
+    // dependency changed structurally
+    moduleA = mojos.readMavenProject(new File(parent, "module-a"));
+    addDependency(moduleA, "module-b-2", new File(parent, "module-b/module-b-method.jar"));
+    compile(moduleA);
+    mojos.assertBuildOutputs(parent, "module-a/target/classes/reactor/modulea/ModuleA.class");
+  }
+
   private void compileReactor(File parent) throws Exception {
     File moduleB = new File(parent, "module-b");
 

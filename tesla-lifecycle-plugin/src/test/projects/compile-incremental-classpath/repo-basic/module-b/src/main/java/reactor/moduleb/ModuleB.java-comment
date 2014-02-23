@@ -1,0 +1,5 @@
+package reactor.moduleb;
+
+public class ModuleB {
+  // comments do not trigger rebuilds of other classes
+}
