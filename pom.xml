@@ -19,7 +19,7 @@
   </prerequisites>
 
   <properties>
-    <mavenVersion>3.2.2-SNAPSHOT</mavenVersion>
+    <mavenVersion>3.2.1</mavenVersion>
     <aetherVersion>0.9.0.M2</aetherVersion>
     <build.avoidance.version>0.0.1-SNAPSHOT</build.avoidance.version>
   </properties>
