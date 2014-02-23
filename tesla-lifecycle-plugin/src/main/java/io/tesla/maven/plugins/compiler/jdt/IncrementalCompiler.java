@@ -130,7 +130,7 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
 
       // write type index file
       Multimap<String, byte[]> index = ArrayListMultimap.create();
-      for (BuildContext.OutputMetadata<File> output : context.getProcessedOutputs(File.class)) {
+      for (BuildContext.OutputMetadata<File> output : context.getProcessedOutputs()) {
         String type = output.getValue(KEY_TYPE, String.class);
         byte[] hash = output.getValue(KEY_HASH, byte[].class);
         index.put(type, hash);
@@ -224,8 +224,8 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
     }
   }
 
-  private void enqueue(Iterable<DefaultInput> sources) {
-    for (DefaultInput source : sources) {
+  private void enqueue(Iterable<DefaultInput<File>> sources) {
+    for (DefaultInput<File> source : sources) {
       enqueue(source.getResource());
     }
   }
@@ -297,7 +297,7 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
 
     // JDT may decide to compile more sources than it was asked to in some cases
     // always register and process sources with build context
-    DefaultInput input = context.registerInput(sourceFile).process();
+    DefaultInput<File> input = context.registerInput(sourceFile).process();
 
     if (result.hasProblems()) {
       for (CategorizedProblem problem : result.getProblems()) {
@@ -339,8 +339,8 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
     }
   }
 
-  private void writeClassFile(DefaultInput input, String relativeStringName, ClassFile classFile)
-      throws IOException {
+  private void writeClassFile(DefaultInput<File> input, String relativeStringName,
+      ClassFile classFile) throws IOException {
     final byte[] bytes = classFile.getBytes();
     final File outputFile = new File(getOutputDirectory(), relativeStringName);
     final DefaultOutput output = input.associateOutput(outputFile);
