@@ -6,7 +6,7 @@ import java.util.Collection;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class CompileMojoParameterTest extends AbstractCompileMojoTest {
+public class CompileParameterTest extends AbstractCompileMojoTest {
   @Test
   public void testJDKLevel() throws Exception {
     File basedir = getCompiledBasedir("compile-parameters/jdklevel");

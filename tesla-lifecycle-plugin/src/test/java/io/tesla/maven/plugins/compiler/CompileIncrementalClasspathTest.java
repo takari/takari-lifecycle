@@ -13,11 +13,11 @@ import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.project.MavenProject;
 import org.junit.Test;
 
-public class CompileMojoIncrementalClasspathTest extends AbstractCompileMojoTest {
+public class CompileIncrementalClasspathTest extends AbstractCompileMojoTest {
 
   @Test
   public void testReactor() throws Exception {
-    File parent = resources.getBasedir("compile-classpath/reactor");
+    File parent = resources.getBasedir("compile-incremental-classpath/reactor-basic");
 
     compileReactor(parent);
     mojos.assertBuildOutputs(parent, "module-a/target/classes/reactor/modulea/ModuleA.class");
