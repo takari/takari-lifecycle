@@ -198,6 +198,29 @@
           </lifecycle>
         </lifecycles>
       </configuration>
-    </component>     
+    </component>  
+    
+    <!-- Our compiler bits -->
+    <component>
+      <role>org.codehaus.plexus.compiler.manager.CompilerManager</role>
+      <role-hint>default</role-hint>
+      <implementation>org.codehaus.plexus.compiler.manager.DefaultCompilerManager</implementation>
+      <description />
+      <isolated-realm>false</isolated-realm>
+      <requirements>
+        <requirement>
+          <role>org.codehaus.plexus.compiler.Compiler</role>
+          <field-name>compilers</field-name>
+        </requirement>
+      </requirements>
+    </component>    
+    <component>
+      <role>org.codehaus.plexus.compiler.Compiler</role>
+      <role-hint>javac</role-hint>
+      <implementation>org.codehaus.plexus.compiler.javac.JavacCompiler</implementation>
+      <description />
+      <isolated-realm>false</isolated-realm>
+    </component>    
+       
   </components>
 </component-set>
