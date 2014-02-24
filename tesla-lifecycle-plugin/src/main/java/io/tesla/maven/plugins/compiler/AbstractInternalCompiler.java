@@ -7,6 +7,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.codehaus.plexus.util.DirectoryScanner;
 
@@ -35,6 +36,10 @@ public abstract class AbstractInternalCompiler {
 
   protected final List<String> getClasspathElements() {
     return mojo.getClasspathElements();
+  }
+
+  protected final List<Artifact> getCompileArtifacts() {
+    return mojo.getCompileArtifacts();
   }
 
   protected final String getSource() {

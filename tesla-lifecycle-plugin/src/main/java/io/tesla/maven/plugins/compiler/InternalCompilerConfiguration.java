@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.maven.artifact.Artifact;
+
 // XXX do we need both InternalCompilerConfiguration and AbstractInternalCompiler?
 public interface InternalCompilerConfiguration {
   File getPom();
@@ -17,6 +19,8 @@ public interface InternalCompilerConfiguration {
   File getOutputDirectory();
 
   List<String> getClasspathElements();
+
+  List<Artifact> getCompileArtifacts();
 
   String getSource();
 

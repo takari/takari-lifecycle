@@ -1,11 +1,11 @@
 package io.tesla.maven.plugins.compiler.jdt;
 
 import io.takari.incrementalbuild.BuildContext;
-import io.takari.incrementalbuild.BuildContext.Input;
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
 import io.takari.incrementalbuild.spi.CapabilitiesProvider;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.incrementalbuild.spi.DefaultInput;
+import io.takari.incrementalbuild.spi.DefaultInputMetadata;
 import io.takari.incrementalbuild.spi.DefaultOutput;
 import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
 import io.tesla.maven.plugins.compiler.AbstractInternalCompiler;
@@ -14,11 +14,14 @@ import io.tesla.maven.plugins.compiler.InternalCompilerConfiguration;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -27,6 +30,7 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 import org.eclipse.jdt.core.compiler.CharOperation;
@@ -49,6 +53,7 @@ import org.eclipse.jdt.internal.compiler.util.SuffixConstants;
 import org.eclipse.jdt.internal.core.builder.ProblemFactory;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 
 public class IncrementalCompiler extends AbstractInternalCompiler implements ICompilerRequestor {
@@ -153,40 +158,73 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
    * including new and deleted dependency types.
    */
   private Set<String> getChangedDependencyTypes() throws IOException {
-    ArrayListMultimap<String, byte[]> newDigest = ArrayListMultimap.create();
-    List<String> cp = getClasspathElements();
-    for (int i = 1; i < cp.size(); i++) {
-      newDigest.putAll(digester.readIndex(new File(cp.get(i))));
+    ArrayListMultimap<String, byte[]> newIndex = ArrayListMultimap.create();
+
+    for (Artifact dependency : getCompileArtifacts()) {
+      mergeTypeIndex(newIndex, dependency);
     }
 
-    // XXX it is better to track type index for each dependency individually
-    // for jar/zip dependencies this will allow index caching
+    // pom.xml represent overall process classpath
+    DefaultInputMetadata<File> pomMetadata = context.registerInput(getPom());
+    Multimap<String, byte[]> oldIndex = getTypeIndex(pomMetadata);
+    pomMetadata.process().setValue(KEY_CLASSPATH_DIGEST, newIndex);
 
-    // little bit hacky, but pom.xml is where classpath is defined, so kinda makes sense
-    Input<File> input = context.registerInput(getPom()).process();
-    @SuppressWarnings("unchecked")
-    Multimap<String, byte[]> oldDigest =
-        (Multimap<String, byte[]>) input.setValue(KEY_CLASSPATH_DIGEST, newDigest);
+    return diff(oldIndex, newIndex);
+  }
 
-    if (oldDigest == null || oldDigest.isEmpty()) {
-      return newDigest.keySet();
+  private void mergeTypeIndex(Multimap<String, byte[]> newIndex, Artifact dependency)
+      throws IOException {
+    DefaultInputMetadata<File> metadata = null;
+    Multimap<String, byte[]> typeIndex = null;
+
+    File file = dependency.getFile();
+    if (file.isFile()) {
+      metadata = context.registerInput(file);
+      typeIndex = getTypeIndex(metadata);
     }
 
+    if (typeIndex == null) {
+      typeIndex = digester.readIndex(file);
+    }
+
+    if (metadata != null) {
+      // XXX do this for legacy dependency jars only
+      // for modern jars this only wastes context state
+      metadata.process().setValue(KEY_CLASSPATH_DIGEST, ImmutableMultimap.copyOf(typeIndex));
+    }
+
+    newIndex.putAll(typeIndex);
+  }
+
+  private Set<String> diff(Multimap<String, byte[]> left, Multimap<String, byte[]> right) {
+    if (left == null) {
+      if (right != null) {
+        return right.keySet();
+      }
+      return Collections.emptySet();
+    }
+    if (right == null) {
+      return Collections.emptySet();
+    }
     Set<String> result = new HashSet<String>();
-    for (Map.Entry<String, Collection<byte[]>> entry : newDigest.asMap().entrySet()) {
+    for (Map.Entry<String, Collection<byte[]>> entry : left.asMap().entrySet()) {
       String type = entry.getKey();
-      if (!equals(entry.getValue(), oldDigest.get(type))) {
+      if (!equals(entry.getValue(), right.get(type))) {
         result.add(type);
       }
     }
-    for (Map.Entry<String, Collection<byte[]>> entry : oldDigest.asMap().entrySet()) {
+    for (Map.Entry<String, Collection<byte[]>> entry : right.asMap().entrySet()) {
       String type = entry.getKey();
-      if (!newDigest.containsKey(type)) {
+      if (!left.containsKey(type)) {
         result.add(type);
       }
     }
-
     return result;
+  }
+
+  @SuppressWarnings("unchecked")
+  private Multimap<String, byte[]> getTypeIndex(DefaultInputMetadata<?> dependency) {
+    return (Multimap<String, byte[]>) dependency.getValue(KEY_CLASSPATH_DIGEST, Serializable.class);
   }
 
   private static boolean equals(Collection<byte[]> a, Collection<byte[]> b) {
@@ -199,23 +237,15 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
     if (a.size() != b.size()) {
       return false;
     }
-    // it is exceptionally rare to have more than one hash per type
-    // and nested loop is most efficient way to compare two size==1 collections
-    for (byte[] value : a) {
-      if (!contains(b, value)) {
+    // NB classpath order is important
+    Iterator<byte[]> ai = a.iterator();
+    Iterator<byte[]> bi = b.iterator();
+    while (ai.hasNext()) {
+      if (!Arrays.equals(ai.next(), bi.next())) {
         return false;
       }
     }
     return true;
-  }
-
-  private static boolean contains(Collection<byte[]> collection, byte[] value) {
-    for (byte[] other : collection) {
-      if (Arrays.equals(value, other)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private void enqueueAffectedInputs(CapabilitiesProvider output) {

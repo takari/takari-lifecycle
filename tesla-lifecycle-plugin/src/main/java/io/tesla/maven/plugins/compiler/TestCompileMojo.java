@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -23,6 +24,9 @@ public class TestCompileMojo extends AbstractCompileMojo {
    */
   @Parameter(defaultValue = "${project.testClasspathElements}", required = true, readonly = true)
   private List<String> testClasspathElements;
+
+  @Parameter(defaultValue = "${project.testArtifacts}", readonly = true, required = true)
+  private List<Artifact> testCompileArtifacts;
 
   /**
    * The directory where compiled test classes go.
@@ -45,6 +49,11 @@ public class TestCompileMojo extends AbstractCompileMojo {
   @Override
   public List<String> getClasspathElements() {
     return testClasspathElements;
+  }
+
+  @Override
+  public List<Artifact> getCompileArtifacts() {
+    return testCompileArtifacts;
   }
 
   @Override

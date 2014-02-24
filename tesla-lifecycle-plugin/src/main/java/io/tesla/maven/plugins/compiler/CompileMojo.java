@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -17,6 +18,9 @@ public class CompileMojo extends AbstractCompileMojo {
    */
   @Parameter(defaultValue = "${project.compileSourceRoots}", readonly = true, required = true)
   private List<String> compileSourceRoots;
+
+  @Parameter(defaultValue = "${project.compileArtifacts}", readonly = true, required = true)
+  private List<Artifact> compileArtifacts;
 
   /**
    * A list of inclusion filters for the compiler.
@@ -45,6 +49,11 @@ public class CompileMojo extends AbstractCompileMojo {
   @Override
   public List<String> getClasspathElements() {
     return classpathElements;
+  }
+
+  @Override
+  public List<Artifact> getCompileArtifacts() {
+    return compileArtifacts;
   }
 
   @Override

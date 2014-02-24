@@ -34,7 +34,7 @@ public class CompileIncrementalClasspathTest extends AbstractCompileMojoTest {
     compileReactor(parent);
     mojos.assertCarriedOverOutputs(parent, "module-a/target/classes/reactor/modulea/ModuleA.class");
 
-    // API comment changes DO propagate
+    // API changes DO propagate
     cp(new File(parent, "module-b/src/main/java/reactor/moduleb"), "ModuleB.java-method",
         "ModuleB.java");
     compileReactor(parent);
@@ -107,6 +107,34 @@ public class CompileIncrementalClasspathTest extends AbstractCompileMojoTest {
     // dependency changed structurally
     moduleA = mojos.readMavenProject(new File(parent, "module-a"));
     addDependency(moduleA, "module-b-2", new File(parent, "module-b/module-b-method.jar"));
+    compile(moduleA);
+    mojos.assertBuildOutputs(parent, "module-a/target/classes/reactor/modulea/ModuleA.class");
+  }
+
+  @Test
+  public void testRepository_classpathOrder() throws Exception {
+    File parent = resources.getBasedir("compile-incremental-classpath/repo-basic");
+
+    MavenProject moduleA = mojos.readMavenProject(new File(parent, "module-a"));
+    addDependency(moduleA, "module-b", new File(parent, "module-b/module-b.jar"));
+    addDependency(moduleA, "module-b-comment", new File(parent, "module-b/module-b-comment.jar"));
+    addDependency(moduleA, "module-b-method", new File(parent, "module-b/module-b-method.jar"));
+    compile(moduleA);
+    mojos.assertBuildOutputs(parent, "module-a/target/classes/reactor/modulea/ModuleA.class");
+
+    // classpath order change did not result in structural type definition change
+    moduleA = mojos.readMavenProject(new File(parent, "module-a"));
+    addDependency(moduleA, "module-b-comment", new File(parent, "module-b/module-b-comment.jar"));
+    addDependency(moduleA, "module-b", new File(parent, "module-b/module-b.jar"));
+    addDependency(moduleA, "module-b-method", new File(parent, "module-b/module-b-method.jar"));
+    compile(moduleA);
+    mojos.assertBuildOutputs(parent, new String[0]);
+
+    // classpath order change DID result in structural type definition change
+    moduleA = mojos.readMavenProject(new File(parent, "module-a"));
+    addDependency(moduleA, "module-b-method", new File(parent, "module-b/module-b-method.jar"));
+    addDependency(moduleA, "module-b", new File(parent, "module-b/module-b.jar"));
+    addDependency(moduleA, "module-b-comment", new File(parent, "module-b/module-b-comment.jar"));
     compile(moduleA);
     mojos.assertBuildOutputs(parent, "module-a/target/classes/reactor/modulea/ModuleA.class");
   }
