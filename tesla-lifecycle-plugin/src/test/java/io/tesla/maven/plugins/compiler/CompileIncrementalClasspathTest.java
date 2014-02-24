@@ -152,7 +152,7 @@ public class CompileIncrementalClasspathTest extends AbstractCompileMojoTest {
 
   private void compile(MavenProject project) throws Exception {
     MavenSession session = mojos.newMavenSession(project);
-    MojoExecution execution = mojos.newMojoExecution("compile");
+    MojoExecution execution = mojos.newMojoExecution("compileXXX");
     mojos.executeMojo(session, project, execution);
   }
 

@@ -17,11 +17,11 @@ public abstract class AbstractCompileMojoTest {
   public final BuildAvoidanceRule mojos = new BuildAvoidanceRule();
 
   protected void compile(File basedir) throws Exception {
-    mojos.executeMojo(basedir, "compile");
+    mojos.executeMojo(basedir, "compileXXX");
   }
 
   protected void testCompile(File basedir) throws Exception {
-    mojos.executeMojo(basedir, "testCompile");
+    mojos.executeMojo(basedir, "testCompileXXX");
   }
 
   protected File getCompiledBasedir(String location) throws Exception {
