@@ -1,22 +1,18 @@
 package org.apache.maven.plugin.compiler;
 
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * Licensed to the Apache Software Foundation (ASF) under one or more contributor license
+ * agreements. See the NOTICE file distributed with this work for additional information regarding
+ * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License. You may obtain a
+ * copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 import java.io.File;
@@ -38,7 +34,7 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
  * @version $Id: CompilerMojo.java 1441990 2013-02-03 23:41:24Z olamy $
  * @since 2.0
  */
-@org.apache.maven.plugins.annotations.Mojo(name = "compileXXX", defaultPhase = LifecyclePhase.COMPILE, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE)
+@org.apache.maven.plugins.annotations.Mojo(name = "compile", defaultPhase = LifecyclePhase.COMPILE, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE)
 public class CompilerMojo extends AbstractCompilerMojo {
   /**
    * The source directories containing the sources to be compiled.
@@ -80,8 +76,8 @@ public class CompilerMojo extends AbstractCompilerMojo {
 
   /**
    * <p>
-   * Specify where to place generated source files created by annotation processing.
-   * Only applies to JDK 1.6+
+   * Specify where to place generated source files created by annotation processing. Only applies to
+   * JDK 1.6+
    * </p>
    *
    * @since 2.2
@@ -90,8 +86,8 @@ public class CompilerMojo extends AbstractCompilerMojo {
   private File generatedSourcesDirectory;
 
   /**
-   * Set this to 'true' to bypass compilation of main sources.
-   * Its use is NOT RECOMMENDED, but quite convenient on occasion.
+   * Set this to 'true' to bypass compilation of main sources. Its use is NOT RECOMMENDED, but quite
+   * convenient on occasion.
    */
   @Parameter(property = "maven.main.skip")
   private boolean skipMain;

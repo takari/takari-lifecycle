@@ -11,7 +11,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
-@Mojo(name = "compile", defaultPhase = LifecyclePhase.COMPILE, requiresProject = true, requiresDependencyResolution = ResolutionScope.COMPILE)
+@Mojo(name = "compileXXX", defaultPhase = LifecyclePhase.COMPILE, requiresProject = true, requiresDependencyResolution = ResolutionScope.COMPILE)
 public class CompileMojo extends AbstractCompileMojo {
   /**
    * The source directories containing the sources to be compiled.

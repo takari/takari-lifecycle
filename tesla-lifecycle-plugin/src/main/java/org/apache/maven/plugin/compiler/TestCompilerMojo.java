@@ -1,35 +1,30 @@
 package org.apache.maven.plugin.compiler;
 
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
+ * Licensed to the Apache Software Foundation (ASF) under one or more contributor license
+ * agreements. See the NOTICE file distributed with this work for additional information regarding
+ * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License. You may obtain a
+ * copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  */
+
+import java.io.File;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
-
-import java.io.File;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Compiles application test sources.
@@ -38,11 +33,11 @@ import java.util.Set;
  * @version $Id: TestCompilerMojo.java 1410034 2012-11-15 21:40:58Z olamy $
  * @since 2.0
  */
-@org.apache.maven.plugins.annotations.Mojo(name = "testCompileXXX", defaultPhase = LifecyclePhase.TEST_COMPILE, threadSafe = true, requiresDependencyResolution = ResolutionScope.TEST)
+@org.apache.maven.plugins.annotations.Mojo(name = "testCompile", defaultPhase = LifecyclePhase.TEST_COMPILE, threadSafe = true, requiresDependencyResolution = ResolutionScope.TEST)
 public class TestCompilerMojo extends AbstractCompilerMojo {
   /**
-   * Set this to 'true' to bypass compilation of test sources.
-   * Its use is NOT RECOMMENDED, but quite convenient on occasion.
+   * Set this to 'true' to bypass compilation of test sources. Its use is NOT RECOMMENDED, but quite
+   * convenient on occasion.
    */
   @Parameter(property = "maven.test.skip")
   private boolean skip;
@@ -98,8 +93,8 @@ public class TestCompilerMojo extends AbstractCompilerMojo {
    * Sets the arguments to be passed to test compiler (prepending a dash) if fork is set to true.
    * </p>
    * <p>
-   * This is because the list of valid arguments passed to a Java compiler
-   * varies based on the compiler version.
+   * This is because the list of valid arguments passed to a Java compiler varies based on the
+   * compiler version.
    * </p>
    *
    * @since 2.1
@@ -112,8 +107,8 @@ public class TestCompilerMojo extends AbstractCompilerMojo {
    * Sets the unformatted argument string to be passed to test compiler if fork is set to true.
    * </p>
    * <p>
-   * This is because the list of valid arguments passed to a Java compiler
-   * varies based on the compiler version.
+   * This is because the list of valid arguments passed to a Java compiler varies based on the
+   * compiler version.
    * </p>
    *
    * @since 2.1
@@ -123,8 +118,8 @@ public class TestCompilerMojo extends AbstractCompilerMojo {
 
   /**
    * <p>
-   * Specify where to place generated source files created by annotation processing.
-   * Only applies to JDK 1.6+
+   * Specify where to place generated source files created by annotation processing. Only applies to
+   * JDK 1.6+
    * </p>
    *
    * @since 2.2

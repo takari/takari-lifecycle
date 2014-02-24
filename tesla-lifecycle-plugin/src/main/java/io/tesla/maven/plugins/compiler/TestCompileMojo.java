@@ -11,7 +11,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
-@Mojo(name = "testCompile", defaultPhase = LifecyclePhase.TEST_COMPILE, requiresProject = true, requiresDependencyResolution = ResolutionScope.TEST)
+@Mojo(name = "testCompileXXX", defaultPhase = LifecyclePhase.TEST_COMPILE, requiresProject = true, requiresDependencyResolution = ResolutionScope.TEST)
 public class TestCompileMojo extends AbstractCompileMojo {
   /**
    * The source directories containing the test-source to be compiled.
