@@ -4,13 +4,13 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>io.tesla</groupId>
-    <artifactId>tesla</artifactId>
-    <version>7</version>
+    <groupId>io.takari</groupId>
+    <artifactId>takari</artifactId>
+    <version>9</version>
   </parent>
 
-  <groupId>io.tesla.maven.plugins</groupId>
-  <artifactId>tesla-lifecycle</artifactId>
+  <groupId>io.takari.maven.plugins</groupId>
+  <artifactId>takari-lifecycle</artifactId>
   <version>1.0.4-SNAPSHOT</version>
   <packaging>pom</packaging>
 
@@ -25,14 +25,14 @@
   </properties>
 
   <scm>
-    <connection>scm:git:git@github.com/tesla/tesla-lifecycle-plugin.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/tesla/tesla-lifecycle-plugin.git</developerConnection>
-    <url>http://github.com/tesla/tesla-lifecycle-plugin</url>
+    <connection>scm:git:git@github.com/takari/takari-lifecycle-plugin.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/takari/takari-lifecycle-plugin.git</developerConnection>
+    <url>http://github.com/takari/takari-lifecycle-plugin</url>
   </scm>
 
   <modules>
-    <module>tesla-lifecycle-plugin</module>
-    <module>tesla-lifecycle-plugin-its</module>
+    <module>takari-lifecycle-plugin</module>
+    <module>takari-lifecycle-plugin-its</module>
   </modules>
 
   <build>
