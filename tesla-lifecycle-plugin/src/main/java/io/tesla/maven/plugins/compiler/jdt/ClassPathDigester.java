@@ -105,8 +105,8 @@ public class ClassPathDigester {
     if (!reader.isLocal() && !reader.isAnonymous()) {
       // note on using smaller number of bytes per hash
       // for ~20k classes in the index
-      // using full 20 byte hash results in index size ~1.3M txt ~535k zip
-      // using 10 byte hash results in index size ~1.6M txt ~762k zip
+      // using full 20 byte hash results in index size ~1.6M txt ~762k zip
+      // using 10 byte hash results in index size ~1.3M txt ~535k zip
       // zip of the ~20k classes is ~52M, so index size is insignificant (1.5%)
       // reduced hash size does not noticeably reduce index size
       return digester.digest(reader);
