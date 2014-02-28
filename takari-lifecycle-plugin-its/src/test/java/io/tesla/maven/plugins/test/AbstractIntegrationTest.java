@@ -9,26 +9,15 @@ import java.util.Properties;
 
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
-import org.codehaus.plexus.util.FileUtils;
+import org.apache.maven.plugin.testing.resources.TestResources;
 import org.codehaus.plexus.util.IOUtil;
 import org.junit.Assert;
 import org.junit.Rule;
-import org.junit.rules.TestName;
 
 public abstract class AbstractIntegrationTest {
 
   @Rule
-  public final TestName name = new TestName();
-
-  protected File getBasedir(String path) throws IOException {
-    File src = new File(path);
-    Assert.assertTrue(path + " is a directory", src.isDirectory());
-    File dst = new File("target/it", getClass().getSimpleName() + "-" + name.getMethodName());
-    FileUtils.deleteDirectory(dst);
-    Assert.assertTrue("create target directory", dst.mkdirs());
-    FileUtils.copyDirectoryStructure(src, dst);
-    return dst;
-  }
+  public final TestResources resources = new TestResources("src/it", "target/it/");
 
   protected Map<String, String> getTestProperties() throws IOException {
     Properties p = new Properties();

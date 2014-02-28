@@ -9,7 +9,7 @@ public class CompileClasspathTest extends AbstractIntegrationTest {
 
   @Test
   public void testClasspath() throws Exception {
-    File basedir = getBasedir("src/it/compile-classpath");
+    File basedir = resources.getBasedir("compile-classpath");
     Verifier verifier = getVerifier(basedir);
     verifier.executeGoal("compile");
     verifier.verifyErrorFreeLog();

@@ -7,9 +7,10 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class BasicTest extends AbstractIntegrationTest {
+
   @Test
   public void testBasic() throws Exception {
-    File basedir = getBasedir("src/it/basic");
+    File basedir = resources.getBasedir("basic");
     Verifier verifier = getVerifier(basedir);
     verifier.executeGoal("install"); // TODO deploy
     verifier.verifyErrorFreeLog();
