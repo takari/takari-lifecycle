@@ -136,4 +136,14 @@ public class CompilerMojo extends AbstractCompilerMojo {
     return generatedSourcesDirectory;
   }
 
+  @Override
+  protected Set<String> getIncludes() {
+    return includes;
+  }
+
+  @Override
+  protected Set<String> getExcludes() {
+    return excludes;
+  }
+
 }

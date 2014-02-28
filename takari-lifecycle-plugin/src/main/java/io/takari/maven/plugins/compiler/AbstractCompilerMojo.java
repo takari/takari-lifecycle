@@ -32,6 +32,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
@@ -342,6 +343,10 @@ public abstract class AbstractCompilerMojo extends AbstractMojo {
 
   protected abstract File getGeneratedSourcesDirectory();
 
+  protected abstract Set<String> getIncludes();
+
+  protected abstract Set<String> getExcludes();
+
   public void execute() throws MojoExecutionException, CompilationFailureException {
 
     Compiler compiler;
@@ -374,6 +379,8 @@ public abstract class AbstractCompilerMojo extends AbstractMojo {
     compilerConfiguration.setOutputLocation(getOutputDirectory().getAbsolutePath());
     compilerConfiguration.setClasspathEntries(getClasspathElements());
     compilerConfiguration.setSourceLocations(compileSourceRoots);
+    compilerConfiguration.setIncludes(getIncludes());
+    compilerConfiguration.setExcludes(getExcludes());
     compilerConfiguration.setOptimize(optimize);
     compilerConfiguration.setDebug(debug);
 

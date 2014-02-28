@@ -167,4 +167,14 @@ public class TestCompilerMojo extends AbstractCompilerMojo {
     return generatedTestSourcesDirectory;
   }
 
+  @Override
+  protected Set<String> getIncludes() {
+    return testIncludes;
+  }
+
+  @Override
+  protected Set<String> getExcludes() {
+    return testExcludes;
+  }
+
 }
