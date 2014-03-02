@@ -1,7 +1,7 @@
 package io.takari.maven.plugins.resources;
 
 import io.takari.incrementalbuild.BuildContext;
-import io.takari.incrementalbuild.maven.DirectoryScannerAdapter;
+import io.takari.incrementalbuild.util.DirectoryScannerAdapter;
 
 import java.io.File;
 import java.io.FileReader;
