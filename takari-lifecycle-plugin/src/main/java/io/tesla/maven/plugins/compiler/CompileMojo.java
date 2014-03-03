@@ -1,5 +1,7 @@
 package io.tesla.maven.plugins.compiler;
 
+import io.takari.incrementalbuild.configuration.Configuration;
+
 import java.io.File;
 import java.util.HashSet;
 import java.util.List;
@@ -19,9 +21,6 @@ public class CompileMojo extends AbstractCompileMojo {
   @Parameter(defaultValue = "${project.compileSourceRoots}", readonly = true, required = true)
   private List<String> compileSourceRoots;
 
-  @Parameter(defaultValue = "${project.compileArtifacts}", readonly = true, required = true)
-  private List<Artifact> compileArtifacts;
-
   /**
    * A list of inclusion filters for the compiler.
    */
@@ -37,8 +36,14 @@ public class CompileMojo extends AbstractCompileMojo {
   /**
    * Project classpath.
    */
+  // note that dependency changes are handled incrementally, hence @Configuration(ignored=true)
   @Parameter(defaultValue = "${project.compileClasspathElements}", readonly = true, required = true)
+  @Configuration(ignored = true)
   private List<String> classpathElements;
+
+  @Parameter(defaultValue = "${project.compileArtifacts}", readonly = true, required = true)
+  @Configuration(ignored = true)
+  private List<Artifact> compileArtifacts;
 
   /**
    * The directory for compiled classes.

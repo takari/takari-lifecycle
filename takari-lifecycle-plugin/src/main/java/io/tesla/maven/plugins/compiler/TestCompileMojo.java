@@ -1,5 +1,7 @@
 package io.tesla.maven.plugins.compiler;
 
+import io.takari.incrementalbuild.configuration.Configuration;
+
 import java.io.File;
 import java.util.HashSet;
 import java.util.List;
@@ -22,10 +24,13 @@ public class TestCompileMojo extends AbstractCompileMojo {
   /**
    * Project test classpath.
    */
+  // note that dependency changes are handled incrementally, hence @Configuration(ignored=true)
   @Parameter(defaultValue = "${project.testClasspathElements}", required = true, readonly = true)
+  @Configuration(ignored = true)
   private List<String> testClasspathElements;
 
   @Parameter(defaultValue = "${project.testArtifacts}", readonly = true, required = true)
+  @Configuration(ignored = true)
   private List<Artifact> testCompileArtifacts;
 
   /**

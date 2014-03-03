@@ -1,5 +1,7 @@
 package io.takari.maven.plugins;
 
+import io.takari.incrementalbuild.configuration.Configuration;
+
 import java.util.List;
 
 import javax.inject.Inject;
@@ -29,6 +31,8 @@ import org.slf4j.Logger;
 //
 public abstract class TakariLifecycleMojo extends AbstractMojo {
 
+  // TODO review @Configuration(ignored=true) parameters and if they should not be ignored
+
   @Inject
   protected RepositorySystem repositorySystem;
 
@@ -39,21 +43,27 @@ public abstract class TakariLifecycleMojo extends AbstractMojo {
   protected MavenProjectHelper projectHelper;
 
   @Parameter(defaultValue = "${project}")
+  @Configuration(ignored = true)
   protected MavenProject project;
 
   @Parameter(defaultValue = "${reactorProjects}")
+  @Configuration(ignored = true)
   protected List<MavenProject> reactorProjects;
 
   @Parameter(defaultValue = "${repositorySystemSession}")
+  @Configuration(ignored = true)
   protected RepositorySystemSession repositorySystemSession;
 
   @Parameter(defaultValue = "${project.remoteRepositories}")
+  @Configuration(ignored = true)
   protected List<RemoteRepository> remoteRepositories;
 
   @Parameter(defaultValue = "${mojoExecution.mojoDescriptor}")
+  @Configuration(ignored = true)
   protected MojoDescriptor mojoDescriptor;
 
   @Parameter(defaultValue = "${settings}")
+  @Configuration(ignored = true)
   protected Settings settings;
 
   @Parameter(defaultValue = "false", property = "skip")
