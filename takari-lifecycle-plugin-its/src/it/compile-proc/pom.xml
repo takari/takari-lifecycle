@@ -1,0 +1,45 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>compile-proc</groupId>
+  <artifactId>compile-proc</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <description>
+  Annotation processing smoke test. One of the source classes in module=project depends on generate
+  class and fails to compile if annotation processing does not work.
+  </description>
+
+  <modules>
+    <module>processor</module>
+    <module>project</module>
+  </modules>
+
+  <properties>
+    <lifecycle-plugin.version>1.0.4-SNAPSHOT</lifecycle-plugin.version>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>io.takari.maven.plugins</groupId>
+        <artifactId>takari-lifecycle-plugin</artifactId>
+        <version>${lifecycle-plugin.version}</version>
+        <extensions>true</extensions>
+        <configuration>
+          <!-- 
+            | igorf: source/target names maybe confusing 
+            |        not everyone will guess this is about java compiler 
+           -->
+          <source>1.6</source>
+          <target>1.6</target>
+          <fork>true</fork>
+          <verbose>true</verbose>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
