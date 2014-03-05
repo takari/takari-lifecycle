@@ -1,6 +1,6 @@
 package io.takari.maven.plugins.resources;
 
-import io.takari.incrementalbuild.maven.testing.BuildAvoidanceRule;
+import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -18,7 +18,7 @@ public class ResourcesBuildAvoidanceTest {
   public final TestResources resources = new TestResources();
 
   @Rule
-  public final BuildAvoidanceRule mojos = new BuildAvoidanceRule();
+  public final IncrementalBuildRule mojos = new IncrementalBuildRule();
 
   @Test
   public void resources() throws Exception {
