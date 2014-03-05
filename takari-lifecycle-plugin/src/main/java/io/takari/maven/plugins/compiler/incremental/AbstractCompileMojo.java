@@ -41,6 +41,24 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Parameter(property = "maven.compiler.fork", defaultValue = "false")
   private boolean fork;
 
+  /**
+   * <p>
+   * Sets whether annotation processing is performed or not. Only applies to JDK 1.6+ If not set,
+   * both compilation and annotation processing are performed at the same time.
+   * </p>
+   * <p>
+   * Allowed values are:
+   * </p>
+   * <ul>
+   * <li><code>none</code> - no annotation processing is performed.</li>
+   * <li><code>only</code> - only annotation processing is done, no compilation.</li>
+   * </ul>
+   *
+   * @since 2.2
+   */
+  @Parameter
+  private String proc;
+
   //
 
   @Parameter(defaultValue = "${project.file}", readonly = true)
@@ -96,6 +114,8 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
   public abstract List<String> getClasspathElements();
 
+  public abstract File getGeneratedSourcesDirectory();
+
   public final File getPom() {
     return pom;
   }
@@ -124,7 +144,19 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     options.add("-classpath");
     options.add(getClasspath());
 
+    if (proc != null) {
+      options.add("-proc:" + proc);
+    }
+    if (isAnnotationProcessing()) {
+      options.add("-s");
+      options.add(getGeneratedSourcesDirectory().getAbsolutePath());
+    }
+
     return options;
+  }
+
+  public boolean isAnnotationProcessing() {
+    return !"none".equals(proc);
   }
 
   public String getClasspath() {
@@ -141,9 +173,9 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
 
-    File outputDirectory = getOutputDirectory();
-    if (!outputDirectory.isDirectory() && !outputDirectory.mkdirs()) {
-      throw new MojoExecutionException("Could not create output directory " + outputDirectory);
+    mkdirs(getOutputDirectory());
+    if (isAnnotationProcessing()) {
+      mkdirs(getGeneratedSourcesDirectory());
     }
 
     if (!fork) {
@@ -159,5 +191,12 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
         throw new MojoExecutionException("Could not execute compiler", e);
       }
     }
+  }
+
+  protected File mkdirs(File dir) throws MojoExecutionException {
+    if (!dir.isDirectory() && !dir.mkdirs()) {
+      throw new MojoExecutionException("Could not create directory " + dir);
+    }
+    return dir;
   }
 }

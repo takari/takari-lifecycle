@@ -1,8 +1,10 @@
 package io.takari.maven.plugins.compile;
 
+import static org.apache.maven.plugin.testing.resources.TestResources.cp;
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Set;
 
@@ -123,4 +125,48 @@ public class CompileTest {
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), "space/Space.class");
   }
 
+  @Test
+  public void testProcIncludes() throws Exception {
+    File basedir = procCompile("compile/proc-includes");
+    mojos.assertBuildOutputs(new File(basedir, "target/generated-sources/annotations"),
+        "proc/GeneratedSource.java");
+  }
+
+  @Test
+  public void testProcExcludes() throws Exception {
+    File basedir = procCompile("compile/proc-includes");
+    mojos.assertBuildOutputs(new File(basedir, "target/generated-sources/annotations"),
+        "proc/GeneratedSource.java");
+  }
+
+  @Test
+  public void testProcOnly() throws Exception {
+    File basedir = procCompile("compile/proc-only");
+    mojos.assertBuildOutputs(new File(basedir, "target/generated-sources/annotations"),
+        "proc/GeneratedSource.java");
+  }
+
+  @Test
+  public void testProc() throws Exception {
+    File basedir = procCompile("compile/proc");
+    mojos.assertBuildOutputs(new File(basedir, "target"),
+        "generated-sources/annotations/proc/GeneratedSource.java", "classes/proc/Source.class",
+        "classes/proc/GeneratedSource.class");
+  }
+
+  private File procCompile(String projectName) throws Exception, IOException {
+    File processor = compile("compile/processor");
+    cp(processor, "src/main/resources/META-INF/services/javax.annotation.processing.Processor",
+        "target/classes/META-INF/services/javax.annotation.processing.Processor");
+
+    File basedir = resources.getBasedir(projectName);
+    MavenProject project = mojos.readMavenProject(basedir);
+    MavenSession session = mojos.newMavenSession(project);
+    MojoExecution execution = newMojoExecution();
+
+    addDependency(project, "processor", new File(processor, "target/classes"));
+
+    mojos.executeMojo(session, project, execution);
+    return basedir;
+  }
 }

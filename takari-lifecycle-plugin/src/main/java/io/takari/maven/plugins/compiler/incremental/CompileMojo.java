@@ -43,6 +43,17 @@ public class CompileMojo extends AbstractCompileMojo {
   @Parameter(defaultValue = "${project.build.outputDirectory}", required = true, readonly = true)
   private File outputDirectory;
 
+  /**
+   * <p>
+   * Specify where to place generated source files created by annotation processing. Only applies to
+   * JDK 1.6+
+   * </p>
+   *
+   * @since 2.2
+   */
+  @Parameter(defaultValue = "${project.build.directory}/generated-sources/annotations")
+  private File generatedSourcesDirectory;
+
   @Override
   protected Set<String> getSourceRoots() {
     return new LinkedHashSet<String>(compileSourceRoots);
@@ -66,5 +77,9 @@ public class CompileMojo extends AbstractCompileMojo {
   @Override
   public List<String> getClasspathElements() {
     return classpathElements;
+  }
+
+  public File getGeneratedSourcesDirectory() {
+    return generatedSourcesDirectory;
   }
 }
