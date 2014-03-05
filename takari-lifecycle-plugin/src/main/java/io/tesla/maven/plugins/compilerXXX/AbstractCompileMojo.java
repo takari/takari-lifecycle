@@ -1,7 +1,7 @@
-package io.tesla.maven.plugins.compiler;
+package io.tesla.maven.plugins.compilerXXX;
 
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
-import io.tesla.maven.plugins.compiler.jdt.IncrementalCompiler;
+import io.tesla.maven.plugins.compilerXXX.jdt.IncrementalCompiler;
 
 import java.io.File;
 

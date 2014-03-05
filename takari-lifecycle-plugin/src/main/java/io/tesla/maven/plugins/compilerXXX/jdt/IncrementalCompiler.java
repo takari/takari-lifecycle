@@ -1,4 +1,4 @@
-package io.tesla.maven.plugins.compiler.jdt;
+package io.tesla.maven.plugins.compilerXXX.jdt;
 
 import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
@@ -8,8 +8,8 @@ import io.takari.incrementalbuild.spi.DefaultInput;
 import io.takari.incrementalbuild.spi.DefaultInputMetadata;
 import io.takari.incrementalbuild.spi.DefaultOutput;
 import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
-import io.tesla.maven.plugins.compiler.AbstractInternalCompiler;
-import io.tesla.maven.plugins.compiler.InternalCompilerConfiguration;
+import io.tesla.maven.plugins.compilerXXX.AbstractInternalCompiler;
+import io.tesla.maven.plugins.compilerXXX.InternalCompilerConfiguration;
 
 import java.io.BufferedOutputStream;
 import java.io.File;

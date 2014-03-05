@@ -1,4 +1,4 @@
-package io.tesla.maven.plugins.compiler.jdt;
+package io.tesla.maven.plugins.compilerXXX.jdt;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

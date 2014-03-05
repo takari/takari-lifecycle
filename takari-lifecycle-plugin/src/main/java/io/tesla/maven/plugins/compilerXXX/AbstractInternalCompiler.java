@@ -1,4 +1,4 @@
-package io.tesla.maven.plugins.compiler;
+package io.tesla.maven.plugins.compilerXXX;
 
 import java.io.File;
 import java.util.Collection;
