@@ -104,6 +104,12 @@
       <artifactId>slf4j-api</artifactId>
       <version>1.7.4</version>
     </dependency>
+    <!-- process forking -->
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-exec</artifactId>
+      <version>1.2</version>
+    </dependency>
 
     <!-- test dependencies -->
     <dependency>

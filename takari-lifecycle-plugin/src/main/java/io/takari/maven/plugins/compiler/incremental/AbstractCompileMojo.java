@@ -4,11 +4,13 @@ import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.incrementalbuild.util.DirectoryScannerAdapter;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -32,8 +34,23 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Parameter(property = "maven.compiler.target", defaultValue = "1.6")
   private String target;
 
+  /**
+   * Allows running the compiler in a separate process. If <code>false</code> it uses the built in
+   * compiler, while if <code>true</code> it will use an executable.
+   */
+  @Parameter(property = "maven.compiler.fork", defaultValue = "false")
+  private boolean fork;
+
+  //
+
   @Parameter(defaultValue = "${project.file}", readonly = true)
   private File pom;
+
+  @Parameter(defaultValue = "${project.basedir}", readonly = true)
+  private File basedir;
+
+  @Parameter(defaultValue = "${plugin.pluginArtifact}", readonly = true)
+  private Artifact artifact;
 
   @Component
   private DefaultBuildContext<?> context;
@@ -45,7 +62,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     return null;
   }
 
-  public Iterable<? extends File> getSources() {
+  public Iterable<File> getSources() {
     List<Iterable<File>> sources = new ArrayList<Iterable<File>>();
     for (String sourceRoot : getSourceRoots()) {
       DirectoryScanner scanner = new DirectoryScanner();
@@ -86,6 +103,22 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     return source;
   }
 
+  public Iterable<String> getCompilerOptions() {
+    List<String> options = new ArrayList<String>();
+
+    // output directory
+    options.add("-d");
+    options.add(getOutputDirectory().getAbsolutePath());
+
+    options.add("-target");
+    options.add(getTarget());
+
+    options.add("-source");
+    options.add(getSource());
+
+    return options;
+  }
+
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
 
@@ -94,6 +127,17 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       throw new MojoExecutionException("Could not create output directory " + outputDirectory);
     }
 
-    new CompilerJavac(context, this).compile();
+    if (!fork) {
+      new CompilerJavac(context, this).compile();
+    } else {
+      CompilerJavacLauncher compiler = new CompilerJavacLauncher(context, this);
+      compiler.setWorkingDirectory(basedir);
+      compiler.setJar(artifact.getFile());
+      try {
+        compiler.compile();
+      } catch (IOException e) {
+        throw new MojoExecutionException("Could not execute compiler", e);
+      }
+    }
   }
 }
