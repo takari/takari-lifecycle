@@ -4,6 +4,7 @@ import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.Input;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -13,6 +14,8 @@ import java.util.List;
 import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
 import javax.tools.DiagnosticCollector;
+import javax.tools.FileObject;
+import javax.tools.ForwardingJavaFileManager;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
@@ -62,6 +65,33 @@ public class CompilerJavac {
 
   private final AbstractCompileMojo config;
 
+  private class RecordingJavaFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> {
+    protected RecordingJavaFileManager(StandardJavaFileManager fileManager) {
+      super(fileManager);
+    }
+
+    @Override
+    public FileObject getFileForOutput(Location location, String packageName, String relativeName,
+        FileObject sibling) throws IOException {
+      return record(super.getFileForOutput(location, packageName, relativeName, sibling), sibling);
+    }
+
+    @Override
+    public JavaFileObject getJavaFileForOutput(Location location, String className,
+        javax.tools.JavaFileObject.Kind kind, FileObject sibling) throws IOException {
+      return record(super.getJavaFileForOutput(location, className, kind, sibling), sibling);
+    }
+
+    private <T extends FileObject> T record(T fileObject, FileObject sibling) {
+      // tooling API is rather vague about sibling. it "javac might provide
+      // the originating source file as sibling" but this does not appear to be
+      // guaranteed. even though sibling appear to be the source during the test,
+      // the current implementation does not rely on this uncertain javac behaviour
+      context.processOutput(new File(fileObject.toUri()));
+      return fileObject;
+    }
+  }
+
   public CompilerJavac(BuildContext context, AbstractCompileMojo config) {
     this.context = context;
     this.config = config;
@@ -89,6 +119,7 @@ public class CompilerJavac {
     final Charset sourceEncoding = config.getSourceEncoding();
     final DiagnosticCollector<JavaFileObject> diagnosticCollector =
         new DiagnosticCollector<JavaFileObject>();
+
     final StandardJavaFileManager standardFileManager =
         compiler.getStandardFileManager(diagnosticCollector, null, sourceEncoding);
 
@@ -98,7 +129,7 @@ public class CompilerJavac {
     Iterable<String> options = buildCompilerOptions();
 
     final JavaCompiler.CompilationTask task = compiler.getTask(null, // Writer out
-        standardFileManager, // file manager
+        new RecordingJavaFileManager(standardFileManager), // file manager
         diagnosticCollector, // diagnostic listener
         options, //
         null, // Iterable<String> classes to process by annotation processor(s)
