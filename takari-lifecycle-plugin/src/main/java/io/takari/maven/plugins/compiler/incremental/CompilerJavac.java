@@ -5,7 +5,9 @@ import io.takari.incrementalbuild.BuildContext.Input;
 
 import java.io.File;
 import java.nio.charset.Charset;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 
 import javax.tools.Diagnostic;
@@ -20,6 +22,42 @@ import org.apache.maven.plugin.MojoExecutionException;
 
 public class CompilerJavac {
 
+  private static interface JavaCompilerFactory {
+    public JavaCompiler acquire() throws MojoExecutionException;
+
+    public void release(JavaCompiler compiler);
+  }
+
+  private static JavaCompilerFactory CACHE = new JavaCompilerFactory() {
+
+    // TODO broken if this plugin is loaded by multiple classloaders
+    // https://cwiki.apache.org/confluence/display/MAVEN/Maven+3.x+Class+Loading
+    private final Deque<JavaCompiler> compilers = new ArrayDeque<JavaCompiler>();
+
+    @Override
+    public JavaCompiler acquire() throws MojoExecutionException {
+      synchronized (compilers) {
+        if (!compilers.isEmpty()) {
+          return compilers.removeFirst();
+        }
+      }
+      JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+      if (compiler == null) {
+        throw new MojoExecutionException("No compiler is provided in this environment. "
+            + "Perhaps you are running on a JRE rather than a JDK?");
+      }
+      return compiler;
+    }
+
+    @Override
+    public void release(JavaCompiler compiler) {
+      synchronized (compilers) {
+        compilers.addFirst(compiler);
+      }
+    }
+
+  };
+
   private final BuildContext context;
 
   private final AbstractCompileMojo config;
@@ -30,13 +68,24 @@ public class CompilerJavac {
   }
 
   public void compile() throws MojoExecutionException {
-    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+    // java 6 limitations
+    // - there is severe performance penalty using new JavaCompiler instance
+    // - the same JavaCompiler cannot be used concurrently
+    // - even different JavaCompiler instances can't do annotation processing concurrently
 
-    if (compiler == null) {
-      throw new MojoExecutionException("No compiler is provided in this environment. "
-          + "Perhaps you are running on a JRE rather than a JDK?");
+    // The workaround is two-fold
+    // - reuse JavaCompiler instances, but not on the same thread (see CACHE impl)
+    // - do not allow in-process annotation processing
+
+    JavaCompiler compiler = CACHE.acquire();
+    try {
+      compile(compiler);
+    } finally {
+      CACHE.release(compiler);
     }
+  }
 
+  private void compile(JavaCompiler compiler) throws MojoExecutionException {
     final Charset sourceEncoding = config.getSourceEncoding();
     final DiagnosticCollector<JavaFileObject> diagnosticCollector =
         new DiagnosticCollector<JavaFileObject>();
