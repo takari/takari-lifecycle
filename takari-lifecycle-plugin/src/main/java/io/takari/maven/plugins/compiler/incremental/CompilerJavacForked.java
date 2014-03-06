@@ -173,11 +173,11 @@ public class CompilerJavacForked {
               break;
             case 'M': {
               StringTokenizer st = new StringTokenizer(value, " ");
-              String path = URLDecoder.decode(value, ENCODING);
+              String path = URLDecoder.decode(st.nextToken(), ENCODING);
               int line = Integer.parseInt(st.nextToken());
               int column = Integer.parseInt(st.nextToken());
               int severity = toSeverity(st.nextToken());
-              String message = URLDecoder.decode(value, ENCODING);
+              String message = URLDecoder.decode(st.nextToken(), ENCODING);
               callback.addMessage(path, line, column, message, severity);
             }
           }

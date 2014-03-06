@@ -49,6 +49,9 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Parameter(defaultValue = "${project.basedir}", readonly = true)
   private File basedir;
 
+  @Parameter(defaultValue = "${project.build.directory}", readonly = true)
+  private File buildDirectory;
+
   @Parameter(defaultValue = "${plugin.pluginArtifact}", readonly = true)
   private Artifact artifact;
 
@@ -91,6 +94,8 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
   public abstract File getOutputDirectory();
 
+  public abstract List<String> getClasspathElements();
+
   public final File getPom() {
     return pom;
   }
@@ -116,7 +121,21 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     options.add("-source");
     options.add(getSource());
 
+    options.add("-classpath");
+    options.add(getClasspath());
+
     return options;
+  }
+
+  public String getClasspath() {
+    StringBuilder cp = new StringBuilder();
+    for (String cpe : getClasspathElements()) {
+      if (cp.length() > 0) {
+        cp.append(File.pathSeparatorChar);
+      }
+      cp.append(cpe);
+    }
+    return cp.toString();
   }
 
   @Override
@@ -131,8 +150,9 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       new CompilerJavac(context, this).compile();
     } else {
       CompilerJavacLauncher compiler = new CompilerJavacLauncher(context, this);
-      compiler.setWorkingDirectory(basedir);
+      compiler.setBasedir(basedir);
       compiler.setJar(artifact.getFile());
+      compiler.setBuildDirectory(buildDirectory);
       try {
         compiler.compile();
       } catch (IOException e) {

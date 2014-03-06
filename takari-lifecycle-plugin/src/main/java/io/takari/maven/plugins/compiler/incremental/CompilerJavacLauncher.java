@@ -11,6 +11,7 @@ import java.io.IOException;
 
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.exec.ShutdownHookProcessDestroyer;
 
 public class CompilerJavacLauncher {
@@ -21,7 +22,9 @@ public class CompilerJavacLauncher {
 
   private File jar;
 
-  private File workingDirectory;
+  private File basedir;
+
+  private File buildDirectory;
 
   public CompilerJavacLauncher(BuildContext context, AbstractCompileMojo config) {
     this.context = context;
@@ -29,18 +32,26 @@ public class CompilerJavacLauncher {
   }
 
   public void compile() throws IOException {
+    File options = File.createTempFile("javac-forked", ".options", buildDirectory);
+    File output = File.createTempFile("javac-forked", ".output", buildDirectory);
+    try {
+      compile(options, output);
+    } finally {
+      options.delete();
+      output.delete();
+    }
+  }
+
+  private void compile(File options, File output) throws IOException, ExecuteException {
+    new CompilerConfiguration(config.getSourceEncoding(), config.getCompilerOptions(),
+        config.getSources()).write(options);
+
     // use the same JVM as the one used to run Maven (the "java.home" one)
     String executable =
         System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
     if (File.separatorChar == '\\') {
       executable = executable + ".exe";
     }
-
-    File options = File.createTempFile("javac-forked", ".options");
-    new CompilerConfiguration(config.getSourceEncoding(), config.getCompilerOptions(),
-        config.getSources()).write(options);
-
-    File output = File.createTempFile("javac-forked", ".output");
 
     CommandLine cli = new CommandLine(executable);
     cli.addArguments(new String[] {"-cp", jar.getAbsolutePath()});
@@ -56,7 +67,7 @@ public class CompilerJavacLauncher {
     // }
     // best effort to avoid orphaned child process
     executor.setProcessDestroyer(new ShutdownHookProcessDestroyer());
-    executor.setWorkingDirectory(workingDirectory);
+    executor.setWorkingDirectory(basedir);
     executor.execute(cli);
 
     CompilerOutput.process(output, new CompilerOutputProcessor() {
@@ -68,7 +79,7 @@ public class CompilerJavacLauncher {
       @Override
       public void addMessage(String path, int line, int column, String message, int kind) {
         if (".".equals(path)) {
-
+          // TODO
         } else {
           Input<File> input = context.registerInput(new File(path)).process();
           input.addMessage(line, column, message, kind, null);
@@ -77,11 +88,15 @@ public class CompilerJavacLauncher {
     });
   }
 
-  public void setWorkingDirectory(File workingDirectory) {
-    this.workingDirectory = workingDirectory;
+  public void setBasedir(File basedir) {
+    this.basedir = basedir;
   }
 
   public void setJar(File jar) {
     this.jar = jar;
+  }
+
+  public void setBuildDirectory(File buildDirectory) {
+    this.buildDirectory = buildDirectory;
   }
 }

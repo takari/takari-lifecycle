@@ -62,4 +62,9 @@ public class CompileMojo extends AbstractCompileMojo {
   public File getOutputDirectory() {
     return outputDirectory;
   }
+
+  @Override
+  public List<String> getClasspathElements() {
+    return classpathElements;
+  }
 }
