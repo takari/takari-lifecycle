@@ -19,7 +19,7 @@ public class CompileIncrementalClasspathTest extends AbstractCompileMojoTest {
 
   @Test
   public void testReactor() throws Exception {
-    File parent = resources.getBasedir("compile-incremental-classpath/reactor-basic");
+    File parent = resources.getBasedir("compile-jdt-classpath/reactor-basic");
 
     compileReactor(parent);
     mojos.assertBuildOutputs(parent, "module-a/target/classes/reactor/modulea/ModuleA.class");
@@ -43,7 +43,7 @@ public class CompileIncrementalClasspathTest extends AbstractCompileMojoTest {
 
   @Test
   public void testReactor_missingType() throws Exception {
-    File parent = resources.getBasedir("compile-incremental-classpath/reactor-missing");
+    File parent = resources.getBasedir("compile-jdt-classpath/reactor-missing");
 
     try {
       compileReactor(parent);
@@ -67,8 +67,7 @@ public class CompileIncrementalClasspathTest extends AbstractCompileMojoTest {
 
   @Test
   public void testReactor_missingType_splitpackage() throws Exception {
-    File parent =
-        resources.getBasedir("compile-incremental-classpath/reactor-missing-splitpackage");
+    File parent = resources.getBasedir("compile-jdt-classpath/reactor-missing-splitpackage");
 
     try {
       compileReactor(parent);
@@ -91,7 +90,7 @@ public class CompileIncrementalClasspathTest extends AbstractCompileMojoTest {
 
   @Test
   public void testRepository() throws Exception {
-    File parent = resources.getBasedir("compile-incremental-classpath/repo-basic");
+    File parent = resources.getBasedir("compile-jdt-classpath/repo-basic");
 
     MavenProject moduleA = mojos.readMavenProject(new File(parent, "module-a"));
     addDependency(moduleA, "module-b", new File(parent, "module-b/module-b.jar"));
@@ -113,7 +112,7 @@ public class CompileIncrementalClasspathTest extends AbstractCompileMojoTest {
 
   @Test
   public void testRepository_classpathOrder() throws Exception {
-    File parent = resources.getBasedir("compile-incremental-classpath/repo-basic");
+    File parent = resources.getBasedir("compile-jdt-classpath/repo-basic");
 
     MavenProject moduleA = mojos.readMavenProject(new File(parent, "module-a"));
     addDependency(moduleA, "module-b", new File(parent, "module-b/module-b.jar"));

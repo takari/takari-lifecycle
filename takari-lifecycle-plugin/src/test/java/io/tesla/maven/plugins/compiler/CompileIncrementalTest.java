@@ -14,7 +14,7 @@ public class CompileIncrementalTest extends AbstractCompileMojoTest {
 
   @Test
   public void testBasic() throws Exception {
-    File basedir = resources.getBasedir("compile-incremental/basic");
+    File basedir = resources.getBasedir("compile-jdt/basic");
 
     // initial build
     compile(basedir);
@@ -39,7 +39,7 @@ public class CompileIncrementalTest extends AbstractCompileMojoTest {
 
   @Test
   public void testBasic_timestampChangeRebuild() throws Exception {
-    File basedir = resources.getBasedir("compile-incremental/basic");
+    File basedir = resources.getBasedir("compile-jdt/basic");
 
     // initial build
     compile(basedir);
@@ -57,7 +57,7 @@ public class CompileIncrementalTest extends AbstractCompileMojoTest {
 
   @Test
   public void testSupertype() throws Exception {
-    File basedir = resources.getBasedir("compile-incremental/supertype");
+    File basedir = resources.getBasedir("compile-jdt/supertype");
 
     // initial build
     compile(basedir);
@@ -86,7 +86,7 @@ public class CompileIncrementalTest extends AbstractCompileMojoTest {
   @Test
   public void testSupertype_superClassChangeDoesNotTriggerRebuildOfImplementedInterfaces()
       throws Exception {
-    File basedir = resources.getBasedir("compile-incremental/supertype");
+    File basedir = resources.getBasedir("compile-jdt/supertype");
 
     // initial build
     compile(basedir);
@@ -111,7 +111,7 @@ public class CompileIncrementalTest extends AbstractCompileMojoTest {
 
   @Test
   public void testCirtular() throws Exception {
-    File basedir = getCompiledBasedir("compile-incremental/circular");
+    File basedir = getCompiledBasedir("compile-jdt/circular");
     mojos.assertBuildOutputs(basedir, "target/classes/circular/ClassA.class",
         "target/classes/circular/ClassB.class");
 
@@ -123,7 +123,7 @@ public class CompileIncrementalTest extends AbstractCompileMojoTest {
 
   @Test
   public void testRerence() throws Exception {
-    File basedir = getCompiledBasedir("compile-incremental/reference");
+    File basedir = getCompiledBasedir("compile-jdt/reference");
     mojos.assertBuildOutputs(basedir, "target/classes/reference/Parameter.class",
         "target/classes/reference/Type.class");
 
@@ -154,7 +154,7 @@ public class CompileIncrementalTest extends AbstractCompileMojoTest {
         {"ERROR Error.java [6:12] Missing cannot be resolved to a type",
             "ERROR Error.java [8:20] Missing cannot be resolved to a type"};
 
-    File basedir = resources.getBasedir("compile-incremental/missing");
+    File basedir = resources.getBasedir("compile-jdt/missing");
     try {
       compile(basedir);
       Assert.fail();
@@ -199,7 +199,7 @@ public class CompileIncrementalTest extends AbstractCompileMojoTest {
 
   @Test
   public void testMultifile() throws Exception {
-    File basedir = getCompiledBasedir("compile-incremental/multifile");
+    File basedir = getCompiledBasedir("compile-jdt/multifile");
     mojos.assertBuildOutputs(basedir, "target/classes/multifile/ClassA.class",
         "target/classes/multifile/ClassB.class", "target/classes/multifile/ClassB$Nested.class");
 
