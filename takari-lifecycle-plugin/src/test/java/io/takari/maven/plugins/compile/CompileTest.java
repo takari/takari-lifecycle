@@ -13,6 +13,7 @@ import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.testing.resources.TestResources;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -51,13 +52,16 @@ public class CompileTest {
 
   private File compile(String name) throws Exception {
     File basedir = resources.getBasedir(name);
+    compile(basedir);
+    return basedir;
+  }
+
+  private void compile(File basedir) throws Exception {
     MavenProject project = mojos.readMavenProject(basedir);
     MavenSession session = mojos.newMavenSession(project);
     MojoExecution execution = newMojoExecution();
 
     mojos.executeMojo(session, project, execution);
-
-    return basedir;
   }
 
   private MojoExecution newMojoExecution() {
@@ -82,6 +86,22 @@ public class CompileTest {
     Xpp3Dom child = new Xpp3Dom(name);
     child.setValue(value);
     configuration.addChild(child);
+  }
+
+  private File procCompile(String projectName) throws Exception, IOException {
+    File processor = compile("compile/processor");
+    cp(processor, "src/main/resources/META-INF/services/javax.annotation.processing.Processor",
+        "target/classes/META-INF/services/javax.annotation.processing.Processor");
+
+    File basedir = resources.getBasedir(projectName);
+    MavenProject project = mojos.readMavenProject(basedir);
+    MavenSession session = mojos.newMavenSession(project);
+    MojoExecution execution = newMojoExecution();
+
+    addDependency(project, "processor", new File(processor, "target/classes"));
+
+    mojos.executeMojo(session, project, execution);
+    return basedir;
   }
 
   @Test
@@ -154,19 +174,19 @@ public class CompileTest {
         "classes/proc/GeneratedSource.class");
   }
 
-  private File procCompile(String projectName) throws Exception, IOException {
-    File processor = compile("compile/processor");
-    cp(processor, "src/main/resources/META-INF/services/javax.annotation.processing.Processor",
-        "target/classes/META-INF/services/javax.annotation.processing.Processor");
-
-    File basedir = resources.getBasedir(projectName);
-    MavenProject project = mojos.readMavenProject(basedir);
-    MavenSession session = mojos.newMavenSession(project);
-    MojoExecution execution = newMojoExecution();
-
-    addDependency(project, "processor", new File(processor, "target/classes"));
-
-    mojos.executeMojo(session, project, execution);
-    return basedir;
+  @Test
+  public void testError() throws Exception {
+    File basedir = resources.getBasedir("compile/error");
+    try {
+      compile(basedir);
+      Assert.fail();
+    } catch (MojoExecutionException e) {
+      Assert.assertEquals("1 error(s) encountered, see previous message(s) for details",
+          e.getMessage());
+    }
+    mojos.assertBuildOutputs(basedir, new String[0]);
+    mojos
+        .assertMessages(basedir, "src/main/java/error/Error.java",
+            "ERROR Error.java [4:11] cannot find symbol\n  symbol:   class Foo\n  location: class basic.Error");
   }
 }
