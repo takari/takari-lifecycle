@@ -21,8 +21,8 @@ public class ResourcesBuildAvoidanceTest {
   public final BuildAvoidanceRule mojos = new BuildAvoidanceRule();
 
   @Test
-  public void testResources() throws Exception {
-    File basedir = resources.getBasedir("project-with-resources");
+  public void resources() throws Exception {
+    File basedir = resources.getBasedir("resources/project-with-resources");
     mojos.executeMojo(basedir, "process-resources");
     File resource = new File(basedir, "target/classes/resource.txt");
     Assert.assertTrue(resource.exists());
@@ -31,8 +31,8 @@ public class ResourcesBuildAvoidanceTest {
   }
 
   @Test
-  public void testResourcesWithTargetPath() throws Exception {
-    File basedir = resources.getBasedir("project-with-resources-with-target-path");
+  public void resourcesWithTargetPath() throws Exception {
+    File basedir = resources.getBasedir("resources/project-with-resources-with-target-path");
     mojos.executeMojo(basedir, "process-resources");
     File resource = new File(basedir, "target/classes/resources/targetPath/resource.txt");
     Assert.assertTrue(resource.exists());
@@ -41,8 +41,8 @@ public class ResourcesBuildAvoidanceTest {
   }
 
   @Test
-  public void testResourcesWithFiltering() throws Exception {
-    File basedir = resources.getBasedir("project-with-resources-filtered");
+  public void resourcesWithFiltering() throws Exception {
+    File basedir = resources.getBasedir("resources/project-with-resources-filtered");
     mojos.executeMojo(basedir, "process-resources");
     File resource = new File(basedir, "target/classes/resource.txt");
     Assert.assertTrue(resource.exists());

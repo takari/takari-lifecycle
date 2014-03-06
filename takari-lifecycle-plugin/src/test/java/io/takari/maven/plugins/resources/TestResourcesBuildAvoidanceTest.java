@@ -22,7 +22,7 @@ public class TestResourcesBuildAvoidanceTest {
 
   @Test
   public void testResources() throws Exception {
-    File basedir = resources.getBasedir("project-with-test-resources");
+    File basedir = resources.getBasedir("resources/project-with-test-resources");
     mojos.executeMojo(basedir, "process-test-resources");
     File resource = new File(basedir, "target/test-classes/resource.txt");
     Assert.assertTrue(resource.exists());
@@ -32,7 +32,7 @@ public class TestResourcesBuildAvoidanceTest {
 
   @Test
   public void testResourcesWithTargetPath() throws Exception {
-    File basedir = resources.getBasedir("project-with-test-resources-with-target-path");
+    File basedir = resources.getBasedir("resources/project-with-test-resources-with-target-path");
     mojos.executeMojo(basedir, "process-test-resources");
     File resource = new File(basedir, "target/test-classes/resources/targetPath/resource.txt");
     Assert.assertTrue(resource.exists());
@@ -42,7 +42,7 @@ public class TestResourcesBuildAvoidanceTest {
 
   @Test
   public void testResourcesWithFiltering() throws Exception {
-    File basedir = resources.getBasedir("project-with-test-resources-filtered");
+    File basedir = resources.getBasedir("resources/project-with-test-resources-filtered");
     mojos.executeMojo(basedir, "process-test-resources");
     File resource = new File(basedir, "target/test-classes/resource.txt");
     Assert.assertTrue(resource.exists());

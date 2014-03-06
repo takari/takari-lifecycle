@@ -1,5 +1,6 @@
-package io.takari.maven.plugins;
+package io.takari.maven.plugins.jar;
 
+import io.takari.maven.plugins.TakariLifecycleMojo;
 import io.tesla.proviso.archive.Archiver;
 
 import java.io.File;
@@ -34,6 +35,10 @@ public class Jar extends TakariLifecycleMojo {
     Archiver archiver = Archiver.builder() //
         .useRoot(false) // Step into the classes/ directory
         .build();
+
+    if (!outputDirectory.exists()) {
+      outputDirectory.mkdir();
+    }
 
     //
     // type = test-jar
