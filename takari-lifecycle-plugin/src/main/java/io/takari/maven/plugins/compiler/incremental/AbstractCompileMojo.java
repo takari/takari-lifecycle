@@ -22,6 +22,10 @@ import com.google.common.collect.Iterables;
 
 public abstract class AbstractCompileMojo extends AbstractMojo {
 
+  public static enum Proc {
+    proc, only, none
+  }
+
   /**
    * The -source argument for the Java compiler.
    */
@@ -43,21 +47,23 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
   /**
    * <p>
-   * Sets whether annotation processing is performed or not. Only applies to JDK 1.6+ If not set,
-   * both compilation and annotation processing are performed at the same time.
+   * Sets whether annotation processing is performed or not. Only applies to JDK 1.6+ If not set, no
+   * annotation processing is performed.
    * </p>
    * <p>
    * Allowed values are:
    * </p>
    * <ul>
+   * <li><code>proc</code> - both compilation and annotation processing are performed at the same
+   * time.</li>
    * <li><code>none</code> - no annotation processing is performed.</li>
    * <li><code>only</code> - only annotation processing is done, no compilation.</li>
    * </ul>
    *
    * @since 2.2
    */
-  @Parameter
-  private String proc;
+  @Parameter(defaultValue = "none")
+  private Proc proc = Proc.none;
 
   //
 
@@ -144,8 +150,16 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     options.add("-classpath");
     options.add(getClasspath());
 
-    if (proc != null) {
-      options.add("-proc:" + proc);
+    switch (proc) {
+      case only:
+        options.add("-proc:only");
+        break;
+      case proc:
+        // this is the javac default
+        break;
+      case none:
+        options.add("-proc:none");
+        break;
     }
     if (isAnnotationProcessing()) {
       options.add("-s");
@@ -156,7 +170,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   }
 
   public boolean isAnnotationProcessing() {
-    return !"none".equals(proc);
+    return proc != Proc.none;
   }
 
   public String getClasspath() {

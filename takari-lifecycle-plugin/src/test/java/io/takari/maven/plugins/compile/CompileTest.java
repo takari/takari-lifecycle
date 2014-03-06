@@ -2,6 +2,7 @@ package io.takari.maven.plugins.compile;
 
 import static org.apache.maven.plugin.testing.resources.TestResources.cp;
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
+import io.takari.maven.plugins.compiler.incremental.AbstractCompileMojo.Proc;
 
 import java.io.File;
 import java.io.IOException;
@@ -88,7 +89,7 @@ public class CompileTest {
     configuration.addChild(child);
   }
 
-  private File procCompile(String projectName) throws Exception, IOException {
+  private File procCompile(String projectName, Proc proc) throws Exception, IOException {
     File processor = compile("compile/processor");
     cp(processor, "src/main/resources/META-INF/services/javax.annotation.processing.Processor",
         "target/classes/META-INF/services/javax.annotation.processing.Processor");
@@ -99,6 +100,10 @@ public class CompileTest {
     MojoExecution execution = newMojoExecution();
 
     addDependency(project, "processor", new File(processor, "target/classes"));
+
+    if (proc != null) {
+      add(execution.getConfiguration(), "proc", proc.name());
+    }
 
     mojos.executeMojo(session, project, execution);
     return basedir;
@@ -147,30 +152,42 @@ public class CompileTest {
 
   @Test
   public void testProcIncludes() throws Exception {
-    File basedir = procCompile("compile/proc-includes");
+    File basedir = procCompile("compile/proc-includes", null);
     mojos.assertBuildOutputs(new File(basedir, "target/generated-sources/annotations"),
         "proc/GeneratedSource.java");
   }
 
   @Test
   public void testProcExcludes() throws Exception {
-    File basedir = procCompile("compile/proc-includes");
+    File basedir = procCompile("compile/proc-includes", null);
     mojos.assertBuildOutputs(new File(basedir, "target/generated-sources/annotations"),
         "proc/GeneratedSource.java");
   }
 
   @Test
-  public void testProcOnly() throws Exception {
-    File basedir = procCompile("compile/proc-only");
+  public void testProc_only() throws Exception {
+    File basedir = procCompile("compile/proc", Proc.only);
     mojos.assertBuildOutputs(new File(basedir, "target/generated-sources/annotations"),
         "proc/GeneratedSource.java");
   }
 
   @Test
-  public void testProc() throws Exception {
-    File basedir = procCompile("compile/proc");
-    mojos.assertBuildOutputs(new File(basedir, "target"),
-        "generated-sources/annotations/proc/GeneratedSource.java", "classes/proc/Source.class",
+  public void testProc_default() throws Exception {
+    File basedir = procCompile("compile/proc", null);
+    mojos.assertBuildOutputs(new File(basedir, "target"), "classes/proc/Source.class");
+  }
+
+  @Test
+  public void testProc_none() throws Exception {
+    File basedir = procCompile("compile/proc", Proc.none);
+    mojos.assertBuildOutputs(new File(basedir, "target"), "classes/proc/Source.class");
+  }
+
+  @Test
+  public void testProc_proc() throws Exception {
+    File basedir = procCompile("compile/proc", Proc.proc);
+    mojos.assertBuildOutputs(new File(basedir, "target"), "classes/proc/Source.class",
+        "generated-sources/annotations/proc/GeneratedSource.java",
         "classes/proc/GeneratedSource.class");
   }
 

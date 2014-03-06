@@ -6,12 +6,4 @@
   <artifactId>proc</artifactId>
   <version>1.0</version>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>io.takari.maven.plugins</groupId>
-        <artifactId>takari-lifecycle-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
 </project>

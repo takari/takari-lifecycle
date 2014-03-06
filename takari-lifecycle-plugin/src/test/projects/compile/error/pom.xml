@@ -6,19 +6,4 @@
   <artifactId>error</artifactId>
   <version>1.0</version>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>io.takari.maven.plugins</groupId>
-        <artifactId>takari-lifecycle-plugin</artifactId>
-        <configuration>
-          <!--
-            | annotation processing results in duplicate error messages in some cases
-            | http://stackoverflow.com/questions/19188842/compiler-api-annotation-processing-double-diagnostic-messages 
-           -->
-          <proc>none</proc>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
 </project>
