@@ -123,7 +123,7 @@ public class CompilerJavac {
     }
   }
 
-  private int toSeverity(Kind kind) {
-    return kind == Kind.ERROR ? BuildContext.SEVERITY_ERROR : BuildContext.SEVERITY_WARNING;
+  private BuildContext.Severity toSeverity(Kind kind) {
+    return kind == Kind.ERROR ? BuildContext.Severity.ERROR : BuildContext.Severity.WARNING;
   }
 }

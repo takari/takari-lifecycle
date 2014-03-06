@@ -340,8 +340,8 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
       for (CategorizedProblem problem : result.getProblems()) {
         input.addMessage(problem.getSourceLineNumber(), ((DefaultProblem) problem).column, problem
             .getMessage(), problem.isError()
-            ? BuildContext.SEVERITY_ERROR
-            : BuildContext.SEVERITY_WARNING, null);
+            ? BuildContext.Severity.ERROR
+            : BuildContext.Severity.WARNING, null);
       }
     }
 

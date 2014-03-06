@@ -77,7 +77,8 @@ public class CompilerJavacLauncher {
       }
 
       @Override
-      public void addMessage(String path, int line, int column, String message, int kind) {
+      public void addMessage(String path, int line, int column, String message,
+          BuildContext.Severity kind) {
         if (".".equals(path)) {
           // TODO
         } else {

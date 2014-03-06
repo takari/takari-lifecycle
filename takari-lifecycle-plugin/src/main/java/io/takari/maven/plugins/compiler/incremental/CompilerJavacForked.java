@@ -176,7 +176,7 @@ public class CompilerJavacForked {
               String path = URLDecoder.decode(st.nextToken(), ENCODING);
               int line = Integer.parseInt(st.nextToken());
               int column = Integer.parseInt(st.nextToken());
-              int severity = toSeverity(st.nextToken());
+              BuildContext.Severity severity = toSeverity(st.nextToken());
               String message = URLDecoder.decode(st.nextToken(), ENCODING);
               callback.addMessage(path, line, column, message, severity);
             }
@@ -187,15 +187,16 @@ public class CompilerJavacForked {
       }
     }
 
-    private static int toSeverity(String token) {
-      return "E".equals(token) ? BuildContext.SEVERITY_ERROR : BuildContext.SEVERITY_WARNING;
+    private static BuildContext.Severity toSeverity(String token) {
+      return "E".equals(token) ? BuildContext.Severity.ERROR : BuildContext.Severity.WARNING;
     }
   }
 
   public static interface CompilerOutputProcessor {
     public void processOutput(File file);
 
-    public void addMessage(String path, int line, int column, String message, int kind);
+    public void addMessage(String path, int line, int column, String message,
+        BuildContext.Severity kind);
   }
 
   static Writer newWriter(File file) throws IOException {
