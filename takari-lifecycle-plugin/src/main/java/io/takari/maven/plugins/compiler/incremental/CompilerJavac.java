@@ -2,6 +2,7 @@ package io.takari.maven.plugins.compiler.incremental;
 
 import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.Input;
+import io.takari.incrementalbuild.spi.DefaultBuildContext;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -56,11 +57,11 @@ public class CompilerJavac {
 
   };
 
-  private final BuildContext context;
+  private final DefaultBuildContext<?> context;
 
   private final AbstractCompileMojo config;
 
-  public CompilerJavac(BuildContext context, AbstractCompileMojo config) {
+  public CompilerJavac(DefaultBuildContext<?> context, AbstractCompileMojo config) {
     this.context = context;
     this.config = config;
   }
@@ -89,8 +90,19 @@ public class CompilerJavac {
         new DiagnosticCollector<JavaFileObject>();
     final StandardJavaFileManager standardFileManager =
         compiler.getStandardFileManager(diagnosticCollector, null, sourceEncoding);
-    final Iterable<? extends JavaFileObject> fileObjects =
-        standardFileManager.getJavaFileObjectsFromFiles(config.getSources());
+    final InputMetadataIterable<File> sources =
+        new InputMetadataIterable<File>(context.registerInputs(config.getSources()));
+    final Iterable<? extends JavaFileObject> javaSources =
+        standardFileManager.getJavaFileObjectsFromFiles(sources);
+
+    boolean deleted = context.getRemovedInputs(File.class).iterator().hasNext();
+
+    // javac does not provide information about inter-class dependencies
+    // if any of the sources changed, all sources need to be recompiled
+    if (sources.isUnmodified() && !deleted) {
+      return;
+    }
+
     final Iterable<String> options = config.getCompilerOptions();
     final RecordingJavaFileManager recordingFileManager =
         new RecordingJavaFileManager(standardFileManager) {
@@ -105,9 +117,13 @@ public class CompilerJavac {
         diagnosticCollector, // diagnostic listener
         options, //
         null, // Iterable<String> classes to process by annotation processor(s)
-        fileObjects);
+        javaSources);
 
     task.call();
+
+    for (JavaFileObject source : javaSources) {
+      context.registerInput(new File(source.toUri())).process();
+    }
 
     for (Diagnostic<? extends JavaFileObject> diagnostic : diagnosticCollector.getDiagnostics()) {
       JavaFileObject source = diagnostic.getSource();

@@ -2,21 +2,25 @@ package io.takari.maven.plugins.compiler.incremental;
 
 import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.Input;
+import io.takari.incrementalbuild.BuildContext.InputMetadata;
+import io.takari.incrementalbuild.BuildContext.ResourceStatus;
+import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.maven.plugins.compiler.incremental.CompilerJavacForked.CompilerConfiguration;
 import io.takari.maven.plugins.compiler.incremental.CompilerJavacForked.CompilerOutput;
 import io.takari.maven.plugins.compiler.incremental.CompilerJavacForked.CompilerOutputProcessor;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.exec.ShutdownHookProcessDestroyer;
 
 public class CompilerJavacLauncher {
 
-  private final BuildContext context;
+  private final DefaultBuildContext<?> context;
 
   private final AbstractCompileMojo config;
 
@@ -26,7 +30,7 @@ public class CompilerJavacLauncher {
 
   private File buildDirectory;
 
-  public CompilerJavacLauncher(BuildContext context, AbstractCompileMojo config) {
+  public CompilerJavacLauncher(DefaultBuildContext<?> context, AbstractCompileMojo config) {
     this.context = context;
     this.config = config;
   }
@@ -42,9 +46,23 @@ public class CompilerJavacLauncher {
     }
   }
 
-  private void compile(File options, File output) throws IOException, ExecuteException {
-    new CompilerConfiguration(config.getSourceEncoding(), config.getCompilerOptions(),
-        config.getSources()).write(options);
+  private void compile(File options, File output) throws IOException {
+    List<File> sources = new ArrayList<File>();
+
+    boolean unmodified = true;
+    for (InputMetadata<File> source : context.registerInputs(config.getSources())) {
+      unmodified = unmodified && source.getStatus() == ResourceStatus.UNMODIFIED;
+      sources.add(source.getResource());
+    }
+
+    boolean deleted = context.getRemovedInputs(File.class).iterator().hasNext();
+
+    if (unmodified && !deleted) {
+      return;
+    }
+
+    new CompilerConfiguration(config.getSourceEncoding(), config.getCompilerOptions(), sources)
+        .write(options);
 
     // use the same JVM as the one used to run Maven (the "java.home" one)
     String executable =
@@ -68,7 +86,12 @@ public class CompilerJavacLauncher {
     // best effort to avoid orphaned child process
     executor.setProcessDestroyer(new ShutdownHookProcessDestroyer());
     executor.setWorkingDirectory(basedir);
-    executor.execute(cli);
+
+    executor.execute(cli); // this throws ExecuteException if process return code != 0
+
+    for (File source : sources) {
+      context.registerInput(source).process();
+    }
 
     CompilerOutput.process(output, new CompilerOutputProcessor() {
       @Override
