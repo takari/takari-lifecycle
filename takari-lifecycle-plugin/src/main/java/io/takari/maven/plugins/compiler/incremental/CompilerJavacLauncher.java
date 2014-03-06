@@ -56,8 +56,8 @@ public class CompilerJavacLauncher {
     CommandLine cli = new CommandLine(executable);
     cli.addArguments(new String[] {"-cp", jar.getAbsolutePath()});
     cli.addArgument(CompilerJavacForked.class.getName());
-    cli.addArgument(options.getAbsolutePath());
-    cli.addArgument(output.getAbsolutePath());
+    cli.addArgument(options.getAbsolutePath(), false);
+    cli.addArgument(output.getAbsolutePath(), false);
 
     DefaultExecutor executor = new DefaultExecutor();
     // ExecuteWatchdog watchdog = null;

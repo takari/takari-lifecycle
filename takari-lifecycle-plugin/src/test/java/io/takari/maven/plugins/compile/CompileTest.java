@@ -14,6 +14,7 @@ import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.testing.resources.TestResources;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -114,4 +115,12 @@ public class CompileTest {
 
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), "classpath/Classpath.class");
   }
+
+  @Test
+  public void testSpace() throws Exception {
+    File basedir = compile("compile/spa ce");
+    Assert.assertTrue(basedir.getAbsolutePath().contains(" "));
+    mojos.assertBuildOutputs(new File(basedir, "target/classes"), "space/Space.class");
+  }
+
 }
