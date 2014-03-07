@@ -1,6 +1,6 @@
 package io.tesla.maven.plugins.compiler;
 
-import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
+import io.takari.maven.plugins.compile.CompileRule;
 
 import java.io.File;
 
@@ -14,7 +14,7 @@ public abstract class AbstractCompileMojoTest {
   public final TestResources resources = new TestResources();
 
   @Rule
-  public final IncrementalBuildRule mojos = new IncrementalBuildRule();
+  public final CompileRule mojos = new CompileRule();
 
   protected void compile(File basedir) throws Exception {
     mojos.executeMojo(basedir, "compileXXX");

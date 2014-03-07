@@ -1,4 +1,4 @@
-package io.tesla.maven.plugins.compilerXXX.jdt;
+package io.takari.maven.plugins.compiler.incremental;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -17,11 +17,15 @@ import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
 
 import com.google.common.base.Charsets;
 
-public class ClassFileDigester {
+/**
+ * Adopted from {@link ClassFileReader#hasStructuralChanges(byte[], boolean, boolean)}
+ */
+public class ClassfileDigester {
 
+  // TODO use Guava Hasher
   private final MessageDigest digester;
 
-  public ClassFileDigester() {
+  public ClassfileDigester() {
     try {
       digester = MessageDigest.getInstance("SHA1");
     } catch (NoSuchAlgorithmException e) {
@@ -29,9 +33,6 @@ public class ClassFileDigester {
     }
   }
 
-  /**
-   * Adopted from {@link ClassFileReader#hasStructuralChanges(byte[], boolean, boolean)}
-   */
   public byte[] digest(ClassFileReader classFile) {
 
     // type level comparison

@@ -1,7 +1,6 @@
 package io.takari.maven.plugins.compile;
 
 import static org.apache.maven.plugin.testing.resources.TestResources.cp;
-import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 import io.takari.maven.plugins.compiler.incremental.AbstractCompileMojo.Proc;
 
 import java.io.File;
@@ -24,11 +23,12 @@ import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public abstract class AbstractCompileTest {
+
   @Rule
   public final TestResources resources = new TestResources();
 
   @Rule
-  public final IncrementalBuildRule mojos = new IncrementalBuildRule();
+  public final CompileRule mojos = new CompileRule();
 
   private final String compilerId;
 
@@ -49,12 +49,16 @@ public abstract class AbstractCompileTest {
 
   protected File compile(String name) throws Exception {
     File basedir = resources.getBasedir(name);
-    compile(basedir);
+    return compile(basedir);
+  }
+
+  protected File compile(File basedir, Xpp3Dom... parameters) throws Exception {
+    MavenProject project = mojos.readMavenProject(basedir);
+    compile(project, parameters);
     return basedir;
   }
 
-  protected void compile(File basedir, Xpp3Dom... parameters) throws Exception {
-    MavenProject project = mojos.readMavenProject(basedir);
+  protected void compile(MavenProject project, Xpp3Dom... parameters) throws Exception {
     MavenSession session = mojos.newMavenSession(project);
     MojoExecution execution = newMojoExecution();
 

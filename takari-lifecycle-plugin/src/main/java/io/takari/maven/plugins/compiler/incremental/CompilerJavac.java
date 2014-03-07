@@ -99,7 +99,7 @@ public class CompilerJavac {
 
     // javac does not provide information about inter-class dependencies
     // if any of the sources changed, all sources need to be recompiled
-    if (sources.isUnmodified() && !deleted) {
+    if (sources.isUnmodified() && !deleted && config.getChangedDependencyTypes().isEmpty()) {
       return;
     }
 

@@ -85,6 +85,11 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Component
   private DefaultBuildContext<?> context;
 
+  @Component
+  private ProjectClasspathDigester digester;
+
+  private Set<String> changedDependencyTypes;
+
   public Charset getSourceEncoding() {
     // TODO
     // final Charset sourceCharset = sourceEncoding == null ? null :
@@ -121,7 +126,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
   public abstract File getOutputDirectory();
 
-  public abstract List<String> getClasspathElements();
+  public abstract List<Artifact> getCompileArtifacts();
 
   public abstract File getGeneratedSourcesDirectory();
 
@@ -180,13 +185,25 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
   public String getClasspath() {
     StringBuilder cp = new StringBuilder();
-    for (String cpe : getClasspathElements()) {
-      if (cp.length() > 0) {
-        cp.append(File.pathSeparatorChar);
+    cp.append(getOutputDirectory().getAbsolutePath());
+    for (Artifact cpe : getCompileArtifacts()) {
+      File file = cpe.getFile();
+      if (file != null) {
+        if (cp.length() > 0) {
+          cp.append(File.pathSeparatorChar);
+        }
+        cp.append(file.getAbsolutePath());
       }
-      cp.append(cpe);
     }
     return cp.toString();
+  }
+
+  /**
+   * Returns set of dependency types that changed structurally compared to the previous build,
+   * including new and deleted dependency types.
+   */
+  public Set<String> getChangedDependencyTypes() {
+    return changedDependencyTypes;
   }
 
   @Override
@@ -197,18 +214,22 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       mkdirs(getGeneratedSourcesDirectory());
     }
 
-    if (!fork) {
-      new CompilerJavac(context, this).compile();
-    } else {
-      CompilerJavacLauncher compiler = new CompilerJavacLauncher(context, this);
-      compiler.setBasedir(basedir);
-      compiler.setJar(artifact.getFile());
-      compiler.setBuildDirectory(buildDirectory);
-      try {
+    try {
+      this.changedDependencyTypes = digester.digestDependencies(getCompileArtifacts());
+
+      if (!fork) {
+        new CompilerJavac(context, this).compile();
+      } else {
+        CompilerJavacLauncher compiler = new CompilerJavacLauncher(context, this);
+        compiler.setBasedir(basedir);
+        compiler.setJar(artifact.getFile());
+        compiler.setBuildDirectory(buildDirectory);
         compiler.compile();
-      } catch (IOException e) {
-        throw new MojoExecutionException("Could not execute compiler", e);
       }
+
+      digester.writeTypeIndex(getOutputDirectory());
+    } catch (IOException e) {
+      throw new MojoExecutionException("Could not compile project", e);
     }
   }
 

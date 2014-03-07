@@ -1,6 +1,8 @@
 package io.takari.maven.plugins.compile;
 
 import io.takari.maven.plugins.compiler.incremental.AbstractCompileMojo.Proc;
+import io.takari.maven.plugins.compiler.incremental.ClasspathEntryDigester;
+import io.takari.maven.plugins.compiler.incremental.ClasspathEntryIndex;
 
 import java.io.File;
 
@@ -33,7 +35,13 @@ public class CompileTest extends AbstractCompileTest {
   @Test
   public void testBasic() throws Exception {
     File basedir = compile("compile/basic");
-    mojos.assertBuildOutputs(new File(basedir, "target/classes"), "basic/Basic.class");
+    File classes = new File(basedir, "target/classes");
+    mojos.assertBuildOutputs(classes, "basic/Basic.class");
+    Assert.assertTrue(new File(classes, ClasspathEntryDigester.TYPE_INDEX_LOCATION).isFile());
+    ClasspathEntryIndex index =
+        new ClasspathEntryDigester().readIndex(classes, mojos.getStartTime());
+    Assert.assertTrue(index.isPersistent());
+    Assert.assertEquals(1, index.getIndex().get("basic.Basic").size());
   }
 
   @Test

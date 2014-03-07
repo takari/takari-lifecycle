@@ -1,11 +1,14 @@
 package io.takari.maven.plugins.compiler.incremental;
 
+import io.takari.incrementalbuild.configuration.Configuration;
+
 import java.io.File;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -34,8 +37,9 @@ public class CompileMojo extends AbstractCompileMojo {
   /**
    * Project classpath.
    */
-  @Parameter(defaultValue = "${project.compileClasspathElements}", readonly = true, required = true)
-  private List<String> classpathElements;
+  @Parameter(defaultValue = "${project.compileArtifacts}", readonly = true, required = true)
+  @Configuration(ignored = true)
+  private List<Artifact> compileArtifacts;
 
   /**
    * The directory for compiled classes.
@@ -75,8 +79,8 @@ public class CompileMojo extends AbstractCompileMojo {
   }
 
   @Override
-  public List<String> getClasspathElements() {
-    return classpathElements;
+  public List<Artifact> getCompileArtifacts() {
+    return compileArtifacts;
   }
 
   public File getGeneratedSourcesDirectory() {

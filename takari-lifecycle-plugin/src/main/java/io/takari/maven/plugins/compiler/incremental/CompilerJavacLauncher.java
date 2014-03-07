@@ -57,7 +57,7 @@ public class CompilerJavacLauncher {
 
     boolean deleted = context.getRemovedInputs(File.class).iterator().hasNext();
 
-    if (unmodified && !deleted) {
+    if (unmodified && !deleted && config.getChangedDependencyTypes().isEmpty()) {
       return;
     }
 

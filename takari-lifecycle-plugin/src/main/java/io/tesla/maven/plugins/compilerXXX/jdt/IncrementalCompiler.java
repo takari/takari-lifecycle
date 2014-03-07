@@ -5,23 +5,17 @@ import io.takari.incrementalbuild.BuildContext.InputMetadata;
 import io.takari.incrementalbuild.spi.CapabilitiesProvider;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.incrementalbuild.spi.DefaultInput;
-import io.takari.incrementalbuild.spi.DefaultInputMetadata;
 import io.takari.incrementalbuild.spi.DefaultOutput;
 import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
+import io.takari.maven.plugins.compiler.incremental.ProjectClasspathDigester;
 import io.tesla.maven.plugins.compilerXXX.AbstractInternalCompiler;
 import io.tesla.maven.plugins.compilerXXX.InternalCompilerConfiguration;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -30,7 +24,6 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
-import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 import org.eclipse.jdt.core.compiler.CharOperation;
@@ -43,8 +36,6 @@ import org.eclipse.jdt.internal.compiler.IErrorHandlingPolicy;
 import org.eclipse.jdt.internal.compiler.IProblemFactory;
 import org.eclipse.jdt.internal.compiler.batch.CompilationUnit;
 import org.eclipse.jdt.internal.compiler.batch.FileSystem.Classpath;
-import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
-import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
 import org.eclipse.jdt.internal.compiler.env.INameEnvironment;
 import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
@@ -52,18 +43,10 @@ import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.eclipse.jdt.internal.compiler.util.SuffixConstants;
 import org.eclipse.jdt.internal.core.builder.ProblemFactory;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Multimap;
-
 public class IncrementalCompiler extends AbstractInternalCompiler implements ICompilerRequestor {
 
   private static final String CAPABILITY_TYPE = "jdt.type";
   private static final String CAPABILITY_SIMPLE_TYPE = "jdt.simpleType";
-
-  private static final String KEY_TYPE = "jdt.type";
-  private static final String KEY_HASH = "jdt.hash";
-  private static final String KEY_CLASSPATH_DIGEST = "jdt.classpath.digest";
 
   private final DefaultBuildContext<?> context;
 
@@ -77,13 +60,14 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
    */
   private final Set<File> processedSources = new LinkedHashSet<File>();
 
-  private final ClassPathDigester digester = new ClassPathDigester();
+  private final ProjectClasspathDigester digester;
 
   @Inject
-  public IncrementalCompiler(InternalCompilerConfiguration mojo, DefaultBuildContext<?> context) {
+  public IncrementalCompiler(InternalCompilerConfiguration mojo, DefaultBuildContext<?> context,
+      ProjectClasspathDigester digester) {
     super(mojo);
-
     this.context = (DefaultBuildContext<?>) context;
+    this.digester = digester;
   }
 
   @Override
@@ -113,7 +97,7 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
         enqueue(context.registerAndProcessInputs(getSourceFileSet(sourceRoot)));
       }
 
-      for (String type : getChangedDependencyTypes()) {
+      for (String type : digester.digestDependencies(getCompileArtifacts())) {
         for (InputMetadata<File> input : context.getDependentInputs(CAPABILITY_TYPE, type)) {
           enqueue(input.getResource());
         }
@@ -141,111 +125,10 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
       }
 
       // write type index file
-      Multimap<String, byte[]> index = ArrayListMultimap.create();
-      for (BuildContext.OutputMetadata<File> output : context.getProcessedOutputs()) {
-        String type = output.getValue(KEY_TYPE, String.class);
-        byte[] hash = output.getValue(KEY_HASH, byte[].class);
-        index.put(type, hash);
-      }
-      digester.writeIndex(getOutputDirectory(), index);
+      digester.writeTypeIndex(getOutputDirectory());
     } catch (IOException e) {
       throw new MojoExecutionException("Unexpected IOException during compilation", e);
     }
-  }
-
-  /**
-   * Returns set of dependency types that changed structurally compared to the previous build,
-   * including new and deleted dependency types.
-   */
-  private Set<String> getChangedDependencyTypes() throws IOException {
-    ArrayListMultimap<String, byte[]> newIndex = ArrayListMultimap.create();
-
-    for (Artifact dependency : getCompileArtifacts()) {
-      mergeTypeIndex(newIndex, dependency);
-    }
-
-    // pom.xml represent overall process classpath
-    DefaultInputMetadata<File> pomMetadata = context.registerInput(getPom());
-    Multimap<String, byte[]> oldIndex = getTypeIndex(pomMetadata);
-    pomMetadata.process().setValue(KEY_CLASSPATH_DIGEST, newIndex);
-
-    return diff(oldIndex, newIndex);
-  }
-
-  private void mergeTypeIndex(Multimap<String, byte[]> newIndex, Artifact dependency)
-      throws IOException {
-    DefaultInputMetadata<File> metadata = null;
-    Multimap<String, byte[]> typeIndex = null;
-
-    File file = dependency.getFile();
-    if (file.isFile()) {
-      metadata = context.registerInput(file);
-      typeIndex = getTypeIndex(metadata);
-    }
-
-    if (typeIndex == null) {
-      typeIndex = digester.readIndex(file);
-    }
-
-    if (metadata != null) {
-      // XXX do this for legacy dependency jars only
-      // for modern jars this only wastes context state
-      metadata.process().setValue(KEY_CLASSPATH_DIGEST, ImmutableMultimap.copyOf(typeIndex));
-    }
-
-    newIndex.putAll(typeIndex);
-  }
-
-  private Set<String> diff(Multimap<String, byte[]> left, Multimap<String, byte[]> right) {
-    if (left == null) {
-      if (right != null) {
-        return right.keySet();
-      }
-      return Collections.emptySet();
-    }
-    if (right == null) {
-      return Collections.emptySet();
-    }
-    Set<String> result = new HashSet<String>();
-    for (Map.Entry<String, Collection<byte[]>> entry : left.asMap().entrySet()) {
-      String type = entry.getKey();
-      if (!equals(entry.getValue(), right.get(type))) {
-        result.add(type);
-      }
-    }
-    for (Map.Entry<String, Collection<byte[]>> entry : right.asMap().entrySet()) {
-      String type = entry.getKey();
-      if (!left.containsKey(type)) {
-        result.add(type);
-      }
-    }
-    return result;
-  }
-
-  @SuppressWarnings("unchecked")
-  private Multimap<String, byte[]> getTypeIndex(DefaultInputMetadata<?> dependency) {
-    return (Multimap<String, byte[]>) dependency.getValue(KEY_CLASSPATH_DIGEST, Serializable.class);
-  }
-
-  private static boolean equals(Collection<byte[]> a, Collection<byte[]> b) {
-    if (a == null) {
-      return b == null;
-    }
-    if (b == null) {
-      return false;
-    }
-    if (a.size() != b.size()) {
-      return false;
-    }
-    // NB classpath order is important
-    Iterator<byte[]> ai = a.iterator();
-    Iterator<byte[]> bi = b.iterator();
-    while (ai.hasNext()) {
-      if (!Arrays.equals(ai.next(), bi.next())) {
-        return false;
-      }
-    }
-    return true;
   }
 
   private void enqueueAffectedInputs(CapabilitiesProvider output) {
@@ -385,20 +268,7 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
     final char[][] compoundName = classFile.getCompoundName();
     final String type = CharOperation.toString(compoundName);
 
-    boolean significantChange = true;
-    try {
-      ClassFileReader reader =
-          new ClassFileReader(bytes, outputFile.getAbsolutePath().toCharArray());
-      byte[] hash = digester.digestClass(reader);
-      if (hash != null) {
-        output.setValue(KEY_TYPE, type);
-        byte[] oldHash = (byte[]) output.setValue(KEY_HASH, hash);
-        significantChange = oldHash == null || !Arrays.equals(hash, oldHash);
-      }
-    } catch (ClassFormatException e) {
-      // this is a bug in jdt compiler if it can't parse class files it just generated
-      throw new IllegalStateException("Could not calculate .class file digest", e);
-    }
+    boolean significantChange = digester.digestClassFile(output, bytes);
 
     output.addCapability(CAPABILITY_TYPE, type);
     output.addCapability(CAPABILITY_SIMPLE_TYPE, new String(compoundName[compoundName.length - 1]));
