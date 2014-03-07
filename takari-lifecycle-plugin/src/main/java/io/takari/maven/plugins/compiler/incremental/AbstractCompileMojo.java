@@ -33,9 +33,12 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   private String source;
 
   /**
-   * The -target argument for the Java compiler.
+   * The -target argument for the Java compiler. The default depends on the value of {@code source}
+   * as defined in javac documentation.
+   * 
+   * @see http://docs.oracle.com/javase/6/docs/technotes/tools/solaris/javac.html
    */
-  @Parameter(property = "maven.compiler.target", defaultValue = "1.6")
+  @Parameter(property = "maven.compiler.target")
   private String target;
 
   /**
@@ -141,11 +144,13 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     options.add("-d");
     options.add(getOutputDirectory().getAbsolutePath());
 
-    options.add("-target");
-    options.add(getTarget());
-
     options.add("-source");
     options.add(getSource());
+
+    if (getTarget() != null) {
+      options.add("-target");
+      options.add(getTarget());
+    }
 
     options.add("-classpath");
     options.add(getClasspath());

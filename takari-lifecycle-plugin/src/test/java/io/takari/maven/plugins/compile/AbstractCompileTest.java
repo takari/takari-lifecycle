@@ -53,10 +53,17 @@ public abstract class AbstractCompileTest {
     return basedir;
   }
 
-  protected void compile(File basedir) throws Exception {
+  protected void compile(File basedir, Xpp3Dom... parameters) throws Exception {
     MavenProject project = mojos.readMavenProject(basedir);
     MavenSession session = mojos.newMavenSession(project);
     MojoExecution execution = newMojoExecution();
+
+    if (parameters != null) {
+      Xpp3Dom configuration = execution.getConfiguration();
+      for (Xpp3Dom parameter : parameters) {
+        configuration.addChild(parameter);
+      }
+    }
 
     mojos.executeMojo(session, project, execution);
   }
@@ -80,9 +87,13 @@ public abstract class AbstractCompileTest {
   }
 
   private void add(Xpp3Dom configuration, String name, String value) {
+    configuration.addChild(newParameter(name, value));
+  }
+
+  protected Xpp3Dom newParameter(String name, String value) {
     Xpp3Dom child = new Xpp3Dom(name);
     child.setValue(value);
-    configuration.addChild(child);
+    return child;
   }
 
   protected File procCompile(String projectName, Proc proc) throws Exception, IOException {
