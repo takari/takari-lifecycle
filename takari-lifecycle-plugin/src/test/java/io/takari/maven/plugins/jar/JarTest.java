@@ -2,11 +2,16 @@ package io.takari.maven.plugins.jar;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import io.takari.hash.FingerprintSha1Streaming;
 import io.takari.incrementalbuild.maven.testing.BuildAvoidanceRule;
 
 import java.io.File;
+import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.Properties;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import org.apache.maven.plugin.testing.resources.TestResources;
 import org.junit.Assert;
@@ -25,7 +30,9 @@ public class JarTest {
 
   @Test
   public void resources() throws Exception {
+    //
     // Generate some resources to JAR
+    //
     File basedir = resources.getBasedir("jar/project-with-resources");
     mojos.executeMojo(basedir, "process-resources");
     File resource = new File(basedir, "target/classes/resource.txt");
@@ -33,7 +40,7 @@ public class JarTest {
     String line = Files.readFirstLine(resource, Charset.defaultCharset());
     assertTrue(line.contains("resource.txt"));
     //
-    // Generate the JAR a first time and use our jar fingerprinting
+    // Generate the JAR a first time and capture the fingerprint
     //
     mojos.executeMojo(basedir, "jar");
     File jar0 = new File(basedir, "target/test-1.0.jar");
@@ -41,7 +48,7 @@ public class JarTest {
     String fingerprint0 = new FingerprintSha1Streaming().fingerprint(jar0);
     //
     // Generate the JAR a second time and ensure that the fingerprint is still the same when
-    // the JAR contains the same content. The outer SHA1 of a JAR built at two points in time will
+    // the JAR content is the same. The outer SHA1 of a JAR built at two points in time will
     // be different even though the content has not changed.
     //
     mojos.executeMojo(basedir, "jar");
@@ -50,5 +57,20 @@ public class JarTest {
     String fingerprint1 = new FingerprintSha1Streaming().fingerprint(jar1);
     assertEquals("We expect the JAR to have the same fingerprint after repeated builds.",
         fingerprint0, fingerprint1);
+
+    // Make sure our maven properties file is written correctly
+    ZipFile zip = new ZipFile(jar1);
+    String pomProperties = "META-INF/io.takari.lifecycle.its/test/pom.properties";
+    ZipEntry entry = zip.getEntry(pomProperties);
+    if (entry != null) {
+      InputStream is = zip.getInputStream(entry);
+      Properties p = new Properties();
+      p.load(is);
+      assertEquals("io.takari.lifecycle.its", p.getProperty("groupId"));
+      assertEquals("test", p.getProperty("artifactId"));
+      assertEquals("1.0", p.getProperty("version"));
+    } else {
+      fail("We expected the standard pom.properties: " + pomProperties);
+    }
   }
 }

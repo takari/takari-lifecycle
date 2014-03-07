@@ -4,7 +4,9 @@ import io.takari.maven.plugins.TakariLifecycleMojo;
 import io.tesla.proviso.archive.Archiver;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -46,6 +48,7 @@ public class Jar extends TakariLifecycleMojo {
     //
     File jar = new File(outputDirectory, String.format("%s.jar", finalName));
     try {
+      createPomPropertiesFile();
       archiver.archive(jar, classesDirectory);
       project.getArtifact().setFile(jar);
     } catch (IOException e) {
@@ -71,5 +74,20 @@ public class Jar extends TakariLifecycleMojo {
         throw new MojoExecutionException(e.getMessage(), e);
       }
     }
+  }
+
+  private void createPomPropertiesFile() throws IOException {
+    JarProperties p = new JarProperties();
+    p.setProperty("groupId", project.getGroupId());
+    p.setProperty("artifactId", project.getArtifactId());
+    p.setProperty("version", project.getVersion());
+    File mavenPropertiesFile =
+        new File(classesDirectory, String.format("META-INF/%s/%s/pom.properties",
+            project.getGroupId(), project.getArtifactId()));
+    if (!mavenPropertiesFile.getParentFile().exists()) {
+      mavenPropertiesFile.getParentFile().mkdirs();
+    }
+    OutputStream os = new FileOutputStream(mavenPropertiesFile);
+    p.store(os);
   }
 }
