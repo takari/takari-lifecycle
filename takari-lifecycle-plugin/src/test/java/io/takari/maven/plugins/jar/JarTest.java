@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import io.takari.hash.FingerprintSha1Streaming;
-import io.takari.incrementalbuild.maven.testing.BuildAvoidanceRule;
+import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 
 import java.io.File;
 import java.io.InputStream;
@@ -26,7 +26,7 @@ public class JarTest {
   public final TestResources resources = new TestResources();
 
   @Rule
-  public final BuildAvoidanceRule mojos = new BuildAvoidanceRule();
+  public final IncrementalBuildRule mojos = new IncrementalBuildRule();
 
   @Test
   public void resources() throws Exception {
