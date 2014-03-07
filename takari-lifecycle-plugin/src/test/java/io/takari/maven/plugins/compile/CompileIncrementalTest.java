@@ -8,9 +8,9 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class IncrementalCompileTest extends AbstractCompileTest {
+public class CompileIncrementalTest extends AbstractCompileTest {
 
-  public IncrementalCompileTest(String compilerId, boolean fork) {
+  public CompileIncrementalTest(String compilerId, boolean fork) {
     super(compilerId, fork);
   }
 
