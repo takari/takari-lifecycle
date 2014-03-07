@@ -60,17 +60,21 @@ public class JarTest {
 
     // Make sure our maven properties file is written correctly
     ZipFile zip = new ZipFile(jar1);
-    String pomProperties = "META-INF/io.takari.lifecycle.its/test/pom.properties";
-    ZipEntry entry = zip.getEntry(pomProperties);
-    if (entry != null) {
-      InputStream is = zip.getInputStream(entry);
-      Properties p = new Properties();
-      p.load(is);
-      assertEquals("io.takari.lifecycle.its", p.getProperty("groupId"));
-      assertEquals("test", p.getProperty("artifactId"));
-      assertEquals("1.0", p.getProperty("version"));
-    } else {
-      fail("We expected the standard pom.properties: " + pomProperties);
+    try {
+      String pomProperties = "META-INF/io.takari.lifecycle.its/test/pom.properties";
+      ZipEntry entry = zip.getEntry(pomProperties);
+      if (entry != null) {
+        InputStream is = zip.getInputStream(entry);
+        Properties p = new Properties();
+        p.load(is);
+        assertEquals("io.takari.lifecycle.its", p.getProperty("groupId"));
+        assertEquals("test", p.getProperty("artifactId"));
+        assertEquals("1.0", p.getProperty("version"));
+      } else {
+        fail("We expected the standard pom.properties: " + pomProperties);
+      }
+    } finally {
+      zip.close();
     }
   }
 }
