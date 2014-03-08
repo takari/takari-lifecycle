@@ -12,7 +12,6 @@ import javax.inject.Singleton;
 import org.codehaus.plexus.util.Base64;
 import org.codehaus.plexus.util.DirectoryScanner;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
-import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,6 +60,7 @@ public class ClasspathEntryDigester {
     try {
       ZipEntry indexEntry = zip.getEntry(TYPE_INDEX_LOCATION);
       if (indexEntry != null) {
+        // modern zip, use provided type index
         InputStream is = zip.getInputStream(indexEntry);
         try {
           persisted = true;
@@ -69,22 +69,18 @@ public class ClasspathEntryDigester {
           is.close();
         }
       } else {
+        // this is a legacy zip that does not provide type index
+        // use the zip simple hash for all zip entries for now
+        // if zip changes, all entries will be assumed changed
         persisted = false;
         index = ArrayListMultimap.create();
+        byte[] hash = getSimpleHash(file);
         Enumeration<? extends ZipEntry> entries = zip.entries();
         while (entries.hasMoreElements()) {
           ZipEntry entry = entries.nextElement();
           String fileName = entry.getName();
           if (entry.getName().endsWith(".class")) {
-            InputStream is = zip.getInputStream(entry);
-            try {
-              byte[] hash = digest(is, fileName);
-              if (hash != null) {
-                index.put(pathToType(fileName), hash);
-              }
-            } finally {
-              is.close();
-            }
+            index.put(pathToType(fileName), hash);
           }
         }
       }
@@ -96,13 +92,22 @@ public class ClasspathEntryDigester {
     return new ClasspathEntryIndex(index, persisted);
   }
 
-  private byte[] digest(InputStream inputStream, String fileName) throws IOException {
-    try {
-      return digestClass(ClassFileReader.read(inputStream, fileName));
-    } catch (ClassFormatException e) {
-      // as far as jdt compiler is concerned, the class is not present
-    }
-    return null;
+  private byte[] getSimpleHash(File file) {
+    byte[] hash = new byte[16];
+    toByteArray(hash, 0, file.length());
+    toByteArray(hash, 8, file.lastModified());
+    return hash;
+  }
+
+  private void toByteArray(byte[] bytes, int offset, long value) {
+    bytes[offset + 0] = (byte) ((value >> 0x00) & 0xFF);
+    bytes[offset + 1] = (byte) ((value >> 0x08) & 0xFF);
+    bytes[offset + 2] = (byte) ((value >> 0x10) & 0xFF);
+    bytes[offset + 3] = (byte) ((value >> 0x18) & 0xFF);
+    bytes[offset + 4] = (byte) ((value >> 0x20) & 0xFF);
+    bytes[offset + 5] = (byte) ((value >> 0x28) & 0xFF);
+    bytes[offset + 6] = (byte) ((value >> 0x30) & 0xFF);
+    bytes[offset + 7] = (byte) ((value >> 0x38) & 0xFF);
   }
 
   public byte[] digestClass(ClassFileReader reader) {
@@ -160,23 +165,13 @@ public class ClasspathEntryDigester {
         File file = new File(dir, rpath);
         if (persistedIndex != null && file.lastModified() <= timestamp) {
           // the file was last modified before persisted index was created
-          // use existing hash(es) if available
+          // use existing hash(es)
           hashes = persistedIndex.get(type);
         }
         if (hashes == null) {
-          InputStream is = new FileInputStream(file);
-          try {
-            byte[] hash = digest(is, rpath);
-            if (hash != null) {
-              hashes = Collections.singleton(hash);
-            }
-          } finally {
-            is.close();
-          }
+          hashes = Collections.singleton(getSimpleHash(file));
         }
-        if (hashes != null) {
-          index.putAll(type, hashes);
-        }
+        index.putAll(type, hashes);
       }
     }
     log.info("dir {} persistent {} size {} {} ms", dir, persisted, index.size(),

@@ -119,7 +119,7 @@ public class ClasspathEntryDigesterTest {
 
     ClasspathEntryIndex index = digester.readIndex(classes, now);
     Assert.assertFalse(index.isPersistent());
-    Assert.assertEquals(3, index.getIndex().size());
+    Assert.assertEquals(5, index.getIndex().size());
     Assert.assertTrue(Arrays.equals(knownHash, getHash(index, "folder.OuterClass")));
     Assert.assertFalse(Arrays.equals(knownHash, getHash(index, "folder.FolderClassA")));
     Assert.assertFalse(Arrays.equals(knownHash, getHash(index, "folder.FolderClassB")));
