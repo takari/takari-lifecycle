@@ -5,11 +5,15 @@ import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.plugin.*;
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.codehaus.plexus.util.DirectoryScanner;
@@ -68,6 +72,17 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
    */
   @Parameter(defaultValue = "none")
   private Proc proc = Proc.none;
+
+  /**
+   * <p>
+   * Names of annotation processors to run. Only applies to JDK 1.6+ If not set, the default
+   * annotation processors discovery process applies.
+   * </p>
+   *
+   * @since 2.2
+   */
+  @Parameter
+  private String[] annotationProcessors;
 
   //
 
@@ -178,6 +193,18 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     if (isAnnotationProcessing()) {
       options.add("-s");
       options.add(getGeneratedSourcesDirectory().getAbsolutePath());
+
+      if (annotationProcessors != null) {
+        options.add("-processor");
+        StringBuilder processors = new StringBuilder();
+        for (String processor : annotationProcessors) {
+          if (processors.length() > 0) {
+            processors.append(',');
+          }
+          processors.append(processor);
+        }
+        options.add(processors.toString());
+      }
     }
 
     return options;

@@ -74,9 +74,7 @@ public abstract class AbstractCompileTest {
 
   protected MojoExecution newMojoExecution() {
     MojoExecution execution = mojos.newMojoExecution("compile-incremental");
-
-    Xpp3Dom configuration = execution.getConfiguration();
-    add(configuration, "fork", Boolean.toString(fork));
+    execution.getConfiguration().addChild(newParameter("fork", Boolean.toString(fork)));
     return execution;
   }
 
@@ -90,17 +88,14 @@ public abstract class AbstractCompileTest {
     project.setArtifacts(artifacts);
   }
 
-  private void add(Xpp3Dom configuration, String name, String value) {
-    configuration.addChild(newParameter(name, value));
-  }
-
   protected Xpp3Dom newParameter(String name, String value) {
     Xpp3Dom child = new Xpp3Dom(name);
     child.setValue(value);
     return child;
   }
 
-  protected File procCompile(String projectName, Proc proc) throws Exception, IOException {
+  protected File procCompile(String projectName, Proc proc, Xpp3Dom... parameters)
+      throws Exception, IOException {
     File processor = compile("compile/processor");
     cp(processor, "src/main/resources/META-INF/services/javax.annotation.processing.Processor",
         "target/classes/META-INF/services/javax.annotation.processing.Processor");
@@ -112,12 +107,18 @@ public abstract class AbstractCompileTest {
 
     addDependency(project, "processor", new File(processor, "target/classes"));
 
+    Xpp3Dom configuration = execution.getConfiguration();
+
     if (proc != null) {
-      add(execution.getConfiguration(), "proc", proc.name());
+      configuration.addChild(newParameter("proc", proc.name()));
+    }
+    if (parameters != null) {
+      for (Xpp3Dom parameter : parameters) {
+        configuration.addChild(parameter);
+      }
     }
 
     mojos.executeMojo(session, project, execution);
     return basedir;
   }
-
 }

@@ -90,7 +90,7 @@ public class CompileTest extends AbstractCompileTest {
   public void testProc_only() throws Exception {
     File basedir = procCompile("compile/proc", Proc.only);
     mojos.assertBuildOutputs(new File(basedir, "target/generated-sources/annotations"),
-        "proc/GeneratedSource.java");
+        "proc/GeneratedSource.java", "proc/AnotherGeneratedSource.java");
   }
 
   @Test
@@ -108,8 +108,22 @@ public class CompileTest extends AbstractCompileTest {
   @Test
   public void testProc_proc() throws Exception {
     File basedir = procCompile("compile/proc", Proc.proc);
-    mojos.assertBuildOutputs(new File(basedir, "target"), "classes/proc/Source.class",
-        "generated-sources/annotations/proc/GeneratedSource.java",
+    mojos.assertBuildOutputs(new File(basedir, "target"), //
+        "classes/proc/Source.class", //
+        "generated-sources/annotations/proc/GeneratedSource.java", //
+        "classes/proc/GeneratedSource.class", //
+        "generated-sources/annotations/proc/AnotherGeneratedSource.java", //
+        "classes/proc/AnotherGeneratedSource.class");
+  }
+
+  @Test
+  public void testProc_annotationProcessors() throws Exception {
+    Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
+    processors.addChild(newParameter("processor", "processor.Processor"));
+    File basedir = procCompile("compile/proc", Proc.proc, processors);
+    mojos.assertBuildOutputs(new File(basedir, "target"), //
+        "classes/proc/Source.class", //
+        "generated-sources/annotations/proc/GeneratedSource.java", //
         "classes/proc/GeneratedSource.class");
   }
 
