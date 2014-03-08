@@ -1,6 +1,6 @@
 package io.takari.maven.plugins.compiler.incremental;
 
-import io.takari.incrementalbuild.BuildContext;
+import io.takari.incrementalbuild.*;
 import io.takari.incrementalbuild.BuildContext.Input;
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
 import io.takari.incrementalbuild.BuildContext.ResourceStatus;
@@ -14,9 +14,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.exec.CommandLine;
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.ShutdownHookProcessDestroyer;
+import org.apache.commons.exec.*;
 
 public class CompilerJavacLauncher {
 
@@ -35,18 +33,18 @@ public class CompilerJavacLauncher {
     this.config = config;
   }
 
-  public void compile() throws IOException {
+  public int compile() throws IOException {
     File options = File.createTempFile("javac-forked", ".options", buildDirectory);
     File output = File.createTempFile("javac-forked", ".output", buildDirectory);
     try {
-      compile(options, output);
+      return compile(options, output);
     } finally {
       options.delete();
       output.delete();
     }
   }
 
-  private void compile(File options, File output) throws IOException {
+  private int compile(File options, File output) throws IOException {
     List<File> sources = new ArrayList<File>();
 
     boolean unmodified = true;
@@ -58,7 +56,7 @@ public class CompilerJavacLauncher {
     boolean deleted = context.getRemovedInputs(File.class).iterator().hasNext();
 
     if (unmodified && !deleted && config.getChangedDependencyTypes().isEmpty()) {
-      return;
+      return 0;
     }
 
     new CompilerConfiguration(config.getSourceEncoding(), config.getCompilerOptions(), sources)
@@ -110,6 +108,8 @@ public class CompilerJavacLauncher {
         }
       }
     });
+
+    return sources.size();
   }
 
   public void setBasedir(File basedir) {

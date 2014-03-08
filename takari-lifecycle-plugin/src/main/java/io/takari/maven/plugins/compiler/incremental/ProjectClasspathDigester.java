@@ -5,12 +5,9 @@ import io.takari.incrementalbuild.BuildContext.Output;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.incrementalbuild.spi.DefaultInputMetadata;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -22,15 +19,18 @@ import org.apache.maven.project.MavenProject;
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Multimap;
+import com.google.common.base.Stopwatch;
+import com.google.common.collect.*;
 import com.google.common.io.Files;
 
 @Named
 @MojoExecutionScoped
 public class ProjectClasspathDigester {
+
+  private final Logger log = LoggerFactory.getLogger(getClass());
 
   private static final String KEY_TYPE = "jdt.type";
   private static final String KEY_HASH = "jdt.hash";
@@ -63,6 +63,8 @@ public class ProjectClasspathDigester {
    * including new and deleted dependency types.
    */
   public Set<String> digestDependencies(List<Artifact> dependencies) throws IOException {
+    Stopwatch stopwatch = new Stopwatch().start();
+
     ArrayListMultimap<String, byte[]> newIndex = ArrayListMultimap.create();
 
     for (Artifact dependency : dependencies) {
@@ -74,7 +76,12 @@ public class ProjectClasspathDigester {
     Multimap<String, byte[]> oldIndex = getTypeIndex(pomMetadata);
     pomMetadata.process().setValue(KEY_CLASSPATH_DIGEST, newIndex);
 
-    return ClasspathEntryDigester.diff(oldIndex, newIndex);
+    Set<String> result = ClasspathEntryDigester.diff(oldIndex, newIndex);
+
+    log.info("type index artifacts {} types {} {} ms", dependencies.size(), newIndex.size(),
+        stopwatch.elapsed(TimeUnit.MILLISECONDS));
+
+    return result;
   }
 
   private void addToTypeIndex(Multimap<String, byte[]> index, Artifact dependency)

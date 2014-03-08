@@ -9,13 +9,8 @@ import java.nio.charset.Charset;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-import javax.tools.Diagnostic;
+import javax.tools.*;
 import javax.tools.Diagnostic.Kind;
-import javax.tools.DiagnosticCollector;
-import javax.tools.JavaCompiler;
-import javax.tools.JavaFileObject;
-import javax.tools.StandardJavaFileManager;
-import javax.tools.ToolProvider;
 
 import org.apache.maven.plugin.MojoExecutionException;
 
@@ -66,7 +61,7 @@ public class CompilerJavac {
     this.config = config;
   }
 
-  public void compile() throws MojoExecutionException {
+  public int compile() throws MojoExecutionException {
     // java 6 limitations
     // - there is severe performance penalty using new JavaCompiler instance
     // - the same JavaCompiler cannot be used concurrently
@@ -78,13 +73,13 @@ public class CompilerJavac {
 
     JavaCompiler compiler = CACHE.acquire();
     try {
-      compile(compiler);
+      return compile(compiler);
     } finally {
       CACHE.release(compiler);
     }
   }
 
-  private void compile(JavaCompiler compiler) throws MojoExecutionException {
+  private int compile(JavaCompiler compiler) throws MojoExecutionException {
     final Charset sourceEncoding = config.getSourceEncoding();
     final DiagnosticCollector<JavaFileObject> diagnosticCollector =
         new DiagnosticCollector<JavaFileObject>();
@@ -100,7 +95,7 @@ public class CompilerJavac {
     // javac does not provide information about inter-class dependencies
     // if any of the sources changed, all sources need to be recompiled
     if (sources.isUnmodified() && !deleted && config.getChangedDependencyTypes().isEmpty()) {
-      return;
+      return 0;
     }
 
     final Iterable<String> options = config.getCompilerOptions();
@@ -121,8 +116,10 @@ public class CompilerJavac {
 
     task.call();
 
+    int count = 0;
     for (JavaFileObject source : javaSources) {
       context.registerInput(new File(source.toUri())).process();
+      count++;
     }
 
     for (Diagnostic<? extends JavaFileObject> diagnostic : diagnosticCollector.getDiagnostics()) {
@@ -137,6 +134,8 @@ public class CompilerJavac {
         input.addMessage(0, 0, diagnostic.getMessage(null), toSeverity(diagnostic.getKind()), null);
       }
     }
+
+    return count;
   }
 
   private BuildContext.Severity toSeverity(Kind kind) {

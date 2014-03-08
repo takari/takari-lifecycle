@@ -6,18 +6,16 @@ import io.takari.incrementalbuild.util.DirectoryScannerAdapter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.*;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.codehaus.plexus.util.DirectoryScanner;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.Iterables;
 
 public abstract class AbstractCompileMojo extends AbstractMojo {
@@ -62,7 +60,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
    * <li><code>none</code> - no annotation processing is performed.</li>
    * <li><code>only</code> - only annotation processing is done, no compilation.</li>
    * </ul>
-   *
+   * 
    * @since 2.2
    */
   @Parameter(defaultValue = "none")
@@ -209,6 +207,8 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
 
+    Stopwatch stopwatch = new Stopwatch().start();
+
     mkdirs(getOutputDirectory());
     if (isAnnotationProcessing()) {
       mkdirs(getGeneratedSourcesDirectory());
@@ -217,17 +217,24 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     try {
       this.changedDependencyTypes = digester.digestDependencies(getCompileArtifacts());
 
+      int count;
       if (!fork) {
-        new CompilerJavac(context, this).compile();
+        count = new CompilerJavac(context, this).compile();
       } else {
         CompilerJavacLauncher compiler = new CompilerJavacLauncher(context, this);
         compiler.setBasedir(basedir);
         compiler.setJar(artifact.getFile());
         compiler.setBuildDirectory(buildDirectory);
-        compiler.compile();
+        count = compiler.compile();
       }
 
       digester.writeTypeIndex(getOutputDirectory());
+
+      // eclipse code formatter is horrible :-(
+      getLog()
+          .info(
+              String.format("Compiled source %d %d ms", count,
+                  stopwatch.elapsed(TimeUnit.MILLISECONDS)));
     } catch (IOException e) {
       throw new MojoExecutionException("Could not compile project", e);
     }

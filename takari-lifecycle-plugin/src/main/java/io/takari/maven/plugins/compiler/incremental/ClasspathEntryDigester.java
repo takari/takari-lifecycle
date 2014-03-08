@@ -1,22 +1,8 @@
 package io.takari.maven.plugins.compiler.incremental;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -27,14 +13,19 @@ import org.codehaus.plexus.util.Base64;
 import org.codehaus.plexus.util.DirectoryScanner;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
 @Named
 @Singleton
 public class ClasspathEntryDigester {
+
+  private final Logger log = LoggerFactory.getLogger(getClass());
 
   public static final String TYPE_INDEX_LOCATION = "META-INF/incrementalbuild/types.index";
 
@@ -63,38 +54,46 @@ public class ClasspathEntryDigester {
   }
 
   private ClasspathEntryIndex getJarTypeDigest(File file) throws IOException {
+    Stopwatch stopwatch = new Stopwatch().start();
+    Multimap<String, byte[]> index;
+    boolean persisted;
     ZipFile zip = new ZipFile(file);
     try {
-      ZipEntry index = zip.getEntry(TYPE_INDEX_LOCATION);
-      if (index != null) {
-        InputStream is = zip.getInputStream(index);
+      ZipEntry indexEntry = zip.getEntry(TYPE_INDEX_LOCATION);
+      if (indexEntry != null) {
+        InputStream is = zip.getInputStream(indexEntry);
         try {
-          return readTypeIndex(is);
+          persisted = true;
+          index = readTypeIndex(is);
         } finally {
           is.close();
         }
-      }
-      Multimap<String, byte[]> result = ArrayListMultimap.create();
-      Enumeration<? extends ZipEntry> entries = zip.entries();
-      while (entries.hasMoreElements()) {
-        ZipEntry entry = entries.nextElement();
-        String fileName = entry.getName();
-        if (entry.getName().endsWith(".class")) {
-          InputStream is = zip.getInputStream(entry);
-          try {
-            byte[] hash = digest(is, fileName);
-            if (hash != null) {
-              result.put(pathToType(fileName), hash);
+      } else {
+        persisted = false;
+        index = ArrayListMultimap.create();
+        Enumeration<? extends ZipEntry> entries = zip.entries();
+        while (entries.hasMoreElements()) {
+          ZipEntry entry = entries.nextElement();
+          String fileName = entry.getName();
+          if (entry.getName().endsWith(".class")) {
+            InputStream is = zip.getInputStream(entry);
+            try {
+              byte[] hash = digest(is, fileName);
+              if (hash != null) {
+                index.put(pathToType(fileName), hash);
+              }
+            } finally {
+              is.close();
             }
-          } finally {
-            is.close();
           }
         }
       }
-      return new ClasspathEntryIndex(result, false);
     } finally {
       zip.close();
     }
+    log.info("zip {} persistent {} size {} {} ms", file, persisted, index.size(),
+        stopwatch.elapsed(TimeUnit.MILLISECONDS));
+    return new ClasspathEntryIndex(index, persisted);
   }
 
   private byte[] digest(InputStream inputStream, String fileName) throws IOException {
@@ -125,56 +124,64 @@ public class ClasspathEntryDigester {
     // indexing the same ~23k class files takes ~3.5 seconds with warm filesystem cache
     // checking timestapt&size of the same 23k class takes ~1second
 
-    ClasspathEntryIndex persistedIndex = null;;
+    Stopwatch stopwatch = new Stopwatch().start();
+
+    boolean persisted = true;
+    Multimap<String, byte[]> index = null;;
 
     final File indexFile = new File(dir, TYPE_INDEX_LOCATION);
     if (indexFile.isFile()) {
       InputStream is = new FileInputStream(indexFile);
       try {
-        persistedIndex = readTypeIndex(is);
+        index = readTypeIndex(is);
       } finally {
         is.close();
       }
     }
 
-    if (persistedIndex != null && indexFile.lastModified() >= timestamp) {
-      // index file exists and was created after the build started
-      // assume the index is up-to-date
-      return persistedIndex;
-    }
+    if (index == null || indexFile.lastModified() < timestamp) {
+      // index file does not exist or was created before the build started
+      // assume the index is stale and merge/rebuild
 
-    timestamp = indexFile.lastModified(); // returns 0 if index file does not exist
+      persisted = false;
 
-    Multimap<String, byte[]> result = ArrayListMultimap.create();
-    DirectoryScanner scanner = new DirectoryScanner();
-    scanner.setBasedir(dir);
-    scanner.setIncludes(new String[] {"**/*.class"});
-    scanner.scan();
-    for (String rpath : scanner.getIncludedFiles()) {
-      String type = pathToType(rpath);
-      Collection<byte[]> hashes = null;
-      File file = new File(dir, rpath);
-      if (persistedIndex != null && file.lastModified() <= timestamp) {
-        // the file was last modified before persisted index was created
-        // use existing hash(es) if available
-        hashes = persistedIndex.getIndex().get(type);
-      }
-      if (hashes == null) {
-        InputStream is = new FileInputStream(file);
-        try {
-          byte[] hash = digest(is, rpath);
-          if (hash != null) {
-            hashes = Collections.singleton(hash);
+      Multimap<String, byte[]> persistedIndex = index;
+      index = ArrayListMultimap.create();
+
+      timestamp = indexFile.lastModified(); // returns 0 if index file does not exist
+
+      DirectoryScanner scanner = new DirectoryScanner();
+      scanner.setBasedir(dir);
+      scanner.setIncludes(new String[] {"**/*.class"});
+      scanner.scan();
+      for (String rpath : scanner.getIncludedFiles()) {
+        String type = pathToType(rpath);
+        Collection<byte[]> hashes = null;
+        File file = new File(dir, rpath);
+        if (persistedIndex != null && file.lastModified() <= timestamp) {
+          // the file was last modified before persisted index was created
+          // use existing hash(es) if available
+          hashes = persistedIndex.get(type);
+        }
+        if (hashes == null) {
+          InputStream is = new FileInputStream(file);
+          try {
+            byte[] hash = digest(is, rpath);
+            if (hash != null) {
+              hashes = Collections.singleton(hash);
+            }
+          } finally {
+            is.close();
           }
-        } finally {
-          is.close();
+        }
+        if (hashes != null) {
+          index.putAll(type, hashes);
         }
       }
-      if (hashes != null) {
-        result.putAll(type, hashes);
-      }
     }
-    return new ClasspathEntryIndex(result, false);
+    log.info("dir {} persistent {} size {} {} ms", dir, persisted, index.size(),
+        stopwatch.elapsed(TimeUnit.MILLISECONDS));
+    return new ClasspathEntryIndex(index, persisted);
   }
 
   private String pathToType(String rpath) {
@@ -190,7 +197,7 @@ public class ClasspathEntryDigester {
   // first value is record type
   // 'T' record: type hash+, where hash is Base64 encoded class file digest
 
-  private ClasspathEntryIndex readTypeIndex(InputStream is) throws IOException {
+  private Multimap<String, byte[]> readTypeIndex(InputStream is) throws IOException {
     Multimap<String, byte[]> result = ArrayListMultimap.create();
     BufferedReader r = new BufferedReader(new InputStreamReader(is, Charsets.UTF_8));
     String str;
@@ -207,7 +214,7 @@ public class ClasspathEntryDigester {
         result.put(type, Base64.decodeBase64(st.nextToken().getBytes(Charsets.UTF_8)));
       }
     }
-    return new ClasspathEntryIndex(result, true);
+    return result;
   }
 
   private void writeTypeIndex(OutputStream os, Multimap<String, byte[]> index) throws IOException {
