@@ -70,7 +70,7 @@ public class CompileTest extends AbstractCompileTest {
     File basedir = resources.getBasedir("compile/classpath");
     MavenProject project = mojos.readMavenProject(basedir);
     MavenSession session = mojos.newMavenSession(project);
-    MojoExecution execution = newMojoExecution();
+    MojoExecution execution = mojos.newMojoExecution();
 
     addDependency(project, "dependency", dependency);
 

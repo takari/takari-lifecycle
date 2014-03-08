@@ -84,23 +84,23 @@ public class CompileIncrementalTest extends AbstractCompileTest {
     compile(moduleB);
     MavenProject projectA = mojos.readMavenProject(moduleA);
     addDependency(projectA, "module-b", new File(moduleB, "target/classes"));
-    compile(projectA);
+    mojos.compile(projectA);
     mojos.assertBuildOutputs(moduleA, "target/classes/modulea/ModuleA.class");
 
     // no change rebuild
-    compile(projectA);
+    mojos.compile(projectA);
     mojos.assertBuildOutputs(moduleA, new String[0]);
 
     // dependency changed "non-structurally"
     cp(moduleB, "src/main/java/moduleb/ModuleB.java-comment", "src/main/java/moduleb/ModuleB.java");
     compile(moduleB);
-    compile(projectA);
+    mojos.compile(projectA);
     mojos.assertBuildOutputs(moduleA, new String[0]);
 
     // dependency changed "structurally"
     cp(moduleB, "src/main/java/moduleb/ModuleB.java-method", "src/main/java/moduleb/ModuleB.java");
     compile(moduleB);
-    compile(projectA);
+    mojos.compile(projectA);
     mojos.assertBuildOutputs(moduleA, "target/classes/modulea/ModuleA.class");
   }
 
@@ -112,25 +112,25 @@ public class CompileIncrementalTest extends AbstractCompileTest {
 
     MavenProject projectA = mojos.readMavenProject(moduleA);
     addDependency(projectA, "module-b", new File(moduleB, "module-b.jar"));
-    compile(projectA);
+    mojos.compile(projectA);
     mojos.assertBuildOutputs(moduleA, "target/classes/modulea/ModuleA.class");
 
     // no change rebuild
     projectA = mojos.readMavenProject(moduleA);
     addDependency(projectA, "module-b", new File(moduleB, "module-b.jar"));
-    compile(projectA);
+    mojos.compile(projectA);
     mojos.assertBuildOutputs(moduleA, new String[0]);
 
     // dependency changed "non-structurally"
     projectA = mojos.readMavenProject(moduleA);
     addDependency(projectA, "module-b", new File(moduleB, "module-b-comment.jar"));
-    compile(projectA);
+    mojos.compile(projectA);
     mojos.assertBuildOutputs(moduleA, new String[0]);
 
     // dependency changed "structurally"
     projectA = mojos.readMavenProject(moduleA);
     addDependency(projectA, "module-b", new File(moduleB, "module-b-method.jar"));
-    compile(projectA);
+    mojos.compile(projectA);
     mojos.assertBuildOutputs(moduleA, "target/classes/modulea/ModuleA.class");
   }
 }

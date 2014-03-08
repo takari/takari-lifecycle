@@ -28,7 +28,14 @@ public abstract class AbstractCompileTest {
   public final TestResources resources = new TestResources();
 
   @Rule
-  public final CompileRule mojos = new CompileRule();
+  public final CompileRule mojos = new CompileRule() {
+    @Override
+    public MojoExecution newMojoExecution() {
+      MojoExecution execution = super.newMojoExecution();
+      execution.getConfiguration().addChild(newParameter("fork", Boolean.toString(fork)));
+      return execution;
+    };
+  };
 
   private final String compilerId;
 
@@ -49,33 +56,11 @@ public abstract class AbstractCompileTest {
 
   protected File compile(String name, Xpp3Dom... parameters) throws Exception {
     File basedir = resources.getBasedir(name);
-    return compile(basedir, parameters);
+    return mojos.compile(basedir, parameters);
   }
 
   protected File compile(File basedir, Xpp3Dom... parameters) throws Exception {
-    MavenProject project = mojos.readMavenProject(basedir);
-    compile(project, parameters);
-    return basedir;
-  }
-
-  protected void compile(MavenProject project, Xpp3Dom... parameters) throws Exception {
-    MavenSession session = mojos.newMavenSession(project);
-    MojoExecution execution = newMojoExecution();
-
-    if (parameters != null) {
-      Xpp3Dom configuration = execution.getConfiguration();
-      for (Xpp3Dom parameter : parameters) {
-        configuration.addChild(parameter);
-      }
-    }
-
-    mojos.executeMojo(session, project, execution);
-  }
-
-  protected MojoExecution newMojoExecution() {
-    MojoExecution execution = mojos.newMojoExecution("compile-incremental");
-    execution.getConfiguration().addChild(newParameter("fork", Boolean.toString(fork)));
-    return execution;
+    return mojos.compile(basedir, parameters);
   }
 
   protected void addDependency(MavenProject project, String artifactId, File file) throws Exception {
@@ -103,7 +88,7 @@ public abstract class AbstractCompileTest {
     File basedir = resources.getBasedir(projectName);
     MavenProject project = mojos.readMavenProject(basedir);
     MavenSession session = mojos.newMavenSession(project);
-    MojoExecution execution = newMojoExecution();
+    MojoExecution execution = mojos.newMojoExecution();
 
     addDependency(project, "processor", new File(processor, "target/classes"));
 

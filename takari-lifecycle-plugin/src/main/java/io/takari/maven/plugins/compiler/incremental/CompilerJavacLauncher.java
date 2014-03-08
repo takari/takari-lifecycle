@@ -1,6 +1,6 @@
 package io.takari.maven.plugins.compiler.incremental;
 
-import io.takari.incrementalbuild.*;
+import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.Input;
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
 import io.takari.incrementalbuild.BuildContext.ResourceStatus;
@@ -14,7 +14,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.exec.*;
+import org.apache.commons.exec.CommandLine;
+import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.ShutdownHookProcessDestroyer;
 
 public class CompilerJavacLauncher {
 
@@ -70,7 +72,17 @@ public class CompilerJavacLauncher {
     }
 
     CommandLine cli = new CommandLine(executable);
+
+    // jvm options
     cli.addArguments(new String[] {"-cp", jar.getAbsolutePath()});
+    if (config.getMeminitial() != null) {
+      cli.addArgument("-Xms" + config.getMeminitial());
+    }
+    if (config.getMaxmem() != null) {
+      cli.addArgument("-Xmx" + config.getMaxmem());
+    }
+
+    // main class and program arguments
     cli.addArgument(CompilerJavacForked.class.getName());
     cli.addArgument(options.getAbsolutePath(), false);
     cli.addArgument(output.getAbsolutePath(), false);

@@ -54,6 +54,24 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   private boolean fork;
 
   /**
+   * Initial size, in megabytes, of the memory allocation pool, ex. "64", "64m" if {@link #fork} is
+   * set to <code>true</code>.
+   *
+   * @since 2.0.1
+   */
+  @Parameter(property = "maven.compiler.meminitial")
+  private String meminitial;
+
+  /**
+   * Sets the maximum size, in megabytes, of the memory allocation pool, ex. "128", "128m" if
+   * {@link #fork} is set to <code>true</code>.
+   *
+   * @since 2.0.1
+   */
+  @Parameter(property = "maven.compiler.maxmem")
+  private String maxmem;
+
+  /**
    * <p>
    * Sets whether annotation processing is performed or not. Only applies to JDK 1.6+ If not set, no
    * annotation processing is performed.
@@ -235,6 +253,14 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
    */
   public Set<String> getChangedDependencyTypes() {
     return changedDependencyTypes;
+  }
+
+  public String getMaxmem() {
+    return maxmem;
+  }
+
+  public String getMeminitial() {
+    return meminitial;
   }
 
   @Override
