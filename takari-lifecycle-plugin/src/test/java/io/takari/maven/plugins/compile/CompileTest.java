@@ -171,4 +171,17 @@ public class CompileTest extends AbstractCompileTest {
     compile(basedir, newParameter("source", "1.7"));
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), "version/RequiresJava7.class");
   }
+
+  @Test
+  public void testEncoding() throws Exception {
+    File basedir = resources.getBasedir("compile/encoding");
+    try {
+      compile(basedir, newParameter("encoding", "ISO-8859-5"));
+      Assert.fail();
+    } catch (MojoExecutionException e) {
+      //
+    }
+    mojos.assertMessageContains(new File(basedir, "src/main/java/encoding/ISO8859p5.java"),
+        "\u043f\u043e\u0440\u0443\u0441\u0441\u043a\u0438"); // "inrussian" in UTF8 Russian
+  }
 }

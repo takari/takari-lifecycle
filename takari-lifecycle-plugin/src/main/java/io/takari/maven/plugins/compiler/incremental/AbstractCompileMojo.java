@@ -32,6 +32,14 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   }
 
   /**
+   * The -encoding argument for the Java compiler.
+   *
+   * @since 2.1
+   */
+  @Parameter(property = "encoding", defaultValue = "${project.build.sourceEncoding}")
+  private String encoding;
+
+  /**
    * The -source argument for the Java compiler.
    */
   @Parameter(property = "maven.compiler.source", defaultValue = "1.6")
@@ -131,10 +139,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   private Set<String> changedDependencyTypes;
 
   public Charset getSourceEncoding() {
-    // TODO
-    // final Charset sourceCharset = sourceEncoding == null ? null :
-    // Charset.forName(sourceEncoding);
-    return null;
+    return encoding == null ? null : Charset.forName(encoding);
   }
 
   public List<File> getSources() {
