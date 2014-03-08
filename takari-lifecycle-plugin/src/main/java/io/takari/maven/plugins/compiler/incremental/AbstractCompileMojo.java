@@ -1,5 +1,6 @@
 package io.takari.maven.plugins.compiler.incremental;
 
+import io.takari.incrementalbuild.configuration.Configuration;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 
 import java.io.File;
@@ -55,11 +56,10 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   private String target;
 
   /**
-   * Allows running the compiler in a separate process. If <code>false</code> it uses the built in
-   * compiler, while if <code>true</code> it will use an executable.
+   * The compiler id of the compiler to use, one of {@code javac}, {@code forked-javac}.
    */
-  @Parameter(property = "maven.compiler.fork", defaultValue = "false")
-  private boolean fork;
+  @Parameter(property = "maven.compiler.compilerId", defaultValue = "javac")
+  private String compilerId;
 
   /**
    * Initial size, in megabytes, of the memory allocation pool, ex. "64", "64m" if {@link #fork} is
@@ -119,18 +119,23 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   //
 
   @Parameter(defaultValue = "${project.file}", readonly = true)
+  @Configuration(ignored = true)
   private File pom;
 
   @Parameter(defaultValue = "${project.basedir}", readonly = true)
+  @Configuration(ignored = true)
   private File basedir;
 
   @Parameter(defaultValue = "${project.build.directory}", readonly = true)
+  @Configuration(ignored = true)
   private File buildDirectory;
 
   @Parameter(defaultValue = "${plugin.pluginArtifact}", readonly = true)
+  @Configuration(ignored = true)
   private Artifact pluginArtifact;
 
   @Parameter(defaultValue = "${project.artifact}", readonly = true)
+  @Configuration(ignored = true)
   private Artifact artifact;
 
   @Component
@@ -302,14 +307,16 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
       log.info("Compiling {} sources to {}", sources.size(), getOutputDirectory());
 
-      if (!fork) {
+      if ("javac".equals(compilerId)) {
         new CompilerJavac(context, this).compile(sources);
-      } else {
+      } else if ("forked-javac".equals(compilerId)) {
         CompilerJavacLauncher compiler = new CompilerJavacLauncher(context, this);
         compiler.setBasedir(basedir);
         compiler.setJar(pluginArtifact.getFile());
         compiler.setBuildDirectory(buildDirectory);
         compiler.compile(sources);
+      } else {
+        throw new MojoExecutionException("Unsupported compilerId" + compilerId);
       }
 
       digester.writeTypeIndex(getOutputDirectory());

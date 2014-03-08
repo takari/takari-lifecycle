@@ -21,8 +21,8 @@ public class ForkedCompileTest {
   public void testJvmMemoryOptions() throws Exception {
     File basedir = resources.getBasedir("compile/basic");
 
-    Xpp3Dom fork = new Xpp3Dom("fork");
-    fork.setValue("true");
+    Xpp3Dom fork = new Xpp3Dom("compilerId");
+    fork.setValue("forked-javac");
 
     Xpp3Dom maxmem = new Xpp3Dom("maxmem");
     Xpp3Dom meminitial = new Xpp3Dom("meminitial");

@@ -19,8 +19,8 @@ import org.junit.Test;
 
 public class CompileTest extends AbstractCompileTest {
 
-  public CompileTest(String compilerId, boolean fork) {
-    super(compilerId, fork);
+  public CompileTest(String compilerId) {
+    super(compilerId);
   }
 
   @Test
@@ -101,7 +101,7 @@ public class CompileTest extends AbstractCompileTest {
 
   @Test
   public void testProc_only() throws Exception {
-    Assume.assumeTrue(isJava7 || fork);
+    Assume.assumeTrue(isJava7 || !"javac".equals(compilerId));
 
     File basedir = procCompile("compile/proc", Proc.only);
     mojos.assertBuildOutputs(new File(basedir, "target/generated-sources/annotations"),
@@ -122,7 +122,7 @@ public class CompileTest extends AbstractCompileTest {
 
   @Test
   public void testProc_proc() throws Exception {
-    Assume.assumeTrue(isJava7 || fork);
+    Assume.assumeTrue(isJava7 || !"javac".equals(compilerId));
 
     File basedir = procCompile("compile/proc", Proc.proc);
     mojos.assertBuildOutputs(new File(basedir, "target"), //
@@ -135,7 +135,7 @@ public class CompileTest extends AbstractCompileTest {
 
   @Test
   public void testProc_annotationProcessors() throws Exception {
-    Assume.assumeTrue(isJava7 || fork);
+    Assume.assumeTrue(isJava7 || !"javac".equals(compilerId));
 
     Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
     processors.addChild(newParameter("processor", "processor.Processor"));

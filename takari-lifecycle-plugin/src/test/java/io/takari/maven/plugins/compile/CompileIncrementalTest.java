@@ -11,8 +11,8 @@ import org.junit.Test;
 
 public class CompileIncrementalTest extends AbstractCompileTest {
 
-  public CompileIncrementalTest(String compilerId, boolean fork) {
-    super(compilerId, fork);
+  public CompileIncrementalTest(String compilerId) {
+    super(compilerId);
   }
 
   @Test

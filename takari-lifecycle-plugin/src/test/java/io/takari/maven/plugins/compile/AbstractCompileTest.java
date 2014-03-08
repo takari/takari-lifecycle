@@ -44,25 +44,22 @@ public abstract class AbstractCompileTest {
     @Override
     public MojoExecution newMojoExecution() {
       MojoExecution execution = super.newMojoExecution();
-      execution.getConfiguration().addChild(newParameter("fork", Boolean.toString(fork)));
+      execution.getConfiguration().addChild(newParameter("compilerId", compilerId));
       return execution;
     };
   };
 
   protected final String compilerId;
 
-  protected final boolean fork;
-
-  protected AbstractCompileTest(String compilerId, boolean fork) {
+  protected AbstractCompileTest(String compilerId) {
     this.compilerId = compilerId;
-    this.fork = fork;
   }
 
   @Parameters
   public static Iterable<Object[]> compilers() {
     return Arrays.asList( //
-        new Object[] {"javac", Boolean.FALSE}, //
-        new Object[] {"javac", Boolean.TRUE} //
+        new Object[] {"javac"}, //
+        new Object[] {"forked-javac"} //
         );
   }
 
