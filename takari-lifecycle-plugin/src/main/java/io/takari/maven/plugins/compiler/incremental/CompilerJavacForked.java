@@ -10,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -242,7 +243,8 @@ public class CompilerJavacForked {
           }
         };
 
-    final JavaCompiler.CompilationTask task = compiler.getTask(null, // Writer out
+    Writer stdout = new PrintWriter(System.out, true);
+    final JavaCompiler.CompilationTask task = compiler.getTask(stdout, // Writer out
         recordingFileManager, // file manager
         diagnosticCollector, // diagnostic listener
         options, //

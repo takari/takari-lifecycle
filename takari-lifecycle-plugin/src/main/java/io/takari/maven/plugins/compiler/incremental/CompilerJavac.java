@@ -5,11 +5,20 @@ import io.takari.incrementalbuild.BuildContext.Input;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.List;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
+import javax.tools.DiagnosticCollector;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
 
 import org.apache.maven.plugin.MojoExecutionException;
 
@@ -106,7 +115,8 @@ public class CompilerJavac {
           }
         };
 
-    final JavaCompiler.CompilationTask task = compiler.getTask(null, // Writer out
+    Writer stdout = new PrintWriter(System.out, true);
+    final JavaCompiler.CompilationTask task = compiler.getTask(stdout, // Writer out
         recordingFileManager, // file manager
         diagnosticCollector, // diagnostic listener
         options, //

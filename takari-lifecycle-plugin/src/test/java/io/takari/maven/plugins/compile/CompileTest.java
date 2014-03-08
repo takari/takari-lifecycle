@@ -4,7 +4,9 @@ import io.takari.maven.plugins.compiler.incremental.AbstractCompileMojo.Proc;
 import io.takari.maven.plugins.compiler.incremental.ClasspathEntryDigester;
 import io.takari.maven.plugins.compiler.incremental.ClasspathEntryIndex;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.PrintStream;
 
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
@@ -43,6 +45,21 @@ public class CompileTest extends AbstractCompileTest {
         new ClasspathEntryDigester().readIndex(classes, mojos.getStartTime());
     Assert.assertTrue(index.isPersistent());
     Assert.assertEquals(1, index.getIndex().get("basic.Basic").size());
+  }
+
+  @Test
+  public void testBasic_verbose() throws Exception {
+    PrintStream origOut = System.out;
+    try {
+      ByteArrayOutputStream buf = new ByteArrayOutputStream();
+      System.setOut(new PrintStream(buf, true));
+      File basedir = compile("compile/basic", newParameter("verbose", "true"));
+      mojos.assertBuildOutputs(basedir, "target/classes/basic/Basic.class");
+      String output = new String(buf.toByteArray());
+      Assert.assertTrue(output.contains("parsing started"));
+    } finally {
+      System.setOut(origOut);
+    }
   }
 
   @Test

@@ -102,6 +102,12 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Parameter
   private String[] annotationProcessors;
 
+  /**
+   * Set to <code>true</code> to show messages about what the compiler is doing.
+   */
+  @Parameter(property = "maven.compiler.verbose", defaultValue = "false")
+  private boolean verbose;
+
   //
 
   @Parameter(defaultValue = "${project.file}", readonly = true)
@@ -223,6 +229,10 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
         }
         options.add(processors.toString());
       }
+    }
+
+    if (verbose) {
+      options.add("-verbose");
     }
 
     return options;
