@@ -155,9 +155,8 @@ public class CompileTest extends AbstractCompileTest {
           e.getMessage());
     }
     mojos.assertBuildOutputs(basedir, new String[0]);
-    mojos
-        .assertMessages(basedir, "src/main/java/error/Error.java",
-            "ERROR Error.java [4:11] cannot find symbol\n  symbol:   class Foo\n  location: class basic.Error");
+    mojos.assertMessageContains(new File(basedir, "src/main/java/error/Error.java"),//
+        "cannot find symbol", "Foo", "basic.Error");
   }
 
   @Test

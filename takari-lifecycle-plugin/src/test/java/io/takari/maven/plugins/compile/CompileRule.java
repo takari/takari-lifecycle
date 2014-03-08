@@ -3,12 +3,14 @@ package io.takari.maven.plugins.compile;
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.Date;
 
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.junit.Assert;
 
 public class CompileRule extends IncrementalBuildRule {
 
@@ -48,4 +50,14 @@ public class CompileRule extends IncrementalBuildRule {
   public MojoExecution newMojoExecution() {
     return newMojoExecution("compile-incremental");
   }
+
+  public void assertMessageContains(File file, String... strings) throws Exception {
+    Collection<String> messages = getBuildContextLog().getMessages(file);
+    Assert.assertEquals(1, messages.size());
+    String message = messages.iterator().next();
+    for (String string : strings) {
+      Assert.assertTrue("message contains " + string, message.contains(string));
+    }
+  }
+
 }

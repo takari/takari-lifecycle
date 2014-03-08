@@ -44,9 +44,6 @@ public class CompileIncrementalTest extends AbstractCompileTest {
 
   @Test
   public void testError() throws Exception {
-    String error =
-        "ERROR Error.java [4:11] cannot find symbol\n  symbol:   class Errorr\n  location: class error.Error";
-
     File basedir = resources.getBasedir("compile-incremental/error");
     try {
       compile(basedir);
@@ -56,7 +53,8 @@ public class CompileIncrementalTest extends AbstractCompileTest {
           e.getMessage());
     }
     mojos.assertBuildOutputs(basedir, new String[0]);
-    mojos.assertMessages(basedir, "src/main/java/error/Error.java", error);
+    mojos.assertMessageContains(new File(basedir, "src/main/java/error/Error.java"), //
+        "cannot find symbol", "Errorr", "error.Error");
 
     // no change rebuild, should still fail with the same error
     try {
@@ -67,12 +65,14 @@ public class CompileIncrementalTest extends AbstractCompileTest {
           e.getMessage());
     }
     mojos.assertBuildOutputs(basedir, new String[0]);
-    mojos.assertMessages(basedir, "src/main/java/error/Error.java", error);
+    mojos.assertMessageContains(new File(basedir, "src/main/java/error/Error.java"), //
+        "cannot find symbol", "Errorr", "error.Error");
 
     // fixed the error should clear the message during next build
     cp(basedir, "src/main/java/error/Error.java-fixed", "src/main/java/error/Error.java");
     compile(basedir);
     mojos.assertBuildOutputs(basedir, "target/classes/error/Error.class");
+    mojos.assertMessages(basedir, "target/classes/error/Error.class", new String[0]);
   }
 
   @Test
