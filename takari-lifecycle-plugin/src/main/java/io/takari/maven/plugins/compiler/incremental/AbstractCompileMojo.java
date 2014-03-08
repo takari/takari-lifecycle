@@ -1,7 +1,6 @@
 package io.takari.maven.plugins.compiler.incremental;
 
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
-import io.takari.incrementalbuild.util.DirectoryScannerAdapter;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,11 +13,15 @@ import org.apache.maven.plugin.*;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.codehaus.plexus.util.DirectoryScanner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.Iterables;
 
 public abstract class AbstractCompileMojo extends AbstractMojo {
+
+  // I much prefer slf4j over plexus logger api
+  private final Logger log = LoggerFactory.getLogger(getClass());
 
   public static enum Proc {
     proc, only, none
@@ -95,12 +98,12 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     return null;
   }
 
-  public Iterable<File> getSources() {
-    List<Iterable<File>> sources = new ArrayList<Iterable<File>>();
+  public List<File> getSources() {
+    List<File> sources = new ArrayList<File>();
     for (String sourceRoot : getSourceRoots()) {
       DirectoryScanner scanner = new DirectoryScanner();
       scanner.setBasedir(sourceRoot);
-      // TODO this is an API bug, includes/excludes should be per sourceRoot
+      // TODO this is a bug in project model, includes/excludes should be per sourceRoot
       Set<String> includes = getIncludes();
       if (includes != null && !includes.isEmpty()) {
         scanner.setIncludes(includes.toArray(new String[includes.size()]));
@@ -111,9 +114,12 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       if (excludes != null && !excludes.isEmpty()) {
         scanner.setExcludes(excludes.toArray(new String[excludes.size()]));
       }
-      sources.add(new DirectoryScannerAdapter(scanner));
+      scanner.scan();
+      for (String relpath : scanner.getIncludedFiles()) {
+        sources.add(new File(sourceRoot, relpath));
+      }
     }
-    return Iterables.concat(sources);
+    return sources;
   }
 
   protected abstract Set<String> getSourceRoots();
@@ -140,7 +146,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     return source;
   }
 
-  public Iterable<String> getCompilerOptions() {
+  public List<String> getCompilerOptions() {
     List<String> options = new ArrayList<String>();
 
     // output directory
@@ -217,24 +223,24 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     try {
       this.changedDependencyTypes = digester.digestDependencies(getCompileArtifacts());
 
-      int count;
+      final List<File> sources = getSources();
+
+      log.info("Compiling {} sources to {}", sources.size(), getOutputDirectory());
+
       if (!fork) {
-        count = new CompilerJavac(context, this).compile();
+        new CompilerJavac(context, this).compile(sources);
       } else {
         CompilerJavacLauncher compiler = new CompilerJavacLauncher(context, this);
         compiler.setBasedir(basedir);
         compiler.setJar(artifact.getFile());
         compiler.setBuildDirectory(buildDirectory);
-        count = compiler.compile();
+        compiler.compile(sources);
       }
 
       digester.writeTypeIndex(getOutputDirectory());
 
-      // eclipse code formatter is horrible :-(
-      getLog()
-          .info(
-              String.format("Compiled source %d %d ms", count,
-                  stopwatch.elapsed(TimeUnit.MILLISECONDS)));
+      log.info("Compiled {} sources in {} ms", sources.size(),
+          stopwatch.elapsed(TimeUnit.MILLISECONDS));
     } catch (IOException e) {
       throw new MojoExecutionException("Could not compile project", e);
     }

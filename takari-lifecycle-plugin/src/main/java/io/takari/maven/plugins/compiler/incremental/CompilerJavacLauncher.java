@@ -33,22 +33,22 @@ public class CompilerJavacLauncher {
     this.config = config;
   }
 
-  public int compile() throws IOException {
+  public int compile(List<File> sources) throws IOException {
     File options = File.createTempFile("javac-forked", ".options", buildDirectory);
     File output = File.createTempFile("javac-forked", ".output", buildDirectory);
     try {
-      return compile(options, output);
+      return compile(options, output, sources);
     } finally {
       options.delete();
       output.delete();
     }
   }
 
-  private int compile(File options, File output) throws IOException {
+  private int compile(File options, File output, List<File> sourcesFiles) throws IOException {
     List<File> sources = new ArrayList<File>();
 
     boolean unmodified = true;
-    for (InputMetadata<File> source : context.registerInputs(config.getSources())) {
+    for (InputMetadata<File> source : context.registerInputs(sourcesFiles)) {
       unmodified = unmodified && source.getStatus() == ResourceStatus.UNMODIFIED;
       sources.add(source.getResource());
     }

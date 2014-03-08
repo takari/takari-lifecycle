@@ -6,8 +6,7 @@ import io.takari.incrementalbuild.spi.DefaultBuildContext;
 
 import java.io.File;
 import java.nio.charset.Charset;
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.*;
 
 import javax.tools.*;
 import javax.tools.Diagnostic.Kind;
@@ -61,7 +60,7 @@ public class CompilerJavac {
     this.config = config;
   }
 
-  public int compile() throws MojoExecutionException {
+  public void compile(List<File> sources) throws MojoExecutionException {
     // java 6 limitations
     // - there is severe performance penalty using new JavaCompiler instance
     // - the same JavaCompiler cannot be used concurrently
@@ -73,20 +72,20 @@ public class CompilerJavac {
 
     JavaCompiler compiler = CACHE.acquire();
     try {
-      return compile(compiler);
+      compile(compiler, sources);
     } finally {
       CACHE.release(compiler);
     }
   }
 
-  private int compile(JavaCompiler compiler) throws MojoExecutionException {
+  private void compile(JavaCompiler compiler, List<File> sourceFiles) throws MojoExecutionException {
     final Charset sourceEncoding = config.getSourceEncoding();
     final DiagnosticCollector<JavaFileObject> diagnosticCollector =
         new DiagnosticCollector<JavaFileObject>();
     final StandardJavaFileManager standardFileManager =
         compiler.getStandardFileManager(diagnosticCollector, null, sourceEncoding);
     final InputMetadataIterable<File> sources =
-        new InputMetadataIterable<File>(context.registerInputs(config.getSources()));
+        new InputMetadataIterable<File>(context.registerInputs(sourceFiles));
     final Iterable<? extends JavaFileObject> javaSources =
         standardFileManager.getJavaFileObjectsFromFiles(sources);
 
@@ -95,7 +94,7 @@ public class CompilerJavac {
     // javac does not provide information about inter-class dependencies
     // if any of the sources changed, all sources need to be recompiled
     if (sources.isUnmodified() && !deleted && config.getChangedDependencyTypes().isEmpty()) {
-      return 0;
+      return;
     }
 
     final Iterable<String> options = config.getCompilerOptions();
@@ -116,10 +115,8 @@ public class CompilerJavac {
 
     task.call();
 
-    int count = 0;
     for (JavaFileObject source : javaSources) {
       context.registerInput(new File(source.toUri())).process();
-      count++;
     }
 
     for (Diagnostic<? extends JavaFileObject> diagnostic : diagnosticCollector.getDiagnostics()) {
@@ -134,8 +131,6 @@ public class CompilerJavac {
         input.addMessage(0, 0, diagnostic.getMessage(null), toSeverity(diagnostic.getKind()), null);
       }
     }
-
-    return count;
   }
 
   private BuildContext.Severity toSeverity(Kind kind) {
