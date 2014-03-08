@@ -19,18 +19,6 @@ import org.junit.Test;
 
 public class CompileTest extends AbstractCompileTest {
 
-  private static final boolean isJava7;
-
-  static {
-    boolean isJava7x = true;
-    try {
-      Class.forName("java.nio.file.Files");
-    } catch (Exception e) {
-      isJava7x = false;
-    }
-    isJava7 = isJava7x;
-  }
-
   public CompileTest(String compilerId, boolean fork) {
     super(compilerId, fork);
   }
@@ -105,6 +93,8 @@ public class CompileTest extends AbstractCompileTest {
 
   @Test
   public void testProc_only() throws Exception {
+    Assume.assumeTrue(isJava7 || fork);
+
     File basedir = procCompile("compile/proc", Proc.only);
     mojos.assertBuildOutputs(new File(basedir, "target/generated-sources/annotations"),
         "proc/GeneratedSource.java", "proc/AnotherGeneratedSource.java");
@@ -124,6 +114,8 @@ public class CompileTest extends AbstractCompileTest {
 
   @Test
   public void testProc_proc() throws Exception {
+    Assume.assumeTrue(isJava7 || fork);
+
     File basedir = procCompile("compile/proc", Proc.proc);
     mojos.assertBuildOutputs(new File(basedir, "target"), //
         "classes/proc/Source.class", //
@@ -135,6 +127,8 @@ public class CompileTest extends AbstractCompileTest {
 
   @Test
   public void testProc_annotationProcessors() throws Exception {
+    Assume.assumeTrue(isJava7 || fork);
+
     Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
     processors.addChild(newParameter("processor", "processor.Processor"));
     File basedir = procCompile("compile/proc", Proc.proc, processors);

@@ -3,6 +3,7 @@ package io.takari.maven.plugins.compiler.incremental;
 import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.Input;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
+import io.takari.maven.plugins.compiler.incremental.AbstractCompileMojo.Proc;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -24,13 +25,34 @@ import org.apache.maven.plugin.MojoExecutionException;
 
 public class CompilerJavac {
 
+  private static final boolean isJava7;
+
+  static {
+    boolean isJava7x = true;
+    try {
+      Class.forName("java.nio.file.Files");
+    } catch (Exception e) {
+      isJava7x = false;
+    }
+    isJava7 = isJava7x;
+  }
+
+  static JavaCompiler getSystemJavaCompiler() throws MojoExecutionException {
+    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+    if (compiler == null) {
+      throw new MojoExecutionException("No compiler is provided in this environment. "
+          + "Perhaps you are running on a JRE rather than a JDK?");
+    }
+    return compiler;
+  }
+
   private static interface JavaCompilerFactory {
     public JavaCompiler acquire() throws MojoExecutionException;
 
     public void release(JavaCompiler compiler);
   }
 
-  private static JavaCompilerFactory CACHE = new JavaCompilerFactory() {
+  private static final JavaCompilerFactory REUSECREATED = new JavaCompilerFactory() {
 
     // TODO broken if this plugin is loaded by multiple classloaders
     // https://cwiki.apache.org/confluence/display/MAVEN/Maven+3.x+Class+Loading
@@ -43,12 +65,7 @@ public class CompilerJavac {
           return compilers.removeFirst();
         }
       }
-      JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-      if (compiler == null) {
-        throw new MojoExecutionException("No compiler is provided in this environment. "
-            + "Perhaps you are running on a JRE rather than a JDK?");
-      }
-      return compiler;
+      return getSystemJavaCompiler();
     }
 
     @Override
@@ -57,7 +74,22 @@ public class CompilerJavac {
         compilers.addFirst(compiler);
       }
     }
+  };
 
+  private static final JavaCompilerFactory SINGLETON = new JavaCompilerFactory() {
+
+    private JavaCompiler compiler;
+
+    @Override
+    public void release(JavaCompiler compiler) {}
+
+    @Override
+    public synchronized JavaCompiler acquire() throws MojoExecutionException {
+      if (compiler == null) {
+        compiler = getSystemJavaCompiler();
+      }
+      return compiler;
+    }
   };
 
   private final DefaultBuildContext<?> context;
@@ -75,15 +107,24 @@ public class CompilerJavac {
     // - the same JavaCompiler cannot be used concurrently
     // - even different JavaCompiler instances can't do annotation processing concurrently
 
+    // java 7 (and I assume newer) do not have these limitations
+
     // The workaround is two-fold
-    // - reuse JavaCompiler instances, but not on the same thread (see CACHE impl)
+    // - reuse JavaCompiler instances, but not on multiple threads
     // - do not allow in-process annotation processing
 
-    JavaCompiler compiler = CACHE.acquire();
+    if (!isJava7 && config.getProc() != Proc.none) {
+      // TODO maybe allow in single-threaded mode
+      throw new MojoExecutionException("Annotation processing requires forked JVM on Java 6");
+    }
+
+    final JavaCompilerFactory factory = isJava7 ? SINGLETON : REUSECREATED;
+
+    final JavaCompiler compiler = factory.acquire();
     try {
       compile(compiler, sources);
     } finally {
-      CACHE.release(compiler);
+      factory.release(compiler);
     }
   }
 

@@ -185,6 +185,10 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     return source;
   }
 
+  public Proc getProc() {
+    return proc;
+  }
+
   public List<String> getCompilerOptions() {
     List<String> options = new ArrayList<String>();
 

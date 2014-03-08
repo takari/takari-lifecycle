@@ -24,6 +24,18 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public abstract class AbstractCompileTest {
 
+  public static final boolean isJava7;
+
+  static {
+    boolean isJava7x = true;
+    try {
+      Class.forName("java.nio.file.Files");
+    } catch (Exception e) {
+      isJava7x = false;
+    }
+    isJava7 = isJava7x;
+  }
+
   @Rule
   public final TestResources resources = new TestResources();
 
@@ -37,9 +49,9 @@ public abstract class AbstractCompileTest {
     };
   };
 
-  private final String compilerId;
+  protected final String compilerId;
 
-  private final boolean fork;
+  protected final boolean fork;
 
   protected AbstractCompileTest(String compilerId, boolean fork) {
     this.compilerId = compilerId;
