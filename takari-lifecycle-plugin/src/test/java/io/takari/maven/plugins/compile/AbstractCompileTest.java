@@ -47,9 +47,9 @@ public abstract class AbstractCompileTest {
         );
   }
 
-  protected File compile(String name) throws Exception {
+  protected File compile(String name, Xpp3Dom... parameters) throws Exception {
     File basedir = resources.getBasedir(name);
-    return compile(basedir);
+    return compile(basedir, parameters);
   }
 
   protected File compile(File basedir, Xpp3Dom... parameters) throws Exception {

@@ -10,6 +10,7 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
@@ -46,13 +47,19 @@ public class CompileTest extends AbstractCompileTest {
 
   @Test
   public void testIncludes() throws Exception {
-    File basedir = compile("compile/includes");
+    Xpp3Dom includes = new Xpp3Dom("includes");
+    includes.addChild(newParameter("include", "basic/Basic.java"));
+    File basedir = compile("compile/source-filtering", includes);
+
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), "basic/Basic.class");
   }
 
   @Test
   public void testExcludes() throws Exception {
-    File basedir = compile("compile/excludes");
+    Xpp3Dom includes = new Xpp3Dom("excludes");
+    includes.addChild(newParameter("exclude", "basic/Garbage.java"));
+    File basedir = compile("compile/source-filtering", includes);
+
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), "basic/Basic.class");
   }
 
@@ -77,20 +84,6 @@ public class CompileTest extends AbstractCompileTest {
     File basedir = compile("compile/spa ce");
     Assert.assertTrue(basedir.getAbsolutePath().contains(" "));
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), "space/Space.class");
-  }
-
-  @Test
-  public void testProcIncludes() throws Exception {
-    File basedir = procCompile("compile/proc-includes", null);
-    mojos.assertBuildOutputs(new File(basedir, "target/generated-sources/annotations"),
-        "proc/GeneratedSource.java");
-  }
-
-  @Test
-  public void testProcExcludes() throws Exception {
-    File basedir = procCompile("compile/proc-includes", null);
-    mojos.assertBuildOutputs(new File(basedir, "target/generated-sources/annotations"),
-        "proc/GeneratedSource.java");
   }
 
   @Test
