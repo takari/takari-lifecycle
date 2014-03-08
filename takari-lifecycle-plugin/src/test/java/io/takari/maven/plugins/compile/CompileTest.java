@@ -51,6 +51,14 @@ public class CompileTest extends AbstractCompileTest {
   }
 
   @Test
+  public void testBasic_projectArtifactFile() throws Exception {
+    File basedir = resources.getBasedir("compile/basic");
+    MavenProject project = mojos.readMavenProject(basedir);
+    mojos.compile(project);
+    Assert.assertEquals(new File(basedir, "target/classes"), project.getArtifact().getFile());
+  }
+
+  @Test
   public void testIncludes() throws Exception {
     Xpp3Dom includes = new Xpp3Dom("includes");
     includes.addChild(newParameter("include", "basic/Basic.java"));

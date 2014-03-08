@@ -128,6 +128,9 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   private File buildDirectory;
 
   @Parameter(defaultValue = "${plugin.pluginArtifact}", readonly = true)
+  private Artifact pluginArtifact;
+
+  @Parameter(defaultValue = "${project.artifact}", readonly = true)
   private Artifact artifact;
 
   @Component
@@ -304,12 +307,14 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       } else {
         CompilerJavacLauncher compiler = new CompilerJavacLauncher(context, this);
         compiler.setBasedir(basedir);
-        compiler.setJar(artifact.getFile());
+        compiler.setJar(pluginArtifact.getFile());
         compiler.setBuildDirectory(buildDirectory);
         compiler.compile(sources);
       }
 
       digester.writeTypeIndex(getOutputDirectory());
+
+      artifact.setFile(getOutputDirectory());
 
       log.info("Compiled {} sources in {} ms", sources.size(),
           stopwatch.elapsed(TimeUnit.MILLISECONDS));
