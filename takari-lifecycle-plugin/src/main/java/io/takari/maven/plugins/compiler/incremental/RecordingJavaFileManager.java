@@ -18,7 +18,7 @@ abstract class RecordingJavaFileManager extends ForwardingJavaFileManager<Standa
   public FileObject getFileForOutput(Location location, String packageName, String relativeName,
       FileObject sibling) throws IOException {
     FileObject fileObject = super.getFileForOutput(location, packageName, relativeName, sibling);
-    record(new File(fileObject.toUri()));
+    record(FileObjects.toFile(fileObject));
     return fileObject;
   }
 
@@ -26,7 +26,7 @@ abstract class RecordingJavaFileManager extends ForwardingJavaFileManager<Standa
   public JavaFileObject getJavaFileForOutput(Location location, String className,
       javax.tools.JavaFileObject.Kind kind, FileObject sibling) throws IOException {
     JavaFileObject fileObject = super.getJavaFileForOutput(location, className, kind, sibling);
-    record(new File(fileObject.toUri()));
+    record(FileObjects.toFile(fileObject));
     return fileObject;
   }
 

@@ -126,13 +126,13 @@ public class CompilerJavac {
     task.call();
 
     for (JavaFileObject source : javaSources) {
-      context.registerInput(new File(source.toUri())).process();
+      context.registerInput(FileObjects.toFile(source)).process();
     }
 
     for (Diagnostic<? extends JavaFileObject> diagnostic : diagnosticCollector.getDiagnostics()) {
       JavaFileObject source = diagnostic.getSource();
       if (source != null) {
-        Input<File> input = context.registerInput(new File(source.toUri())).process();
+        Input<File> input = context.registerInput(FileObjects.toFile(source)).process();
         input.addMessage((int) diagnostic.getLineNumber(), (int) diagnostic.getColumnNumber(),
             diagnostic.getMessage(null), toSeverity(diagnostic.getKind()), null);
       } else {
