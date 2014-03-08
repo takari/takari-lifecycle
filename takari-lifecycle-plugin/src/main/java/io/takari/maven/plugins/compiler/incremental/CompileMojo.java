@@ -3,16 +3,10 @@ package io.takari.maven.plugins.compiler.incremental;
 import io.takari.incrementalbuild.configuration.Configuration;
 
 import java.io.File;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.plugins.annotations.*;
 
 @Mojo(name = "compile-incremental", defaultPhase = LifecyclePhase.COMPILE, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE)
 public class CompileMojo extends AbstractCompileMojo {
@@ -52,7 +46,7 @@ public class CompileMojo extends AbstractCompileMojo {
    * Specify where to place generated source files created by annotation processing. Only applies to
    * JDK 1.6+
    * </p>
-   *
+   * 
    * @since 2.2
    */
   @Parameter(defaultValue = "${project.build.directory}/generated-sources/annotations")
@@ -83,6 +77,7 @@ public class CompileMojo extends AbstractCompileMojo {
     return compileArtifacts;
   }
 
+  @Override
   public File getGeneratedSourcesDirectory() {
     return generatedSourcesDirectory;
   }
