@@ -56,7 +56,8 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   private String target;
 
   /**
-   * The compiler id of the compiler to use, one of {@code javac}, {@code forked-javac}.
+   * The compiler id of the compiler to use, one of {@code javac}, {@code forked-javac} or
+   * {@code jdt}.
    */
   @Parameter(property = "maven.compiler.compilerId", defaultValue = "javac")
   private String compilerId;
@@ -259,6 +260,10 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     return proc != Proc.none;
   }
 
+  public boolean isVerbose() {
+    return verbose;
+  }
+
   public String getClasspath() {
     StringBuilder cp = new StringBuilder();
     cp.append(getOutputDirectory().getAbsolutePath());
@@ -315,6 +320,8 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
         compiler.setJar(pluginArtifact.getFile());
         compiler.setBuildDirectory(buildDirectory);
         compiler.compile(sources);
+      } else if ("jdt".equals(compilerId)) {
+        new CompilerJdt(this, context, digester).compile(sources);
       } else {
         throw new MojoExecutionException("Unsupported compilerId" + compilerId);
       }

@@ -1,4 +1,4 @@
-package io.tesla.maven.plugins.compilerXXX.jdt;
+package io.takari.maven.plugins.compiler.incremental;
 
 import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
@@ -7,9 +7,6 @@ import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.incrementalbuild.spi.DefaultInput;
 import io.takari.incrementalbuild.spi.DefaultOutput;
 import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
-import io.takari.maven.plugins.compiler.incremental.ProjectClasspathDigester;
-import io.tesla.maven.plugins.compilerXXX.AbstractInternalCompiler;
-import io.tesla.maven.plugins.compilerXXX.InternalCompilerConfiguration;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -24,6 +21,7 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 import org.eclipse.jdt.core.compiler.CharOperation;
@@ -43,12 +41,16 @@ import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.eclipse.jdt.internal.compiler.util.SuffixConstants;
 import org.eclipse.jdt.internal.core.builder.ProblemFactory;
 
-public class IncrementalCompiler extends AbstractInternalCompiler implements ICompilerRequestor {
+public class CompilerJdt implements ICompilerRequestor {
 
   private static final String CAPABILITY_TYPE = "jdt.type";
   private static final String CAPABILITY_SIMPLE_TYPE = "jdt.simpleType";
 
   private final DefaultBuildContext<?> context;
+
+  private final AbstractCompileMojo mojo;
+
+  private final String sourceEncoding;
 
   /**
    * Set of ICompilationUnit to be compiled.
@@ -63,24 +65,29 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
   private final ProjectClasspathDigester digester;
 
   @Inject
-  public IncrementalCompiler(InternalCompilerConfiguration mojo, DefaultBuildContext<?> context,
+  public CompilerJdt(AbstractCompileMojo mojo, DefaultBuildContext<?> context,
       ProjectClasspathDigester digester) {
-    super(mojo);
+    this.mojo = mojo;
     this.context = (DefaultBuildContext<?>) context;
     this.digester = digester;
+    this.sourceEncoding = mojo.getSourceEncoding() != null ? mojo.getSourceEncoding().name() : null;
   }
 
-  @Override
-  public void compile() throws MojoExecutionException {
+  public void compile(List<File> sources) throws MojoExecutionException {
     INameEnvironment namingEnvironment = getClassPath();
     IErrorHandlingPolicy errorHandlingPolicy = DefaultErrorHandlingPolicies.exitAfterAllProblems();
     Map<String, String> args = new HashMap<String, String>();
     // XXX figure out why compiler does not complain if source/target combination is not compatible
-    args.put(CompilerOptions.OPTION_TargetPlatform, getTarget()); // support 5/6/7 aliases
-    args.put(CompilerOptions.OPTION_Source, getSource()); // support 5/6/7 aliases
+    args.put(CompilerOptions.OPTION_TargetPlatform, mojo.getTarget()); // support 5/6/7 aliases
+    args.put(CompilerOptions.OPTION_Source, mojo.getSource()); // support 5/6/7 aliases
+    if (mojo.getSourceEncoding() != null) {
+      // TODO not sure this is necessary, #newSourceFile handles source encoding already
+      args.put(CompilerOptions.OPTION_Encoding, mojo.getSourceEncoding().name());
+    }
     CompilerOptions compilerOptions = new CompilerOptions(args);
     compilerOptions.performMethodsFullRecovery = false;
     compilerOptions.performStatementsRecovery = false;
+    compilerOptions.verbose = mojo.isVerbose();
     IProblemFactory problemFactory = ProblemFactory.getProblemFactory(Locale.getDefault());
     Compiler compiler =
         new Compiler(namingEnvironment, errorHandlingPolicy, compilerOptions, this, problemFactory);
@@ -93,11 +100,9 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
     // rebuild everything after certain % of sources is modified
 
     try {
-      for (String sourceRoot : getSourceRoots()) {
-        enqueue(context.registerAndProcessInputs(getSourceFileSet(sourceRoot)));
-      }
+      enqueue(context.registerAndProcessInputs(sources));
 
-      for (String type : digester.digestDependencies(getCompileArtifacts())) {
+      for (String type : mojo.getChangedDependencyTypes()) {
         for (InputMetadata<File> input : context.getDependentInputs(CAPABILITY_TYPE, type)) {
           enqueue(input.getResource());
         }
@@ -116,6 +121,7 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
         enqueueAffectedInputs(output);
       }
 
+      // keep calling the compiler while there are sources in the queue
       while (!compileQueue.isEmpty()) {
         ICompilationUnit[] sourceFiles =
             compileQueue.toArray(new ICompilationUnit[compileQueue.size()]);
@@ -123,9 +129,6 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
         compiler.compile(sourceFiles);
         namingEnvironment.cleanup();
       }
-
-      // write type index file
-      digester.writeTypeIndex(getOutputDirectory());
     } catch (IOException e) {
       throw new MojoExecutionException("Unexpected IOException during compilation", e);
     }
@@ -158,9 +161,9 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
 
   private CompilationUnit newSourceFile(File source) {
     final String fileName = source.getAbsolutePath();
-    final String encoding = null;
-    return new CompilationUnit(null, fileName, encoding, getOutputDirectory().getAbsolutePath(),
-        false);
+    final String encoding = sourceEncoding;
+    return new CompilationUnit(null, fileName, encoding, mojo.getOutputDirectory()
+        .getAbsolutePath(), false);
   }
 
   private static class FileSystem extends org.eclipse.jdt.internal.compiler.batch.FileSystem {
@@ -184,7 +187,8 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
 
     classpath.addAll(JavaInstallation.getDefault().getClasspath());
 
-    for (String sourceRoot : getSourceRoots()) {
+    for (String sourceRoot : mojo.getSourceRoots()) {
+      // TODO why do I need this here? unit test or take out
       // XXX includes/excludes => access rules
       Classpath element = FileSystem.getClasspath(sourceRoot, null, true, null, null);
       if (element != null) {
@@ -192,11 +196,13 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
       }
     }
 
-    getOutputDirectory().mkdirs(); // XXX does not belong here
+    classpath.add(FileSystem.getClasspath(mojo.getOutputDirectory().getAbsolutePath(), null, false,
+        null, null));
 
     // this also adds outputDirectory
-    for (String classpathElement : getClasspathElements()) {
-      Classpath element = FileSystem.getClasspath(classpathElement, null, false, null, null);
+    for (Artifact classpathElement : mojo.getCompileArtifacts()) {
+      String path = classpathElement.getFile().getAbsolutePath();
+      Classpath element = FileSystem.getClasspath(path, null, false, null, null);
       if (element != null) {
         classpath.add(element);
       }
@@ -262,7 +268,7 @@ public class IncrementalCompiler extends AbstractInternalCompiler implements ICo
   private void writeClassFile(DefaultInput<File> input, String relativeStringName,
       ClassFile classFile) throws IOException {
     final byte[] bytes = classFile.getBytes();
-    final File outputFile = new File(getOutputDirectory(), relativeStringName);
+    final File outputFile = new File(mojo.getOutputDirectory(), relativeStringName);
     final DefaultOutput output = input.associateOutput(outputFile);
 
     final char[][] compoundName = classFile.getCompoundName();

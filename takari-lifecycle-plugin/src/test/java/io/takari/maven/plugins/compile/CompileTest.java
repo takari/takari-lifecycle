@@ -44,7 +44,7 @@ public class CompileTest extends AbstractCompileTest {
       File basedir = compile("compile/basic", newParameter("verbose", "true"));
       mojos.assertBuildOutputs(basedir, "target/classes/basic/Basic.class");
       String output = new String(buf.toByteArray());
-      Assert.assertTrue(output.contains("parsing started"));
+      Assert.assertTrue(output.contains("parsing "));
     } finally {
       System.setOut(origOut);
     }
@@ -102,6 +102,7 @@ public class CompileTest extends AbstractCompileTest {
   @Test
   public void testProc_only() throws Exception {
     Assume.assumeTrue(isJava7 || !"javac".equals(compilerId));
+    Assume.assumeFalse("jdt".equals(compilerId));
 
     File basedir = procCompile("compile/proc", Proc.only);
     mojos.assertBuildOutputs(new File(basedir, "target/generated-sources/annotations"),
@@ -123,6 +124,7 @@ public class CompileTest extends AbstractCompileTest {
   @Test
   public void testProc_proc() throws Exception {
     Assume.assumeTrue(isJava7 || !"javac".equals(compilerId));
+    Assume.assumeFalse("jdt".equals(compilerId));
 
     File basedir = procCompile("compile/proc", Proc.proc);
     mojos.assertBuildOutputs(new File(basedir, "target"), //
@@ -136,6 +138,7 @@ public class CompileTest extends AbstractCompileTest {
   @Test
   public void testProc_annotationProcessors() throws Exception {
     Assume.assumeTrue(isJava7 || !"javac".equals(compilerId));
+    Assume.assumeFalse("jdt".equals(compilerId));
 
     Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
     processors.addChild(newParameter("processor", "processor.Processor"));
@@ -148,6 +151,11 @@ public class CompileTest extends AbstractCompileTest {
 
   @Test
   public void testError() throws Exception {
+    ErrorMessage expected = new ErrorMessage(compilerId);
+    expected.setText("jdt", "ERROR Error.java [4:11] Foo cannot be resolved to a type");
+    expected.setText("javac", "ERROR Error.java [4:11] cannot find symbol\n"
+        + "  symbol:   class Foo\n  location: class basic.Error");
+
     File basedir = resources.getBasedir("compile/error");
     try {
       compile(basedir);
@@ -157,13 +165,20 @@ public class CompileTest extends AbstractCompileTest {
           e.getMessage());
     }
     mojos.assertBuildOutputs(basedir, new String[0]);
-    mojos.assertMessageContains(new File(basedir, "src/main/java/error/Error.java"),//
-        "cannot find symbol", "Foo", "basic.Error");
+    mojos.assertMessages(basedir, "src/main/java/error/Error.java", expected);
   }
 
   @Test
   public void testSourceTargetVersion() throws Exception {
     Assume.assumeTrue(isJava7);
+
+    ErrorMessage expected = new ErrorMessage(compilerId);
+    expected.setText("jdt",
+        "ERROR RequiresJava7.java [9:40] '<>' operator is not allowed for source level below 1.7");
+    expected.setText("javac",
+        "ERROR RequiresJava7.java [9:50] diamond operator is not supported in -source 1.6\n"
+            + "  (use -source 7 or higher to enable diamond operator)");
+
     File basedir = resources.getBasedir("compile/source-target-version");
     try {
       compile(basedir);
@@ -171,9 +186,7 @@ public class CompileTest extends AbstractCompileTest {
       Assert.assertEquals("1 error(s) encountered, see previous message(s) for details",
           e.getMessage());
     }
-    mojos.assertMessages(basedir, "src/main/java/version/RequiresJava7.java",
-        "ERROR RequiresJava7.java [9:50] diamond operator is not supported in -source 1.6\n"
-            + "  (use -source 7 or higher to enable diamond operator)");
+    mojos.assertMessages(basedir, "src/main/java/version/RequiresJava7.java", expected);
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), new String[0]);
 
     compile(basedir, newParameter("source", "1.7"));

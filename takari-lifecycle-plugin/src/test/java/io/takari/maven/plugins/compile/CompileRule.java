@@ -60,4 +60,8 @@ public class CompileRule extends IncrementalBuildRule {
     }
   }
 
+  public void assertMessages(File basedir, String path, ErrorMessage expected) throws Exception {
+    assertMessages(basedir, path, expected.getText());
+  }
+
 }

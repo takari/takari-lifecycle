@@ -1,4 +1,4 @@
-package io.tesla.maven.plugins.compiler;
+package io.takari.maven.plugins.compile;
 
 import static org.apache.maven.plugin.testing.resources.TestResources.cp;
 
@@ -8,14 +8,31 @@ import java.util.Set;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
-import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.testing.resources.TestResources;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
 
-public class CompileIncrementalClasspathTest extends AbstractCompileMojoTest {
+public class CompileJdtClasspathTest {
+
+  @Rule
+  public final TestResources resources = new TestResources();
+
+  @Rule
+  public final CompileRule mojos = new CompileRule() {
+    @Override
+    public org.apache.maven.plugin.MojoExecution newMojoExecution() {
+      MojoExecution execution = super.newMojoExecution();
+      Xpp3Dom compilerId = new Xpp3Dom("compilerId");
+      compilerId.setValue("jdt");
+      execution.getConfiguration().addChild(compilerId);
+      return execution;
+    };
+  };
 
   @Test
   public void testReactor() throws Exception {
@@ -94,19 +111,19 @@ public class CompileIncrementalClasspathTest extends AbstractCompileMojoTest {
 
     MavenProject moduleA = mojos.readMavenProject(new File(parent, "module-a"));
     addDependency(moduleA, "module-b", new File(parent, "module-b/module-b.jar"));
-    compile(moduleA);
+    mojos.compile(moduleA);
     mojos.assertBuildOutputs(parent, "module-a/target/classes/reactor/modulea/ModuleA.class");
 
     // dependency changed non-structurally
     moduleA = mojos.readMavenProject(new File(parent, "module-a"));
     addDependency(moduleA, "module-b-2", new File(parent, "module-b/module-b-comment.jar"));
-    compile(moduleA);
+    mojos.compile(moduleA);
     mojos.assertBuildOutputs(parent, new String[0]);
 
     // dependency changed structurally
     moduleA = mojos.readMavenProject(new File(parent, "module-a"));
     addDependency(moduleA, "module-b-2", new File(parent, "module-b/module-b-method.jar"));
-    compile(moduleA);
+    mojos.compile(moduleA);
     mojos.assertBuildOutputs(parent, "module-a/target/classes/reactor/modulea/ModuleA.class");
   }
 
@@ -118,7 +135,7 @@ public class CompileIncrementalClasspathTest extends AbstractCompileMojoTest {
     addDependency(moduleA, "module-b", new File(parent, "module-b/module-b.jar"));
     addDependency(moduleA, "module-b-comment", new File(parent, "module-b/module-b-comment.jar"));
     addDependency(moduleA, "module-b-method", new File(parent, "module-b/module-b-method.jar"));
-    compile(moduleA);
+    mojos.compile(moduleA);
     mojos.assertBuildOutputs(parent, "module-a/target/classes/reactor/modulea/ModuleA.class");
 
     // classpath order change did not result in structural type definition change
@@ -126,7 +143,7 @@ public class CompileIncrementalClasspathTest extends AbstractCompileMojoTest {
     addDependency(moduleA, "module-b-comment", new File(parent, "module-b/module-b-comment.jar"));
     addDependency(moduleA, "module-b", new File(parent, "module-b/module-b.jar"));
     addDependency(moduleA, "module-b-method", new File(parent, "module-b/module-b-method.jar"));
-    compile(moduleA);
+    mojos.compile(moduleA);
     mojos.assertBuildOutputs(parent, new String[0]);
 
     // classpath order change DID result in structural type definition change
@@ -134,25 +151,19 @@ public class CompileIncrementalClasspathTest extends AbstractCompileMojoTest {
     addDependency(moduleA, "module-b-method", new File(parent, "module-b/module-b-method.jar"));
     addDependency(moduleA, "module-b", new File(parent, "module-b/module-b.jar"));
     addDependency(moduleA, "module-b-comment", new File(parent, "module-b/module-b-comment.jar"));
-    compile(moduleA);
+    mojos.compile(moduleA);
     mojos.assertBuildOutputs(parent, "module-a/target/classes/reactor/modulea/ModuleA.class");
   }
 
   private void compileReactor(File parent) throws Exception {
     File moduleB = new File(parent, "module-b");
 
-    compile(moduleB);
+    mojos.compile(moduleB);
 
     MavenProject moduleA = mojos.readMavenProject(new File(parent, "module-a"));
     addDependency(moduleA, "module-b", new File(moduleB, "target/classes"));
 
-    compile(moduleA);
-  }
-
-  private void compile(MavenProject project) throws Exception {
-    MavenSession session = mojos.newMavenSession(project);
-    MojoExecution execution = mojos.newMojoExecution("compileXXX");
-    mojos.executeMojo(session, project, execution);
+    mojos.compile(moduleA);
   }
 
   private void addDependency(MavenProject project, String artifactId, File file) throws Exception {

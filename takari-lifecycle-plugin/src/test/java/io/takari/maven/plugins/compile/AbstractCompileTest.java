@@ -55,11 +55,12 @@ public abstract class AbstractCompileTest {
     this.compilerId = compilerId;
   }
 
-  @Parameters
+  @Parameters(name = "{0}")
   public static Iterable<Object[]> compilers() {
-    return Arrays.asList( //
+    return Arrays.<Object[]>asList( //
         new Object[] {"javac"}, //
-        new Object[] {"forked-javac"} //
+        new Object[] {"forked-javac"}, //
+        new Object[] {"jdt"} //
         );
   }
 

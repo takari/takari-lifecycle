@@ -38,12 +38,21 @@ public class CompileIncrementalTest extends AbstractCompileTest {
 
     Assert.assertTrue(new File(basedir, "src/main/java/delete/Delete.java").delete());
     compile(basedir);
-    mojos.assertBuildOutputs(new File(basedir, "target/classes"), "delete/Keep.class");
+    if ("jdt".equals(compilerId)) {
+      mojos.assertCarriedOverOutputs(new File(basedir, "target/classes"), "delete/Keep.class");
+    } else {
+      mojos.assertBuildOutputs(new File(basedir, "target/classes"), "delete/Keep.class");
+    }
     mojos.assertDeletedOutputs(new File(basedir, "target/classes"), "delete/Delete.class");
   }
 
   @Test
   public void testError() throws Exception {
+    ErrorMessage expected = new ErrorMessage(compilerId);
+    expected.setText("jdt", "ERROR Error.java [4:11] Errorr cannot be resolved to a type");
+    expected.setText("javac", "ERROR Error.java [4:11] cannot find symbol\n"
+        + "  symbol:   class Errorr\n  location: class error.Error");
+
     File basedir = resources.getBasedir("compile-incremental/error");
     try {
       compile(basedir);
@@ -53,8 +62,7 @@ public class CompileIncrementalTest extends AbstractCompileTest {
           e.getMessage());
     }
     mojos.assertBuildOutputs(basedir, new String[0]);
-    mojos.assertMessageContains(new File(basedir, "src/main/java/error/Error.java"), //
-        "cannot find symbol", "Errorr", "error.Error");
+    mojos.assertMessages(basedir, "src/main/java/error/Error.java", expected);
 
     // no change rebuild, should still fail with the same error
     try {
@@ -65,8 +73,7 @@ public class CompileIncrementalTest extends AbstractCompileTest {
           e.getMessage());
     }
     mojos.assertBuildOutputs(basedir, new String[0]);
-    mojos.assertMessageContains(new File(basedir, "src/main/java/error/Error.java"), //
-        "cannot find symbol", "Errorr", "error.Error");
+    mojos.assertMessages(basedir, "src/main/java/error/Error.java", expected);
 
     // fixed the error should clear the message during next build
     cp(basedir, "src/main/java/error/Error.java-fixed", "src/main/java/error/Error.java");
