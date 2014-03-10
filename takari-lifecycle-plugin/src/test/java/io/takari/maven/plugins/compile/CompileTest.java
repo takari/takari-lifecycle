@@ -222,4 +222,12 @@ public class CompileTest extends AbstractCompileTest {
     mojos.assertMessageContains(new File(basedir, "src/main/java/encoding/ISO8859p5.java"),
         "\u043f\u043e\u0440\u0443\u0441\u0441\u043a\u0438"); // "inrussian" in UTF8 Russian
   }
+
+  @Test
+  public void testEmpty() throws Exception {
+    File basedir = compile("compile/empty");
+    mojos.assertBuildOutputs(basedir, new String[0]);
+    Assert.assertFalse("outputDirectory was not created",
+        new File(basedir, "target/classes").exists());
+  }
 }

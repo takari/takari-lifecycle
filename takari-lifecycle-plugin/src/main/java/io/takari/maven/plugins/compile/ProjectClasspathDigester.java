@@ -5,8 +5,12 @@ import io.takari.incrementalbuild.BuildContext.Output;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.incrementalbuild.spi.DefaultInputMetadata;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -23,7 +27,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.*;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
 import com.google.common.io.Files;
 
 @Named
@@ -86,10 +92,16 @@ public class ProjectClasspathDigester {
 
   private void addToTypeIndex(Multimap<String, byte[]> index, Artifact dependency)
       throws IOException {
+    File file = dependency.getFile();
+
+    if (!file.exists()) {
+      // can happen with multi-module build and empty source directories
+      return;
+    }
+
     DefaultInputMetadata<ArtifactFile> metadata = null;
     Multimap<String, byte[]> typeIndex = null;
 
-    File file = dependency.getFile();
     if (file.isFile()) {
       // XXX introduce #registerInput(qualifier, File);
       metadata = context.registerInput(new ArtifactFileHolder(file));

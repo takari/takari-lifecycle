@@ -156,7 +156,11 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
   public List<File> getSources() {
     List<File> sources = new ArrayList<File>();
-    for (String sourceRoot : getSourceRoots()) {
+    for (String sourcePath : getSourceRoots()) {
+      File sourceRoot = new File(sourcePath);
+      if (!sourceRoot.isDirectory()) {
+        continue;
+      }
       DirectoryScanner scanner = new DirectoryScanner();
       scanner.setBasedir(sourceRoot);
       // TODO this is a bug in project model, includes/excludes should be per sourceRoot
@@ -303,6 +307,12 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
     Stopwatch stopwatch = new Stopwatch().start();
 
+    final List<File> sources = getSources();
+    if (sources.isEmpty()) {
+      log.info("No sources, skipping compilation");
+      return;
+    }
+
     mkdirs(getOutputDirectory());
     if (isAnnotationProcessing()) {
       mkdirs(getGeneratedSourcesDirectory());
@@ -310,8 +320,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
     try {
       this.changedDependencyTypes = digester.digestDependencies(getCompileArtifacts());
-
-      final List<File> sources = getSources();
 
       log.info("Compiling {} sources to {}", sources.size(), getOutputDirectory());
 
