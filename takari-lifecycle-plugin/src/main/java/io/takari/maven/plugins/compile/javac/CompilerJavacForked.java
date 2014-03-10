@@ -158,8 +158,8 @@ public class CompilerJavacForked {
     }
 
     private void handleException(IOException e) {
-      // TODO Auto-generated method stub
-
+      e.printStackTrace();
+      System.exit(1); // this will trigger ExecutionExceptio in Maven plugin
     }
 
     public static void process(File file, CompilerOutputProcessor callback) throws IOException {
