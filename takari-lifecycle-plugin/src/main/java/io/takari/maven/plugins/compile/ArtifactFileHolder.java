@@ -1,4 +1,4 @@
-package io.takari.maven.plugins.compiler.incremental;
+package io.takari.maven.plugins.compile;
 
 import io.takari.incrementalbuild.BuildContext.ResourceStatus;
 import io.takari.incrementalbuild.spi.ResourceHolder;

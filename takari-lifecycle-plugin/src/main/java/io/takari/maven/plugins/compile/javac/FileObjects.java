@@ -1,4 +1,4 @@
-package io.takari.maven.plugins.compiler.incremental;
+package io.takari.maven.plugins.compile.javac;
 
 import java.io.File;
 

@@ -1,14 +1,20 @@
-package io.takari.maven.plugins.compiler.incremental;
+package io.takari.maven.plugins.compile;
 
 import io.takari.incrementalbuild.configuration.Configuration;
 
 import java.io.File;
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.plugins.annotations.*;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
 
-@Mojo(name = "compile-incremental", defaultPhase = LifecyclePhase.COMPILE, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE)
+@Mojo(name = "compile", defaultPhase = LifecyclePhase.COMPILE, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE)
 public class CompileMojo extends AbstractCompileMojo {
   /**
    * The source directories containing the sources to be compiled.
@@ -53,17 +59,17 @@ public class CompileMojo extends AbstractCompileMojo {
   private File generatedSourcesDirectory;
 
   @Override
-  protected Set<String> getSourceRoots() {
+  public Set<String> getSourceRoots() {
     return new LinkedHashSet<String>(compileSourceRoots);
   }
 
   @Override
-  protected Set<String> getIncludes() {
+  public Set<String> getIncludes() {
     return includes;
   }
 
   @Override
-  protected Set<String> getExcludes() {
+  public Set<String> getExcludes() {
     return excludes;
   }
 

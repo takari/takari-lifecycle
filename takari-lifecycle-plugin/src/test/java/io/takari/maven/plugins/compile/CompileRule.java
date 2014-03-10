@@ -48,7 +48,7 @@ public class CompileRule extends IncrementalBuildRule {
   }
 
   public MojoExecution newMojoExecution() {
-    return newMojoExecution("compile-incremental");
+    return newMojoExecution("compile");
   }
 
   public void assertMessageContains(File file, String... strings) throws Exception {

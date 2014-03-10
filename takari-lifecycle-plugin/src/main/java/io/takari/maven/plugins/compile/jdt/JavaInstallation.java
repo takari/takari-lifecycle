@@ -1,4 +1,4 @@
-package io.takari.maven.plugins.compiler.incremental;
+package io.takari.maven.plugins.compile.jdt;
 
 import java.io.File;
 import java.io.FilenameFilter;

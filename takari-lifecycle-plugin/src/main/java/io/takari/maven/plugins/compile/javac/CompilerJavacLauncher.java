@@ -1,13 +1,14 @@
-package io.takari.maven.plugins.compiler.incremental;
+package io.takari.maven.plugins.compile.javac;
 
 import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.Input;
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
 import io.takari.incrementalbuild.BuildContext.ResourceStatus;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
-import io.takari.maven.plugins.compiler.incremental.CompilerJavacForked.CompilerConfiguration;
-import io.takari.maven.plugins.compiler.incremental.CompilerJavacForked.CompilerOutput;
-import io.takari.maven.plugins.compiler.incremental.CompilerJavacForked.CompilerOutputProcessor;
+import io.takari.maven.plugins.compile.AbstractCompileMojo;
+import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerConfiguration;
+import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerOutput;
+import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerOutputProcessor;
 
 import java.io.File;
 import java.io.IOException;

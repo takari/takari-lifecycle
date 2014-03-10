@@ -1,9 +1,10 @@
-package io.takari.maven.plugins.compiler.incremental;
+package io.takari.maven.plugins.compile.javac;
 
 import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.Input;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
-import io.takari.maven.plugins.compiler.incremental.AbstractCompileMojo.Proc;
+import io.takari.maven.plugins.compile.AbstractCompileMojo;
+import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 
 import java.io.File;
 import java.io.PrintWriter;

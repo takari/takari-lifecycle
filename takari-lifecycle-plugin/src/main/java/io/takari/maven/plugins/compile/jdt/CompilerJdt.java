@@ -1,4 +1,4 @@
-package io.takari.maven.plugins.compiler.incremental;
+package io.takari.maven.plugins.compile.jdt;
 
 import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
@@ -7,6 +7,8 @@ import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.incrementalbuild.spi.DefaultInput;
 import io.takari.incrementalbuild.spi.DefaultOutput;
 import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
+import io.takari.maven.plugins.compile.AbstractCompileMojo;
+import io.takari.maven.plugins.compile.ProjectClasspathDigester;
 
 import java.io.BufferedOutputStream;
 import java.io.File;

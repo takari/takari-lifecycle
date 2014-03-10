@@ -1,7 +1,10 @@
-package io.takari.maven.plugins.compiler.incremental;
+package io.takari.maven.plugins.compile;
 
 import io.takari.incrementalbuild.configuration.Configuration;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
+import io.takari.maven.plugins.compile.javac.CompilerJavac;
+import io.takari.maven.plugins.compile.javac.CompilerJavacLauncher;
+import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 
 import java.io.File;
 import java.io.IOException;
@@ -175,11 +178,11 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     return sources;
   }
 
-  protected abstract Set<String> getSourceRoots();
+  public abstract Set<String> getSourceRoots();
 
-  protected abstract Set<String> getIncludes();
+  public abstract Set<String> getIncludes();
 
-  protected abstract Set<String> getExcludes();
+  public abstract Set<String> getExcludes();
 
   public abstract File getOutputDirectory();
 

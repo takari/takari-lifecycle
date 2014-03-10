@@ -1,8 +1,6 @@
 package io.takari.maven.plugins.compile;
 
 import static org.apache.maven.plugin.testing.resources.TestResources.cp;
-import io.takari.maven.plugins.compiler.incremental.ClasspathEntryDigester;
-import io.takari.maven.plugins.compiler.incremental.ClasspathEntryIndex;
 
 import java.io.File;
 import java.util.Arrays;
@@ -48,7 +46,7 @@ public class ClasspathEntryDigesterTest {
   public void testClassFolderIndex() throws Exception {
     File basedir = resources.getBasedir("classpath-digester/folder");
     File classes = new File(basedir, "target/classes/");
-    mojos.executeMojo(basedir, "compile-incremental");
+    mojos.executeMojo(basedir, "compile");
     cp(basedir, "pom.xml", "target/classes/CorruptedClass.class");
 
     ClasspathEntryIndex index = digester.readIndex(classes, now);
@@ -67,7 +65,7 @@ public class ClasspathEntryDigesterTest {
 
     File basedir = resources.getBasedir("classpath-digester/folder");
     File classes = new File(basedir, "target/classes/");
-    mojos.executeMojo(basedir, "compile-incremental");
+    mojos.executeMojo(basedir, "compile");
 
     byte[] knownHash = "test".getBytes("UTF-8");
     {
@@ -98,7 +96,7 @@ public class ClasspathEntryDigesterTest {
     File basedir = resources.getBasedir("classpath-digester/folder");
     File classes = new File(basedir, "target/classes/");
     File indexFile = new File(classes, ClasspathEntryDigester.TYPE_INDEX_LOCATION);
-    mojos.executeMojo(basedir, "compile-incremental");
+    mojos.executeMojo(basedir, "compile");
 
     byte[] knownHash = "test".getBytes("UTF-8");
     {

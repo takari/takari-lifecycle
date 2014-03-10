@@ -1,8 +1,8 @@
 package io.takari.maven.plugins.compile;
 
-import io.takari.maven.plugins.compiler.incremental.AbstractCompileMojo.Proc;
-import io.takari.maven.plugins.compiler.incremental.ClasspathEntryDigester;
-import io.takari.maven.plugins.compiler.incremental.ClasspathEntryIndex;
+import io.takari.maven.plugins.compile.ClasspathEntryDigester;
+import io.takari.maven.plugins.compile.ClasspathEntryIndex;
+import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
