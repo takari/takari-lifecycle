@@ -18,4 +18,26 @@
       <version>${project.version}</version>
     </dependency>
   </dependencies>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>io.takari.maven.plugins</groupId>
+          <artifactId>takari-lifecycle-plugin</artifactId>
+          <configuration>
+            <!-- 
+              | annotation processing must be explicitly enabled 
+             -->
+            <proc>proc</proc>
+            <!--
+              | in-process annotation processing is not supported on java 6  
+             -->
+            <compilerId>forked-javac</compilerId>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
 </project>

@@ -35,9 +35,6 @@
             |        not everyone will guess this is about java compiler 
            -->
           <source>1.6</source>
-          <target>1.6</target>
-          <fork>true</fork>
-          <verbose>true</verbose>
         </configuration>
       </plugin>
     </plugins>

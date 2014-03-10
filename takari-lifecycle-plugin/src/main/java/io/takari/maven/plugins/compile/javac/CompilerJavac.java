@@ -2,6 +2,7 @@ package io.takari.maven.plugins.compile.javac;
 
 import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.Input;
+import io.takari.incrementalbuild.BuildContext.Severity;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.maven.plugins.compile.AbstractCompileMojo;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
@@ -165,7 +166,7 @@ public class CompilerJavac {
         null, // Iterable<String> classes to process by annotation processor(s)
         javaSources);
 
-    task.call();
+    boolean success = task.call();
 
     for (JavaFileObject source : javaSources) {
       context.registerInput(FileObjects.toFile(source)).process();
@@ -173,14 +174,21 @@ public class CompilerJavac {
 
     for (Diagnostic<? extends JavaFileObject> diagnostic : diagnosticCollector.getDiagnostics()) {
       JavaFileObject source = diagnostic.getSource();
+
+      // javac appears to report errors even when compilation was success.
+      // I was only able to reproduce this with annotation processing on java 6
+      // for consistency with forked mode, downgrade errors to warning here too
+      Severity severity =
+          success ? BuildContext.Severity.WARNING : toSeverity(diagnostic.getKind());
+
       if (source != null) {
         Input<File> input = context.registerInput(FileObjects.toFile(source)).process();
         input.addMessage((int) diagnostic.getLineNumber(), (int) diagnostic.getColumnNumber(),
-            diagnostic.getMessage(null), toSeverity(diagnostic.getKind()), null);
+            diagnostic.getMessage(null), severity, null);
       } else {
         Input<File> input = context.registerInput(config.getPom()).process();
         // TODO execution line/column
-        input.addMessage(0, 0, diagnostic.getMessage(null), toSeverity(diagnostic.getKind()), null);
+        input.addMessage(0, 0, diagnostic.getMessage(null), severity, null);
       }
     }
   }

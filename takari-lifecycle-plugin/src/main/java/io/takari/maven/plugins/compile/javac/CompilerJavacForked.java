@@ -251,15 +251,21 @@ public class CompilerJavacForked {
         null, // Iterable<String> classes to process by annotation processor(s)
         fileObjects);
 
-    task.call();
+    boolean success = task.call();
 
     for (Diagnostic<? extends JavaFileObject> diagnostic : diagnosticCollector.getDiagnostics()) {
       JavaFileObject source = diagnostic.getSource();
+
+      // when doing annotation processing, javac 6 reports errors when handwritten sources
+      // depend on generated sources even when overall compilation is reported as success
+      // to prevent false build failures, never issue ERROR messages after successful compilation
+      Kind kind = success ? Kind.WARNING : diagnostic.getKind();
+
       if (source != null) {
         output.addMessage(source.toUri().getPath(), (int) diagnostic.getLineNumber(),
-            (int) diagnostic.getColumnNumber(), diagnostic.getMessage(null), diagnostic.getKind());
+            (int) diagnostic.getColumnNumber(), diagnostic.getMessage(null), kind);
       } else {
-        output.addMessage(".", 0, 0, diagnostic.getMessage(null), diagnostic.getKind());
+        output.addMessage(".", 0, 0, diagnostic.getMessage(null), kind);
       }
     }
   }

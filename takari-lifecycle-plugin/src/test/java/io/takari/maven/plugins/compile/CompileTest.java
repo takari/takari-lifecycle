@@ -153,6 +153,21 @@ public class CompileTest extends AbstractCompileTest {
   }
 
   @Test
+  public void testProcTypeReference() throws Exception {
+    Assume.assumeTrue(isJava7 || !"javac".equals(compilerId));
+    Assume.assumeFalse("jdt".equals(compilerId));
+
+    File basedir = procCompile("compile/proc-type-reference", Proc.proc);
+    mojos.assertBuildOutputs(new File(basedir, "target"), //
+        "classes/proc/Source.class", //
+        "classes/proc/GeneratedSourceSubclass.class", //
+        "generated-sources/annotations/proc/GeneratedSource.java", //
+        "classes/proc/GeneratedSource.class", //
+        "generated-sources/annotations/proc/AnotherGeneratedSource.java", //
+        "classes/proc/AnotherGeneratedSource.class");
+  }
+
+  @Test
   public void testProc_annotationProcessors() throws Exception {
     Assume.assumeTrue(isJava7 || !"javac".equals(compilerId));
     Assume.assumeFalse("jdt".equals(compilerId));
