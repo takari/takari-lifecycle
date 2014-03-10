@@ -169,9 +169,9 @@ public class CompileTest extends AbstractCompileTest {
   @Test
   public void testError() throws Exception {
     ErrorMessage expected = new ErrorMessage(compilerId);
-    expected.setText("jdt", "ERROR Error.java [4:11] Foo cannot be resolved to a type");
-    expected.setText("javac", "ERROR Error.java [4:11] cannot find symbol\n"
-        + "  symbol:   class Foo\n  location: class basic.Error");
+    expected.setSnippets("jdt", "ERROR Error.java [4:11] Foo cannot be resolved to a type");
+    expected.setSnippets("javac", "ERROR Error.java [4:11]", "cannot find symbol", "class Foo",
+        "location", "class basic.Error");
 
     File basedir = resources.getBasedir("compile/error");
     try {
@@ -182,7 +182,7 @@ public class CompileTest extends AbstractCompileTest {
           e.getMessage());
     }
     mojos.assertBuildOutputs(basedir, new String[0]);
-    mojos.assertMessages(basedir, "src/main/java/error/Error.java", expected);
+    mojos.assertMessage(basedir, "src/main/java/error/Error.java", expected);
   }
 
   @Test
@@ -190,9 +190,9 @@ public class CompileTest extends AbstractCompileTest {
     Assume.assumeTrue(isJava7);
 
     ErrorMessage expected = new ErrorMessage(compilerId);
-    expected.setText("jdt",
+    expected.setSnippets("jdt",
         "ERROR RequiresJava7.java [9:40] '<>' operator is not allowed for source level below 1.7");
-    expected.setText("javac",
+    expected.setSnippets("javac",
         "ERROR RequiresJava7.java [9:50] diamond operator is not supported in -source 1.6\n"
             + "  (use -source 7 or higher to enable diamond operator)");
 
@@ -203,7 +203,7 @@ public class CompileTest extends AbstractCompileTest {
       Assert.assertEquals("1 error(s) encountered, see previous message(s) for details",
           e.getMessage());
     }
-    mojos.assertMessages(basedir, "src/main/java/version/RequiresJava7.java", expected);
+    mojos.assertMessage(basedir, "src/main/java/version/RequiresJava7.java", expected);
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), new String[0]);
 
     compile(basedir, newParameter("source", "1.7"));

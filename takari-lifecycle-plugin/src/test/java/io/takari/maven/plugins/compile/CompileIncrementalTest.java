@@ -49,9 +49,9 @@ public class CompileIncrementalTest extends AbstractCompileTest {
   @Test
   public void testError() throws Exception {
     ErrorMessage expected = new ErrorMessage(compilerId);
-    expected.setText("jdt", "ERROR Error.java [4:11] Errorr cannot be resolved to a type");
-    expected.setText("javac", "ERROR Error.java [4:11] cannot find symbol\n"
-        + "  symbol:   class Errorr\n  location: class error.Error");
+    expected.setSnippets("jdt", "ERROR Error.java [4:11] Errorr cannot be resolved to a type");
+    expected.setSnippets("javac", "ERROR Error.java [4:11]", "cannot find symbol", "class Errorr",
+        "location", "class error.Error");
 
     File basedir = resources.getBasedir("compile-incremental/error");
     try {
@@ -62,7 +62,7 @@ public class CompileIncrementalTest extends AbstractCompileTest {
           e.getMessage());
     }
     mojos.assertBuildOutputs(basedir, new String[0]);
-    mojos.assertMessages(basedir, "src/main/java/error/Error.java", expected);
+    mojos.assertMessage(basedir, "src/main/java/error/Error.java", expected);
 
     // no change rebuild, should still fail with the same error
     try {
@@ -73,7 +73,7 @@ public class CompileIncrementalTest extends AbstractCompileTest {
           e.getMessage());
     }
     mojos.assertBuildOutputs(basedir, new String[0]);
-    mojos.assertMessages(basedir, "src/main/java/error/Error.java", expected);
+    mojos.assertMessage(basedir, "src/main/java/error/Error.java", expected);
 
     // fixed the error should clear the message during next build
     cp(basedir, "src/main/java/error/Error.java-fixed", "src/main/java/error/Error.java");
