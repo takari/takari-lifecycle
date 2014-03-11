@@ -3,6 +3,7 @@ package io.takari.maven.plugins.compile.javac;
 import io.takari.incrementalbuild.*;
 import io.takari.incrementalbuild.BuildContext.Input;
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
+import io.takari.incrementalbuild.BuildContext.OutputMetadata;
 import io.takari.incrementalbuild.BuildContext.ResourceStatus;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.maven.plugins.compile.AbstractCompileMojo;
@@ -64,6 +65,10 @@ public class CompilerJavacLauncher {
     boolean deleted = context.getRemovedInputs(File.class).iterator().hasNext();
 
     if (unmodified && !deleted && config.getChangedDependencyTypes().isEmpty()) {
+      // mark outputs as up-to-date, otherwise they are deleted during BuildContext#commit
+      for (OutputMetadata<File> outputMetadata : context.getProcessedOutputs()) {
+        context.carryOverOutput(outputMetadata.getResource());
+      }
       return 0;
     }
 

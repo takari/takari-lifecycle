@@ -2,6 +2,7 @@ package io.takari.maven.plugins.compile.javac;
 
 import io.takari.incrementalbuild.*;
 import io.takari.incrementalbuild.BuildContext.Input;
+import io.takari.incrementalbuild.BuildContext.OutputMetadata;
 import io.takari.incrementalbuild.BuildContext.Severity;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.maven.plugins.compile.AbstractCompileMojo;
@@ -144,6 +145,10 @@ public class CompilerJavac {
     // javac does not provide information about inter-class dependencies
     // if any of the sources changed, all sources need to be recompiled
     if (sources.isUnmodified() && !deleted && config.getChangedDependencyTypes().isEmpty()) {
+      // mark outputs as up-to-date, otherwise they are deleted during BuildContext#commit
+      for (OutputMetadata<File> output : context.getProcessedOutputs()) {
+        context.carryOverOutput(output.getResource());
+      }
       return;
     }
 

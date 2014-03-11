@@ -17,17 +17,31 @@ public class CompileIncrementalTest extends AbstractCompileTest {
 
   @Test
   public void testBasic() throws Exception {
+    ClasspathEntryDigester digester = new ClasspathEntryDigester();
+
     File basedir = compile("compile-incremental/basic");
-    mojos.assertBuildOutputs(new File(basedir, "target/classes"), "basic/Basic.class");
+    File classes = new File(basedir, "target/classes");
+    mojos.assertBuildOutputs(classes, "basic/Basic.class");
+    ClasspathEntryIndex index = digester.readIndex(classes, 0);
+    Assert.assertTrue(index.isPersistent());
+    Assert.assertNotNull(index.getIndex().get("basic.Basic"));
 
     // no-change rebuild
     compile(basedir);
-    mojos.assertBuildOutputs(new File(basedir, "target/classes"), new String[0]);
+    mojos.assertBuildOutputs(classes, new String[0]);
+    mojos.assertDeletedOutputs(classes, new String[0]);
+    mojos.assertCarriedOverOutputs(classes, "basic/Basic.class");
+    index = digester.readIndex(classes, 0);
+    Assert.assertTrue(index.isPersistent());
+    Assert.assertNotNull(index.getIndex().get("basic.Basic"));
 
     // change
     cp(basedir, "src/main/java/basic/Basic.java-modified", "src/main/java/basic/Basic.java");
     compile(basedir);
-    mojos.assertBuildOutputs(new File(basedir, "target/classes"), "basic/Basic.class");
+    mojos.assertBuildOutputs(classes, "basic/Basic.class");
+    index = digester.readIndex(classes, 0);
+    Assert.assertTrue(index.isPersistent());
+    Assert.assertNotNull(index.getIndex().get("basic.Basic"));
   }
 
   @Test
