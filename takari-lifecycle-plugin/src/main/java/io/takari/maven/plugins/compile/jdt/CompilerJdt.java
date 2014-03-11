@@ -2,24 +2,13 @@ package io.takari.maven.plugins.compile.jdt;
 
 import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
-import io.takari.incrementalbuild.spi.CapabilitiesProvider;
-import io.takari.incrementalbuild.spi.DefaultBuildContext;
-import io.takari.incrementalbuild.spi.DefaultInput;
-import io.takari.incrementalbuild.spi.DefaultOutput;
-import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
+import io.takari.incrementalbuild.spi.*;
 import io.takari.maven.plugins.compile.AbstractCompileMojo;
 import io.takari.maven.plugins.compile.ProjectClasspathDigester;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
@@ -27,13 +16,8 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 import org.eclipse.jdt.core.compiler.CharOperation;
-import org.eclipse.jdt.internal.compiler.ClassFile;
-import org.eclipse.jdt.internal.compiler.CompilationResult;
+import org.eclipse.jdt.internal.compiler.*;
 import org.eclipse.jdt.internal.compiler.Compiler;
-import org.eclipse.jdt.internal.compiler.DefaultErrorHandlingPolicies;
-import org.eclipse.jdt.internal.compiler.ICompilerRequestor;
-import org.eclipse.jdt.internal.compiler.IErrorHandlingPolicy;
-import org.eclipse.jdt.internal.compiler.IProblemFactory;
 import org.eclipse.jdt.internal.compiler.batch.CompilationUnit;
 import org.eclipse.jdt.internal.compiler.batch.FileSystem.Classpath;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
@@ -42,8 +26,14 @@ import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.eclipse.jdt.internal.compiler.util.SuffixConstants;
 import org.eclipse.jdt.internal.core.builder.ProblemFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Stopwatch;
 
 public class CompilerJdt implements ICompilerRequestor {
+
+  private final Logger log = LoggerFactory.getLogger(getClass());
 
   private static final String CAPABILITY_TYPE = "jdt.type";
   private static final String CAPABILITY_SIMPLE_TYPE = "jdt.simpleType";
@@ -70,7 +60,7 @@ public class CompilerJdt implements ICompilerRequestor {
   public CompilerJdt(AbstractCompileMojo mojo, DefaultBuildContext<?> context,
       ProjectClasspathDigester digester) {
     this.mojo = mojo;
-    this.context = (DefaultBuildContext<?>) context;
+    this.context = context;
     this.digester = digester;
     this.sourceEncoding = mojo.getSourceEncoding() != null ? mojo.getSourceEncoding().name() : null;
   }
@@ -100,6 +90,8 @@ public class CompilerJdt implements ICompilerRequestor {
     // which saves memory and GC cycles
     // also, if number of sources in the previous build is known, it may be more efficient to
     // rebuild everything after certain % of sources is modified
+
+    Stopwatch stopwatch = new Stopwatch().start();
 
     try {
       enqueue(context.registerAndProcessInputs(sources));
@@ -134,6 +126,8 @@ public class CompilerJdt implements ICompilerRequestor {
     } catch (IOException e) {
       throw new MojoExecutionException("Unexpected IOException during compilation", e);
     }
+
+    log.info("Compilation time {}", stopwatch.elapsed(TimeUnit.MILLISECONDS));
   }
 
   private void enqueueAffectedInputs(CapabilitiesProvider output) {
