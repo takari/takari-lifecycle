@@ -140,10 +140,10 @@
      |-->
     <component>
       <role>org.apache.maven.artifact.handler.ArtifactHandler</role>
-      <role-hint>takari-plugin</role-hint>
+      <role-hint>takari-maven-plugin</role-hint>
       <implementation>org.apache.maven.artifact.handler.DefaultArtifactHandler</implementation>
       <configuration>
-        <type>tesla-plugin</type>
+        <type>takari-maven-plugin</type>
         <extension>jar</extension>
         <language>java</language>
         <addedToClasspath>true</addedToClasspath>
@@ -151,41 +151,39 @@
     </component>
     <component>
       <role>org.apache.maven.lifecycle.mapping.LifecycleMapping</role>
-      <role-hint>tesla-plugin</role-hint>
+      <role-hint>takari-maven-plugin</role-hint>
       <implementation>org.apache.maven.lifecycle.mapping.DefaultLifecycleMapping</implementation>
       <configuration>
         <lifecycles>
           <lifecycle>
             <id>default</id>
             <phases>
+              <generate-resources>
+              </generate-resources>
               <process-resources>
-                org.apache.maven.plugins:maven-resources-plugin:2.5:resources
+                org.apache.maven.plugins:maven-resources-plugin:2.6:resources
               </process-resources>
               <compile>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:compile
               </compile>
               <process-classes>
-                io.takari.maven.plugins:tesla-plugin-plugin:${version.tesla-plugin-api}:descriptor,
-                org.sonatype.plugins:sisu-maven-plugin:1.1:main-index
+                org.apache.maven.plugins:maven-plugin-plugin:3.2:descriptor
               </process-classes>
               <process-test-resources>
-                org.apache.maven.plugins:maven-resources-plugin:2.5:testResources
+                org.apache.maven.plugins:maven-resources-plugin:2.6:testResources
               </process-test-resources>
               <test-compile>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:testCompile
               </test-compile>
-              <process-test-classes>
-                org.sonatype.plugins:sisu-maven-plugin:1.1:test-index
-              </process-test-classes>
               <test>
-                org.apache.maven.plugins:maven-surefire-plugin:2.12.1:test
+                org.apache.maven.plugins:maven-surefire-plugin:2.12.4:test
               </test>
               <package>
-                io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:jar,
-                org.apache.maven.plugins:maven-plugin-plugin:2.7:addPluginArtifactMetadata
+                io.takari.maven.plugins:takari-lifecycle-plugin:${project.version},
+                org.apache.maven.plugins:maven-plugin-plugin:3.2:addPluginArtifactMetadata
               </package>
               <install>
-                org.apache.maven.plugins:maven-install-plugin:2.3.1:install
+                org.apache.maven.plugins:maven-install-plugin:2.4:install
               </install>
               <deploy>
                 org.apache.maven.plugins:maven-deploy-plugin:2.7:deploy
@@ -195,28 +193,5 @@
         </lifecycles>
       </configuration>
     </component>  
-    
-    <!-- Our compiler bits -->
-    <component>
-      <role>io.takari.maven.plugins.compiler.manager.CompilerManager</role>
-      <role-hint>default</role-hint>
-      <implementation>io.takari.maven.plugins.compiler.manager.DefaultCompilerManager</implementation>
-      <description />
-      <isolated-realm>false</isolated-realm>
-      <requirements>
-        <requirement>
-          <role>io.takari.maven.plugins.compiler.api.Compiler</role>
-          <field-name>compilers</field-name>
-        </requirement>
-      </requirements>
-    </component>    
-    <component>
-      <role>io.takari.maven.plugins.compiler.api.Compiler</role>
-      <role-hint>javac</role-hint>
-      <implementation>io.takari.maven.plugins.compiler.javac.JavacCompiler</implementation>
-      <description />
-      <isolated-realm>false</isolated-realm>
-    </component>    
-       
   </components>
 </component-set>
