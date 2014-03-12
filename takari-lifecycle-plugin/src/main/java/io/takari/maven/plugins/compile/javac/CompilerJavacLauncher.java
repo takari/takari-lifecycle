@@ -1,10 +1,7 @@
 package io.takari.maven.plugins.compile.javac;
 
-import io.takari.incrementalbuild.*;
+import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.Input;
-import io.takari.incrementalbuild.BuildContext.InputMetadata;
-import io.takari.incrementalbuild.BuildContext.OutputMetadata;
-import io.takari.incrementalbuild.BuildContext.ResourceStatus;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.maven.plugins.compile.AbstractCompileMojo;
 import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerConfiguration;
@@ -13,7 +10,6 @@ import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerOutputP
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -53,25 +49,7 @@ public class CompilerJavacLauncher {
     }
   }
 
-  private int compile(File options, File output, List<File> sourcesFiles) throws IOException {
-    List<File> sources = new ArrayList<File>();
-
-    boolean unmodified = true;
-    for (InputMetadata<File> source : context.registerInputs(sourcesFiles)) {
-      unmodified = unmodified && source.getStatus() == ResourceStatus.UNMODIFIED;
-      sources.add(source.getResource());
-    }
-
-    boolean deleted = context.getRemovedInputs(File.class).iterator().hasNext();
-
-    if (unmodified && !deleted && config.getChangedDependencyTypes().isEmpty()) {
-      // mark outputs as up-to-date, otherwise they are deleted during BuildContext#commit
-      for (OutputMetadata<File> outputMetadata : context.getProcessedOutputs()) {
-        context.carryOverOutput(outputMetadata.getResource());
-      }
-      return 0;
-    }
-
+  private int compile(File options, File output, List<File> sources) throws IOException {
     new CompilerConfiguration(config.getSourceEncoding(), config.getCompilerOptions(), sources)
         .write(options);
 

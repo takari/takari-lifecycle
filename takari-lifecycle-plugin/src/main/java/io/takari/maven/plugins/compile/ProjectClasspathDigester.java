@@ -5,12 +5,8 @@ import io.takari.incrementalbuild.BuildContext.Output;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.incrementalbuild.spi.DefaultInputMetadata;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -28,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.io.Files;
 
@@ -69,6 +64,8 @@ public class ProjectClasspathDigester {
    * including new and deleted dependency types.
    */
   public Set<String> digestDependencies(List<Artifact> dependencies) throws IOException {
+    log.info("Analyzing {} classpath dependencies", dependencies.size());
+
     Stopwatch stopwatch = new Stopwatch().start();
 
     ArrayListMultimap<String, byte[]> newIndex = ArrayListMultimap.create();
@@ -84,8 +81,8 @@ public class ProjectClasspathDigester {
 
     Set<String> result = ClasspathEntryDigester.diff(oldIndex, newIndex);
 
-    log.info("type index artifacts {} types {} {} ms", dependencies.size(), newIndex.size(),
-        stopwatch.elapsed(TimeUnit.MILLISECONDS));
+    log.info("Analyzed {} types in {} classpath dependencies ({} ms)", newIndex.size(),
+        dependencies.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
 
     return result;
   }
@@ -99,26 +96,15 @@ public class ProjectClasspathDigester {
       return;
     }
 
-    DefaultInputMetadata<ArtifactFile> metadata = null;
-    Multimap<String, byte[]> typeIndex = null;
+    // three types of dependencies
+    // 1. classes folders, always delegate to digester to deal with changes
+    // 2. new jars, type index should be fast to read
+    // 3. legacy jars, "simple" type index should be fast to generate
+    // no pros storing per-dependency type index in BuildContext
+    // cons include significant BuildContext state size
+    // it makes sense to cache type index in-memory per-jar (or per-dependency)
 
-    if (file.isFile()) {
-      // XXX introduce #registerInput(qualifier, File);
-      metadata = context.registerInput(new ArtifactFileHolder(file));
-      typeIndex = getTypeIndex(metadata);
-    }
-
-    if (typeIndex == null) {
-      typeIndex = digester.readIndex(file, timestamp).getIndex();
-    }
-
-    if (metadata != null) {
-      // XXX do this for legacy dependency jars only
-      // for modern jars this only wastes context state
-      metadata.process().setValue(KEY_CLASSPATH_DIGEST, ImmutableMultimap.copyOf(typeIndex));
-    }
-
-    index.putAll(typeIndex);
+    index.putAll(digester.readIndex(file, timestamp).getIndex());
   }
 
   @SuppressWarnings("unchecked")

@@ -2,7 +2,6 @@ package io.takari.maven.plugins.compile.javac;
 
 import io.takari.incrementalbuild.*;
 import io.takari.incrementalbuild.BuildContext.Input;
-import io.takari.incrementalbuild.BuildContext.OutputMetadata;
 import io.takari.incrementalbuild.BuildContext.Severity;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.maven.plugins.compile.AbstractCompileMojo;
@@ -129,28 +128,14 @@ public class CompilerJavac {
     }
   }
 
-  private void compile(JavaCompiler compiler, List<File> sourceFiles) throws MojoExecutionException {
+  private void compile(JavaCompiler compiler, List<File> sources) throws MojoExecutionException {
     final Charset sourceEncoding = config.getSourceEncoding();
     final DiagnosticCollector<JavaFileObject> diagnosticCollector =
         new DiagnosticCollector<JavaFileObject>();
     final StandardJavaFileManager standardFileManager =
         compiler.getStandardFileManager(diagnosticCollector, null, sourceEncoding);
-    final InputMetadataIterable<File> sources =
-        new InputMetadataIterable<File>(context.registerInputs(sourceFiles));
     final Iterable<? extends JavaFileObject> javaSources =
         standardFileManager.getJavaFileObjectsFromFiles(sources);
-
-    boolean deleted = context.getRemovedInputs(File.class).iterator().hasNext();
-
-    // javac does not provide information about inter-class dependencies
-    // if any of the sources changed, all sources need to be recompiled
-    if (sources.isUnmodified() && !deleted && config.getChangedDependencyTypes().isEmpty()) {
-      // mark outputs as up-to-date, otherwise they are deleted during BuildContext#commit
-      for (OutputMetadata<File> output : context.getProcessedOutputs()) {
-        context.carryOverOutput(output.getResource());
-      }
-      return;
-    }
 
     final Iterable<String> options = config.getCompilerOptions();
     final RecordingJavaFileManager recordingFileManager =

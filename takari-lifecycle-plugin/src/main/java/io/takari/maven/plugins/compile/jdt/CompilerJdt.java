@@ -65,7 +65,8 @@ public class CompilerJdt implements ICompilerRequestor {
     this.sourceEncoding = mojo.getSourceEncoding() != null ? mojo.getSourceEncoding().name() : null;
   }
 
-  public void compile(List<File> sources) throws MojoExecutionException {
+  public void compile(List<File> sources, Set<String> changedDependencyTypes)
+      throws MojoExecutionException {
     INameEnvironment namingEnvironment = getClassPath();
     IErrorHandlingPolicy errorHandlingPolicy = DefaultErrorHandlingPolicies.exitAfterAllProblems();
     Map<String, String> args = new HashMap<String, String>();
@@ -96,7 +97,7 @@ public class CompilerJdt implements ICompilerRequestor {
     try {
       enqueue(context.registerAndProcessInputs(sources));
 
-      for (String type : mojo.getChangedDependencyTypes()) {
+      for (String type : changedDependencyTypes) {
         for (InputMetadata<File> input : context.getDependentInputs(CAPABILITY_TYPE, type)) {
           enqueue(input.getResource());
         }

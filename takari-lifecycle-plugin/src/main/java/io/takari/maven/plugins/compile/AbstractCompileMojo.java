@@ -1,7 +1,11 @@
 package io.takari.maven.plugins.compile;
 
+import io.takari.incrementalbuild.BuildContext.InputMetadata;
+import io.takari.incrementalbuild.BuildContext.OutputMetadata;
+import io.takari.incrementalbuild.BuildContext.ResourceStatus;
 import io.takari.incrementalbuild.configuration.Configuration;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
+import io.takari.incrementalbuild.spi.DefaultInputMetadata;
 import io.takari.maven.plugins.compile.javac.CompilerJavac;
 import io.takari.maven.plugins.compile.javac.CompilerJavacLauncher;
 import io.takari.maven.plugins.compile.jdt.CompilerJdt;
@@ -9,15 +13,11 @@ import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.*;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.codehaus.plexus.util.DirectoryScanner;
@@ -147,8 +147,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
   @Component
   private ProjectClasspathDigester digester;
-
-  private Set<String> changedDependencyTypes;
 
   public Charset getSourceEncoding() {
     return encoding == null ? null : Charset.forName(encoding);
@@ -286,13 +284,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     return cp.toString();
   }
 
-  /**
-   * Returns set of dependency types that changed structurally compared to the previous build,
-   * including new and deleted dependency types.
-   */
-  public Set<String> getChangedDependencyTypes() {
-    return changedDependencyTypes;
-  }
 
   public String getMaxmem() {
     return maxmem;
@@ -319,9 +310,57 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     }
 
     try {
-      this.changedDependencyTypes = digester.digestDependencies(getCompileArtifacts());
+      Set<String> changedDependencyTypes = digester.digestDependencies(getCompileArtifacts());
+
+      List<InputMetadata<File>> modified = new ArrayList<InputMetadata<File>>();
+      List<InputMetadata<File>> inputs = new ArrayList<InputMetadata<File>>();
+      for (InputMetadata<File> input : context.registerInputs(sources)) {
+        inputs.add(input);
+        if (input.getStatus() != ResourceStatus.UNMODIFIED) {
+          modified.add(input);
+        }
+      }
+      Set<DefaultInputMetadata<File>> deleted = context.getRemovedInputs(File.class);
+
+      // TODO javac needs to explicitly check deleted/modified outputs
+
+      if (modified.isEmpty() && deleted.isEmpty() && changedDependencyTypes.isEmpty()) {
+        if (!"jdt".equals(compilerId)) {
+          // javac does not track input/output association
+          // need to manually carry-over output metadata
+          // otherwise outouts are deleted during BuildContext#commit
+          for (OutputMetadata<File> output : context.getProcessedOutputs()) {
+            context.carryOverOutput(output.getResource());
+          }
+        }
+        log.info("Skipping compilation, all classes are up to date");
+        return;
+      }
 
       log.info("Compiling {} sources to {}", sources.size(), getOutputDirectory());
+
+      if (!context.isEscalated()) {
+        if (!modified.isEmpty() || !deleted.isEmpty()) {
+          StringBuilder inputsMsg = new StringBuilder("Modified inputs:");
+          for (InputMetadata<File> input : modified) {
+            inputsMsg.append("\n   ").append(input.getStatus()).append(" ")
+                .append(input.getResource());
+          }
+          for (InputMetadata<File> input : deleted) {
+            inputsMsg.append("\n   ").append(input.getStatus()).append(" ")
+                .append(input.getResource());
+          }
+          log.info(inputsMsg.toString());
+        }
+
+        if (changedDependencyTypes.size() > 0) {
+          StringBuilder types = new StringBuilder("Changed types:");
+          for (String type : changedDependencyTypes) {
+            types.append("\n   ").append(type);
+          }
+          log.info(types.toString());
+        }
+      }
 
       if ("javac".equals(compilerId)) {
         new CompilerJavac(context, this).compile(sources);
@@ -332,7 +371,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
         compiler.setBuildDirectory(buildDirectory);
         compiler.compile(sources);
       } else if ("jdt".equals(compilerId)) {
-        new CompilerJdt(this, context, digester).compile(sources);
+        new CompilerJdt(this, context, digester).compile(sources, changedDependencyTypes);
       } else {
         throw new MojoExecutionException("Unsupported compilerId" + compilerId);
       }
