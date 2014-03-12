@@ -1,6 +1,7 @@
 package io.takari.maven.plugins.compile;
 
 import static org.apache.maven.plugin.testing.resources.TestResources.cp;
+import static org.apache.maven.plugin.testing.resources.TestResources.touch;
 
 import java.io.File;
 
@@ -17,31 +18,21 @@ public class CompileIncrementalTest extends AbstractCompileTest {
 
   @Test
   public void testBasic() throws Exception {
-    ClasspathEntryDigester digester = new ClasspathEntryDigester();
 
     File basedir = compile("compile-incremental/basic");
     File classes = new File(basedir, "target/classes");
     mojos.assertBuildOutputs(classes, "basic/Basic.class");
-    ClasspathEntryIndex index = digester.readIndex(classes, 0);
-    Assert.assertTrue(index.isPersistent());
-    Assert.assertNotNull(index.getIndex().get("basic.Basic"));
 
     // no-change rebuild
     compile(basedir);
     mojos.assertBuildOutputs(classes, new String[0]);
     mojos.assertDeletedOutputs(classes, new String[0]);
     mojos.assertCarriedOverOutputs(classes, "basic/Basic.class");
-    index = digester.readIndex(classes, 0);
-    Assert.assertTrue(index.isPersistent());
-    Assert.assertNotNull(index.getIndex().get("basic.Basic"));
 
     // change
     cp(basedir, "src/main/java/basic/Basic.java-modified", "src/main/java/basic/Basic.java");
     compile(basedir);
     mojos.assertBuildOutputs(classes, "basic/Basic.class");
-    index = digester.readIndex(classes, 0);
-    Assert.assertTrue(index.isPersistent());
-    Assert.assertNotNull(index.getIndex().get("basic.Basic"));
   }
 
   @Test
@@ -112,14 +103,17 @@ public class CompileIncrementalTest extends AbstractCompileTest {
     mojos.compile(projectA);
     mojos.assertBuildOutputs(moduleA, new String[0]);
 
-    // dependency changed "non-structurally"
-    cp(moduleB, "src/main/java/moduleb/ModuleB.java-comment", "src/main/java/moduleb/ModuleB.java");
-    compile(moduleB);
-    mojos.compile(projectA);
-    mojos.assertBuildOutputs(moduleA, new String[0]);
+    // dependency changed "non-structurally" (only applies to jdt)
+    // cp(moduleB, "src/main/java/moduleb/ModuleB.java-comment",
+    // "src/main/java/moduleb/ModuleB.java");
+    // touch(moduleB, "src/main/java/moduleb/ModuleB.java");
+    // compile(moduleB);
+    // mojos.compile(projectA);
+    // mojos.assertBuildOutputs(moduleA, new String[0]);
 
     // dependency changed "structurally"
     cp(moduleB, "src/main/java/moduleb/ModuleB.java-method", "src/main/java/moduleb/ModuleB.java");
+    touch(moduleB, "src/main/java/moduleb/ModuleB.java");
     compile(moduleB);
     mojos.compile(projectA);
     mojos.assertBuildOutputs(moduleA, "target/classes/modulea/ModuleA.class");
@@ -142,11 +136,11 @@ public class CompileIncrementalTest extends AbstractCompileTest {
     mojos.compile(projectA);
     mojos.assertBuildOutputs(moduleA, new String[0]);
 
-    // dependency changed "non-structurally"
-    projectA = mojos.readMavenProject(moduleA);
-    addDependency(projectA, "module-b", new File(moduleB, "module-b-comment.jar"));
-    mojos.compile(projectA);
-    mojos.assertBuildOutputs(moduleA, new String[0]);
+    // dependency changed "non-structurally" (only applies to jdt)
+    // projectA = mojos.readMavenProject(moduleA);
+    // addDependency(projectA, "module-b", new File(moduleB, "module-b-comment.jar"));
+    // mojos.compile(projectA);
+    // mojos.assertBuildOutputs(moduleA, new String[0]);
 
     // dependency changed "structurally"
     projectA = mojos.readMavenProject(moduleA);

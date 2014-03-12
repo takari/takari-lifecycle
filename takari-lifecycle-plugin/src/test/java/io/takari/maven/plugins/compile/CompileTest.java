@@ -2,18 +2,14 @@ package io.takari.maven.plugins.compile;
 
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.PrintStream;
+import java.io.*;
 
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
-import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.Test;
+import org.junit.*;
 
 public class CompileTest extends AbstractCompileTest {
 
@@ -26,11 +22,6 @@ public class CompileTest extends AbstractCompileTest {
     File basedir = compile("compile/basic");
     File classes = new File(basedir, "target/classes");
     mojos.assertBuildOutputs(classes, "basic/Basic.class");
-    Assert.assertTrue(new File(classes, ClasspathEntryDigester.TYPE_INDEX_LOCATION).isFile());
-    ClasspathEntryIndex index =
-        new ClasspathEntryDigester().readIndex(classes, mojos.getStartTime());
-    Assert.assertTrue(index.isPersistent());
-    Assert.assertEquals(1, index.getIndex().get("basic.Basic").size());
   }
 
   @Test
@@ -45,11 +36,6 @@ public class CompileTest extends AbstractCompileTest {
     mojos.executeMojo(session, project, execution);
 
     mojos.assertBuildOutputs(classes, "basic/BasicTest.class");
-    Assert.assertTrue(new File(classes, ClasspathEntryDigester.TYPE_INDEX_LOCATION).isFile());
-    ClasspathEntryIndex index =
-        new ClasspathEntryDigester().readIndex(classes, mojos.getStartTime());
-    Assert.assertTrue(index.isPersistent());
-    Assert.assertEquals(1, index.getIndex().get("basic.BasicTest").size());
   }
 
   @Test

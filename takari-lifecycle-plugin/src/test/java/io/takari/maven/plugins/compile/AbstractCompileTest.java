@@ -58,9 +58,9 @@ public abstract class AbstractCompileTest {
   @Parameters(name = "{0}")
   public static Iterable<Object[]> compilers() {
     return Arrays.<Object[]>asList( //
-        new Object[] {"javac"}, //
-        new Object[] {"forked-javac"}, //
-        new Object[] {"jdt"} //
+        new Object[] {"javac"} //
+        , new Object[] {"forked-javac"} //
+        // , new Object[] {"jdt"} //
         );
   }
 

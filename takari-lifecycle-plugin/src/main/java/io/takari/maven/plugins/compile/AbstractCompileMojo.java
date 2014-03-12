@@ -310,7 +310,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     }
 
     try {
-      Set<String> changedDependencyTypes = digester.digestDependencies(getCompileArtifacts());
+      boolean classpathChanged = digester.digestDependencies(getCompileArtifacts());
 
       List<InputMetadata<File>> modified = new ArrayList<InputMetadata<File>>();
       List<InputMetadata<File>> inputs = new ArrayList<InputMetadata<File>>();
@@ -324,7 +324,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
       // TODO javac needs to explicitly check deleted/modified outputs
 
-      if (modified.isEmpty() && deleted.isEmpty() && changedDependencyTypes.isEmpty()) {
+      if (modified.isEmpty() && deleted.isEmpty() && !classpathChanged) {
         if (!"jdt".equals(compilerId)) {
           // javac does not track input/output association
           // need to manually carry-over output metadata
@@ -352,14 +352,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
           }
           log.info(inputsMsg.toString());
         }
-
-        if (changedDependencyTypes.size() > 0) {
-          StringBuilder types = new StringBuilder("Changed types:");
-          for (String type : changedDependencyTypes) {
-            types.append("\n   ").append(type);
-          }
-          log.info(types.toString());
-        }
       }
 
       if ("javac".equals(compilerId)) {
@@ -371,12 +363,10 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
         compiler.setBuildDirectory(buildDirectory);
         compiler.compile(sources);
       } else if ("jdt".equals(compilerId)) {
-        new CompilerJdt(this, context, digester).compile(sources, changedDependencyTypes);
+        new CompilerJdt(this, context).compile(sources, Collections.<String>emptySet());
       } else {
         throw new MojoExecutionException("Unsupported compilerId" + compilerId);
       }
-
-      digester.writeTypeIndex(getOutputDirectory());
 
       artifact.setFile(getOutputDirectory());
 

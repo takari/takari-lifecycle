@@ -18,6 +18,8 @@ public class CompileRule extends IncrementalBuildRule {
 
   @Override
   public MavenSession newMavenSession(MavenProject project) {
+    ArtifactFileHolder.flushCache();
+
     MavenSession session = super.newMavenSession(project);
     session.getRequest().setStartTime(new Date(now));
     return session;

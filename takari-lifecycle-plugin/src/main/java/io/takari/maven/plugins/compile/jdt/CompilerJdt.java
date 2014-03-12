@@ -1,10 +1,11 @@
 package io.takari.maven.plugins.compile.jdt;
 
-import io.takari.incrementalbuild.BuildContext;
+import io.takari.incrementalbuild.*;
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
+import io.takari.incrementalbuild.BuildContext.Output;
 import io.takari.incrementalbuild.spi.*;
 import io.takari.maven.plugins.compile.AbstractCompileMojo;
-import io.takari.maven.plugins.compile.ProjectClasspathDigester;
+import io.takari.maven.plugins.compile.ClassfileDigester;
 
 import java.io.*;
 import java.util.*;
@@ -20,6 +21,8 @@ import org.eclipse.jdt.internal.compiler.*;
 import org.eclipse.jdt.internal.compiler.Compiler;
 import org.eclipse.jdt.internal.compiler.batch.CompilationUnit;
 import org.eclipse.jdt.internal.compiler.batch.FileSystem.Classpath;
+import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
+import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
 import org.eclipse.jdt.internal.compiler.env.INameEnvironment;
 import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
@@ -54,14 +57,12 @@ public class CompilerJdt implements ICompilerRequestor {
    */
   private final Set<File> processedSources = new LinkedHashSet<File>();
 
-  private final ProjectClasspathDigester digester;
+  private final ClassfileDigester digester = new ClassfileDigester();
 
   @Inject
-  public CompilerJdt(AbstractCompileMojo mojo, DefaultBuildContext<?> context,
-      ProjectClasspathDigester digester) {
+  public CompilerJdt(AbstractCompileMojo mojo, DefaultBuildContext<?> context) {
     this.mojo = mojo;
     this.context = context;
-    this.digester = digester;
     this.sourceEncoding = mojo.getSourceEncoding() != null ? mojo.getSourceEncoding().name() : null;
   }
 
@@ -271,7 +272,7 @@ public class CompilerJdt implements ICompilerRequestor {
     final char[][] compoundName = classFile.getCompoundName();
     final String type = CharOperation.toString(compoundName);
 
-    boolean significantChange = digester.digestClassFile(output, bytes);
+    boolean significantChange = digestClassFile(output, bytes);
 
     output.addCapability(CAPABILITY_TYPE, type);
     output.addCapability(CAPABILITY_SIMPLE_TYPE, new String(compoundName[compoundName.length - 1]));
@@ -288,6 +289,34 @@ public class CompilerJdt implements ICompilerRequestor {
     } finally {
       os.close();
     }
+  }
+
+  private static final String KEY_TYPE = "jdt.type";
+  private static final String KEY_HASH = "jdt.hash";
+  /**
+   * {@code KEY_TYPE} value used for local and anonymous types and also class files with
+   * corrupted/unsupported format.
+   */
+  private static final String TYPE_NOTYPE = ".";
+
+  public boolean digestClassFile(Output<File> output, byte[] definition) {
+    boolean significantChange = true;
+    try {
+      ClassFileReader reader =
+          new ClassFileReader(definition, output.getResource().getAbsolutePath().toCharArray());
+      String type = new String(CharOperation.replaceOnCopy(reader.getName(), '/', '.'));
+      byte[] hash = digester.digest(reader);
+      if (hash != null) {
+        output.setValue(KEY_TYPE, type);
+        byte[] oldHash = (byte[]) output.setValue(KEY_HASH, hash);
+        significantChange = oldHash == null || !Arrays.equals(hash, oldHash);
+      } else {
+        output.setValue(KEY_TYPE, TYPE_NOTYPE);
+      }
+    } catch (ClassFormatException e) {
+      output.setValue(KEY_TYPE, TYPE_NOTYPE);
+    }
+    return significantChange;
   }
 
 }

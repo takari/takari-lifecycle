@@ -9,8 +9,17 @@ class ArtifactFile implements Serializable {
 
   final File file;
 
-  public ArtifactFile(File file) {
+  final boolean isFile;
+
+  final long length;
+
+  final long lastModified;
+
+  public ArtifactFile(File file, boolean isFile, long length, long lastModified) {
     this.file = file;
+    this.isFile = isFile;
+    this.length = length;
+    this.lastModified = lastModified;
   }
 
   @Override
@@ -26,6 +35,12 @@ class ArtifactFile implements Serializable {
     if (!(obj instanceof ArtifactFile)) {
       return false;
     }
-    return file.equals(((ArtifactFile) obj).file);
+    ArtifactFile other = (ArtifactFile) obj;
+    return file.equals(other.file);
+  }
+
+  @Override
+  public String toString() {
+    return file.toString();
   }
 }

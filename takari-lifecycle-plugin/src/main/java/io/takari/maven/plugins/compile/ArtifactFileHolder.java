@@ -4,29 +4,70 @@ import io.takari.incrementalbuild.BuildContext.ResourceStatus;
 import io.takari.incrementalbuild.spi.ResourceHolder;
 
 import java.io.File;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-// this is a temporary workaround for missing BuildContext API
-// what I need, is ability to track source files and dependency artifact files separately
-// the proper way to do this is to introduce BuildContext.registerInput(qualifier,file)
-// for now, will use ArtifactFile type to separate dependencies and sources
-class ArtifactFileHolder implements ResourceHolder<ArtifactFile> {
+import org.codehaus.plexus.util.DirectoryScanner;
+
+public class ArtifactFileHolder implements ResourceHolder<ArtifactFile> {
 
   private static final long serialVersionUID = 1L;
 
-  private final ArtifactFile file;
+  // this assumes single classloader
+  private static final transient Map<File, ArtifactFile> CACHE =
+      new ConcurrentHashMap<File, ArtifactFile>();
+
+  private final ArtifactFile artifact;
 
   public ArtifactFileHolder(File file) {
-    this.file = new ArtifactFile(file);
+    this.artifact = newArtifactFile(file);
+    if (artifact == null) {
+      throw new IllegalArgumentException("Path does not exist " + file);
+    }
   }
 
   @Override
   public ArtifactFile getResource() {
-    return file;
+    return artifact;
   }
 
   @Override
   public ResourceStatus getStatus() {
-    return file.file.isFile() ? ResourceStatus.UNMODIFIED : ResourceStatus.REMOVED;
+    ArtifactFile current = newArtifactFile(this.artifact.file);
+    if (current == null) {
+      return ResourceStatus.REMOVED;
+    }
+    if (current.isFile != artifact.isFile || current.length != artifact.length
+        || current.lastModified != artifact.lastModified) {
+      return ResourceStatus.MODIFIED;
+    }
+    return ResourceStatus.UNMODIFIED;
   }
 
+  private static ArtifactFile newArtifactFile(File resource) {
+    ArtifactFile artifact = CACHE.get(resource);
+    if (artifact == null) {
+      if (resource.isFile()) {
+        artifact = new ArtifactFile(resource, true, resource.length(), resource.lastModified());
+      } else if (resource.isDirectory()) {
+        DirectoryScanner scanner = new DirectoryScanner();
+        scanner.setBasedir(resource);
+        scanner.scan();
+        long lastModified = 0, length = 0;
+        for (String path : scanner.getIncludedFiles()) {
+          lastModified = Math.max(lastModified, new File(resource, path).lastModified());
+          length++;
+        }
+        artifact = new ArtifactFile(resource, false, length, lastModified);
+      } // else resource does not exist
+      CACHE.put(resource, artifact);
+    }
+    return artifact;
+  }
+
+  // XXX decide if there is a way to get rid of this
+  // current, required by tests for incremental changes to reactor project
+  public static void flushCache() {
+    CACHE.clear();
+  }
 }
