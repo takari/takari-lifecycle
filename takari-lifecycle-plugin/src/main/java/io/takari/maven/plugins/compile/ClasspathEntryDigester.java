@@ -15,8 +15,7 @@ import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Stopwatch;
+import com.google.common.base.*;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
@@ -35,11 +34,13 @@ public class ClasspathEntryDigester {
   public void writeIndex(File outputDirectory, Multimap<String, byte[]> index) throws IOException {
     File indexFile = new File(outputDirectory, TYPE_INDEX_LOCATION);
     indexFile.getParentFile().mkdirs();
-    OutputStream os = new FileOutputStream(indexFile);
+    OutputStreamWriter writer =
+        new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(indexFile)),
+            Charsets.UTF_8);
     try {
-      writeTypeIndex(os, index);
+      writeTypeIndex(writer, index);
     } finally {
-      os.close();
+      writer.close();
     }
   }
 
@@ -64,7 +65,7 @@ public class ClasspathEntryDigester {
         InputStream is = zip.getInputStream(indexEntry);
         try {
           persisted = true;
-          index = readTypeIndex(is);
+          index = parseTypeIndex(is);
         } finally {
           is.close();
         }
@@ -138,7 +139,7 @@ public class ClasspathEntryDigester {
     if (indexFile.isFile()) {
       InputStream is = new FileInputStream(indexFile);
       try {
-        index = readTypeIndex(is);
+        index = parseTypeIndex(is);
       } finally {
         is.close();
       }
@@ -192,9 +193,20 @@ public class ClasspathEntryDigester {
   // first value is record type
   // 'T' record: type hash+, where hash is Base64 encoded class file digest
 
-  private Multimap<String, byte[]> readTypeIndex(InputStream is) throws IOException {
+  private static Multimap<String, byte[]> parseTypeIndex(InputStream is) throws IOException {
+    return parseTypeIndex(new InputStreamReader(is, Charsets.UTF_8));
+  }
+
+  public static Multimap<String, byte[]> parseTypeIndex(String index) throws IOException {
+    if (index == null) {
+      return null;
+    }
+    return parseTypeIndex(new StringReader(index));
+  }
+
+  private static Multimap<String, byte[]> parseTypeIndex(Reader reader) throws IOException {
+    BufferedReader r = new BufferedReader(reader);
     Multimap<String, byte[]> result = ArrayListMultimap.create();
-    BufferedReader r = new BufferedReader(new InputStreamReader(is, Charsets.UTF_8));
     String str;
     while ((str = r.readLine()) != null) {
       final StringTokenizer st = new StringTokenizer(str, " ");
@@ -212,14 +224,24 @@ public class ClasspathEntryDigester {
     return result;
   }
 
-  private void writeTypeIndex(OutputStream os, Multimap<String, byte[]> index) throws IOException {
+  public static String toString(Multimap<String, byte[]> index) {
+    StringWriter w = new StringWriter();
+    try {
+      writeTypeIndex(w, index);
+    } catch (IOException e) {
+      throw Throwables.propagate(e); // can't really happen
+    }
+    return w.toString();
+  }
+
+  private static void writeTypeIndex(Writer os, Multimap<String, byte[]> index) throws IOException {
     for (Map.Entry<String, Collection<byte[]>> entry : index.asMap().entrySet()) {
-      os.write("T".getBytes(Charsets.UTF_8));
+      os.write("T");
       os.write(' ');
-      os.write(entry.getKey().getBytes(Charsets.UTF_8));
+      os.write(entry.getKey());
       for (byte[] hash : entry.getValue()) {
         os.write(' ');
-        os.write(Base64.encodeBase64(hash, false));
+        os.write(new String(Base64.encodeBase64(hash, false), Charsets.US_ASCII));
       }
       os.write('\n');
     }

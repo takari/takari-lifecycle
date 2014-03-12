@@ -5,7 +5,8 @@ import io.takari.incrementalbuild.BuildContext.Output;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.incrementalbuild.spi.DefaultInputMetadata;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -76,8 +77,9 @@ public class ProjectClasspathDigester {
 
     // pom.xml represent overall process classpath
     DefaultInputMetadata<File> pomMetadata = context.registerInput(pom);
-    Multimap<String, byte[]> oldIndex = getTypeIndex(pomMetadata);
-    pomMetadata.process().setValue(KEY_CLASSPATH_DIGEST, newIndex);
+    String oldIndexStr = pomMetadata.getValue(KEY_CLASSPATH_DIGEST, String.class);
+    Multimap<String, byte[]> oldIndex = ClasspathEntryDigester.parseTypeIndex(oldIndexStr);
+    pomMetadata.process().setValue(KEY_CLASSPATH_DIGEST, ClasspathEntryDigester.toString(newIndex));
 
     Set<String> result = ClasspathEntryDigester.diff(oldIndex, newIndex);
 
@@ -105,11 +107,6 @@ public class ProjectClasspathDigester {
     // it makes sense to cache type index in-memory per-jar (or per-dependency)
 
     index.putAll(digester.readIndex(file, timestamp).getIndex());
-  }
-
-  @SuppressWarnings("unchecked")
-  private Multimap<String, byte[]> getTypeIndex(DefaultInputMetadata<?> dependency) {
-    return (Multimap<String, byte[]>) dependency.getValue(KEY_CLASSPATH_DIGEST, Serializable.class);
   }
 
   public void writeTypeIndex(File outputDirectory) throws IOException {
