@@ -13,13 +13,6 @@ import org.junit.Assert;
 
 public class CompileRule extends IncrementalBuildRule {
 
-  @Override
-  public MavenSession newMavenSession(MavenProject project) {
-    ArtifactFileHolder.flushCache();
-
-    return super.newMavenSession(project);
-  };
-
   public File compile(File basedir, Xpp3Dom... parameters) throws Exception {
     MavenProject project = readMavenProject(basedir);
     compile(project, parameters);
