@@ -3,7 +3,8 @@ package io.takari.maven.plugins.compile;
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
 import io.takari.incrementalbuild.BuildContext.OutputMetadata;
 import io.takari.incrementalbuild.BuildContext.ResourceStatus;
-import io.takari.incrementalbuild.configuration.Configuration;
+import io.takari.incrementalbuild.*;
+import io.takari.incrementalbuild.Incremental.Configuration;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.incrementalbuild.spi.DefaultInputMetadata;
 import io.takari.maven.plugins.compile.javac.CompilerJavac;
@@ -123,23 +124,23 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   //
 
   @Parameter(defaultValue = "${project.file}", readonly = true)
-  @Configuration(ignored = true)
+  @Incremental(configuration = Configuration.ignore)
   private File pom;
 
   @Parameter(defaultValue = "${project.basedir}", readonly = true)
-  @Configuration(ignored = true)
+  @Incremental(configuration = Configuration.ignore)
   private File basedir;
 
   @Parameter(defaultValue = "${project.build.directory}", readonly = true)
-  @Configuration(ignored = true)
+  @Incremental(configuration = Configuration.ignore)
   private File buildDirectory;
 
   @Parameter(defaultValue = "${plugin.pluginArtifact}", readonly = true)
-  @Configuration(ignored = true)
+  @Incremental(configuration = Configuration.ignore)
   private Artifact pluginArtifact;
 
   @Parameter(defaultValue = "${project.artifact}", readonly = true)
-  @Configuration(ignored = true)
+  @Incremental(configuration = Configuration.ignore)
   private Artifact artifact;
 
   @Component

@@ -1,6 +1,7 @@
 package io.takari.maven.plugins;
 
-import io.takari.incrementalbuild.configuration.Configuration;
+import io.takari.incrementalbuild.Incremental;
+import io.takari.incrementalbuild.Incremental.Configuration;
 
 import java.util.List;
 
@@ -43,27 +44,27 @@ public abstract class TakariLifecycleMojo extends AbstractMojo {
   protected MavenProjectHelper projectHelper;
 
   @Parameter(defaultValue = "${project}")
-  @Configuration(ignored = true)
+  @Incremental(configuration = Configuration.ignore)
   protected MavenProject project;
 
   @Parameter(defaultValue = "${reactorProjects}")
-  @Configuration(ignored = true)
+  @Incremental(configuration = Configuration.ignore)
   protected List<MavenProject> reactorProjects;
 
   @Parameter(defaultValue = "${repositorySystemSession}")
-  @Configuration(ignored = true)
+  @Incremental(configuration = Configuration.ignore)
   protected RepositorySystemSession repositorySystemSession;
 
   @Parameter(defaultValue = "${project.remoteRepositories}")
-  @Configuration(ignored = true)
+  @Incremental(configuration = Configuration.ignore)
   protected List<RemoteRepository> remoteRepositories;
 
   @Parameter(defaultValue = "${mojoExecution.mojoDescriptor}")
-  @Configuration(ignored = true)
+  @Incremental(configuration = Configuration.ignore)
   protected MojoDescriptor mojoDescriptor;
 
   @Parameter(defaultValue = "${settings}")
-  @Configuration(ignored = true)
+  @Incremental(configuration = Configuration.ignore)
   protected Settings settings;
 
   @Parameter(defaultValue = "false", property = "skip")

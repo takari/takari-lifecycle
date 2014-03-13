@@ -1,18 +1,13 @@
 package io.takari.maven.plugins.compile;
 
-import io.takari.incrementalbuild.configuration.Configuration;
+import io.takari.incrementalbuild.Incremental;
+import io.takari.incrementalbuild.Incremental.Configuration;
 
 import java.io.File;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.plugins.annotations.*;
 
 @Mojo(name = "testCompile", defaultPhase = LifecyclePhase.TEST_COMPILE, threadSafe = true, requiresDependencyResolution = ResolutionScope.TEST)
 public class TestCompileMojo extends AbstractCompileMojo {
@@ -39,7 +34,7 @@ public class TestCompileMojo extends AbstractCompileMojo {
    * Project classpath.
    */
   @Parameter(defaultValue = "${project.testArtifacts}", readonly = true, required = true)
-  @Configuration(ignored = true)
+  @Incremental(configuration = Configuration.ignore)
   private List<Artifact> compileArtifacts;
 
   /**
