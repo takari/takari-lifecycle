@@ -11,17 +11,10 @@ import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerOutputP
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.exec.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Stopwatch;
 
 public class CompilerJavacLauncher {
-
-  private Logger log = LoggerFactory.getLogger(getClass());
 
   private final DefaultBuildContext<?> context;
 
@@ -86,9 +79,7 @@ public class CompilerJavacLauncher {
     executor.setProcessDestroyer(new ShutdownHookProcessDestroyer());
     executor.setWorkingDirectory(basedir);
 
-    Stopwatch stopwatch = new Stopwatch().start();
     executor.execute(cli); // this throws ExecuteException if process return code != 0
-    log.info("Compilation time {}", stopwatch.elapsed(TimeUnit.MILLISECONDS));
 
     for (File source : sources) {
       context.registerInput(source).process();

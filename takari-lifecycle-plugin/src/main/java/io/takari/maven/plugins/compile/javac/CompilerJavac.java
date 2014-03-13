@@ -10,20 +10,13 @@ import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 import javax.tools.*;
 import javax.tools.Diagnostic.Kind;
 
 import org.apache.maven.plugin.MojoExecutionException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Stopwatch;
 
 public class CompilerJavac {
-
-  private final Logger log = LoggerFactory.getLogger(getClass());
 
   private static final boolean isJava7;
 
@@ -154,9 +147,7 @@ public class CompilerJavac {
         null, // Iterable<String> classes to process by annotation processor(s)
         javaSources);
 
-    Stopwatch stopwatch = new Stopwatch().start();
     boolean success = task.call();
-    log.info("Compilation time {}", stopwatch.elapsed(TimeUnit.MILLISECONDS));
 
     for (JavaFileObject source : javaSources) {
       context.registerInput(FileObjects.toFile(source)).process();

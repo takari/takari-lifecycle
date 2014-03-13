@@ -75,16 +75,16 @@ public class ProjectClasspathDigester {
 
       if (hasChanged(artifact, previousArtifact)) {
         changed = true;
-        log.info("New or changed classpath entry {}", file);
+        log.debug("New or changed classpath entry {}", file);
       }
     }
 
     for (InputMetadata<ArtifactFile> removedArtifact : context.getRemovedInputs(ArtifactFile.class)) {
       changed = true;
-      log.info("Removed classpath entry {}", removedArtifact.getResource().file);
+      log.debug("Removed classpath entry {}", removedArtifact.getResource().file);
     }
 
-    log.info("Analyzed {} classpath dependencies ({} ms)", dependencies.size(),
+    log.debug("Analyzed {} classpath dependencies ({} ms)", dependencies.size(),
         stopwatch.elapsed(TimeUnit.MILLISECONDS));
 
     return changed;
@@ -120,7 +120,7 @@ public class ProjectClasspathDigester {
     }
 
     if (msg.length() > 0) {
-      log.info("Changed dependency class folder {}: {}", directory, msg.toString());
+      log.debug("Changed dependency class folder {}: {}", directory, msg.toString());
     }
 
     return new ArtifactFile(directory, false, fileCount, maxLastModified);

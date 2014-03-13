@@ -333,13 +333,13 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
             context.carryOverOutput(output.getResource());
           }
         }
-        log.info("Skipping compilation, all classes are up to date");
+        log.info("Skipped compilation, all {} sources are up to date", sources.size());
         return;
       }
 
       log.info("Compiling {} sources to {}", sources.size(), getOutputDirectory());
 
-      if (!context.isEscalated()) {
+      if (!context.isEscalated() && log.isDebugEnabled()) {
         if (!modified.isEmpty() || !deleted.isEmpty()) {
           StringBuilder inputsMsg = new StringBuilder("Modified inputs:");
           for (InputMetadata<File> input : modified) {
@@ -350,7 +350,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
             inputsMsg.append("\n   ").append(input.getStatus()).append(" ")
                 .append(input.getResource());
           }
-          log.info(inputsMsg.toString());
+          log.debug(inputsMsg.toString());
         }
       }
 
@@ -370,7 +370,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
       artifact.setFile(getOutputDirectory());
 
-      log.info("Compiled {} sources in {} ms", sources.size(),
+      log.info("Compiled {} sources ({} ms)", sources.size(),
           stopwatch.elapsed(TimeUnit.MILLISECONDS));
     } catch (IOException e) {
       throw new MojoExecutionException("Could not compile project", e);
