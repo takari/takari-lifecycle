@@ -1,12 +1,8 @@
 package io.takari.maven.plugins.compile.javac;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 
-import javax.tools.FileObject;
-import javax.tools.ForwardingJavaFileManager;
-import javax.tools.JavaFileObject;
-import javax.tools.StandardJavaFileManager;
+import javax.tools.*;
 
 abstract class RecordingJavaFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> {
 
@@ -19,7 +15,12 @@ abstract class RecordingJavaFileManager extends ForwardingJavaFileManager<Standa
       FileObject sibling) throws IOException {
     FileObject fileObject = super.getFileForOutput(location, packageName, relativeName, sibling);
     record(FileObjects.toFile(fileObject));
-    return fileObject;
+    return new ForwardingFileObject<FileObject>(fileObject) {
+      @Override
+      public OutputStream openOutputStream() throws IOException {
+        return new IncrementalFileOutputStream(FileObjects.toFile(this));
+      }
+    };
   }
 
   @Override
@@ -27,7 +28,12 @@ abstract class RecordingJavaFileManager extends ForwardingJavaFileManager<Standa
       javax.tools.JavaFileObject.Kind kind, FileObject sibling) throws IOException {
     JavaFileObject fileObject = super.getJavaFileForOutput(location, className, kind, sibling);
     record(FileObjects.toFile(fileObject));
-    return fileObject;
+    return new ForwardingJavaFileObject<JavaFileObject>(fileObject) {
+      @Override
+      public OutputStream openOutputStream() throws IOException {
+        return new IncrementalFileOutputStream(FileObjects.toFile(this));
+      }
+    };
   }
 
   // tooling API is rather vague about sibling. it "javac might provide
@@ -35,4 +41,9 @@ abstract class RecordingJavaFileManager extends ForwardingJavaFileManager<Standa
   // guaranteed. even though sibling appear to be the source during the test,
   // the current implementation does not rely on this uncertain javac behaviour
   protected abstract void record(File outputFile);
+
+  @Override
+  public boolean isSameFile(FileObject a, FileObject b) {
+    return a.toUri().equals(b.toUri());
+  }
 }
