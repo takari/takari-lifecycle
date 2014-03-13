@@ -4,7 +4,6 @@ import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.Date;
 
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
@@ -14,20 +13,12 @@ import org.junit.Assert;
 
 public class CompileRule extends IncrementalBuildRule {
 
-  private final long now = System.currentTimeMillis() - 10000;
-
   @Override
   public MavenSession newMavenSession(MavenProject project) {
     ArtifactFileHolder.flushCache();
 
-    MavenSession session = super.newMavenSession(project);
-    session.getRequest().setStartTime(new Date(now));
-    return session;
+    return super.newMavenSession(project);
   };
-
-  public long getStartTime() {
-    return now;
-  }
 
   public File compile(File basedir, Xpp3Dom... parameters) throws Exception {
     MavenProject project = readMavenProject(basedir);
