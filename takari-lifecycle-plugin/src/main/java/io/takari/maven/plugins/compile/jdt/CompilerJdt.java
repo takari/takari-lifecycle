@@ -78,7 +78,8 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     Set<String> changedDependencyTypes = Collections.emptySet(); // XXX
     IErrorHandlingPolicy errorHandlingPolicy = DefaultErrorHandlingPolicies.exitAfterAllProblems();
     Map<String, String> args = new HashMap<String, String>();
-    // XXX figure out why compiler does not complain if source/target combination is not compatible
+    // XXX figure out how to reuse source/target check from jdt
+    // org.eclipse.jdt.internal.compiler.batch.Main.validateOptions(boolean)
     args.put(CompilerOptions.OPTION_TargetPlatform, config.getTarget()); // support 5/6/7 aliases
     args.put(CompilerOptions.OPTION_Source, config.getSource()); // support 5/6/7 aliases
     if (config.getSourceEncoding() != null) {
