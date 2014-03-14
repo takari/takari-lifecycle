@@ -6,6 +6,7 @@ import io.takari.incrementalbuild.BuildContext.Severity;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.maven.plugins.compile.AbstractCompileMojo;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
+import io.takari.maven.plugins.compile.ProjectClasspathDigester;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -94,8 +95,9 @@ public class CompilerJavac extends AbstractCompilerJavac {
     }
   };
 
-  public CompilerJavac(DefaultBuildContext<?> context, AbstractCompileMojo config) {
-    super(context, config);
+  public CompilerJavac(DefaultBuildContext<?> context, AbstractCompileMojo config,
+      ProjectClasspathDigester digester) {
+    super(context, config, digester);
   }
 
   @Override

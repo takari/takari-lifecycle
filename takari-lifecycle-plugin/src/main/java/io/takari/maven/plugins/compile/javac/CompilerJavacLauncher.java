@@ -4,6 +4,7 @@ import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.Input;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.maven.plugins.compile.AbstractCompileMojo;
+import io.takari.maven.plugins.compile.ProjectClasspathDigester;
 import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerConfiguration;
 import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerOutput;
 import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerOutputProcessor;
@@ -24,8 +25,9 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
 
   private File buildDirectory;
 
-  public CompilerJavacLauncher(DefaultBuildContext<?> context, AbstractCompileMojo config) {
-    super(context, config);
+  public CompilerJavacLauncher(DefaultBuildContext<?> context, AbstractCompileMojo config,
+      ProjectClasspathDigester digester) {
+    super(context, config, digester);
   }
 
   @Override

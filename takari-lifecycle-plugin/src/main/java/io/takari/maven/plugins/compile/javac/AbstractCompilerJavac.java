@@ -3,8 +3,10 @@ package io.takari.maven.plugins.compile.javac;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.maven.plugins.compile.AbstractCompileMojo;
 import io.takari.maven.plugins.compile.AbstractCompiler;
+import io.takari.maven.plugins.compile.ProjectClasspathDigester;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,8 +14,12 @@ import org.apache.maven.artifact.Artifact;
 
 public abstract class AbstractCompilerJavac extends AbstractCompiler {
 
-  protected AbstractCompilerJavac(DefaultBuildContext<?> context, AbstractCompileMojo config) {
+  private final ProjectClasspathDigester digester;
+
+  protected AbstractCompilerJavac(DefaultBuildContext<?> context, AbstractCompileMojo config,
+      ProjectClasspathDigester digester) {
     super(context, config);
+    this.digester = digester;
   }
 
   protected List<String> getCompilerOptions() {
@@ -84,4 +90,8 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
     return cp.toString();
   }
 
+  @Override
+  public boolean setupClasspath(List<Artifact> dependencies) throws IOException {
+    return digester.digestDependencies(dependencies);
+  }
 }

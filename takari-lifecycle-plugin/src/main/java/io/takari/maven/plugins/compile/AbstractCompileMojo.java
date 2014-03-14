@@ -242,9 +242,9 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
     final AbstractCompiler compiler;
     if ("javac".equals(compilerId)) {
-      compiler = new CompilerJavac(context, this);
+      compiler = new CompilerJavac(context, this, digester);
     } else if ("forked-javac".equals(compilerId)) {
-      CompilerJavacLauncher javacLauncher = new CompilerJavacLauncher(context, this);
+      CompilerJavacLauncher javacLauncher = new CompilerJavacLauncher(context, this, digester);
       javacLauncher.setBasedir(basedir);
       javacLauncher.setJar(pluginArtifact.getFile());
       javacLauncher.setBuildDirectory(buildDirectory);
@@ -267,7 +267,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     }
 
     try {
-      boolean classpathChanged = digester.digestDependencies(getCompileArtifacts());
+      boolean classpathChanged = compiler.setupClasspath(getCompileArtifacts());
 
       List<InputMetadata<File>> modifiedSources = new ArrayList<InputMetadata<File>>();
       List<InputMetadata<File>> inputs = new ArrayList<InputMetadata<File>>();

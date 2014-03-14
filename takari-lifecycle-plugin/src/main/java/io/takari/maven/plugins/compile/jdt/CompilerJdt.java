@@ -55,6 +55,8 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
   private final String sourceEncoding;
 
+  private INameEnvironment namingEnvironment;
+
   /**
    * Set of ICompilationUnit to be compiled.
    */
@@ -75,7 +77,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   @Override
   public void compile(List<File> sources) throws MojoExecutionException, IOException {
     Set<String> changedDependencyTypes = Collections.emptySet(); // XXX
-    INameEnvironment namingEnvironment = getClassPath();
     IErrorHandlingPolicy errorHandlingPolicy = DefaultErrorHandlingPolicies.exitAfterAllProblems();
     Map<String, String> args = new HashMap<String, String>();
     // XXX figure out why compiler does not complain if source/target combination is not compatible
@@ -179,7 +180,8 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     }
   }
 
-  private INameEnvironment getClassPath() {
+  @Override
+  public boolean setupClasspath(List<Artifact> dependencies) throws IOException {
     List<FileSystem.Classpath> classpath = new ArrayList<FileSystem.Classpath>();
 
     classpath.addAll(JavaInstallation.getDefault().getClasspath());
@@ -196,7 +198,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     classpath.add(FileSystem.getClasspath(config.getOutputDirectory().getAbsolutePath(), null,
         false, null, null));
 
-    // this also adds outputDirectory
     for (Artifact classpathElement : config.getCompileArtifacts()) {
       String path = classpathElement.getFile().getAbsolutePath();
       Classpath element = FileSystem.getClasspath(path, null, false, null, null);
@@ -205,7 +206,10 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       }
     }
 
-    return new FileSystem(classpath.toArray(new FileSystem.Classpath[classpath.size()]));
+    namingEnvironment =
+        new FileSystem(classpath.toArray(new FileSystem.Classpath[classpath.size()]));
+
+    return true; // XXX
   }
 
   @Override
