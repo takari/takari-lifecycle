@@ -13,6 +13,7 @@ import io.takari.maven.plugins.compile.ProjectClasspathDigester;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -117,6 +118,14 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
     }
     Set<DefaultInputMetadata<File>> deletedSources = context.getRemovedInputs(File.class);
 
+    Set<DefaultOutputMetadata> modifiedOutputs = new HashSet<DefaultOutputMetadata>();
+    for (DefaultOutputMetadata output : context.getProcessedOutputs()) {
+      ResourceStatus status = output.getStatus();
+      if (status == ResourceStatus.MODIFIED || status == ResourceStatus.REMOVED) {
+        modifiedOutputs.add(output);
+      }
+    }
+
     if (!context.isEscalated() && log.isDebugEnabled()) {
       StringBuilder inputsMsg = new StringBuilder("Modified inputs:");
       for (InputMetadata<File> input : modifiedSources) {
@@ -126,9 +135,18 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
         inputsMsg.append("\n   ").append(input.getStatus()).append(" ").append(input.getResource());
       }
       log.debug(inputsMsg.toString());
+
+      if (!modifiedOutputs.isEmpty()) {
+        StringBuilder outputsMsg = new StringBuilder("Modified outputs:");
+        for (OutputMetadata<File> output : modifiedOutputs) {
+          outputsMsg.append("\n   ").append(output.getStatus()).append(" ")
+              .append(output.getResource());
+        }
+        log.debug(outputsMsg.toString());
+      }
     }
 
-    return !modifiedSources.isEmpty() || !deletedSources.isEmpty();
+    return !modifiedSources.isEmpty() || !deletedSources.isEmpty() || !modifiedOutputs.isEmpty();
   }
 
   @Override
@@ -139,10 +157,5 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
     for (OutputMetadata<File> output : context.getProcessedOutputs()) {
       context.carryOverOutput(output.getResource());
     }
-  }
-
-  @Override
-  public void setModifiedOutputs(Set<DefaultOutputMetadata> outputs) {
-    // javac compiler will rebuild everything
   }
 }

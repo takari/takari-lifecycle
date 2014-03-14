@@ -1,11 +1,8 @@
 package io.takari.maven.plugins.compile;
 
-import io.takari.incrementalbuild.BuildContext.OutputMetadata;
-import io.takari.incrementalbuild.BuildContext.ResourceStatus;
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
-import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
 import io.takari.maven.plugins.compile.javac.CompilerJavac;
 import io.takari.maven.plugins.compile.javac.CompilerJavacLauncher;
 import io.takari.maven.plugins.compile.jdt.CompilerJdt;
@@ -14,7 +11,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -268,10 +264,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       boolean classpathChanged = compiler.setClasspath(getCompileArtifacts());
       boolean sourcesChanged = compiler.setSources(sources);
 
-      Set<DefaultOutputMetadata> modifiedOutputs = getModifiedOutputs();
-      compiler.setModifiedOutputs(modifiedOutputs);
-
-      if (!sourcesChanged && modifiedOutputs.isEmpty() && !classpathChanged) {
+      if (!sourcesChanged && !classpathChanged) {
         compiler.skipCompilation();
         log.info("Skipped compilation, all {} sources are up to date", sources.size());
         return;
@@ -289,27 +282,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     } catch (IOException e) {
       throw new MojoExecutionException("Could not compile project", e);
     }
-  }
-
-  private Set<DefaultOutputMetadata> getModifiedOutputs() {
-    Set<DefaultOutputMetadata> modifiedOutputs = new HashSet<DefaultOutputMetadata>();
-    for (DefaultOutputMetadata output : context.getProcessedOutputs()) {
-      ResourceStatus status = output.getStatus();
-      if (status == ResourceStatus.MODIFIED || status == ResourceStatus.REMOVED) {
-        modifiedOutputs.add(output);
-      }
-    }
-    if (!context.isEscalated() && log.isDebugEnabled()) {
-      if (!modifiedOutputs.isEmpty()) {
-        StringBuilder outputsMsg = new StringBuilder("Modified outputs:");
-        for (OutputMetadata<File> output : modifiedOutputs) {
-          outputsMsg.append("\n   ").append(output.getStatus()).append(" ")
-              .append(output.getResource());
-        }
-        log.debug(outputsMsg.toString());
-      }
-    }
-    return modifiedOutputs;
   }
 
   protected File mkdirs(File dir) throws MojoExecutionException {

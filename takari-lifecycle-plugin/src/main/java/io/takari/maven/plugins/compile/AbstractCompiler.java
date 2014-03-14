@@ -1,12 +1,10 @@
 package io.takari.maven.plugins.compile;
 
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
-import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -29,8 +27,6 @@ public abstract class AbstractCompiler {
   public abstract boolean setClasspath(List<Artifact> dependencies) throws IOException;
 
   public abstract boolean setSources(List<File> sources) throws IOException;
-
-  public abstract void setModifiedOutputs(Set<DefaultOutputMetadata> outputs);
 
   public abstract void compile() throws MojoExecutionException, IOException;
 

@@ -328,11 +328,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   }
 
   @Override
-  public void setModifiedOutputs(Set<DefaultOutputMetadata> outputs) {
-    // XXX
-  }
-
-  @Override
   public void skipCompilation() {
     // unlike javac, jdt compiler tracks input-output association
     // this allows BuildContext to automatically carry-over output metadata
