@@ -3,10 +3,11 @@ package io.takari.maven.plugins.compile;
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
 import io.takari.incrementalbuild.BuildContext.OutputMetadata;
 import io.takari.incrementalbuild.BuildContext.ResourceStatus;
-import io.takari.incrementalbuild.*;
+import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.incrementalbuild.spi.DefaultInputMetadata;
+import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
 import io.takari.maven.plugins.compile.javac.CompilerJavac;
 import io.takari.maven.plugins.compile.javac.CompilerJavacLauncher;
 import io.takari.maven.plugins.compile.jdt.CompilerJdt;
@@ -14,11 +15,17 @@ import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.plugin.*;
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.codehaus.plexus.util.DirectoryScanner;
@@ -313,19 +320,26 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     try {
       boolean classpathChanged = digester.digestDependencies(getCompileArtifacts());
 
-      List<InputMetadata<File>> modified = new ArrayList<InputMetadata<File>>();
+      List<InputMetadata<File>> modifiedSources = new ArrayList<InputMetadata<File>>();
       List<InputMetadata<File>> inputs = new ArrayList<InputMetadata<File>>();
       for (InputMetadata<File> input : context.registerInputs(sources)) {
         inputs.add(input);
         if (input.getStatus() != ResourceStatus.UNMODIFIED) {
-          modified.add(input);
+          modifiedSources.add(input);
         }
       }
-      Set<DefaultInputMetadata<File>> deleted = context.getRemovedInputs(File.class);
+      Set<DefaultInputMetadata<File>> deletedSources = context.getRemovedInputs(File.class);
 
-      // TODO javac needs to explicitly check deleted/modified outputs
+      Set<DefaultOutputMetadata> modifiedClasses = new HashSet<DefaultOutputMetadata>();
+      for (DefaultOutputMetadata output : context.getProcessedOutputs()) {
+        ResourceStatus status = output.getStatus();
+        if (status == ResourceStatus.MODIFIED || status == ResourceStatus.REMOVED) {
+          modifiedClasses.add(output);
+        }
+      }
 
-      if (modified.isEmpty() && deleted.isEmpty() && !classpathChanged) {
+      if (modifiedSources.isEmpty() && deletedSources.isEmpty() && modifiedClasses.isEmpty()
+          && !classpathChanged) {
         if (!"jdt".equals(compilerId)) {
           // javac does not track input/output association
           // need to manually carry-over output metadata
@@ -341,17 +355,25 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       log.info("Compiling {} sources to {}", sources.size(), getOutputDirectory());
 
       if (!context.isEscalated() && log.isDebugEnabled()) {
-        if (!modified.isEmpty() || !deleted.isEmpty()) {
+        if (!modifiedSources.isEmpty() || !deletedSources.isEmpty()) {
           StringBuilder inputsMsg = new StringBuilder("Modified inputs:");
-          for (InputMetadata<File> input : modified) {
+          for (InputMetadata<File> input : modifiedSources) {
             inputsMsg.append("\n   ").append(input.getStatus()).append(" ")
                 .append(input.getResource());
           }
-          for (InputMetadata<File> input : deleted) {
+          for (InputMetadata<File> input : deletedSources) {
             inputsMsg.append("\n   ").append(input.getStatus()).append(" ")
                 .append(input.getResource());
           }
           log.debug(inputsMsg.toString());
+        }
+        if (!modifiedClasses.isEmpty()) {
+          StringBuilder outputsMsg = new StringBuilder("Modified outputs:");
+          for (OutputMetadata<File> output : modifiedClasses) {
+            outputsMsg.append("\n   ").append(output.getStatus()).append(" ")
+                .append(output.getResource());
+          }
+          log.debug(outputsMsg.toString());
         }
       }
 

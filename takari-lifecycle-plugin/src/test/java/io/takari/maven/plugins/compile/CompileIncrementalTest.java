@@ -10,6 +10,9 @@ import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
+
 public class CompileIncrementalTest extends AbstractCompileTest {
 
   public CompileIncrementalTest(String compilerId) {
@@ -31,6 +34,23 @@ public class CompileIncrementalTest extends AbstractCompileTest {
 
     // change
     cp(basedir, "src/main/java/basic/Basic.java-modified", "src/main/java/basic/Basic.java");
+    compile(basedir);
+    mojos.assertBuildOutputs(classes, "basic/Basic.class");
+  }
+
+  @Test
+  public void testBasic_deletedOrModifiedClass() throws Exception {
+    File basedir = compile("compile-incremental/basic");
+    File classes = new File(basedir, "target/classes");
+    mojos.assertBuildOutputs(classes, "basic/Basic.class");
+
+    final File file = new File(classes, "basic/Basic.class");
+
+    Assert.assertTrue(file.delete());
+    compile(basedir);
+    mojos.assertBuildOutputs(classes, "basic/Basic.class");
+
+    Files.write("test", file, Charsets.UTF_8);
     compile(basedir);
     mojos.assertBuildOutputs(classes, "basic/Basic.class");
   }
