@@ -75,7 +75,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   }
 
   @Override
-  public void compile(List<File> sources) throws MojoExecutionException, IOException {
+  public void compile() throws MojoExecutionException, IOException {
     Set<String> changedDependencyTypes = Collections.emptySet(); // XXX
     IErrorHandlingPolicy errorHandlingPolicy = DefaultErrorHandlingPolicies.exitAfterAllProblems();
     Map<String, String> args = new HashMap<String, String>();
@@ -101,8 +101,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     // also, if number of sources in the previous build is known, it may be more efficient to
     // rebuild everything after certain % of sources is modified
 
-    enqueue(context.registerAndProcessInputs(sources));
-
     for (String type : changedDependencyTypes) {
       for (InputMetadata<File> input : context.getDependentInputs(CAPABILITY_TYPE, type)) {
         enqueue(input.getResource());
@@ -117,11 +115,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       }
     }
 
-    // remove stale outputs and rebuild all sources that reference them
-    for (DefaultOutputMetadata output : context.deleteStaleOutputs(false)) {
-      enqueueAffectedInputs(output);
-    }
-
     // keep calling the compiler while there are sources in the queue
     while (!compileQueue.isEmpty()) {
       ICompilationUnit[] sourceFiles =
@@ -130,6 +123,18 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       compiler.compile(sourceFiles);
       namingEnvironment.cleanup();
     }
+  }
+
+  @Override
+  public boolean setSources(List<File> sources) throws IOException {
+    enqueue(context.registerAndProcessInputs(sources));
+
+    // remove stale outputs and rebuild all sources that reference them
+    for (DefaultOutputMetadata output : context.deleteStaleOutputs(false)) {
+      enqueueAffectedInputs(output);
+    }
+
+    return !compileQueue.isEmpty();
   }
 
   private void enqueueAffectedInputs(CapabilitiesProvider output) {
@@ -181,7 +186,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   }
 
   @Override
-  public boolean setupClasspath(List<Artifact> dependencies) throws IOException {
+  public boolean setClasspath(List<Artifact> dependencies) throws IOException {
     List<FileSystem.Classpath> classpath = new ArrayList<FileSystem.Classpath>();
 
     classpath.addAll(JavaInstallation.getDefault().getClasspath());
@@ -322,4 +327,14 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     return significantChange;
   }
 
+  @Override
+  public void setModifiedOutputs(Set<DefaultOutputMetadata> outputs) {
+    // XXX
+  }
+
+  @Override
+  public void skipCompilation() {
+    // unlike javac, jdt compiler tracks input-output association
+    // this allows BuildContext to automatically carry-over output metadata
+  }
 }

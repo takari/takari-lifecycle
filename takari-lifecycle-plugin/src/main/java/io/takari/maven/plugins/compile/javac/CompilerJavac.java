@@ -14,7 +14,6 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.List;
 
 import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
@@ -101,7 +100,7 @@ public class CompilerJavac extends AbstractCompilerJavac {
   }
 
   @Override
-  public void compile(List<File> sources) throws MojoExecutionException {
+  public void compile() throws MojoExecutionException {
     // java 6 limitations
     // - there is severe performance penalty using new JavaCompiler instance
     // - the same JavaCompiler cannot be used concurrently
@@ -122,13 +121,13 @@ public class CompilerJavac extends AbstractCompilerJavac {
 
     final JavaCompiler compiler = factory.acquire();
     try {
-      compile(compiler, sources);
+      compile(compiler);
     } finally {
       factory.release(compiler);
     }
   }
 
-  private void compile(JavaCompiler compiler, List<File> sources) {
+  private void compile(JavaCompiler compiler) {
     final Charset sourceEncoding = config.getSourceEncoding();
     final DiagnosticCollector<JavaFileObject> diagnosticCollector =
         new DiagnosticCollector<JavaFileObject>();

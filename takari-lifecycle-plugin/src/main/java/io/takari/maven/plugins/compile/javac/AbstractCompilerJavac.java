@@ -1,6 +1,11 @@
 package io.takari.maven.plugins.compile.javac;
 
+import io.takari.incrementalbuild.BuildContext.InputMetadata;
+import io.takari.incrementalbuild.BuildContext.OutputMetadata;
+import io.takari.incrementalbuild.BuildContext.ResourceStatus;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
+import io.takari.incrementalbuild.spi.DefaultInputMetadata;
+import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
 import io.takari.maven.plugins.compile.AbstractCompileMojo;
 import io.takari.maven.plugins.compile.AbstractCompiler;
 import io.takari.maven.plugins.compile.ProjectClasspathDigester;
@@ -9,12 +14,15 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.maven.artifact.Artifact;
 
 public abstract class AbstractCompilerJavac extends AbstractCompiler {
 
   private final ProjectClasspathDigester digester;
+
+  protected final List<File> sources = new ArrayList<File>();
 
   protected AbstractCompilerJavac(DefaultBuildContext<?> context, AbstractCompileMojo config,
       ProjectClasspathDigester digester) {
@@ -91,7 +99,50 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
   }
 
   @Override
-  public boolean setupClasspath(List<Artifact> dependencies) throws IOException {
+  public boolean setClasspath(List<Artifact> dependencies) throws IOException {
     return digester.digestDependencies(dependencies);
+  }
+
+  @Override
+  public boolean setSources(List<File> sources) {
+    this.sources.addAll(sources);
+
+    List<InputMetadata<File>> modifiedSources = new ArrayList<InputMetadata<File>>();
+    List<InputMetadata<File>> inputs = new ArrayList<InputMetadata<File>>();
+    for (InputMetadata<File> input : context.registerInputs(sources)) {
+      inputs.add(input);
+      if (input.getStatus() != ResourceStatus.UNMODIFIED) {
+        modifiedSources.add(input);
+      }
+    }
+    Set<DefaultInputMetadata<File>> deletedSources = context.getRemovedInputs(File.class);
+
+    if (!context.isEscalated() && log.isDebugEnabled()) {
+      StringBuilder inputsMsg = new StringBuilder("Modified inputs:");
+      for (InputMetadata<File> input : modifiedSources) {
+        inputsMsg.append("\n   ").append(input.getStatus()).append(" ").append(input.getResource());
+      }
+      for (InputMetadata<File> input : deletedSources) {
+        inputsMsg.append("\n   ").append(input.getStatus()).append(" ").append(input.getResource());
+      }
+      log.debug(inputsMsg.toString());
+    }
+
+    return !modifiedSources.isEmpty() || !deletedSources.isEmpty();
+  }
+
+  @Override
+  public void skipCompilation() {
+    // javac does not track input/output association
+    // need to manually carry-over output metadata
+    // otherwise outouts are deleted during BuildContext#commit
+    for (OutputMetadata<File> output : context.getProcessedOutputs()) {
+      context.carryOverOutput(output.getResource());
+    }
+  }
+
+  @Override
+  public void setModifiedOutputs(Set<DefaultOutputMetadata> outputs) {
+    // javac compiler will rebuild everything
   }
 }

@@ -1,12 +1,10 @@
 package io.takari.maven.plugins.compile;
 
-import io.takari.incrementalbuild.BuildContext.InputMetadata;
 import io.takari.incrementalbuild.BuildContext.OutputMetadata;
 import io.takari.incrementalbuild.BuildContext.ResourceStatus;
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
-import io.takari.incrementalbuild.spi.DefaultInputMetadata;
 import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
 import io.takari.maven.plugins.compile.javac.CompilerJavac;
 import io.takari.maven.plugins.compile.javac.CompilerJavacLauncher;
@@ -267,74 +265,51 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     }
 
     try {
-      boolean classpathChanged = compiler.setupClasspath(getCompileArtifacts());
+      boolean classpathChanged = compiler.setClasspath(getCompileArtifacts());
+      boolean sourcesChanged = compiler.setSources(sources);
 
-      List<InputMetadata<File>> modifiedSources = new ArrayList<InputMetadata<File>>();
-      List<InputMetadata<File>> inputs = new ArrayList<InputMetadata<File>>();
-      for (InputMetadata<File> input : context.registerInputs(sources)) {
-        inputs.add(input);
-        if (input.getStatus() != ResourceStatus.UNMODIFIED) {
-          modifiedSources.add(input);
-        }
-      }
-      Set<DefaultInputMetadata<File>> deletedSources = context.getRemovedInputs(File.class);
+      Set<DefaultOutputMetadata> modifiedOutputs = getModifiedOutputs();
+      compiler.setModifiedOutputs(modifiedOutputs);
 
-      Set<DefaultOutputMetadata> modifiedClasses = new HashSet<DefaultOutputMetadata>();
-      for (DefaultOutputMetadata output : context.getProcessedOutputs()) {
-        ResourceStatus status = output.getStatus();
-        if (status == ResourceStatus.MODIFIED || status == ResourceStatus.REMOVED) {
-          modifiedClasses.add(output);
-        }
-      }
-
-      if (modifiedSources.isEmpty() && deletedSources.isEmpty() && modifiedClasses.isEmpty()
-          && !classpathChanged) {
-        if (!"jdt".equals(compilerId)) {
-          // javac does not track input/output association
-          // need to manually carry-over output metadata
-          // otherwise outouts are deleted during BuildContext#commit
-          for (OutputMetadata<File> output : context.getProcessedOutputs()) {
-            context.carryOverOutput(output.getResource());
-          }
-        }
+      if (!sourcesChanged && modifiedOutputs.isEmpty() && !classpathChanged) {
+        compiler.skipCompilation();
         log.info("Skipped compilation, all {} sources are up to date", sources.size());
         return;
       }
 
       log.info("Compiling {} sources to {}", sources.size(), getOutputDirectory());
 
-      if (!context.isEscalated() && log.isDebugEnabled()) {
-        if (!modifiedSources.isEmpty() || !deletedSources.isEmpty()) {
-          StringBuilder inputsMsg = new StringBuilder("Modified inputs:");
-          for (InputMetadata<File> input : modifiedSources) {
-            inputsMsg.append("\n   ").append(input.getStatus()).append(" ")
-                .append(input.getResource());
-          }
-          for (InputMetadata<File> input : deletedSources) {
-            inputsMsg.append("\n   ").append(input.getStatus()).append(" ")
-                .append(input.getResource());
-          }
-          log.debug(inputsMsg.toString());
-        }
-        if (!modifiedClasses.isEmpty()) {
-          StringBuilder outputsMsg = new StringBuilder("Modified outputs:");
-          for (OutputMetadata<File> output : modifiedClasses) {
-            outputsMsg.append("\n   ").append(output.getStatus()).append(" ")
-                .append(output.getResource());
-          }
-          log.debug(outputsMsg.toString());
-        }
-      }
-
-      compiler.compile(sources);
+      compiler.compile();
 
       artifact.setFile(getOutputDirectory());
 
+      // TODO report actual number of sources compiled
       log.info("Compiled {} sources ({} ms)", sources.size(),
           stopwatch.elapsed(TimeUnit.MILLISECONDS));
     } catch (IOException e) {
       throw new MojoExecutionException("Could not compile project", e);
     }
+  }
+
+  private Set<DefaultOutputMetadata> getModifiedOutputs() {
+    Set<DefaultOutputMetadata> modifiedOutputs = new HashSet<DefaultOutputMetadata>();
+    for (DefaultOutputMetadata output : context.getProcessedOutputs()) {
+      ResourceStatus status = output.getStatus();
+      if (status == ResourceStatus.MODIFIED || status == ResourceStatus.REMOVED) {
+        modifiedOutputs.add(output);
+      }
+    }
+    if (!context.isEscalated() && log.isDebugEnabled()) {
+      if (!modifiedOutputs.isEmpty()) {
+        StringBuilder outputsMsg = new StringBuilder("Modified outputs:");
+        for (OutputMetadata<File> output : modifiedOutputs) {
+          outputsMsg.append("\n   ").append(output.getStatus()).append(" ")
+              .append(output.getResource());
+        }
+        log.debug(outputsMsg.toString());
+      }
+    }
+    return modifiedOutputs;
   }
 
   protected File mkdirs(File dir) throws MojoExecutionException {

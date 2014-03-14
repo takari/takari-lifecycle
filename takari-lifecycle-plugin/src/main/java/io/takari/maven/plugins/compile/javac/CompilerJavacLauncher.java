@@ -11,7 +11,6 @@ import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerOutputP
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
@@ -31,18 +30,18 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
   }
 
   @Override
-  public void compile(List<File> sources) throws IOException {
+  public void compile() throws IOException {
     File options = File.createTempFile("javac-forked", ".options", buildDirectory);
     File output = File.createTempFile("javac-forked", ".output", buildDirectory);
     try {
-      compile(options, output, sources);
+      compile(options, output);
     } finally {
       options.delete();
       output.delete();
     }
   }
 
-  private void compile(File options, File output, List<File> sources) throws IOException {
+  private void compile(File options, File output) throws IOException {
     new CompilerConfiguration(config.getSourceEncoding(), getCompilerOptions(), sources)
         .write(options);
 
