@@ -1,4 +1,4 @@
-package io.takari.maven.plugins.compile;
+package io.takari.maven.plugins.compile.javac;
 
 import java.io.File;
 import java.io.Serializable;

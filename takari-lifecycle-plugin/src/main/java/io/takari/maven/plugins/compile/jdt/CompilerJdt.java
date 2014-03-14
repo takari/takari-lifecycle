@@ -9,7 +9,6 @@ import io.takari.incrementalbuild.spi.DefaultOutput;
 import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
 import io.takari.maven.plugins.compile.AbstractCompileMojo;
 import io.takari.maven.plugins.compile.AbstractCompiler;
-import io.takari.maven.plugins.compile.ClassfileDigester;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -54,7 +53,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
   private final String sourceEncoding;
 
-  private INameEnvironment namingEnvironment;
+  final List<FileSystem.Classpath> classpath = new ArrayList<FileSystem.Classpath>();
 
   /**
    * Set of ICompilationUnit to be compiled.
@@ -91,6 +90,8 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     compilerOptions.performStatementsRecovery = false;
     compilerOptions.verbose = config.isVerbose();
     IProblemFactory problemFactory = ProblemFactory.getProblemFactory(Locale.getDefault());
+    INameEnvironment namingEnvironment =
+        new FileSystem(classpath.toArray(new FileSystem.Classpath[classpath.size()]));
     Compiler compiler =
         new Compiler(namingEnvironment, errorHandlingPolicy, compilerOptions, this, problemFactory);
     compiler.options.produceReferenceInfo = true;
@@ -187,8 +188,8 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
   @Override
   public boolean setClasspath(List<Artifact> dependencies) throws IOException {
-    List<FileSystem.Classpath> classpath = new ArrayList<FileSystem.Classpath>();
 
+    // TODO detect change!
     classpath.addAll(JavaInstallation.getDefault().getClasspath());
 
     for (String sourceRoot : config.getSourceRoots()) {
@@ -210,9 +211,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         classpath.add(element);
       }
     }
-
-    namingEnvironment =
-        new FileSystem(classpath.toArray(new FileSystem.Classpath[classpath.size()]));
 
     return true; // XXX
   }

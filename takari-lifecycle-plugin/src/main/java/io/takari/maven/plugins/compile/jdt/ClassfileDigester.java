@@ -1,4 +1,4 @@
-package io.takari.maven.plugins.compile;
+package io.takari.maven.plugins.compile.jdt;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

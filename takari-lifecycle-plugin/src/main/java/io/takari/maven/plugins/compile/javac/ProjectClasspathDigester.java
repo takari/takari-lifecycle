@@ -1,4 +1,4 @@
-package io.takari.maven.plugins.compile;
+package io.takari.maven.plugins.compile.javac;
 
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;

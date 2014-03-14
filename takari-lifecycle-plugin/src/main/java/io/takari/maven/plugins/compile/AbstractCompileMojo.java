@@ -5,6 +5,7 @@ import io.takari.incrementalbuild.Incremental.Configuration;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.maven.plugins.compile.javac.CompilerJavac;
 import io.takari.maven.plugins.compile.javac.CompilerJavacLauncher;
+import io.takari.maven.plugins.compile.javac.ProjectClasspathDigester;
 import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 
 import java.io.File;
@@ -144,6 +145,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Incremental(configuration = Configuration.ignore)
   private Artifact artifact;
 
+  // TODO this needs to be injected in AbstractCompilerJavac
   @Component
   private DefaultBuildContext<?> context;
 

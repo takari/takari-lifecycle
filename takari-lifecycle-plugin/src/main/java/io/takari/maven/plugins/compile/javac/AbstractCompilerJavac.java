@@ -8,7 +8,6 @@ import io.takari.incrementalbuild.spi.DefaultInputMetadata;
 import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
 import io.takari.maven.plugins.compile.AbstractCompileMojo;
 import io.takari.maven.plugins.compile.AbstractCompiler;
-import io.takari.maven.plugins.compile.ProjectClasspathDigester;
 
 import java.io.File;
 import java.io.IOException;
