@@ -216,82 +216,17 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     return proc;
   }
 
-  public List<String> getCompilerOptions() {
-    List<String> options = new ArrayList<String>();
-
-    // output directory
-    options.add("-d");
-    options.add(getOutputDirectory().getAbsolutePath());
-
-    options.add("-source");
-    options.add(getSource());
-
-    if (getTarget() != null) {
-      options.add("-target");
-      options.add(getTarget());
-    }
-
-    options.add("-classpath");
-    options.add(getClasspath());
-
-    switch (proc) {
-      case only:
-        options.add("-proc:only");
-        break;
-      case proc:
-        // this is the javac default
-        break;
-      case none:
-        options.add("-proc:none");
-        break;
-    }
-    if (isAnnotationProcessing()) {
-      options.add("-s");
-      options.add(getGeneratedSourcesDirectory().getAbsolutePath());
-
-      if (annotationProcessors != null) {
-        options.add("-processor");
-        StringBuilder processors = new StringBuilder();
-        for (String processor : annotationProcessors) {
-          if (processors.length() > 0) {
-            processors.append(',');
-          }
-          processors.append(processor);
-        }
-        options.add(processors.toString());
-      }
-    }
-
-    if (verbose) {
-      options.add("-verbose");
-    }
-
-    return options;
-  }
-
   public boolean isAnnotationProcessing() {
     return proc != Proc.none;
+  }
+
+  public String[] getAnnotationProcessors() {
+    return annotationProcessors;
   }
 
   public boolean isVerbose() {
     return verbose;
   }
-
-  public String getClasspath() {
-    StringBuilder cp = new StringBuilder();
-    cp.append(getOutputDirectory().getAbsolutePath());
-    for (Artifact cpe : getCompileArtifacts()) {
-      File file = cpe.getFile();
-      if (file != null) {
-        if (cp.length() > 0) {
-          cp.append(File.pathSeparatorChar);
-        }
-        cp.append(file.getAbsolutePath());
-      }
-    }
-    return cp.toString();
-  }
-
 
   public String getMaxmem() {
     return maxmem;

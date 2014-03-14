@@ -12,13 +12,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import org.apache.commons.exec.*;
+import org.apache.commons.exec.CommandLine;
+import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.ShutdownHookProcessDestroyer;
 
-public class CompilerJavacLauncher {
-
-  private final DefaultBuildContext<?> context;
-
-  private final AbstractCompileMojo config;
+public class CompilerJavacLauncher extends AbstractCompilerJavac {
 
   private File jar;
 
@@ -27,8 +25,7 @@ public class CompilerJavacLauncher {
   private File buildDirectory;
 
   public CompilerJavacLauncher(DefaultBuildContext<?> context, AbstractCompileMojo config) {
-    this.context = context;
-    this.config = config;
+    super(context, config);
   }
 
   public int compile(List<File> sources) throws IOException {
@@ -43,7 +40,7 @@ public class CompilerJavacLauncher {
   }
 
   private int compile(File options, File output, List<File> sources) throws IOException {
-    new CompilerConfiguration(config.getSourceEncoding(), config.getCompilerOptions(), sources)
+    new CompilerConfiguration(config.getSourceEncoding(), getCompilerOptions(), sources)
         .write(options);
 
     // use the same JVM as the one used to run Maven (the "java.home" one)

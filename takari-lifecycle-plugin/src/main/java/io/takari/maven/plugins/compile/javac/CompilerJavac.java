@@ -1,22 +1,31 @@
 package io.takari.maven.plugins.compile.javac;
 
-import io.takari.incrementalbuild.*;
+import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.Input;
 import io.takari.incrementalbuild.BuildContext.Severity;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.maven.plugins.compile.AbstractCompileMojo;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 
-import java.io.*;
+import java.io.File;
+import java.io.PrintWriter;
+import java.io.Writer;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.List;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
+import javax.tools.DiagnosticCollector;
+import javax.tools.JavaCompiler;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
 
 import org.apache.maven.plugin.MojoExecutionException;
 
-public class CompilerJavac {
+public class CompilerJavac extends AbstractCompilerJavac {
 
   private static final boolean isJava7;
 
@@ -85,13 +94,8 @@ public class CompilerJavac {
     }
   };
 
-  private final DefaultBuildContext<?> context;
-
-  private final AbstractCompileMojo config;
-
   public CompilerJavac(DefaultBuildContext<?> context, AbstractCompileMojo config) {
-    this.context = context;
-    this.config = config;
+    super(context, config);
   }
 
   public void compile(List<File> sources) throws MojoExecutionException {
@@ -130,7 +134,7 @@ public class CompilerJavac {
     final Iterable<? extends JavaFileObject> javaSources =
         standardFileManager.getJavaFileObjectsFromFiles(sources);
 
-    final Iterable<String> options = config.getCompilerOptions();
+    final Iterable<String> options = getCompilerOptions();
     final RecordingJavaFileManager recordingFileManager =
         new RecordingJavaFileManager(standardFileManager) {
           @Override
