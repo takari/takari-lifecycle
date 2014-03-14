@@ -28,18 +28,19 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
     super(context, config);
   }
 
-  public int compile(List<File> sources) throws IOException {
+  @Override
+  public void compile(List<File> sources) throws IOException {
     File options = File.createTempFile("javac-forked", ".options", buildDirectory);
     File output = File.createTempFile("javac-forked", ".output", buildDirectory);
     try {
-      return compile(options, output, sources);
+      compile(options, output, sources);
     } finally {
       options.delete();
       output.delete();
     }
   }
 
-  private int compile(File options, File output, List<File> sources) throws IOException {
+  private void compile(File options, File output, List<File> sources) throws IOException {
     new CompilerConfiguration(config.getSourceEncoding(), getCompilerOptions(), sources)
         .write(options);
 
@@ -99,8 +100,6 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
         }
       }
     });
-
-    return sources.size();
   }
 
   public void setBasedir(File basedir) {

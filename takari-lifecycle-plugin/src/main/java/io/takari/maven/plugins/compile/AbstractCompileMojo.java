@@ -16,7 +16,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -241,6 +240,21 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
     Stopwatch stopwatch = new Stopwatch().start();
 
+    final AbstractCompiler compiler;
+    if ("javac".equals(compilerId)) {
+      compiler = new CompilerJavac(context, this);
+    } else if ("forked-javac".equals(compilerId)) {
+      CompilerJavacLauncher javacLauncher = new CompilerJavacLauncher(context, this);
+      javacLauncher.setBasedir(basedir);
+      javacLauncher.setJar(pluginArtifact.getFile());
+      javacLauncher.setBuildDirectory(buildDirectory);
+      compiler = javacLauncher;
+    } else if ("jdt".equals(compilerId)) {
+      compiler = new CompilerJdt(this, context);
+    } else {
+      throw new MojoExecutionException("Unsupported compilerId" + compilerId);
+    }
+
     final List<File> sources = getSources();
     if (sources.isEmpty()) {
       log.info("No sources, skipping compilation");
@@ -312,19 +326,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
         }
       }
 
-      if ("javac".equals(compilerId)) {
-        new CompilerJavac(context, this).compile(sources);
-      } else if ("forked-javac".equals(compilerId)) {
-        CompilerJavacLauncher compiler = new CompilerJavacLauncher(context, this);
-        compiler.setBasedir(basedir);
-        compiler.setJar(pluginArtifact.getFile());
-        compiler.setBuildDirectory(buildDirectory);
-        compiler.compile(sources);
-      } else if ("jdt".equals(compilerId)) {
-        new CompilerJdt(this, context).compile(sources, Collections.<String>emptySet());
-      } else {
-        throw new MojoExecutionException("Unsupported compilerId" + compilerId);
-      }
+      compiler.compile(sources);
 
       artifact.setFile(getOutputDirectory());
 

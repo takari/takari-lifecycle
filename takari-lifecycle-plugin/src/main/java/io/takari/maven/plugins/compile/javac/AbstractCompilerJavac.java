@@ -2,6 +2,7 @@ package io.takari.maven.plugins.compile.javac;
 
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.maven.plugins.compile.AbstractCompileMojo;
+import io.takari.maven.plugins.compile.AbstractCompiler;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -9,15 +10,10 @@ import java.util.List;
 
 import org.apache.maven.artifact.Artifact;
 
-public class AbstractCompilerJavac {
-
-  protected final DefaultBuildContext<?> context;
-
-  protected final AbstractCompileMojo config;
+public abstract class AbstractCompilerJavac extends AbstractCompiler {
 
   protected AbstractCompilerJavac(DefaultBuildContext<?> context, AbstractCompileMojo config) {
-    this.context = context;
-    this.config = config;
+    super(context, config);
   }
 
   protected List<String> getCompilerOptions() {

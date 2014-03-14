@@ -1,24 +1,41 @@
 package io.takari.maven.plugins.compile.jdt;
 
-import io.takari.incrementalbuild.*;
+import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
 import io.takari.incrementalbuild.BuildContext.Output;
-import io.takari.incrementalbuild.spi.*;
+import io.takari.incrementalbuild.spi.CapabilitiesProvider;
+import io.takari.incrementalbuild.spi.DefaultBuildContext;
+import io.takari.incrementalbuild.spi.DefaultInput;
+import io.takari.incrementalbuild.spi.DefaultOutput;
+import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
 import io.takari.maven.plugins.compile.AbstractCompileMojo;
+import io.takari.maven.plugins.compile.AbstractCompiler;
 import io.takari.maven.plugins.compile.ClassfileDigester;
 
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-
-import javax.inject.Inject;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 import org.eclipse.jdt.core.compiler.CharOperation;
-import org.eclipse.jdt.internal.compiler.*;
+import org.eclipse.jdt.internal.compiler.ClassFile;
+import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.Compiler;
+import org.eclipse.jdt.internal.compiler.DefaultErrorHandlingPolicies;
+import org.eclipse.jdt.internal.compiler.ICompilerRequestor;
+import org.eclipse.jdt.internal.compiler.IErrorHandlingPolicy;
+import org.eclipse.jdt.internal.compiler.IProblemFactory;
 import org.eclipse.jdt.internal.compiler.batch.CompilationUnit;
 import org.eclipse.jdt.internal.compiler.batch.FileSystem.Classpath;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
@@ -29,21 +46,12 @@ import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.eclipse.jdt.internal.compiler.util.SuffixConstants;
 import org.eclipse.jdt.internal.core.builder.ProblemFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Stopwatch;
-
-public class CompilerJdt implements ICompilerRequestor {
-
-  private final Logger log = LoggerFactory.getLogger(getClass());
+public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor {
 
   private static final String CAPABILITY_TYPE = "jdt.type";
+
   private static final String CAPABILITY_SIMPLE_TYPE = "jdt.simpleType";
-
-  private final DefaultBuildContext<?> context;
-
-  private final AbstractCompileMojo mojo;
 
   private final String sourceEncoding;
 
@@ -59,29 +67,28 @@ public class CompilerJdt implements ICompilerRequestor {
 
   private final ClassfileDigester digester = new ClassfileDigester();
 
-  @Inject
   public CompilerJdt(AbstractCompileMojo mojo, DefaultBuildContext<?> context) {
-    this.mojo = mojo;
-    this.context = context;
+    super(context, mojo);
     this.sourceEncoding = mojo.getSourceEncoding() != null ? mojo.getSourceEncoding().name() : null;
   }
 
-  public void compile(List<File> sources, Set<String> changedDependencyTypes)
-      throws MojoExecutionException {
+  @Override
+  public void compile(List<File> sources) throws MojoExecutionException, IOException {
+    Set<String> changedDependencyTypes = Collections.emptySet(); // XXX
     INameEnvironment namingEnvironment = getClassPath();
     IErrorHandlingPolicy errorHandlingPolicy = DefaultErrorHandlingPolicies.exitAfterAllProblems();
     Map<String, String> args = new HashMap<String, String>();
     // XXX figure out why compiler does not complain if source/target combination is not compatible
-    args.put(CompilerOptions.OPTION_TargetPlatform, mojo.getTarget()); // support 5/6/7 aliases
-    args.put(CompilerOptions.OPTION_Source, mojo.getSource()); // support 5/6/7 aliases
-    if (mojo.getSourceEncoding() != null) {
+    args.put(CompilerOptions.OPTION_TargetPlatform, config.getTarget()); // support 5/6/7 aliases
+    args.put(CompilerOptions.OPTION_Source, config.getSource()); // support 5/6/7 aliases
+    if (config.getSourceEncoding() != null) {
       // TODO not sure this is necessary, #newSourceFile handles source encoding already
-      args.put(CompilerOptions.OPTION_Encoding, mojo.getSourceEncoding().name());
+      args.put(CompilerOptions.OPTION_Encoding, config.getSourceEncoding().name());
     }
     CompilerOptions compilerOptions = new CompilerOptions(args);
     compilerOptions.performMethodsFullRecovery = false;
     compilerOptions.performStatementsRecovery = false;
-    compilerOptions.verbose = mojo.isVerbose();
+    compilerOptions.verbose = config.isVerbose();
     IProblemFactory problemFactory = ProblemFactory.getProblemFactory(Locale.getDefault());
     Compiler compiler =
         new Compiler(namingEnvironment, errorHandlingPolicy, compilerOptions, this, problemFactory);
@@ -93,43 +100,35 @@ public class CompilerJdt implements ICompilerRequestor {
     // also, if number of sources in the previous build is known, it may be more efficient to
     // rebuild everything after certain % of sources is modified
 
-    Stopwatch stopwatch = new Stopwatch().start();
+    enqueue(context.registerAndProcessInputs(sources));
 
-    try {
-      enqueue(context.registerAndProcessInputs(sources));
-
-      for (String type : changedDependencyTypes) {
-        for (InputMetadata<File> input : context.getDependentInputs(CAPABILITY_TYPE, type)) {
+    for (String type : changedDependencyTypes) {
+      for (InputMetadata<File> input : context.getDependentInputs(CAPABILITY_TYPE, type)) {
+        enqueue(input.getResource());
+      }
+      int idx = type.lastIndexOf('.');
+      if (idx > 0) {
+        String simpleType = type.substring(idx + 1);
+        for (InputMetadata<File> input : context.getDependentInputs(CAPABILITY_SIMPLE_TYPE,
+            simpleType)) {
           enqueue(input.getResource());
         }
-        int idx = type.lastIndexOf('.');
-        if (idx > 0) {
-          String simpleType = type.substring(idx + 1);
-          for (InputMetadata<File> input : context.getDependentInputs(CAPABILITY_SIMPLE_TYPE,
-              simpleType)) {
-            enqueue(input.getResource());
-          }
-        }
       }
-
-      // remove stale outputs and rebuild all sources that reference them
-      for (DefaultOutputMetadata output : context.deleteStaleOutputs(false)) {
-        enqueueAffectedInputs(output);
-      }
-
-      // keep calling the compiler while there are sources in the queue
-      while (!compileQueue.isEmpty()) {
-        ICompilationUnit[] sourceFiles =
-            compileQueue.toArray(new ICompilationUnit[compileQueue.size()]);
-        compileQueue.clear();
-        compiler.compile(sourceFiles);
-        namingEnvironment.cleanup();
-      }
-    } catch (IOException e) {
-      throw new MojoExecutionException("Unexpected IOException during compilation", e);
     }
 
-    log.info("Compilation time {}", stopwatch.elapsed(TimeUnit.MILLISECONDS));
+    // remove stale outputs and rebuild all sources that reference them
+    for (DefaultOutputMetadata output : context.deleteStaleOutputs(false)) {
+      enqueueAffectedInputs(output);
+    }
+
+    // keep calling the compiler while there are sources in the queue
+    while (!compileQueue.isEmpty()) {
+      ICompilationUnit[] sourceFiles =
+          compileQueue.toArray(new ICompilationUnit[compileQueue.size()]);
+      compileQueue.clear();
+      compiler.compile(sourceFiles);
+      namingEnvironment.cleanup();
+    }
   }
 
   private void enqueueAffectedInputs(CapabilitiesProvider output) {
@@ -160,7 +159,7 @@ public class CompilerJdt implements ICompilerRequestor {
   private CompilationUnit newSourceFile(File source) {
     final String fileName = source.getAbsolutePath();
     final String encoding = sourceEncoding;
-    return new CompilationUnit(null, fileName, encoding, mojo.getOutputDirectory()
+    return new CompilationUnit(null, fileName, encoding, config.getOutputDirectory()
         .getAbsolutePath(), false);
   }
 
@@ -185,7 +184,7 @@ public class CompilerJdt implements ICompilerRequestor {
 
     classpath.addAll(JavaInstallation.getDefault().getClasspath());
 
-    for (String sourceRoot : mojo.getSourceRoots()) {
+    for (String sourceRoot : config.getSourceRoots()) {
       // TODO why do I need this here? unit test or take out
       // XXX includes/excludes => access rules
       Classpath element = FileSystem.getClasspath(sourceRoot, null, true, null, null);
@@ -194,11 +193,11 @@ public class CompilerJdt implements ICompilerRequestor {
       }
     }
 
-    classpath.add(FileSystem.getClasspath(mojo.getOutputDirectory().getAbsolutePath(), null, false,
-        null, null));
+    classpath.add(FileSystem.getClasspath(config.getOutputDirectory().getAbsolutePath(), null,
+        false, null, null));
 
     // this also adds outputDirectory
-    for (Artifact classpathElement : mojo.getCompileArtifacts()) {
+    for (Artifact classpathElement : config.getCompileArtifacts()) {
       String path = classpathElement.getFile().getAbsolutePath();
       Classpath element = FileSystem.getClasspath(path, null, false, null, null);
       if (element != null) {
@@ -266,7 +265,7 @@ public class CompilerJdt implements ICompilerRequestor {
   private void writeClassFile(DefaultInput<File> input, String relativeStringName,
       ClassFile classFile) throws IOException {
     final byte[] bytes = classFile.getBytes();
-    final File outputFile = new File(mojo.getOutputDirectory(), relativeStringName);
+    final File outputFile = new File(config.getOutputDirectory(), relativeStringName);
     final DefaultOutput output = input.associateOutput(outputFile);
 
     final char[][] compoundName = classFile.getCompoundName();

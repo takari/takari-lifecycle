@@ -98,6 +98,7 @@ public class CompilerJavac extends AbstractCompilerJavac {
     super(context, config);
   }
 
+  @Override
   public void compile(List<File> sources) throws MojoExecutionException {
     // java 6 limitations
     // - there is severe performance penalty using new JavaCompiler instance
@@ -125,7 +126,7 @@ public class CompilerJavac extends AbstractCompilerJavac {
     }
   }
 
-  private void compile(JavaCompiler compiler, List<File> sources) throws MojoExecutionException {
+  private void compile(JavaCompiler compiler, List<File> sources) {
     final Charset sourceEncoding = config.getSourceEncoding();
     final DiagnosticCollector<JavaFileObject> diagnosticCollector =
         new DiagnosticCollector<JavaFileObject>();
