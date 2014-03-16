@@ -3,8 +3,10 @@ package io.takari.maven.plugins.compile.jdt;
 import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
 import io.takari.incrementalbuild.BuildContext.Output;
+import io.takari.incrementalbuild.BuildContext.ResourceStatus;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.incrementalbuild.spi.DefaultInput;
+import io.takari.incrementalbuild.spi.DefaultInputMetadata;
 import io.takari.incrementalbuild.spi.DefaultOutput;
 import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
 import io.takari.maven.plugins.compile.AbstractCompileMojo;
@@ -15,7 +17,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -40,6 +41,7 @@ import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
 import org.eclipse.jdt.internal.compiler.env.INameEnvironment;
+import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.eclipse.jdt.internal.compiler.util.SuffixConstants;
@@ -50,6 +52,18 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   private static final String CAPABILITY_TYPE = "jdt.type";
 
   private static final String CAPABILITY_SIMPLE_TYPE = "jdt.simpleType";
+
+  private static final String KEY_TYPE = "jdt.type";
+
+  private static final String KEY_HASH = "jdt.hash";
+
+  private static final String KEY_TYPEINDEX = "jdt.typeIndex";
+
+  /**
+   * {@code KEY_TYPE} value used for local and anonymous types and also class files with
+   * corrupted/unsupported format.
+   */
+  private static final String TYPE_NOTYPE = ".";
 
   private final String sourceEncoding;
 
@@ -74,7 +88,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
   @Override
   public void compile() throws MojoExecutionException, IOException {
-    Set<String> changedDependencyTypes = Collections.emptySet(); // XXX
     IErrorHandlingPolicy errorHandlingPolicy = DefaultErrorHandlingPolicies.exitAfterAllProblems();
     Map<String, String> args = new HashMap<String, String>();
     // XXX figure out how to reuse source/target check from jdt
@@ -102,20 +115,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     // also, if number of sources in the previous build is known, it may be more efficient to
     // rebuild everything after certain % of sources is modified
 
-    for (String type : changedDependencyTypes) {
-      for (InputMetadata<File> input : context.getDependentInputs(CAPABILITY_TYPE, type)) {
-        enqueue(input.getResource());
-      }
-      int idx = type.lastIndexOf('.');
-      if (idx > 0) {
-        String simpleType = type.substring(idx + 1);
-        for (InputMetadata<File> input : context.getDependentInputs(CAPABILITY_SIMPLE_TYPE,
-            simpleType)) {
-          enqueue(input.getResource());
-        }
-      }
-    }
-
     // keep calling the compiler while there are sources in the queue
     while (!compileQueue.isEmpty()) {
       ICompilationUnit[] sourceFiles =
@@ -124,6 +123,12 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       compiler.compile(sourceFiles);
       namingEnvironment.cleanup();
     }
+
+    Map<String, byte[]> index = new HashMap<String, byte[]>();
+    for (DefaultInputMetadata input : context.getRegisteredInputs()) {
+      if (input.getStatus() != ResourceStatus.REMOVED) {}
+    }
+
   }
 
   @Override
@@ -189,7 +194,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   @Override
   public boolean setClasspath(List<Artifact> dependencies) throws IOException {
 
-    // TODO detect change!
+    // XXX detect change!
     classpath.addAll(JavaInstallation.getDefault().getClasspath());
 
     for (String sourceRoot : config.getSourceRoots()) {
@@ -212,7 +217,51 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       }
     }
 
-    return true; // XXX
+    // XXX only look in dependencies!
+    INameEnvironment namingEnvironment =
+        new FileSystem(classpath.toArray(new FileSystem.Classpath[classpath.size()]));
+
+    String indexStr = context.registerInput(config.getPom()).getValue(KEY_TYPEINDEX, String.class);
+    if (indexStr != null) {
+      Map<String, byte[]> index = ClasspathEntryDigester.parseTypeIndex(indexStr);
+      for (Map.Entry<String, byte[]> type : index.entrySet()) {
+        NameEnvironmentAnswer answer =
+            namingEnvironment.findType(CharOperation.splitOn('.', type.getKey().toCharArray()));
+        if (answer == null) {
+          if (type.getValue() != null) {
+            // the type used to be available, not it's not
+            enqueType(type.getKey());
+          }
+          // type didn't exist before and still does not exist
+        } else if (type.getValue() == null) {
+          // type didn't exist before but exists now
+          enqueType(type.getKey());
+        } else {
+          byte[] hash = digester.digest(answer.getBinaryType());
+          if (!Arrays.equals(type.getValue(), hash)) {
+            // type existed before, exists now but it's structure has changed
+            enqueType(type.getKey());
+          }
+        }
+      }
+    }
+
+    return !compileQueue.isEmpty();
+  }
+
+  // XXX poor name, "enqueue sources that reference type"
+  private void enqueType(String type) {
+    for (InputMetadata<File> input : context.getDependentInputs(CAPABILITY_TYPE, type)) {
+      enqueue(input.getResource());
+    }
+    int idx = type.lastIndexOf('.');
+    if (idx > 0) {
+      String simpleType = type.substring(idx + 1);
+      for (InputMetadata<File> input : context.getDependentInputs(CAPABILITY_SIMPLE_TYPE,
+          simpleType)) {
+        enqueue(input.getResource());
+      }
+    }
   }
 
   @Override
@@ -296,14 +345,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       os.close();
     }
   }
-
-  private static final String KEY_TYPE = "jdt.type";
-  private static final String KEY_HASH = "jdt.hash";
-  /**
-   * {@code KEY_TYPE} value used for local and anonymous types and also class files with
-   * corrupted/unsupported format.
-   */
-  private static final String TYPE_NOTYPE = ".";
 
   public boolean digestClassFile(Output<File> output, byte[] definition) {
     boolean significantChange = true;

@@ -33,6 +33,7 @@
   <modules>
     <module>takari-lifecycle-plugin</module>
     <module>takari-lifecycle-plugin-its</module>
+    <module>org.eclipse.jdt.patches</module>
   </modules>
 
   <build>

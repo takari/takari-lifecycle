@@ -11,6 +11,7 @@ import org.eclipse.jdt.internal.compiler.env.EnumConstantSignature;
 import org.eclipse.jdt.internal.compiler.env.IBinaryAnnotation;
 import org.eclipse.jdt.internal.compiler.env.IBinaryElementValuePair;
 import org.eclipse.jdt.internal.compiler.env.IBinaryNestedType;
+import org.eclipse.jdt.internal.compiler.env.IBinaryType;
 import org.eclipse.jdt.internal.compiler.impl.Constant;
 import org.eclipse.jdt.internal.compiler.lookup.TagBits;
 import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
@@ -33,7 +34,7 @@ public class ClassfileDigester {
     }
   }
 
-  public byte[] digest(ClassFileReader classFile) {
+  public byte[] digest(IBinaryType classFile) {
 
     // type level comparison
     // modifiers
