@@ -106,7 +106,7 @@ void buildTypeBindings(AccessRestriction accessRestriction) {
 				this.referenceContext.types[0].annotations = this.referenceContext.currentPackage.annotations;
 			}
 		}
-		recordQualifiedReference(this.currentPackageName); // always dependent on your own package
+		// recordQualifiedReference(this.currentPackageName); // always dependent on your own package
 	}
 
 	// Skip typeDeclarations which know of previously reported errors
@@ -428,7 +428,7 @@ public Binding findImport(char[][] compoundName, boolean findStaticImports, bool
 	}
 }
 private Binding findImport(char[][] compoundName, int length) {
-	recordQualifiedReference(compoundName);
+	// recordQualifiedReference(compoundName);
 
 	Binding binding = this.environment.getTopLevelPackage(compoundName[0]);
 	int i = 1;
@@ -459,6 +459,8 @@ private Binding findImport(char[][] compoundName, int length) {
 	} else {
 		type = (ReferenceBinding) binding;
 	}
+
+	recordQualifiedReference(type.compoundName);
 
 	while (i < length) {
 		type = (ReferenceBinding)this.environment.convertToRawType(type, false /*do not force conversion of enclosing types*/); // type imports are necessarily raw for all except last
@@ -629,30 +631,11 @@ OR 'a' -> 'a' in the simple name collection
 void recordQualifiedReference(char[][] qualifiedName) {
 	if (this.qualifiedReferences == null) return; // not recording dependencies
 
-	int length = qualifiedName.length;
-	if (length > 1) {
-		recordRootReference(qualifiedName[0]);
-		while (!this.qualifiedReferences.contains(qualifiedName)) {
-			this.qualifiedReferences.add(qualifiedName);
-			if (length == 2) {
-				recordSimpleReference(qualifiedName[0]);
-				recordSimpleReference(qualifiedName[1]);
-				return;
-			}
-			length--;
-			recordSimpleReference(qualifiedName[length]);
-			System.arraycopy(qualifiedName, 0, qualifiedName = new char[length][], 0, length);
-		}
-	} else if (length == 1) {
-		recordRootReference(qualifiedName[0]);
-		recordSimpleReference(qualifiedName[0]);
-	}
+	if (!this.qualifiedReferences.contains(qualifiedName))
+		this.qualifiedReferences.add(qualifiedName);
 }
 void recordReference(char[][] qualifiedEnclosingName, char[] simpleName) {
-	recordQualifiedReference(qualifiedEnclosingName);
-	if (qualifiedEnclosingName.length == 0)
-		recordRootReference(simpleName);
-	recordSimpleReference(simpleName);
+	recordQualifiedReference(CharOperation.arrayConcat(qualifiedEnclosingName, simpleName));
 }
 void recordReference(ReferenceBinding type, char[] simpleName) {
 	ReferenceBinding actualType = typeToRecord(type);
@@ -660,10 +643,7 @@ void recordReference(ReferenceBinding type, char[] simpleName) {
 		recordReference(actualType.compoundName, simpleName);
 }
 void recordRootReference(char[] simpleName) {
-	if (this.rootReferences == null) return; // not recording dependencies
-
-	if (!this.rootReferences.contains(simpleName))
-		this.rootReferences.add(simpleName);
+	// disabled to avoid confusion
 }
 void recordSimpleReference(char[] simpleName) {
 	if (this.simpleNameReferences == null) return; // not recording dependencies
