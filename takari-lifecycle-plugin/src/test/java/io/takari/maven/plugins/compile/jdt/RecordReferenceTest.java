@@ -51,44 +51,70 @@ public class RecordReferenceTest {
   }
 
   @Test
-  @Ignore("tracks way too much, needs fixing")
   public void testStaticImport() throws Exception {
-    assertReference("StaticImport", //
-        "java.lang.Object", "java.lang.Integer");
+    assertReference(
+        "StaticImport", //
+        "java.lang.Object",
+        "java.lang.Integer" //
+        // somewhat surprisingly, but MAX_VALUE can be a nested type
+        // and it can be inherited from anything Integer extends/implements
+        , "java.io.Serializable.MAX_VALUE", "java.lang.Comparable.MAX_VALUE",
+        "java.lang.Integer.MAX_VALUE", "java.lang.Number.MAX_VALUE", "java.lang.Object.MAX_VALUE" //
+    );
   }
 
   @Test
-  @Ignore("tracks way too much, needs fixing")
   public void testTypeParameter() throws Exception {
     assertReference("TypeParameter", //
-        "java.lang.Object", "java.lang.Class", "java.io.Serializable");
+        "java.lang.Object", "java.lang.Class", "java.io.Serializable"
+        // XXX self-reference for type collision detection?
+        // 'java.lang.Class', 'java.io.Serializable' can be nested type from 'java' class
+        , "java.lang.java", "record.reference.java" //
+    );
   }
 
   @Test
   public void testParameterizedType() throws Exception {
     assertReference("ParameterizedType", //
-        "java.lang.Object", "java.lang.Class", "java.io.Serializable");
+        "java.lang.Object", "java.io.Serializable" //
+        // XXX self-reference for type collision detection?
+        // 'java.lang.Serializable' can be nested type from 'java' class
+        , "java.lang.java", "record.reference.java" //
+        // XXX why type parameter is being resolved
+        , "java.lang.T", "record.reference.T" //
+    );
   }
 
   @Test
-  @Ignore("tracks way too much, needs fixing")
   public void testImplements() throws Exception {
     assertReference("Implements", //
-        "java.lang.Object", "java.lang.Comparable");
+        "java.lang.Object", "java.lang.Comparable" //
+        // needed for 'type collision' error/warning
+        , "record.reference.Implements" //
+        // 'java.lang.Comparable' can be nested type from 'java' class
+        , "java.lang.java", "record.reference.java" //
+    );
   }
 
   @Test
-  @Ignore("tracks way too much, needs fixing")
   public void testMethodReturnType() throws Exception {
     assertReference("MethodReturnType", //
-        "java.lang.Object", "java.util.List");
+        "java.lang.Object", "java.util.List" //
+        // XXX self-reference for type collision detection?
+        // 'java.util.List' can be nested type from 'java' class
+        , "java.lang.java", "record.reference.java" //
+    );
   }
 
   @Test
-  @Ignore("tracks way too much, needs fixing")
   public void testMethodParameterType() throws Exception {
     assertReference("MethodParameterType", //
-        "java.lang.Object", "java.util.List");
+        "java.lang.Object", "java.util.List"
+        // needed for 'type collision' error/warning
+        , "record.reference.MethodParameterType" //
+        // 'java.util.List' can be nested type from 'java' class
+        , "java.lang.java", "record.reference.java" //
+    );
   }
 
   private void assertReference(String source, String... expectedReferences) {
@@ -96,6 +122,7 @@ public class RecordReferenceTest {
     Map<String, String> args = new HashMap<String, String>();
     // XXX figure out how to reuse source/target check from jdt
     // org.eclipse.jdt.internal.compiler.batch.Main.validateOptions(boolean)
+    args.put(CompilerOptions.OPTION_Compliance, "1.7");
     args.put(CompilerOptions.OPTION_TargetPlatform, "1.7");
     args.put(CompilerOptions.OPTION_Source, "1.7");
     CompilerOptions compilerOptions = new CompilerOptions(args);

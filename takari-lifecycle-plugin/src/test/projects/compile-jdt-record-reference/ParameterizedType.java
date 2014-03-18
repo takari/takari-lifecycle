@@ -1,4 +1,4 @@
 package record.reference;
 
-class ParameterizedType<? extends java.io.Serializable> {
+class ParameterizedType<T extends java.io.Serializable> {
 }

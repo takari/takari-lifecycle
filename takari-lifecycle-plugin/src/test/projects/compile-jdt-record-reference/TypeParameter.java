@@ -1,5 +1,5 @@
 package record.reference;
 
 class TypeParameter {
-  Class<java.io.Serializable> clazz;
+  java.lang.Class<java.io.Serializable> clazz;
 }
