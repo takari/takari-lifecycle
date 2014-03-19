@@ -2,11 +2,8 @@ package io.takari.maven.plugins.compile.jdt;
 
 import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
-import io.takari.incrementalbuild.BuildContext.Output;
-import io.takari.incrementalbuild.BuildContext.ResourceStatus;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.incrementalbuild.spi.DefaultInput;
-import io.takari.incrementalbuild.spi.DefaultInputMetadata;
 import io.takari.incrementalbuild.spi.DefaultOutput;
 import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
 import io.takari.maven.plugins.compile.AbstractCompileMojo;
@@ -41,7 +38,6 @@ import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
 import org.eclipse.jdt.internal.compiler.env.INameEnvironment;
-import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.eclipse.jdt.internal.compiler.util.SuffixConstants;
@@ -50,8 +46,6 @@ import org.eclipse.jdt.internal.core.builder.ProblemFactory;
 public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor {
 
   private static final String CAPABILITY_TYPE = "jdt.type";
-
-  private static final String CAPABILITY_SIMPLE_TYPE = "jdt.simpleType";
 
   private static final String KEY_TYPE = "jdt.type";
 
@@ -124,10 +118,9 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       namingEnvironment.cleanup();
     }
 
-    Map<String, byte[]> index = new HashMap<String, byte[]>();
-    for (DefaultInputMetadata input : context.getRegisteredInputs()) {
-      if (input.getStatus() != ResourceStatus.REMOVED) {}
-    }
+    DefaultInput<File> pom = context.registerInput(config.getPom()).process();
+    index.update(namingEnvironment);
+    pom.setValue(KEY_TYPEINDEX, index.toByteArray());
 
   }
 
@@ -146,11 +139,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   private void enqueueAffectedInputs(DefaultOutputMetadata output) {
     for (String type : output.getCapabilities(CAPABILITY_TYPE)) {
       for (InputMetadata<File> input : context.getDependentInputs(CAPABILITY_TYPE, type)) {
-        enqueue(input.getResource());
-      }
-    }
-    for (String type : output.getCapabilities(CAPABILITY_SIMPLE_TYPE)) {
-      for (InputMetadata<File> input : context.getDependentInputs(CAPABILITY_SIMPLE_TYPE, type)) {
         enqueue(input.getResource());
       }
     }
@@ -221,47 +209,11 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     INameEnvironment namingEnvironment =
         new FileSystem(classpath.toArray(new FileSystem.Classpath[classpath.size()]));
 
-    String indexStr = context.registerInput(config.getPom()).getValue(KEY_TYPEINDEX, String.class);
-    if (indexStr != null) {
-      Map<String, byte[]> index = ClasspathEntryDigester.parseTypeIndex(indexStr);
-      for (Map.Entry<String, byte[]> type : index.entrySet()) {
-        NameEnvironmentAnswer answer =
-            namingEnvironment.findType(CharOperation.splitOn('.', type.getKey().toCharArray()));
-        if (answer == null) {
-          if (type.getValue() != null) {
-            // the type used to be available, not it's not
-            enqueType(type.getKey());
-          }
-          // type didn't exist before and still does not exist
-        } else if (type.getValue() == null) {
-          // type didn't exist before but exists now
-          enqueType(type.getKey());
-        } else {
-          byte[] hash = digester.digest(answer.getBinaryType());
-          if (!Arrays.equals(type.getValue(), hash)) {
-            // type existed before, exists now but it's structure has changed
-            enqueType(type.getKey());
-          }
-        }
-      }
+    for (String filename : index.getAffectedSources(namingEnvironment)) {
+      enqueue(new File(filename));
     }
 
     return !compileQueue.isEmpty();
-  }
-
-  // XXX poor name, "enqueue sources that reference type"
-  private void enqueType(String type) {
-    for (InputMetadata<File> input : context.getDependentInputs(CAPABILITY_TYPE, type)) {
-      enqueue(input.getResource());
-    }
-    int idx = type.lastIndexOf('.');
-    if (idx > 0) {
-      String simpleType = type.substring(idx + 1);
-      for (InputMetadata<File> input : context.getDependentInputs(CAPABILITY_SIMPLE_TYPE,
-          simpleType)) {
-        enqueue(input.getResource());
-      }
-    }
   }
 
   @Override
@@ -293,11 +245,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         input.addRequirement(CAPABILITY_TYPE, CharOperation.toString(reference));
       }
     }
-    if (result.simpleNameReferences != null) {
-      for (char[] reference : result.simpleNameReferences) {
-        input.addRequirement(CAPABILITY_SIMPLE_TYPE, new String(reference));
-      }
-    }
 
     if (!result.hasErrors()) {
       for (ClassFile classFile : result.getClassFiles()) {
@@ -324,13 +271,9 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     final File outputFile = new File(config.getOutputDirectory(), relativeStringName);
     final DefaultOutput output = input.associateOutput(outputFile);
 
-    final char[][] compoundName = classFile.getCompoundName();
-    final String type = CharOperation.toString(compoundName);
+    String type = CharOperation.toString(classFile.getCompoundName());
 
-    boolean significantChange = digestClassFile(output, bytes);
-
-    output.addCapability(CAPABILITY_TYPE, type);
-    output.addCapability(CAPABILITY_SIMPLE_TYPE, new String(compoundName[compoundName.length - 1]));
+    boolean significantChange = digestClassFile(output, bytes, type);
 
     if (significantChange) {
       // find all classes that reference this one and put them into work queue
@@ -346,15 +289,15 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     }
   }
 
-  public boolean digestClassFile(Output<File> output, byte[] definition) {
+  private boolean digestClassFile(DefaultOutput output, byte[] definition, String type) {
     boolean significantChange = true;
     try {
       ClassFileReader reader =
           new ClassFileReader(definition, output.getResource().getAbsolutePath().toCharArray());
-      String type = new String(CharOperation.replaceOnCopy(reader.getName(), '/', '.'));
       byte[] hash = digester.digest(reader);
       if (hash != null) {
         output.setValue(KEY_TYPE, type);
+        output.addCapability(CAPABILITY_TYPE, type);
         byte[] oldHash = (byte[]) output.setValue(KEY_HASH, hash);
         significantChange = oldHash == null || !Arrays.equals(hash, oldHash);
       } else {
