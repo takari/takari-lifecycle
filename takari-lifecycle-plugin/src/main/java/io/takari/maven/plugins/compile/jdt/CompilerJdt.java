@@ -3,7 +3,6 @@ package io.takari.maven.plugins.compile.jdt;
 import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
 import io.takari.incrementalbuild.BuildContext.Output;
-import io.takari.incrementalbuild.spi.CapabilitiesProvider;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.incrementalbuild.spi.DefaultInput;
 import io.takari.incrementalbuild.spi.DefaultOutput;
@@ -137,7 +136,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     return !compileQueue.isEmpty();
   }
 
-  private void enqueueAffectedInputs(CapabilitiesProvider output) {
+  private void enqueueAffectedInputs(DefaultOutputMetadata output) {
     for (String type : output.getCapabilities(CAPABILITY_TYPE)) {
       for (InputMetadata<File> input : context.getDependentInputs(CAPABILITY_TYPE, type)) {
         enqueue(input.getResource());
