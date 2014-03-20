@@ -188,7 +188,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       }
     }
     if (log.isDebugEnabled()) {
-      log.debug("Source roots:{}", msg);
+      log.debug("Compile source roots:{}", msg);
     }
     return sources;
   }
@@ -273,7 +273,19 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     }
 
     try {
-      boolean classpathChanged = compiler.setClasspath(getCompileArtifacts());
+      List<Artifact> classpath = getCompileArtifacts();
+      if (log.isDebugEnabled()) {
+        StringBuilder msg = new StringBuilder();
+        if (!classpath.isEmpty()) {
+          for (Artifact artifact : classpath) {
+            msg.append("\n   ").append(artifact.getFile());
+          }
+        } else {
+          msg.append(" <empty>");
+        }
+        log.debug("Compile classpath:{}", msg.toString());
+      }
+      boolean classpathChanged = compiler.setClasspath(classpath);
       boolean sourcesChanged = compiler.setSources(sources);
 
       if (!sourcesChanged && !classpathChanged) {
