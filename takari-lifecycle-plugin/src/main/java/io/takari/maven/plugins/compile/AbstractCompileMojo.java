@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -155,28 +156,39 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
   public List<File> getSources() {
     List<File> sources = new ArrayList<File>();
+    StringBuilder msg = new StringBuilder();
     for (String sourcePath : getSourceRoots()) {
       File sourceRoot = new File(sourcePath);
+      msg.append("\n").append(sourcePath);
       if (!sourceRoot.isDirectory()) {
+        msg.append("\n   does not exist or not a directory, skiped");
         continue;
       }
       DirectoryScanner scanner = new DirectoryScanner();
       scanner.setBasedir(sourceRoot);
       // TODO this is a bug in project model, includes/excludes should be per sourceRoot
       Set<String> includes = getIncludes();
-      if (includes != null && !includes.isEmpty()) {
-        scanner.setIncludes(includes.toArray(new String[includes.size()]));
-      } else {
-        scanner.setIncludes(new String[] {"**/*.java"});
+      if (includes == null || includes.isEmpty()) {
+        includes = Collections.singleton("**/*.java");
       }
+      scanner.setIncludes(includes.toArray(new String[includes.size()]));
       Set<String> excludes = getExcludes();
       if (excludes != null && !excludes.isEmpty()) {
         scanner.setExcludes(excludes.toArray(new String[excludes.size()]));
       }
       scanner.scan();
-      for (String relpath : scanner.getIncludedFiles()) {
+      String[] includedFiles = scanner.getIncludedFiles();
+      for (String relpath : includedFiles) {
         sources.add(new File(sourceRoot, relpath));
       }
+      if (log.isDebugEnabled()) {
+        msg.append("\n   includes=").append(includes.toString());
+        msg.append(" excludes=").append(excludes != null ? excludes.toString() : "[]");
+        msg.append(" matched=").append(includedFiles.length);
+      }
+    }
+    if (log.isDebugEnabled()) {
+      log.debug("Source roots:{}", msg);
     }
     return sources;
   }
