@@ -102,6 +102,33 @@ public class RecordReferenceTest {
   }
 
   @Test
+  public void testExtendsSimple() throws Exception {
+    assertReference("ExtendsSimple", //
+        "java.lang.Object", "record.reference.Object" //
+    // XXX needed for 'type collision' error/warning
+    // , "record.reference.ExtendsSimple" //
+    );
+  }
+
+  @Test
+  public void testExtendsMissing() throws Exception {
+    assertReference("ExtendsMissing", //
+        "java.lang.missing", "record.reference.missing", "missing.Missing" //
+    // XXX needed for 'type collision' error/warning
+    // , "record.reference.ExtendsSimple" //
+    );
+  }
+
+  @Test
+  public void testExtendsMissingSimple() throws Exception {
+    assertReference("ExtendsMissingSimple", //
+        "java.lang.Missing", "record.reference.Missing" //
+    // XXX needed for 'type collision' error/warning
+    // , "record.reference.ExtendsSimple" //
+    );
+  }
+
+  @Test
   public void testMethodReturnType() throws Exception {
     assertReference("MethodReturnType", //
         "java.lang.Object", "java.util.List" //

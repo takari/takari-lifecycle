@@ -736,7 +736,7 @@ public void storeDependencyInfo() {
 
 	for (int i = 0, l = this.referencedTypes.size; i < l; i++) {
 		ReferenceBinding type = (ReferenceBinding) this.referencedTypes.elementAt(i);
-		if (!type.isLocalType())
+		if (!type.isLocalType() && !(type instanceof MissingTypeBinding))
 			recordQualifiedReference(type.isMemberType()
 				? CharOperation.splitOn('.', type.readableName())
 				: type.compoundName);
