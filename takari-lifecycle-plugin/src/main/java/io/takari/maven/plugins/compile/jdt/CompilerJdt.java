@@ -93,6 +93,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     // XXX figure out how to reuse source/target check from jdt
     // org.eclipse.jdt.internal.compiler.batch.Main.validateOptions(boolean)
     args.put(CompilerOptions.OPTION_TargetPlatform, config.getTarget()); // support 5/6/7 aliases
+    args.put(CompilerOptions.OPTION_Compliance, config.getTarget()); // support 5/6/7 aliases
     args.put(CompilerOptions.OPTION_Source, config.getSource()); // support 5/6/7 aliases
     if (config.getSourceEncoding() != null) {
       // TODO not sure this is necessary, #newSourceFile handles source encoding already
