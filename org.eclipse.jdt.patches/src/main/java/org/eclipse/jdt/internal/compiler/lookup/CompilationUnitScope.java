@@ -382,6 +382,7 @@ void faultInImports() {
 				if (importBinding.problemId() == ProblemReasons.Ambiguous) {
 					// keep it unless a duplicate can be found below
 				} else {
+					recordQualifiedReference(compoundName);
 					problemReporter().importProblem(importReference, importBinding);
 					continue nextImport;
 				}

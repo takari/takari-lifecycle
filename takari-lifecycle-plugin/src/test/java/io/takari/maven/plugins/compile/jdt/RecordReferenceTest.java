@@ -37,6 +37,12 @@ public class RecordReferenceTest {
   }
 
   @Test
+  public void testMissingImport() throws Exception {
+    assertReference("MissingImport", //
+        "java.lang.Object", "missing.Missing");
+  }
+
+  @Test
   public void testImportOnDemand() throws Exception {
     assertReference("ImportOnDemand", //
         "java.lang.Object", "record.reference.Name", "java.lang.Name", //
