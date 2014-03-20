@@ -26,7 +26,6 @@ import org.eclipse.jdt.internal.compiler.env.INameEnvironment;
 import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
 import org.eclipse.jdt.internal.core.builder.ProblemFactory;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class RecordReferenceTest {
@@ -40,14 +39,14 @@ public class RecordReferenceTest {
   @Test
   public void testImportOnDemand() throws Exception {
     assertReference("ImportOnDemand", //
-        "java.lang.Object", "record.reference.Name", "java.lang.Name", "java.util.Name");
+        "java.lang.Object", "record.reference.Name", "java.lang.Name", //
+        "java.util.Name", "java.util.*");
   }
 
   @Test
-  @Ignore("missing package tracking is not implemented")
   public void testMissingImportOnDemand() throws Exception {
     assertReference("MissingImportOnDemand", //
-        "java.lang.Object", "record.reference.Name", "java.lang.Name", "missing.Name");
+        "java.lang.Object", "record.reference.Name", "java.lang.Name", "missing.*");
   }
 
   @Test
@@ -137,6 +136,11 @@ public class RecordReferenceTest {
         if (result.qualifiedReferences != null) {
           for (char[][] reference : result.qualifiedReferences) {
             actualReferences.add(CharOperation.toString(reference));
+          }
+        }
+        if (result.packageReferences != null) {
+          for (char[][] reference : result.packageReferences) {
+            actualReferences.add(CharOperation.toString(reference) + ".*");
           }
         }
       }

@@ -35,6 +35,7 @@ public class CompilationUnitScope extends Scope {
 	private SimpleNameVector rootReferences;
 	private ObjectVector referencedTypes;
 	private ObjectVector referencedSuperTypes;
+	private CompoundNameVector referencedPackages; // on-demand imports
 
 	HashtableOfType constantPoolNameUsage;
 	private int captureID = 1;
@@ -50,12 +51,14 @@ public CompilationUnitScope(CompilationUnitDeclaration unit, LookupEnvironment e
 
 	if (compilerOptions().produceReferenceInfo) {
 		this.qualifiedReferences = new CompoundNameVector();
+		this.referencedPackages = new CompoundNameVector();
 		this.simpleNameReferences = new SimpleNameVector();
 		this.rootReferences = new SimpleNameVector();
 		this.referencedTypes = new ObjectVector();
 		this.referencedSuperTypes = new ObjectVector();
 	} else {
 		this.qualifiedReferences = null; // used to test if dependencies should be recorded
+		this.referencedPackages = null;
 		this.simpleNameReferences = null;
 		this.rootReferences = null;
 		this.referencedTypes = null;
@@ -357,6 +360,10 @@ void faultInImports() {
 			if (CharOperation.equals(compoundName, this.currentPackageName)) {
 				problemReporter().unusedImport(importReference); // since skipped, must be reported now
 				continue nextImport;
+			}
+
+			if (!importReference.isStatic()) {
+				recordPackageReference(compoundName);
 			}
 
 			Binding importBinding = findImport(compoundName, compoundName.length);
@@ -680,6 +687,12 @@ void recordTypeReferences(TypeBinding[] types) {
 			this.referencedTypes.add(actualType);
 	}
 }
+void recordPackageReference(char[][] qualifiedName) {
+	if (this.referencedPackages == null) return; // not recording dependencies
+
+	if (!this.referencedPackages.contains(qualifiedName))
+		this.referencedPackages.add(qualifiedName);
+}
 Binding resolveSingleImport(ImportBinding importBinding, int mask) {
 	if (importBinding.resolvedImport == null) {
 		importBinding.resolvedImport = findSingleImport(importBinding.compoundName, mask, importBinding.isStatic());
@@ -733,6 +746,12 @@ public void storeDependencyInfo() {
 	for (int i = 0; i < size; i++)
 		qualifiedRefs[i] = this.qualifiedReferences.elementAt(i);
 	this.referenceContext.compilationResult.qualifiedReferences = qualifiedRefs;
+
+	size = this.referencedPackages.size;
+	char[][][] packageRefs = new char[size][][];
+	for (int i = 0; i < size; i++)
+		packageRefs[i] = this.referencedPackages.elementAt(i);
+	this.referenceContext.compilationResult.packageReferences = packageRefs;
 
 	size = this.simpleNameReferences.size;
 	char[][] simpleRefs = new char[size][];

@@ -61,6 +61,7 @@ public class CompilationResult {
 	private Set firstErrors;
 	private int maxProblemPerUnit;
 	public char[][][] qualifiedReferences;
+	public char[][][] packageReferences;
 	public char[][] simpleNameReferences;
 	public char[][] rootReferences;
 	public boolean hasAnnotations = false;
