@@ -43,3 +43,9 @@ But at very least need to track dependency on missing.Name
 
 == package-info.java
 can package-info.java in other packages result in more/less compilation errors and warnings?
+
+
+== random notes
+
+=== interesting discussion about shadowing and obscuring
+https://bugs.eclipse.org/bugs/show_bug.cgi?id=318401#c1

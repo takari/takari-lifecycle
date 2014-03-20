@@ -91,11 +91,24 @@ public class RecordReferenceTest {
   }
 
   @Test
+  public void testNestedParameterizedType() throws Exception {
+    assertReference("NestedParameterizedTypeSelfReference", //
+        "java.lang.Object" //
+        // jdt resolves type parameter in all visible scope, it seems
+        , "java.lang.Object.S", "java.lang.S", "record.reference.S" //
+        , "record.reference.NestedParameterizedTypeSelfReference.S"
+        // XXX self-reference for type collision detection?
+        // nested type referenced from the same source
+        , "record.reference.NestedParameterizedTypeSelfReference.Nested" //
+    );
+  }
+
+  @Test
   public void testImplements() throws Exception {
     assertReference("Implements", //
         "java.lang.Object", "java.lang.Comparable" //
         // needed for 'type collision' error/warning
-        , "record.reference.Implements" //
+        // XXX self-reference , "record.reference.Implements" //
         // 'java.lang.Comparable' can be nested type from 'java' class
         , "java.lang.java", "record.reference.java" //
     );
@@ -105,8 +118,7 @@ public class RecordReferenceTest {
   public void testExtendsSimple() throws Exception {
     assertReference("ExtendsSimple", //
         "java.lang.Object", "record.reference.Object" //
-    // XXX needed for 'type collision' error/warning
-    // , "record.reference.ExtendsSimple" //
+    // XXX self-reference , "record.reference.ExtendsSimple" //
     );
   }
 
@@ -143,7 +155,7 @@ public class RecordReferenceTest {
     assertReference("MethodParameterType", //
         "java.lang.Object", "java.util.List"
         // needed for 'type collision' error/warning
-        , "record.reference.MethodParameterType" //
+        // XXX self reference , "record.reference.MethodParameterType" //
         // 'java.util.List' can be nested type from 'java' class
         , "java.lang.java", "record.reference.java" //
     );

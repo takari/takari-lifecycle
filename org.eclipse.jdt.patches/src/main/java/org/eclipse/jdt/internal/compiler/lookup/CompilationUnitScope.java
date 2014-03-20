@@ -734,6 +734,7 @@ public void storeDependencyInfo() {
 				recordSuperTypeReference(interfaces[j]);
 	}
 
+	/*
 	for (int i = 0, l = this.referencedTypes.size; i < l; i++) {
 		ReferenceBinding type = (ReferenceBinding) this.referencedTypes.elementAt(i);
 		if (!type.isLocalType() && !(type instanceof MissingTypeBinding))
@@ -741,6 +742,7 @@ public void storeDependencyInfo() {
 				? CharOperation.splitOn('.', type.readableName())
 				: type.compoundName);
 	}
+	 */
 
 	int size = this.qualifiedReferences.size;
 	char[][][] qualifiedRefs = new char[size][][];
