@@ -123,14 +123,6 @@ public class CompileIncrementalTest extends AbstractCompileTest {
     mojos.compile(projectA);
     mojos.assertBuildOutputs(moduleA, new String[0]);
 
-    // dependency changed "non-structurally" (only applies to jdt)
-    // cp(moduleB, "src/main/java/moduleb/ModuleB.java-comment",
-    // "src/main/java/moduleb/ModuleB.java");
-    // touch(moduleB, "src/main/java/moduleb/ModuleB.java");
-    // compile(moduleB);
-    // mojos.compile(projectA);
-    // mojos.assertBuildOutputs(moduleA, new String[0]);
-
     // dependency changed "structurally"
     cp(moduleB, "src/main/java/moduleb/ModuleB.java-method", "src/main/java/moduleb/ModuleB.java");
     touch(moduleB, "src/main/java/moduleb/ModuleB.java");
@@ -155,12 +147,6 @@ public class CompileIncrementalTest extends AbstractCompileTest {
     addDependency(projectA, "module-b", new File(moduleB, "module-b.jar"));
     mojos.compile(projectA);
     mojos.assertBuildOutputs(moduleA, new String[0]);
-
-    // dependency changed "non-structurally" (only applies to jdt)
-    // projectA = mojos.readMavenProject(moduleA);
-    // addDependency(projectA, "module-b", new File(moduleB, "module-b-comment.jar"));
-    // mojos.compile(projectA);
-    // mojos.assertBuildOutputs(moduleA, new String[0]);
 
     // dependency changed "structurally"
     projectA = mojos.readMavenProject(moduleA);
