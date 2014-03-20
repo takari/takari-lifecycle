@@ -4,6 +4,7 @@ import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.incrementalbuild.spi.DefaultInput;
+import io.takari.incrementalbuild.spi.DefaultInputMetadata;
 import io.takari.incrementalbuild.spi.DefaultOutput;
 import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
 import io.takari.maven.plugins.compile.AbstractCompileMojo;
@@ -38,6 +39,7 @@ import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
 import org.eclipse.jdt.internal.compiler.env.INameEnvironment;
+import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.eclipse.jdt.internal.compiler.util.SuffixConstants;
@@ -118,10 +120,24 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       namingEnvironment.cleanup();
     }
 
-    DefaultInput<File> pom = context.registerInput(config.getPom()).process();
-    index.update(namingEnvironment);
-    pom.setValue(KEY_TYPEINDEX, index.toByteArray());
+    HashMap<String, byte[]> index = new HashMap<String, byte[]>();
+    for (DefaultInputMetadata<File> input : context.getRegisteredInputs()) {
+      for (String type : input.getRequireCapabilities(CAPABILITY_TYPE)) {
+        if (!index.containsKey(type)) {
+          index.put(type, digest(namingEnvironment, type));
+        }
+      }
+    }
+    context.registerInput(config.getPom()).process().setValue(KEY_TYPEINDEX, index);
+  }
 
+  private byte[] digest(INameEnvironment namingEnvironment, String type) {
+    NameEnvironmentAnswer answer =
+        namingEnvironment.findType(CharOperation.splitOn('.', type.toCharArray()));
+    if (answer != null && answer.isBinaryType()) {
+      return digester.digest(answer.getBinaryType());
+    }
+    return null;
   }
 
   @Override
@@ -209,8 +225,19 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     INameEnvironment namingEnvironment =
         new FileSystem(classpath.toArray(new FileSystem.Classpath[classpath.size()]));
 
-    for (String filename : index.getAffectedSources(namingEnvironment)) {
-      enqueue(new File(filename));
+    @SuppressWarnings("unchecked")
+    HashMap<String, byte[]> index =
+        context.registerInput(config.getPom()).getValue(KEY_TYPEINDEX, HashMap.class);
+    if (index != null) {
+      for (Map.Entry<String, byte[]> entry : index.entrySet()) {
+        byte[] hash = digest(namingEnvironment, entry.getKey());
+        if (!Arrays.equals(entry.getValue(), hash)) {
+          for (DefaultInputMetadata<File> metadata : context.getDependentInputs(CAPABILITY_TYPE,
+              entry.getKey())) {
+            enqueue(metadata.getResource());
+          }
+        }
+      }
     }
 
     return !compileQueue.isEmpty();
