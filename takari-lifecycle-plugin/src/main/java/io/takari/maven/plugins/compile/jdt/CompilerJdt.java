@@ -49,11 +49,15 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
   private static final String CAPABILITY_TYPE = "jdt.type";
 
+  private static final String CAPABILITY_PACKAGE = "jdt.package";
+
   private static final String KEY_TYPE = "jdt.type";
 
   private static final String KEY_HASH = "jdt.hash";
 
   private static final String KEY_TYPEINDEX = "jdt.typeIndex";
+
+  private static final String KEY_PACKAGEINDEX = "jdt.packageIndex";
 
   /**
    * {@code KEY_TYPE} value used for local and anonymous types and also class files with
@@ -121,14 +125,22 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     }
 
     HashMap<String, byte[]> index = new HashMap<String, byte[]>();
+    HashMap<String, Boolean> packageIndex = new HashMap<String, Boolean>();
     for (DefaultInputMetadata<File> input : context.getRegisteredInputs()) {
       for (String type : input.getRequireCapabilities(CAPABILITY_TYPE)) {
         if (!index.containsKey(type)) {
           index.put(type, digest(namingEnvironment, type));
         }
       }
+      for (String pkg : input.getRequireCapabilities(CAPABILITY_PACKAGE)) {
+        if (!packageIndex.containsKey(pkg)) {
+          packageIndex.put(pkg, isPackage(namingEnvironment, pkg));
+        }
+      }
     }
-    context.registerInput(config.getPom()).process().setValue(KEY_TYPEINDEX, index);
+    DefaultInput<File> pom = context.registerInput(config.getPom()).process();
+    pom.setValue(KEY_TYPEINDEX, index);
+    pom.setValue(KEY_PACKAGEINDEX, packageIndex);
   }
 
   private byte[] digest(INameEnvironment namingEnvironment, String type) {
@@ -138,6 +150,10 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       return digester.digest(answer.getBinaryType());
     }
     return null;
+  }
+
+  private boolean isPackage(INameEnvironment namingEnvironment, String pkg) {
+    return namingEnvironment.isPackage(CharOperation.splitOn('.', pkg.toCharArray()), null);
   }
 
   @Override
@@ -230,10 +246,27 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         context.registerInput(config.getPom()).getValue(KEY_TYPEINDEX, HashMap.class);
     if (index != null) {
       for (Map.Entry<String, byte[]> entry : index.entrySet()) {
-        byte[] hash = digest(namingEnvironment, entry.getKey());
+        String type = entry.getKey();
+        byte[] hash = digest(namingEnvironment, type);
         if (!Arrays.equals(entry.getValue(), hash)) {
           for (DefaultInputMetadata<File> metadata : context.getDependentInputs(CAPABILITY_TYPE,
-              entry.getKey())) {
+              type)) {
+            enqueue(metadata.getResource());
+          }
+        }
+      }
+    }
+
+    @SuppressWarnings("unchecked")
+    HashMap<String, Boolean> packageIndex =
+        context.registerInput(config.getPom()).getValue(KEY_PACKAGEINDEX, HashMap.class);
+    if (packageIndex != null) {
+      for (Map.Entry<String, Boolean> entry : packageIndex.entrySet()) {
+        String pkg = entry.getKey();
+        boolean isPackage = isPackage(namingEnvironment, pkg);
+        if (isPackage != entry.getValue()) {
+          for (DefaultInputMetadata<File> metadata : context.getDependentInputs(CAPABILITY_PACKAGE,
+              pkg)) {
             enqueue(metadata.getResource());
           }
         }
@@ -270,6 +303,12 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     if (result.qualifiedReferences != null) {
       for (char[][] reference : result.qualifiedReferences) {
         input.addRequirement(CAPABILITY_TYPE, CharOperation.toString(reference));
+      }
+    }
+    if (result.packageReferences != null) {
+      for (char[][] reference : result.packageReferences) {
+        // TODO get rid of java.lang.* reference
+        input.addRequirement(CAPABILITY_PACKAGE, CharOperation.toString(reference));
       }
     }
 

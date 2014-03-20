@@ -83,6 +83,28 @@ public class CompileJdtClasspathTest {
   }
 
   @Test
+  public void testReactor_missingOnDemandImport() throws Exception {
+    File parent = resources.getBasedir("compile-jdt-classpath/reactor-missing-ondemand-import");
+
+    try {
+      compileReactor(parent);
+      Assert.fail();
+    } catch (MojoExecutionException e) {
+      Assert.assertEquals("1 error(s) encountered, see previous message(s) for details",
+          e.getMessage());
+    }
+    mojos.assertBuildOutputs(parent, new String[0]);
+    mojos.assertMessages(parent, "module-a/src/main/java/modulea/Error.java",
+        "ERROR Error.java [3:8] The import moduleb cannot be resolved");
+
+    // fix the problem and rebuild
+    cp(parent, "module-b/src/main/java/moduleb/Missing.java-missing",
+        "module-b/src/main/java/moduleb/Missing.java");
+    compileReactor(parent);
+    mojos.assertBuildOutputs(parent, "module-a/target/classes/modulea/Error.class");
+  }
+
+  @Test
   public void testReactor_missingType_splitpackage() throws Exception {
     File parent = resources.getBasedir("compile-jdt-classpath/reactor-missing-splitpackage");
 
