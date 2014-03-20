@@ -127,12 +127,12 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     HashMap<String, byte[]> index = new HashMap<String, byte[]>();
     HashMap<String, Boolean> packageIndex = new HashMap<String, Boolean>();
     for (DefaultInputMetadata<File> input : context.getRegisteredInputs()) {
-      for (String type : input.getRequireCapabilities(CAPABILITY_TYPE)) {
+      for (String type : input.getRequiredCapabilities(CAPABILITY_TYPE)) {
         if (!index.containsKey(type)) {
           index.put(type, digest(namingEnvironment, type));
         }
       }
-      for (String pkg : input.getRequireCapabilities(CAPABILITY_PACKAGE)) {
+      for (String pkg : input.getRequiredCapabilities(CAPABILITY_PACKAGE)) {
         if (!packageIndex.containsKey(pkg)) {
           packageIndex.put(pkg, isPackage(namingEnvironment, pkg));
         }
