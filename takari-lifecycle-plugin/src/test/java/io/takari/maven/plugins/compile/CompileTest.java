@@ -61,6 +61,11 @@ public class CompileTest extends AbstractCompileTest {
     MavenProject project = mojos.readMavenProject(basedir);
     mojos.compile(project);
     Assert.assertEquals(new File(basedir, "target/classes"), project.getArtifact().getFile());
+
+    // no-change rebuild
+    project = mojos.readMavenProject(basedir);
+    mojos.compile(project);
+    Assert.assertEquals(new File(basedir, "target/classes"), project.getArtifact().getFile());
   }
 
   @Test

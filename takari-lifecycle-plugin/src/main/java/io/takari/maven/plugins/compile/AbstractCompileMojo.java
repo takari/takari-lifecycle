@@ -284,21 +284,20 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       boolean classpathChanged = compiler.setClasspath(classpath);
       boolean sourcesChanged = compiler.setSources(sources);
 
-      if (!sourcesChanged && !classpathChanged) {
+      if (sourcesChanged || classpathChanged) {
+        log.info("Compiling {} sources to {}", sources.size(), getOutputDirectory());
+        compiler.compile();
+        // TODO report actual number of sources compiled
+        log.info("Compiled {} sources ({} ms)", sources.size(),
+            stopwatch.elapsed(TimeUnit.MILLISECONDS));
+      } else {
+        // TODO this should be something like "cleanup after skipped compilation"
         compiler.skipCompilation();
         log.info("Skipped compilation, all {} sources are up to date", sources.size());
-        return;
       }
-
-      log.info("Compiling {} sources to {}", sources.size(), getOutputDirectory());
-
-      compiler.compile();
 
       artifact.setFile(getOutputDirectory());
 
-      // TODO report actual number of sources compiled
-      log.info("Compiled {} sources ({} ms)", sources.size(),
-          stopwatch.elapsed(TimeUnit.MILLISECONDS));
     } catch (IOException e) {
       throw new MojoExecutionException("Could not compile project", e);
     }
