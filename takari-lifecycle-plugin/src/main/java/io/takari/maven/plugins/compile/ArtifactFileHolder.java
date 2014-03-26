@@ -23,4 +23,15 @@ class ArtifactFileHolder implements ResourceHolder<ArtifactFile> {
     // dependency changes are handled with in ProjectClasspathDigester
     return ResourceStatus.UNMODIFIED;
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (!(obj instanceof ArtifactFileHolder)) {
+      return false;
+    }
+    return artifact.equals(((ArtifactFileHolder) obj).artifact);
+  }
 }
