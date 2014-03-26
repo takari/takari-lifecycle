@@ -7,7 +7,6 @@ import io.takari.incrementalbuild.spi.DefaultInput;
 import io.takari.incrementalbuild.spi.DefaultInputMetadata;
 import io.takari.incrementalbuild.spi.DefaultOutput;
 import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
-import io.takari.maven.plugins.compile.AbstractCompileMojo;
 import io.takari.maven.plugins.compile.AbstractCompiler;
 
 import java.io.BufferedOutputStream;
@@ -65,8 +64,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
    */
   private static final String TYPE_NOTYPE = ".";
 
-  private final String sourceEncoding;
-
   final List<FileSystem.Classpath> classpath = new ArrayList<FileSystem.Classpath>();
 
   /**
@@ -81,9 +78,8 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
   private final ClassfileDigester digester = new ClassfileDigester();
 
-  public CompilerJdt(AbstractCompileMojo mojo, DefaultBuildContext<?> context) {
-    super(context, mojo);
-    this.sourceEncoding = mojo.getSourceEncoding() != null ? mojo.getSourceEncoding().name() : null;
+  public CompilerJdt(DefaultBuildContext<?> context) {
+    super(context);
   }
 
   @Override
@@ -92,17 +88,13 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     Map<String, String> args = new HashMap<String, String>();
     // XXX figure out how to reuse source/target check from jdt
     // org.eclipse.jdt.internal.compiler.batch.Main.validateOptions(boolean)
-    args.put(CompilerOptions.OPTION_TargetPlatform, config.getTarget()); // support 5/6/7 aliases
-    args.put(CompilerOptions.OPTION_Compliance, config.getTarget()); // support 5/6/7 aliases
-    args.put(CompilerOptions.OPTION_Source, config.getSource()); // support 5/6/7 aliases
-    if (config.getSourceEncoding() != null) {
-      // TODO not sure this is necessary, #newSourceFile handles source encoding already
-      args.put(CompilerOptions.OPTION_Encoding, config.getSourceEncoding().name());
-    }
+    args.put(CompilerOptions.OPTION_TargetPlatform, getTarget()); // support 5/6/7 aliases
+    args.put(CompilerOptions.OPTION_Compliance, getTarget()); // support 5/6/7 aliases
+    args.put(CompilerOptions.OPTION_Source, getSource()); // support 5/6/7 aliases
     CompilerOptions compilerOptions = new CompilerOptions(args);
     compilerOptions.performMethodsFullRecovery = false;
     compilerOptions.performStatementsRecovery = false;
-    compilerOptions.verbose = config.isVerbose();
+    compilerOptions.verbose = isVerbose();
     IProblemFactory problemFactory = ProblemFactory.getProblemFactory(Locale.getDefault());
     INameEnvironment namingEnvironment =
         new FileSystem(classpath.toArray(new FileSystem.Classpath[classpath.size()]));
@@ -139,7 +131,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         }
       }
     }
-    DefaultInput<File> pom = context.registerInput(config.getPom()).process();
+    DefaultInput<File> pom = context.registerInput(getPom()).process();
     pom.setValue(KEY_TYPEINDEX, index);
     pom.setValue(KEY_PACKAGEINDEX, packageIndex);
   }
@@ -191,9 +183,9 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
   private CompilationUnit newSourceFile(File source) {
     final String fileName = source.getAbsolutePath();
-    final String encoding = sourceEncoding;
-    return new CompilationUnit(null, fileName, encoding, config.getOutputDirectory()
-        .getAbsolutePath(), false);
+    final String encoding = getSourceEncoding() != null ? getSourceEncoding().name() : null;
+    return new CompilationUnit(null, fileName, encoding, getOutputDirectory().getAbsolutePath(),
+        false);
   }
 
   private static class FileSystem extends org.eclipse.jdt.internal.compiler.batch.FileSystem {
@@ -218,7 +210,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     // XXX detect change!
     classpath.addAll(JavaInstallation.getDefault().getClasspath());
 
-    for (String sourceRoot : config.getSourceRoots()) {
+    for (String sourceRoot : getSourceRoots()) {
       // TODO why do I need this here? unit test or take out
       // XXX includes/excludes => access rules
       Classpath element = FileSystem.getClasspath(sourceRoot, null, true, null, null);
@@ -227,11 +219,11 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       }
     }
 
-    classpath.add(FileSystem.getClasspath(config.getOutputDirectory().getAbsolutePath(), null,
-        false, null, null));
+    classpath.add(FileSystem.getClasspath(getOutputDirectory().getAbsolutePath(), null, false,
+        null, null));
 
-    for (Artifact classpathElement : config.getCompileArtifacts()) {
-      String path = classpathElement.getFile().getAbsolutePath();
+    for (Artifact dependency : dependencies) {
+      String path = dependency.getFile().getAbsolutePath();
       Classpath element = FileSystem.getClasspath(path, null, false, null, null);
       if (element != null) {
         classpath.add(element);
@@ -244,7 +236,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
     @SuppressWarnings("unchecked")
     HashMap<String, byte[]> index =
-        context.registerInput(config.getPom()).getValue(KEY_TYPEINDEX, HashMap.class);
+        context.registerInput(getPom()).getValue(KEY_TYPEINDEX, HashMap.class);
     if (index != null) {
       for (Map.Entry<String, byte[]> entry : index.entrySet()) {
         String type = entry.getKey();
@@ -260,7 +252,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
     @SuppressWarnings("unchecked")
     HashMap<String, Boolean> packageIndex =
-        context.registerInput(config.getPom()).getValue(KEY_PACKAGEINDEX, HashMap.class);
+        context.registerInput(getPom()).getValue(KEY_PACKAGEINDEX, HashMap.class);
     if (packageIndex != null) {
       for (Map.Entry<String, Boolean> entry : packageIndex.entrySet()) {
         String pkg = entry.getKey();
@@ -335,7 +327,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   private void writeClassFile(DefaultInput<File> input, String relativeStringName,
       ClassFile classFile) throws IOException {
     final byte[] bytes = classFile.getBytes();
-    final File outputFile = new File(config.getOutputDirectory(), relativeStringName);
+    final File outputFile = new File(getOutputDirectory(), relativeStringName);
     final DefaultOutput output = input.associateOutput(outputFile);
 
     String type = CharOperation.toString(classFile.getCompoundName());

@@ -5,7 +5,6 @@ import io.takari.incrementalbuild.BuildContext.Input;
 import io.takari.incrementalbuild.BuildContext.Output;
 import io.takari.incrementalbuild.BuildContext.Resource;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
-import io.takari.maven.plugins.compile.AbstractCompileMojo;
 import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerConfiguration;
 import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerOutput;
 import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerOutputProcessor;
@@ -27,9 +26,12 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
 
   private File buildDirectory;
 
-  public CompilerJavacLauncher(DefaultBuildContext<?> context, AbstractCompileMojo config,
-      ProjectClasspathDigester digester) {
-    super(context, config, digester);
+  private String meminitial;
+
+  private String maxmem;
+
+  public CompilerJavacLauncher(DefaultBuildContext<?> context, ProjectClasspathDigester digester) {
+    super(context, digester);
   }
 
   @Override
@@ -45,8 +47,7 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
   }
 
   private void compile(File options, File output) throws IOException {
-    new CompilerConfiguration(config.getSourceEncoding(), getCompilerOptions(), sources)
-        .write(options);
+    new CompilerConfiguration(getSourceEncoding(), getCompilerOptions(), sources).write(options);
 
     // use the same JVM as the one used to run Maven (the "java.home" one)
     String executable =
@@ -59,11 +60,11 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
 
     // jvm options
     cli.addArguments(new String[] {"-cp", jar.getAbsolutePath()});
-    if (config.getMeminitial() != null) {
-      cli.addArgument("-Xms" + config.getMeminitial());
+    if (meminitial != null) {
+      cli.addArgument("-Xms" + meminitial);
     }
-    if (config.getMaxmem() != null) {
-      cli.addArgument("-Xmx" + config.getMaxmem());
+    if (maxmem != null) {
+      cli.addArgument("-Xmx" + maxmem);
     }
 
     // main class and program arguments
@@ -127,5 +128,13 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
 
   public void setBuildDirectory(File buildDirectory) {
     this.buildDirectory = buildDirectory;
+  }
+
+  public void setMeminitial(String meminitial) {
+    this.meminitial = meminitial;
+  }
+
+  public void setMaxmem(String maxmem) {
+    this.maxmem = maxmem;
   }
 }

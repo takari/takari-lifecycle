@@ -1,10 +1,13 @@
 package io.takari.maven.plugins.compile;
 
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
+import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -17,11 +20,108 @@ public abstract class AbstractCompiler {
 
   protected final DefaultBuildContext<?> context;
 
-  protected final AbstractCompileMojo config;
+  private File outputDirectory;
 
-  protected AbstractCompiler(DefaultBuildContext<?> context, AbstractCompileMojo config) {
+  private String source;
+
+  private String target;
+
+  private Proc proc;
+
+  private File generatedSourcesDirectory;
+
+  private String[] annotationProcessors;
+
+  private boolean verbose;
+
+  private File pom;
+
+  private Charset sourceEncoding;
+
+  private Set<String> sourceRoots;
+
+  protected AbstractCompiler(DefaultBuildContext<?> context) {
     this.context = context;
-    this.config = config;
+  }
+
+  public void setOutputDirectory(File outputDirectory) {
+    this.outputDirectory = outputDirectory;
+  }
+
+  protected File getOutputDirectory() {
+    return outputDirectory;
+  };
+
+  public void setSource(String source) {
+    this.source = source;
+  }
+
+  protected String getSource() {
+    return source;
+  }
+
+  public void setTarget(String target) {
+    this.target = target;
+  }
+
+  protected String getTarget() {
+    return target;
+  }
+
+  public void setProc(Proc proc) {
+    this.proc = proc;
+  }
+
+  protected Proc getProc() {
+    return proc;
+  }
+
+  public void setGeneratedSourcesDirectory(File generatedSourcesDirectory) {
+    this.generatedSourcesDirectory = generatedSourcesDirectory;
+  }
+
+  protected File getGeneratedSourcesDirectory() {
+    return generatedSourcesDirectory;
+  }
+
+  public void setAnnotationProcessors(String[] annotationProcessors) {
+    this.annotationProcessors = annotationProcessors;
+  }
+
+  protected String[] getAnnotationProcessors() {
+    return annotationProcessors;
+  }
+
+  public void setVerbose(boolean verbose) {
+    this.verbose = verbose;
+  }
+
+  protected boolean isVerbose() {
+    return verbose;
+  }
+
+  public void setPom(File pom) {
+    this.pom = pom;
+  }
+
+  protected File getPom() {
+    return pom;
+  }
+
+  public void setSourceEncoding(Charset sourceEncoding) {
+    this.sourceEncoding = sourceEncoding;
+  }
+
+  protected Charset getSourceEncoding() {
+    return sourceEncoding;
+  }
+
+  public void setSourceRoots(Set<String> sourceRoots) {
+    this.sourceRoots = sourceRoots;
+  }
+
+  protected Set<String> getSourceRoots() {
+    return sourceRoots;
   }
 
   public abstract boolean setClasspath(List<Artifact> dependencies) throws IOException;

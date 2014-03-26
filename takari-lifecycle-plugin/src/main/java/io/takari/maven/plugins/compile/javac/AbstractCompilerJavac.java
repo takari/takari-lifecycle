@@ -6,7 +6,7 @@ import io.takari.incrementalbuild.BuildContext.ResourceStatus;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.incrementalbuild.spi.DefaultInputMetadata;
 import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
-import io.takari.maven.plugins.compile.AbstractCompileMojo;
+import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 import io.takari.maven.plugins.compile.AbstractCompiler;
 
 import java.io.File;
@@ -24,9 +24,10 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
 
   protected final List<File> sources = new ArrayList<File>();
 
-  protected AbstractCompilerJavac(DefaultBuildContext<?> context, AbstractCompileMojo config,
-      ProjectClasspathDigester digester) {
-    super(context, config);
+  private String classpath;
+
+  protected AbstractCompilerJavac(DefaultBuildContext<?> context, ProjectClasspathDigester digester) {
+    super(context);
     this.digester = digester;
   }
 
@@ -35,20 +36,20 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
 
     // output directory
     options.add("-d");
-    options.add(config.getOutputDirectory().getAbsolutePath());
+    options.add(getOutputDirectory().getAbsolutePath());
 
     options.add("-source");
-    options.add(config.getSource());
+    options.add(getSource());
 
-    if (config.getTarget() != null) {
+    if (getTarget() != null) {
       options.add("-target");
-      options.add(config.getTarget());
+      options.add(getTarget());
     }
 
     options.add("-classpath");
-    options.add(getClasspath());
+    options.add(classpath);
 
-    switch (config.getProc()) {
+    switch (getProc()) {
       case only:
         options.add("-proc:only");
         break;
@@ -59,14 +60,14 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
         options.add("-proc:none");
         break;
     }
-    if (config.isAnnotationProcessing()) {
+    if (getProc() != Proc.none) {
       options.add("-s");
-      options.add(config.getGeneratedSourcesDirectory().getAbsolutePath());
+      options.add(getGeneratedSourcesDirectory().getAbsolutePath());
 
-      if (config.getAnnotationProcessors() != null) {
+      if (getAnnotationProcessors() != null) {
         options.add("-processor");
         StringBuilder processors = new StringBuilder();
-        for (String processor : config.getAnnotationProcessors()) {
+        for (String processor : getAnnotationProcessors()) {
           if (processors.length() > 0) {
             processors.append(',');
           }
@@ -76,18 +77,19 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
       }
     }
 
-    if (config.isVerbose()) {
+    if (isVerbose()) {
       options.add("-verbose");
     }
 
     return options;
   }
 
-  private String getClasspath() {
+  @Override
+  public boolean setClasspath(List<Artifact> dependencies) throws IOException {
     StringBuilder cp = new StringBuilder();
-    cp.append(config.getOutputDirectory().getAbsolutePath());
-    for (Artifact cpe : config.getCompileArtifacts()) {
-      File file = cpe.getFile();
+    cp.append(getOutputDirectory().getAbsolutePath());
+    for (Artifact dependency : dependencies) {
+      File file = dependency.getFile();
       if (file != null) {
         if (cp.length() > 0) {
           cp.append(File.pathSeparatorChar);
@@ -95,11 +97,8 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
         cp.append(file.getAbsolutePath());
       }
     }
-    return cp.toString();
-  }
+    this.classpath = cp.toString();
 
-  @Override
-  public boolean setClasspath(List<Artifact> dependencies) throws IOException {
     return digester.digestDependencies(dependencies);
   }
 
@@ -109,7 +108,7 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
 
     // always register pom.xml. pom.xml is used to track message general compiler messages
     // if not registered, it will cause these messages to be lost during no-change rebuild
-    context.registerInput(config.getPom());
+    context.registerInput(getPom());
 
     List<InputMetadata<File>> modifiedSources = new ArrayList<InputMetadata<File>>();
     List<InputMetadata<File>> inputs = new ArrayList<InputMetadata<File>>();

@@ -6,7 +6,6 @@ import io.takari.incrementalbuild.BuildContext.Output;
 import io.takari.incrementalbuild.BuildContext.Resource;
 import io.takari.incrementalbuild.BuildContext.Severity;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
-import io.takari.maven.plugins.compile.AbstractCompileMojo;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 
 import java.io.File;
@@ -97,9 +96,8 @@ public class CompilerJavac extends AbstractCompilerJavac {
     }
   };
 
-  public CompilerJavac(DefaultBuildContext<?> context, AbstractCompileMojo config,
-      ProjectClasspathDigester digester) {
-    super(context, config, digester);
+  public CompilerJavac(DefaultBuildContext<?> context, ProjectClasspathDigester digester) {
+    super(context, digester);
   }
 
   @Override
@@ -115,7 +113,7 @@ public class CompilerJavac extends AbstractCompilerJavac {
     // - reuse JavaCompiler instances, but not on multiple threads
     // - do not allow in-process annotation processing
 
-    if (!isJava7 && config.getProc() != Proc.none) {
+    if (!isJava7 && getProc() != Proc.none) {
       // TODO maybe allow in single-threaded mode
       throw new MojoExecutionException("Annotation processing requires forked JVM on Java 6");
     }
@@ -131,7 +129,7 @@ public class CompilerJavac extends AbstractCompilerJavac {
   }
 
   private void compile(JavaCompiler compiler) {
-    final Charset sourceEncoding = config.getSourceEncoding();
+    final Charset sourceEncoding = getSourceEncoding();
     final DiagnosticCollector<JavaFileObject> diagnosticCollector =
         new DiagnosticCollector<JavaFileObject>();
     final StandardJavaFileManager standardFileManager =
@@ -188,7 +186,7 @@ public class CompilerJavac extends AbstractCompilerJavac {
           log.warn("Unexpected java {} resource {}", source.getKind(), file);
         }
       } else {
-        Input<File> input = context.registerInput(config.getPom()).process();
+        Input<File> input = context.registerInput(getPom()).process();
         // TODO execution line/column
         input.addMessage(0, 0, diagnostic.getMessage(null), severity, null);
       }

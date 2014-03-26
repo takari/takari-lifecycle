@@ -156,7 +156,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     return encoding == null ? null : Charset.forName(encoding);
   }
 
-  public List<File> getSources() {
+  private List<File> getSources() {
     List<File> sources = new ArrayList<File>();
     StringBuilder msg = new StringBuilder();
     for (String sourcePath : getSourceRoots()) {
@@ -195,53 +195,17 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     return sources;
   }
 
-  public abstract Set<String> getSourceRoots();
+  protected abstract Set<String> getSourceRoots();
 
-  public abstract Set<String> getIncludes();
+  protected abstract Set<String> getIncludes();
 
-  public abstract Set<String> getExcludes();
+  protected abstract Set<String> getExcludes();
 
-  public abstract File getOutputDirectory();
+  protected abstract File getOutputDirectory();
 
-  public abstract List<Artifact> getCompileArtifacts();
+  protected abstract List<Artifact> getCompileArtifacts();
 
-  public abstract File getGeneratedSourcesDirectory();
-
-  public final File getPom() {
-    return pom;
-  }
-
-  public String getTarget() {
-    return target;
-  }
-
-  public String getSource() {
-    return source;
-  }
-
-  public Proc getProc() {
-    return proc;
-  }
-
-  public boolean isAnnotationProcessing() {
-    return proc != Proc.none;
-  }
-
-  public String[] getAnnotationProcessors() {
-    return annotationProcessors;
-  }
-
-  public boolean isVerbose() {
-    return verbose;
-  }
-
-  public String getMaxmem() {
-    return maxmem;
-  }
-
-  public String getMeminitial() {
-    return meminitial;
-  }
+  protected abstract File getGeneratedSourcesDirectory();
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
@@ -250,15 +214,17 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
     final AbstractCompiler compiler;
     if ("javac".equals(compilerId)) {
-      compiler = new CompilerJavac(context, this, digester);
+      compiler = new CompilerJavac(context, digester);
     } else if ("forked-javac".equals(compilerId)) {
-      CompilerJavacLauncher javacLauncher = new CompilerJavacLauncher(context, this, digester);
+      CompilerJavacLauncher javacLauncher = new CompilerJavacLauncher(context, digester);
       javacLauncher.setBasedir(basedir);
       javacLauncher.setJar(pluginArtifact.getFile());
       javacLauncher.setBuildDirectory(buildDirectory);
+      javacLauncher.setMeminitial(meminitial);
+      javacLauncher.setMaxmem(maxmem);
       compiler = javacLauncher;
     } else if ("jdt".equals(compilerId)) {
-      compiler = new CompilerJdt(this, context);
+      compiler = new CompilerJdt(context);
     } else {
       throw new MojoExecutionException("Unsupported compilerId" + compilerId);
     }
@@ -270,9 +236,20 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     }
 
     mkdirs(getOutputDirectory());
-    if (isAnnotationProcessing()) {
+    if (proc != Proc.none) {
       mkdirs(getGeneratedSourcesDirectory());
     }
+
+    compiler.setOutputDirectory(getOutputDirectory());
+    compiler.setSource(source);
+    compiler.setTarget(target);
+    compiler.setProc(proc);
+    compiler.setGeneratedSourcesDirectory(getGeneratedSourcesDirectory());
+    compiler.setAnnotationProcessors(annotationProcessors);
+    compiler.setVerbose(verbose);
+    compiler.setPom(pom);
+    compiler.setSourceEncoding(getSourceEncoding());
+    compiler.setSourceRoots(getSourceRoots());
 
     try {
       List<Artifact> classpath = getCompileArtifacts();
@@ -305,7 +282,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     }
   }
 
-  protected File mkdirs(File dir) throws MojoExecutionException {
+  private File mkdirs(File dir) throws MojoExecutionException {
     if (!dir.isDirectory() && !dir.mkdirs()) {
       throw new MojoExecutionException("Could not create directory " + dir);
     }
