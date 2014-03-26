@@ -1,8 +1,15 @@
 package io.takari.maven.plugins.compile.javac;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 
-import javax.tools.*;
+import javax.tools.FileObject;
+import javax.tools.ForwardingFileObject;
+import javax.tools.ForwardingJavaFileManager;
+import javax.tools.ForwardingJavaFileObject;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardJavaFileManager;
 
 abstract class RecordingJavaFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> {
 

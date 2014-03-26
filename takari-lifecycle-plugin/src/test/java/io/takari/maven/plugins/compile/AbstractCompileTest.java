@@ -1,17 +1,12 @@
 package io.takari.maven.plugins.compile;
 
-import static org.apache.maven.plugin.testing.resources.TestResources.cp;
-import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
-
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Set;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
-import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.testing.resources.TestResources;
 import org.apache.maven.project.MavenProject;
@@ -87,33 +82,5 @@ public abstract class AbstractCompileTest {
     Xpp3Dom child = new Xpp3Dom(name);
     child.setValue(value);
     return child;
-  }
-
-  protected File procCompile(String projectName, Proc proc, Xpp3Dom... parameters)
-      throws Exception, IOException {
-    File processor = compile("compile/processor");
-    cp(processor, "src/main/resources/META-INF/services/javax.annotation.processing.Processor",
-        "target/classes/META-INF/services/javax.annotation.processing.Processor");
-
-    File basedir = resources.getBasedir(projectName);
-    MavenProject project = mojos.readMavenProject(basedir);
-    MavenSession session = mojos.newMavenSession(project);
-    MojoExecution execution = mojos.newMojoExecution();
-
-    addDependency(project, "processor", new File(processor, "target/classes"));
-
-    Xpp3Dom configuration = execution.getConfiguration();
-
-    if (proc != null) {
-      configuration.addChild(newParameter("proc", proc.name()));
-    }
-    if (parameters != null) {
-      for (Xpp3Dom parameter : parameters) {
-        configuration.addChild(parameter);
-      }
-    }
-
-    mojos.executeMojo(session, project, execution);
-    return basedir;
   }
 }

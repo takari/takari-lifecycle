@@ -2,6 +2,8 @@ package io.takari.maven.plugins.compile.javac;
 
 import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.Input;
+import io.takari.incrementalbuild.BuildContext.Output;
+import io.takari.incrementalbuild.BuildContext.Resource;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.maven.plugins.compile.AbstractCompileMojo;
 import io.takari.maven.plugins.compile.ProjectClasspathDigester;
@@ -11,6 +13,8 @@ import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerOutputP
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
@@ -80,14 +84,17 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
 
     executor.execute(cli); // this throws ExecuteException if process return code != 0
 
+    final Map<File, Output<File>> outputs = new HashMap<File, Output<File>>();
+    final Map<File, Input<File>> inputs = new HashMap<File, Input<File>>();
+
     for (File source : sources) {
-      context.registerInput(source).process();
+      inputs.put(source, context.registerInput(source).process());
     }
 
     CompilerOutput.process(output, new CompilerOutputProcessor() {
       @Override
       public void processOutput(File file) {
-        context.processOutput(file);
+        outputs.put(file, context.processOutput(file));
       }
 
       @Override
@@ -96,8 +103,16 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
         if (".".equals(path)) {
           // TODO
         } else {
-          Input<File> input = context.registerInput(new File(path)).process();
-          input.addMessage(line, column, message, kind, null);
+          File file = new File(path);
+          Resource<File> resource = inputs.get(file);
+          if (resource == null) {
+            resource = outputs.get(file);
+          }
+          if (resource != null) {
+            resource.addMessage(line, column, message, kind, null);
+          } else {
+            log.warn("Unexpected java resource {}", file);
+          }
         }
       }
     });

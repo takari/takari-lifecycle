@@ -6,7 +6,10 @@ package io.takari.maven.plugins.compile.javac;
  * this distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.RandomAccessFile;
 
 /**
  * Output stream that only modifies destination file if new file contents actually changed.

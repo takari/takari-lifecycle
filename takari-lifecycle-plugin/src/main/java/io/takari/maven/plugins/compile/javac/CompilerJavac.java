@@ -2,6 +2,8 @@ package io.takari.maven.plugins.compile.javac;
 
 import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.Input;
+import io.takari.incrementalbuild.BuildContext.Output;
+import io.takari.incrementalbuild.BuildContext.Resource;
 import io.takari.incrementalbuild.BuildContext.Severity;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.maven.plugins.compile.AbstractCompileMojo;
@@ -14,6 +16,8 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
@@ -136,12 +140,15 @@ public class CompilerJavac extends AbstractCompilerJavac {
     final Iterable<? extends JavaFileObject> javaSources =
         standardFileManager.getJavaFileObjectsFromFiles(sources);
 
+    final Map<File, Output<File>> outputs = new HashMap<File, Output<File>>();
+    final Map<File, Input<File>> inputs = new HashMap<File, Input<File>>();
+
     final Iterable<String> options = getCompilerOptions();
     final RecordingJavaFileManager recordingFileManager =
         new RecordingJavaFileManager(standardFileManager) {
           @Override
           protected void record(File outputFile) {
-            context.processOutput(outputFile);
+            outputs.put(outputFile, context.processOutput(outputFile));
           }
         };
 
@@ -156,7 +163,8 @@ public class CompilerJavac extends AbstractCompilerJavac {
     boolean success = task.call();
 
     for (JavaFileObject source : javaSources) {
-      context.registerInput(FileObjects.toFile(source)).process();
+      File sourceFile = FileObjects.toFile(source);
+      inputs.put(sourceFile, context.registerInput(sourceFile).process());
     }
 
     for (Diagnostic<? extends JavaFileObject> diagnostic : diagnosticCollector.getDiagnostics()) {
@@ -169,9 +177,17 @@ public class CompilerJavac extends AbstractCompilerJavac {
           success ? BuildContext.Severity.WARNING : toSeverity(diagnostic.getKind());
 
       if (source != null) {
-        Input<File> input = context.registerInput(FileObjects.toFile(source)).process();
-        input.addMessage((int) diagnostic.getLineNumber(), (int) diagnostic.getColumnNumber(),
-            diagnostic.getMessage(null), severity, null);
+        File file = FileObjects.toFile(source);
+        Resource<File> resource = inputs.get(file);
+        if (resource == null) {
+          resource = outputs.get(file);
+        }
+        if (resource != null) {
+          resource.addMessage((int) diagnostic.getLineNumber(), (int) diagnostic.getColumnNumber(),
+              diagnostic.getMessage(null), severity, null);
+        } else {
+          log.warn("Unexpected java {} resource {}", source.getKind(), file);
+        }
       } else {
         Input<File> input = context.registerInput(config.getPom()).process();
         // TODO execution line/column

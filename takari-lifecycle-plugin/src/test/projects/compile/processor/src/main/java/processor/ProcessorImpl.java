@@ -33,7 +33,8 @@ abstract class ProcessorImpl extends AbstractProcessor {
         try {
           w.append("package ").append(pkg.getQualifiedName()).append(";");
           w.newLine();
-          w.append("public class ").append(clsSimpleName).append(" { }");
+          w.append("public class ").append(clsSimpleName);
+          appendBody(w);
         } finally {
           w.close();
         }
@@ -44,4 +45,7 @@ abstract class ProcessorImpl extends AbstractProcessor {
     return false; // not "claimed" so multiple processors can be tested
   }
 
+  protected void appendBody(BufferedWriter w) throws IOException {
+    w.append(" { }");
+  }
 }

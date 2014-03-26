@@ -108,6 +108,10 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
   public boolean setSources(List<File> sources) {
     this.sources.addAll(sources);
 
+    // always register pom.xml. pom.xml is used to track message general compiler messages
+    // if not registered, it will cause these messages to be lost during no-change rebuild
+    context.registerInput(config.getPom());
+
     List<InputMetadata<File>> modifiedSources = new ArrayList<InputMetadata<File>>();
     List<InputMetadata<File>> inputs = new ArrayList<InputMetadata<File>>();
     for (InputMetadata<File> input : context.registerInputs(sources)) {
