@@ -143,7 +143,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     Assume.assumeTrue(isJava7 || !"javac".equals(compilerId));
 
     ErrorMessage expected = new ErrorMessage(compilerId);
-    expected.setSnippets("javac", "ERROR BrokenSource.java [2:29] cannot find symbol");
+    expected.setSnippets("javac", "ERROR BrokenSource.java [2:29]", "cannot find symbol");
 
     File processor = compileAnnotationProcessor();
     File basedir = resources.getBasedir("compile/proc");
