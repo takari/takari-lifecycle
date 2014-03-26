@@ -5,7 +5,9 @@ import io.takari.incrementalbuild.spi.DefaultBuildContext;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -102,6 +104,7 @@ public class ProjectClasspathDigester {
     StringBuilder msg = new StringBuilder();
     DirectoryScanner scanner = new DirectoryScanner();
     scanner.setBasedir(directory);
+    scanner.setIncludes(new String[] {"**/*.class"});
     scanner.scan();
     long maxLastModified = 0, fileCount = 0;
     for (String path : scanner.getIncludedFiles()) {
