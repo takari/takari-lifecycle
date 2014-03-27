@@ -2,47 +2,30 @@ package io.takari.maven.plugins.compile.jdt;
 
 import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
-import io.takari.incrementalbuild.spi.DefaultBuildContext;
-import io.takari.incrementalbuild.spi.DefaultInput;
-import io.takari.incrementalbuild.spi.DefaultInputMetadata;
-import io.takari.incrementalbuild.spi.DefaultOutput;
-import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
+import io.takari.incrementalbuild.spi.*;
 import io.takari.maven.plugins.compile.AbstractCompiler;
+import io.takari.maven.plugins.compile.jdt.classpath.*;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 import org.eclipse.jdt.core.compiler.CharOperation;
-import org.eclipse.jdt.internal.compiler.ClassFile;
-import org.eclipse.jdt.internal.compiler.CompilationResult;
+import org.eclipse.jdt.internal.compiler.*;
 import org.eclipse.jdt.internal.compiler.Compiler;
-import org.eclipse.jdt.internal.compiler.DefaultErrorHandlingPolicies;
-import org.eclipse.jdt.internal.compiler.ICompilerRequestor;
-import org.eclipse.jdt.internal.compiler.IErrorHandlingPolicy;
-import org.eclipse.jdt.internal.compiler.IProblemFactory;
 import org.eclipse.jdt.internal.compiler.batch.CompilationUnit;
-import org.eclipse.jdt.internal.compiler.batch.FileSystem.Classpath;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
-import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
-import org.eclipse.jdt.internal.compiler.env.INameEnvironment;
-import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
+import org.eclipse.jdt.internal.compiler.env.*;
 import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.eclipse.jdt.internal.compiler.util.SuffixConstants;
 import org.eclipse.jdt.internal.core.builder.ProblemFactory;
+
+import com.google.common.base.Stopwatch;
 
 public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor {
 
@@ -64,7 +47,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
    */
   private static final String TYPE_NOTYPE = ".";
 
-  final List<FileSystem.Classpath> classpath = new ArrayList<FileSystem.Classpath>();
+  private Classpath dependencypath;
 
   /**
    * Set of ICompilationUnit to be compiled.
@@ -95,9 +78,9 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     compilerOptions.performMethodsFullRecovery = false;
     compilerOptions.performStatementsRecovery = false;
     compilerOptions.verbose = isVerbose();
+    compilerOptions.suppressWarnings = true;
     IProblemFactory problemFactory = ProblemFactory.getProblemFactory(Locale.getDefault());
-    INameEnvironment namingEnvironment =
-        new FileSystem(classpath.toArray(new FileSystem.Classpath[classpath.size()]));
+    Classpath namingEnvironment = createClasspath();
     Compiler compiler =
         new Compiler(namingEnvironment, errorHandlingPolicy, compilerOptions, this, problemFactory);
     compiler.options.produceReferenceInfo = true;
@@ -114,7 +97,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
           compileQueue.toArray(new ICompilationUnit[compileQueue.size()]);
       compileQueue.clear();
       compiler.compile(sourceFiles);
-      namingEnvironment.cleanup();
+      namingEnvironment.reset();
     }
 
     HashMap<String, byte[]> index = new HashMap<String, byte[]>();
@@ -122,12 +105,12 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     for (DefaultInputMetadata<File> input : context.getRegisteredInputs()) {
       for (String type : input.getRequiredCapabilities(CAPABILITY_TYPE)) {
         if (!index.containsKey(type)) {
-          index.put(type, digest(namingEnvironment, type));
+          index.put(type, digest(dependencypath, type));
         }
       }
       for (String pkg : input.getRequiredCapabilities(CAPABILITY_PACKAGE)) {
         if (!packageIndex.containsKey(pkg)) {
-          packageIndex.put(pkg, isPackage(namingEnvironment, pkg));
+          packageIndex.put(pkg, isPackage(dependencypath, pkg));
         }
       }
     }
@@ -140,7 +123,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     NameEnvironmentAnswer answer =
         namingEnvironment.findType(CharOperation.splitOn('.', type.toCharArray()));
     if (answer != null && answer.isBinaryType()) {
-      return digester.digest(answer.getBinaryType());
+      // return digester.digest(answer.getBinaryType());
     }
     return null;
   }
@@ -188,59 +171,61 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         false);
   }
 
-  private static class FileSystem extends org.eclipse.jdt.internal.compiler.batch.FileSystem {
-    protected FileSystem(Classpath[] paths) {
-      super(paths, null);
-    }
-
-    @Override
-    public void cleanup() {
-      // TODO need to reset classpath entry that corresponds to the project output directory
-      for (Classpath cpe : classpaths) {
-        if (new File(cpe.getPath()).isDirectory()) {
-          cpe.reset();
-        }
-      }
-    }
-  }
-
-  @Override
-  public boolean setClasspath(List<Artifact> dependencies) throws IOException {
+  private Classpath createClasspath() throws IOException {
+    final List<ClasspathEntry> classpath = new ArrayList<ClasspathEntry>();
+    final List<SourcepathDirectory> localpath = new ArrayList<SourcepathDirectory>();
 
     // XXX detect change!
     classpath.addAll(JavaInstallation.getDefault().getClasspath());
 
+    String encoding = getSourceEncoding() != null ? getSourceEncoding().name() : null;
     for (String sourceRoot : getSourceRoots()) {
       // TODO why do I need this here? unit test or take out
       // XXX includes/excludes => access rules
-      Classpath element = FileSystem.getClasspath(sourceRoot, null, true, null, null);
-      if (element != null) {
-        classpath.add(element);
-      }
+      SourcepathDirectory element = new SourcepathDirectory(new File(sourceRoot), true, encoding);
+      classpath.add(element);
+      localpath.add(element);
     }
 
-    classpath.add(FileSystem.getClasspath(getOutputDirectory().getAbsolutePath(), null, false,
-        null, null));
+    SourcepathDirectory output = new SourcepathDirectory(getOutputDirectory(), false, null);
+    classpath.add(output);
+    localpath.add(output);
+
+    classpath.addAll(dependencypath.getEntries());
+
+    return new Classpath(classpath, localpath);
+  }
+
+  @Override
+  public boolean setClasspath(List<Artifact> dependencies) throws IOException {
+    final List<ClasspathEntry> dependencypath = new ArrayList<ClasspathEntry>();
 
     for (Artifact dependency : dependencies) {
-      String path = dependency.getFile().getAbsolutePath();
-      Classpath element = FileSystem.getClasspath(path, null, false, null, null);
-      if (element != null) {
-        classpath.add(element);
+      File file = dependency.getFile();
+      ClasspathEntry entry = null;
+      if (file.isDirectory()) {
+        entry = new ClasspathDirectory(file, false, null);
+      } else if (file.isFile()) {
+        entry = new ClasspathJar(file, null);
+      }
+      if (entry != null) {
+        dependencypath.add(entry);
       }
     }
 
-    // XXX only look in dependencies!
-    INameEnvironment namingEnvironment =
-        new FileSystem(classpath.toArray(new FileSystem.Classpath[classpath.size()]));
+    Stopwatch stopwatch = new Stopwatch().start();
+    long typecount = 0, packagecount = 0;
+
+    this.dependencypath = new Classpath(dependencypath, null);
 
     @SuppressWarnings("unchecked")
     HashMap<String, byte[]> index =
         context.registerInput(getPom()).getValue(KEY_TYPEINDEX, HashMap.class);
     if (index != null) {
       for (Map.Entry<String, byte[]> entry : index.entrySet()) {
+        typecount++;
         String type = entry.getKey();
-        byte[] hash = digest(namingEnvironment, type);
+        byte[] hash = digest(this.dependencypath, type);
         if (!Arrays.equals(entry.getValue(), hash)) {
           for (DefaultInputMetadata<File> metadata : context.getDependentInputs(CAPABILITY_TYPE,
               type)) {
@@ -255,8 +240,9 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         context.registerInput(getPom()).getValue(KEY_PACKAGEINDEX, HashMap.class);
     if (packageIndex != null) {
       for (Map.Entry<String, Boolean> entry : packageIndex.entrySet()) {
+        packagecount++;
         String pkg = entry.getKey();
-        boolean isPackage = isPackage(namingEnvironment, pkg);
+        boolean isPackage = isPackage(this.dependencypath, pkg);
         if (isPackage != entry.getValue()) {
           for (DefaultInputMetadata<File> metadata : context.getDependentInputs(CAPABILITY_PACKAGE,
               pkg)) {
@@ -265,6 +251,9 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         }
       }
     }
+
+    log.debug("Verified {} types and {} packages in {} ms", typecount, packagecount,
+        stopwatch.elapsed(TimeUnit.MILLISECONDS));
 
     return !compileQueue.isEmpty();
   }

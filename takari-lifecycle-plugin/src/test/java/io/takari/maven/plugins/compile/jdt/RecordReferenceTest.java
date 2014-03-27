@@ -1,26 +1,15 @@
 package io.takari.maven.plugins.compile.jdt;
 
+import io.takari.maven.plugins.compile.jdt.classpath.*;
+
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.io.IOException;
+import java.util.*;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
-import org.eclipse.jdt.internal.compiler.CompilationResult;
+import org.eclipse.jdt.internal.compiler.*;
 import org.eclipse.jdt.internal.compiler.Compiler;
-import org.eclipse.jdt.internal.compiler.DefaultErrorHandlingPolicies;
-import org.eclipse.jdt.internal.compiler.ICompilerRequestor;
-import org.eclipse.jdt.internal.compiler.IErrorHandlingPolicy;
-import org.eclipse.jdt.internal.compiler.IProblemFactory;
 import org.eclipse.jdt.internal.compiler.batch.CompilationUnit;
-import org.eclipse.jdt.internal.compiler.batch.FileSystem;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
 import org.eclipse.jdt.internal.compiler.env.INameEnvironment;
 import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
@@ -161,7 +150,7 @@ public class RecordReferenceTest {
     );
   }
 
-  private void assertReference(String source, String... expectedReferences) {
+  private void assertReference(String source, String... expectedReferences) throws IOException {
     IErrorHandlingPolicy errorHandlingPolicy = DefaultErrorHandlingPolicies.exitAfterAllProblems();
     Map<String, String> args = new HashMap<String, String>();
     // XXX figure out how to reuse source/target check from jdt
@@ -220,10 +209,10 @@ public class RecordReferenceTest {
     return sb.toString();
   }
 
-  private static INameEnvironment getClasspath() {
-    final List<FileSystem.Classpath> classpath = new ArrayList<FileSystem.Classpath>();
+  private static INameEnvironment getClasspath() throws IOException {
+    final List<ClasspathEntry> classpath = new ArrayList<ClasspathEntry>();
     classpath.addAll(JavaInstallation.getDefault().getClasspath());
-    return new FileSystem(classpath.toArray(new FileSystem.Classpath[classpath.size()]), null) {};
+    return new Classpath(classpath, null);
   }
 
 }

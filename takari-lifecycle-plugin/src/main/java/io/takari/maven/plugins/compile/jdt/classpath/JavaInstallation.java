@@ -1,17 +1,15 @@
-package io.takari.maven.plugins.compile.jdt;
+package io.takari.maven.plugins.compile.jdt.classpath;
 
-import java.io.File;
-import java.io.FilenameFilter;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.jdt.internal.compiler.batch.FileSystem;
-import org.eclipse.jdt.internal.compiler.batch.FileSystem.Classpath;
 import org.eclipse.jdt.internal.compiler.util.Util;
 
 // mostly copy&paste from tycho
 public class JavaInstallation {
   private static final FilenameFilter POTENTIAL_ZIP_FILTER = new FilenameFilter() {
+    @Override
     public boolean accept(File dir, String name) {
       return Util.isPotentialZipArchive(name);
     }
@@ -27,10 +25,10 @@ public class JavaInstallation {
    * Returns default classpath associated with this java installation. The classpath includes
    * bootstrap, extendion and endorsed entries.
    */
-  public List<Classpath> getClasspath() {
+  public List<ClasspathEntry> getClasspath() throws IOException {
     // See org.eclipse.jdt.internal.compiler.batch.Main.setPaths
 
-    List<Classpath> classpath = new ArrayList<Classpath>();
+    List<ClasspathEntry> classpath = new ArrayList<ClasspathEntry>();
 
     // boot classpath
     File directoryToCheck;
@@ -54,12 +52,16 @@ public class JavaInstallation {
     return System.getProperty("java.vendor").startsWith("Apple");
   }
 
-  private void scanForArchives(List<Classpath> classPathList, File dir) {
+  private void scanForArchives(List<ClasspathEntry> classPathList, File dir) {
     if (dir.isDirectory()) {
       File[] zipFiles = dir.listFiles(POTENTIAL_ZIP_FILTER);
       if (zipFiles != null) {
         for (File zipFile : zipFiles) {
-          classPathList.add(FileSystem.getClasspath(zipFile.getAbsolutePath(), null, null));
+          try {
+            classPathList.add(new ClasspathJar(zipFile, null));
+          } catch (IOException e) {
+            // not a usable entry
+          }
         }
       }
     }
