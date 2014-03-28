@@ -34,7 +34,7 @@ public class ClasspathTest {
   public void testCaseInsensitiveLookup() {
     // affects windows and osx, linux users should not apply
     File sourceRoot = new File("src/test/projects/compile/basic/src/main/java");
-    ClasspathEntry cpe = new ClasspathDirectory(sourceRoot, true, null);
+    ClasspathEntry cpe = new ClasspathDirectory(sourceRoot);
     Assert.assertNull(cpe.findType("basic", "basic.class"));
   }
 }

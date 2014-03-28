@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.eclipse.jdt.internal.compiler.batch.CompilationUnit;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
@@ -15,18 +14,10 @@ import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 public class ClasspathDirectory implements ClasspathEntry {
 
   private final File directory;
-  private final boolean sourcepath;
-  private final String sourceEncoding;
 
   private final Set<String> packageNames;
 
   public ClasspathDirectory(File directory) {
-    this(directory, false, null);
-  }
-
-  public ClasspathDirectory(File directory, boolean sourcepath, String sourceEncoding) {
-    this.sourcepath = sourcepath;
-    this.sourceEncoding = sourceEncoding;
     try {
       directory = directory.getCanonicalFile();
     } catch (IOException e) {
@@ -67,42 +58,24 @@ public class ClasspathDirectory implements ClasspathEntry {
     return packageNames;
   }
 
-  private String toSourceFileName(String binaryFileName) {
-    return binaryFileName.substring(0, binaryFileName.length() - ".class".length()) + ".java";
-  }
-
   @Override
   public NameEnvironmentAnswer findType(String packageName, String binaryFileName) {
     if (!packageNames.contains(packageName)) {
       return null;
     }
-    if (sourcepath) {
-      String qualifiedFileName = packageName + "/" + toSourceFileName(binaryFileName);
-      try {
-        File sourceFile = new File(directory, qualifiedFileName).getCanonicalFile();
-        if (sourceFile.isFile() && matchQualifiedName(sourceFile, qualifiedFileName)) {
-          CompilationUnit unit =
-              new CompilationUnit(null, sourceFile.getAbsolutePath(), sourceEncoding);
-          return new NameEnvironmentAnswer(unit, null);
+    try {
+      String qualifiedFileName = packageName + "/" + binaryFileName;
+      File classFile = new File(directory, qualifiedFileName).getCanonicalFile();
+      if (classFile.isFile() && matchQualifiedName(classFile, qualifiedFileName)) {
+        ClassFileReader reader = ClassFileReader.read(classFile, false);
+        if (reader != null) {
+          return new NameEnvironmentAnswer(reader, null);
         }
-      } catch (IOException e) {
-        // treat as if source file is missing
       }
-    } else {
-      try {
-        String qualifiedFileName = packageName + "/" + binaryFileName;
-        File classFile = new File(directory, qualifiedFileName).getCanonicalFile();
-        if (classFile.isFile() && matchQualifiedName(classFile, qualifiedFileName)) {
-          ClassFileReader reader = ClassFileReader.read(classFile, false);
-          if (reader != null) {
-            return new NameEnvironmentAnswer(reader, null);
-          }
-        }
-      } catch (ClassFormatException e) {
-        // treat as if class file is missing
-      } catch (IOException e) {
-        // treat as if class file is missing
-      }
+    } catch (ClassFormatException e) {
+      // treat as if class file is missing
+    } catch (IOException e) {
+      // treat as if class file is missing
     }
     return null;
   }

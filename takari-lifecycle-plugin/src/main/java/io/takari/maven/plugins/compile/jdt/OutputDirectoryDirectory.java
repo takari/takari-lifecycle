@@ -12,17 +12,13 @@ import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 class OutputDirectoryClasspathEntry implements ClasspathEntry, MutableClasspathEntry {
 
   private final File directory;
-  private final boolean sourcepath;
-  private final String sourceEncoding;
 
   private ClasspathDirectory delegate;
 
-  public OutputDirectoryClasspathEntry(File directory, boolean sourcepath, String sourceEncoding) {
+  public OutputDirectoryClasspathEntry(File directory) {
     this.directory = directory;
-    this.sourcepath = sourcepath;
-    this.sourceEncoding = sourceEncoding;
 
-    this.delegate = new ClasspathDirectory(directory, sourcepath, sourceEncoding);
+    this.delegate = new ClasspathDirectory(directory);
   }
 
   @Override
@@ -37,11 +33,11 @@ class OutputDirectoryClasspathEntry implements ClasspathEntry, MutableClasspathE
 
   @Override
   public void reset() {
-    this.delegate = new ClasspathDirectory(directory, sourcepath, sourceEncoding);
+    this.delegate = new ClasspathDirectory(directory);
   }
 
   @Override
   public String toString() {
-    return "Classpath for source directory " + directory;
+    return "Classpath for output directory " + directory;
   }
 }

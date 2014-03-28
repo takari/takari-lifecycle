@@ -213,8 +213,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     entries.add(queueEntry);
     mutableentries.add(queueEntry);
 
-    OutputDirectoryClasspathEntry output =
-        new OutputDirectoryClasspathEntry(getOutputDirectory(), false, null);
+    OutputDirectoryClasspathEntry output = new OutputDirectoryClasspathEntry(getOutputDirectory());
     entries.add(output);
     mutableentries.add(output);
 
