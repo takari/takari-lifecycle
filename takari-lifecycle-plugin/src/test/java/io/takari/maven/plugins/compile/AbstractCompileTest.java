@@ -55,7 +55,7 @@ public abstract class AbstractCompileTest {
     return Arrays.<Object[]>asList( //
         new Object[] {"javac"} //
         , new Object[] {"forked-javac"} //
-        , new Object[] {"jdt"} //
+        // , new Object[] {"jdt"} //
         );
   }
 

@@ -32,8 +32,10 @@ import org.eclipse.jdt.internal.compiler.env.INameEnvironment;
 import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
 import org.eclipse.jdt.internal.core.builder.ProblemFactory;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore("requires jdt.core with jar signature removed")
 public class RecordReferenceTest {
 
   @Test
