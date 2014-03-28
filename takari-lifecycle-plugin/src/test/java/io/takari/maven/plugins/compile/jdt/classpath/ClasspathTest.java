@@ -1,6 +1,7 @@
 package io.takari.maven.plugins.compile.jdt.classpath;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,7 +14,17 @@ public class ClasspathTest {
   @Test
   public void testEmptyJarPackage() throws Exception {
     final List<ClasspathEntry> entries = new ArrayList<ClasspathEntry>();
-    entries.addAll(JavaInstallation.getDefault().getClasspath());
+    for (File file : JavaInstallation.getDefault().getClasspath()) {
+      if (file.isFile()) {
+        try {
+          entries.add(new ClasspathJar(file));
+        } catch (IOException e) {
+          // ignore
+        }
+      } else if (file.isDirectory()) {
+        entries.add(new ClasspathDirectory(file));
+      }
+    }
     Classpath classpath = new Classpath(entries, null);
     Assert.assertTrue(classpath.isPackage(CharOperation.splitOn('.', "org".toCharArray()),
         "xml".toCharArray()));

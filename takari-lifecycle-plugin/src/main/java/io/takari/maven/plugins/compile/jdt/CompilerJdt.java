@@ -61,8 +61,11 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
   private final ClassfileDigester digester = new ClassfileDigester();
 
-  public CompilerJdt(DefaultBuildContext<?> context) {
+  private final ClasspathEntryCache classpathCache;
+
+  public CompilerJdt(DefaultBuildContext<?> context, ClasspathEntryCache classpathCache) {
     super(context);
+    this.classpathCache = classpathCache;
   }
 
   @Override
@@ -123,7 +126,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     NameEnvironmentAnswer answer =
         namingEnvironment.findType(CharOperation.splitOn('.', type.toCharArray()));
     if (answer != null && answer.isBinaryType()) {
-      // return digester.digest(answer.getBinaryType());
+      return digester.digest(answer.getBinaryType());
     }
     return null;
   }
@@ -176,7 +179,12 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     final List<SourcepathDirectory> localpath = new ArrayList<SourcepathDirectory>();
 
     // XXX detect change!
-    classpath.addAll(JavaInstallation.getDefault().getClasspath());
+    for (File file : JavaInstallation.getDefault().getClasspath()) {
+      ClasspathEntry entry = classpathCache.get(file);
+      if (entry != null) {
+        classpath.add(entry);
+      }
+    }
 
     String encoding = getSourceEncoding() != null ? getSourceEncoding().name() : null;
     for (String sourceRoot : getSourceRoots()) {
@@ -201,13 +209,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     final List<ClasspathEntry> dependencypath = new ArrayList<ClasspathEntry>();
 
     for (Artifact dependency : dependencies) {
-      File file = dependency.getFile();
-      ClasspathEntry entry = null;
-      if (file.isDirectory()) {
-        entry = new ClasspathDirectory(file, false, null);
-      } else if (file.isFile()) {
-        entry = new ClasspathJar(file, null);
-      }
+      ClasspathEntry entry = classpathCache.get(dependency.getFile());
       if (entry != null) {
         dependencypath.add(entry);
       }

@@ -8,7 +8,6 @@ import java.util.zip.ZipFile;
 
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
-import org.eclipse.jdt.internal.compiler.env.AccessRuleSet;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 
 public class ClasspathJar implements ClasspathEntry {
@@ -17,7 +16,7 @@ public class ClasspathJar implements ClasspathEntry {
   private final ZipFile zipFile;
   private final Set<String> packageNames;
 
-  public ClasspathJar(File file, AccessRuleSet accessRuleSet) throws IOException {
+  public ClasspathJar(File file) throws IOException {
     this.file = file;
     this.zipFile = new ZipFile(this.file);
     this.packageNames = Collections.unmodifiableSet(initializePackageCache(zipFile));

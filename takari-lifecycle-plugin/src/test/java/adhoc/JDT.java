@@ -2,6 +2,7 @@ package adhoc;
 
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
+import io.takari.maven.plugins.compile.jdt.ClasspathEntryCache;
 import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 
 import java.io.*;
@@ -9,7 +10,9 @@ import java.util.*;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
+import org.apache.maven.model.Build;
 import org.apache.maven.plugin.testing.stubs.DefaultArtifactHandlerStub;
+import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.DirectoryScanner;
 
 import com.google.common.base.Charsets;
@@ -39,7 +42,14 @@ public class JDT {
 
     File basedir = new File("/Users/ifedorenko/dev/sandbox/butc-maven/core/sfdc");
 
-    CompilerJdt compiler = new CompilerJdt(context);
+    MavenProject project = new MavenProject();
+    Build build = new Build();
+    build.setOutputDirectory("output");
+    build.setTestOutputDirectory("test-output");
+    project.setBuild(build);
+    ClasspathEntryCache cache = new ClasspathEntryCache(project);
+
+    CompilerJdt compiler = new CompilerJdt(context, cache);
     compiler.setOutputDirectory(new File(basedir, "target/classes"));
     compiler.setSource("1.6");
     compiler.setTarget("1.6");

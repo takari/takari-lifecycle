@@ -17,6 +17,10 @@ public class ClasspathDirectory implements ClasspathEntry {
 
   private final Set<String> packageNames;
 
+  public ClasspathDirectory(File directory) {
+    this(directory, false, null);
+  }
+
   public ClasspathDirectory(File directory, boolean sourcepath, String sourceEncoding) {
     this.sourcepath = sourcepath;
     this.sourceEncoding = sourceEncoding;

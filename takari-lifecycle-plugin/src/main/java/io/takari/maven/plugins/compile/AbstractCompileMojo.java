@@ -3,8 +3,8 @@ package io.takari.maven.plugins.compile;
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
-import io.takari.maven.plugins.compile.javac.CompilerJavacLauncher;
-import io.takari.maven.plugins.compile.javac.ProjectClasspathDigester;
+import io.takari.maven.plugins.compile.javac.*;
+import io.takari.maven.plugins.compile.jdt.ClasspathEntryCache;
 import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 
 import java.io.File;
@@ -59,7 +59,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
    * The compiler id of the compiler to use, one of {@code javac}, {@code forked-javac} or
    * {@code jdt}.
    */
-  @Parameter(property = "maven.compiler.compilerId", defaultValue = "javac")
+  @Parameter(property = "maven.compiler.compilerId", defaultValue = "jdt")
   private String compilerId;
 
   /**
@@ -139,12 +139,16 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Incremental(configuration = Configuration.ignore)
   private Artifact artifact;
 
-  // TODO this needs to be injected in AbstractCompilerJavac
   @Component
   private DefaultBuildContext<?> context;
 
+  // TODO this needs to be injected in AbstractCompilerJavac
   @Component
   private ProjectClasspathDigester digester;
+
+  // TODO this needs to be injected in CompilerJdt
+  @Component
+  private ClasspathEntryCache classpathCache;
 
   public Charset getSourceEncoding() {
     return encoding == null ? null : Charset.forName(encoding);
@@ -208,7 +212,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
     final AbstractCompiler compiler;
     if ("javac".equals(compilerId)) {
-      compiler = new CompilerJdt(context);
+      compiler = new CompilerJavac(context, digester);
     } else if ("forked-javac".equals(compilerId)) {
       CompilerJavacLauncher javacLauncher = new CompilerJavacLauncher(context, digester);
       javacLauncher.setBasedir(basedir);
@@ -218,7 +222,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       javacLauncher.setMaxmem(maxmem);
       compiler = javacLauncher;
     } else if ("jdt".equals(compilerId)) {
-      compiler = new CompilerJdt(context);
+      compiler = new CompilerJdt(context, classpathCache);
     } else {
       throw new MojoExecutionException("Unsupported compilerId" + compilerId);
     }

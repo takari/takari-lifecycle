@@ -210,9 +210,19 @@ public class RecordReferenceTest {
   }
 
   private static INameEnvironment getClasspath() throws IOException {
-    final List<ClasspathEntry> classpath = new ArrayList<ClasspathEntry>();
-    classpath.addAll(JavaInstallation.getDefault().getClasspath());
-    return new Classpath(classpath, null);
+    final List<ClasspathEntry> entries = new ArrayList<ClasspathEntry>();
+    for (File file : JavaInstallation.getDefault().getClasspath()) {
+      if (file.isFile()) {
+        try {
+          entries.add(new ClasspathJar(file));
+        } catch (IOException e) {
+          // ignore
+        }
+      } else if (file.isDirectory()) {
+        entries.add(new ClasspathDirectory(file));
+      }
+    }
+    return new Classpath(entries, null);
   }
 
 }
