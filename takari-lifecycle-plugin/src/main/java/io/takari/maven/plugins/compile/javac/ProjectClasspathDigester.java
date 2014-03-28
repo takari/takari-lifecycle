@@ -48,8 +48,6 @@ public class ProjectClasspathDigester {
    * Detects if classpath dependencies changed compared to the previous build or not.
    */
   public boolean digestDependencies(List<Artifact> dependencies) throws IOException {
-    log.info("Analyzing {} classpath dependencies", dependencies.size());
-
     Stopwatch stopwatch = new Stopwatch().start();
 
     boolean changed = false;
