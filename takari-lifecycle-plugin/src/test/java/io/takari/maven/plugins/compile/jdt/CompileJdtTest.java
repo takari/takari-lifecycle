@@ -1,8 +1,6 @@
 package io.takari.maven.plugins.compile.jdt;
 
-import static org.apache.maven.plugin.testing.resources.TestResources.cp;
-import static org.apache.maven.plugin.testing.resources.TestResources.rm;
-import static org.apache.maven.plugin.testing.resources.TestResources.touch;
+import static org.apache.maven.plugin.testing.resources.TestResources.*;
 import io.takari.maven.plugins.compile.CompileRule;
 
 import java.io.File;
@@ -11,9 +9,7 @@ import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.testing.resources.TestResources;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
 public class CompileJdtTest {
 
@@ -248,5 +244,21 @@ public class CompileJdtTest {
     mojos.assertBuildOutputs(basedir, "target/classes/multifile/ClassB.class");
     mojos.assertDeletedOutputs(basedir, "target/classes/multifile/ClassA.class",
         "target/classes/multifile/ClassB$Nested.class");
+  }
+
+  @Test
+  public void testSecondaryType() throws Exception {
+    File basedir = mojos.compile(resources.getBasedir("compile-jdt/secondary-type"));
+    File classes = new File(basedir, "target/classes");
+    mojos.assertBuildOutputs(classes //
+        , "secondary/Primary.class" //
+        , "secondary/Secondary.class" //
+        , "secondary/SecondarySubclass.class" //
+        , "secondary/SecondarySubclassClient.class");
+
+    touch(basedir, "src/main/java/secondary/SecondarySubclassClient.java");
+    mojos.compile(basedir);
+    mojos.assertBuildOutputs(classes //
+        , "secondary/SecondarySubclassClient.class");
   }
 }
