@@ -15,11 +15,9 @@ import org.apache.maven.plugin.testing.resources.TestResources;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
-@Ignore("requires jdt.core with jar signature removed")
 public class CompileJdtClasspathTest {
 
   @Rule
