@@ -5,8 +5,15 @@ import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 import io.takari.maven.plugins.compile.jdt.ClasspathEntryCache;
 import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;

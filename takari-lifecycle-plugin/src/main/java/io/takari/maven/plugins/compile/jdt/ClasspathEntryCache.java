@@ -1,6 +1,8 @@
 package io.takari.maven.plugins.compile.jdt;
 
-import io.takari.maven.plugins.compile.jdt.classpath.*;
+import io.takari.maven.plugins.compile.jdt.classpath.ClasspathDirectory;
+import io.takari.maven.plugins.compile.jdt.classpath.ClasspathEntry;
+import io.takari.maven.plugins.compile.jdt.classpath.ClasspathJar;
 
 import java.io.File;
 import java.io.IOException;

@@ -1,6 +1,8 @@
 package io.takari.maven.plugins.compile.jdt.classpath;
 
-import java.io.*;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 

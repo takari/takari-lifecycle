@@ -1,14 +1,31 @@
 package io.takari.maven.plugins.compile.jdt;
 
-import io.takari.maven.plugins.compile.jdt.classpath.*;
+import io.takari.maven.plugins.compile.jdt.classpath.Classpath;
+import io.takari.maven.plugins.compile.jdt.classpath.ClasspathDirectory;
+import io.takari.maven.plugins.compile.jdt.classpath.ClasspathEntry;
+import io.takari.maven.plugins.compile.jdt.classpath.ClasspathJar;
+import io.takari.maven.plugins.compile.jdt.classpath.JavaInstallation;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
-import org.eclipse.jdt.internal.compiler.*;
+import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.Compiler;
+import org.eclipse.jdt.internal.compiler.DefaultErrorHandlingPolicies;
+import org.eclipse.jdt.internal.compiler.ICompilerRequestor;
+import org.eclipse.jdt.internal.compiler.IErrorHandlingPolicy;
+import org.eclipse.jdt.internal.compiler.IProblemFactory;
 import org.eclipse.jdt.internal.compiler.batch.CompilationUnit;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
 import org.eclipse.jdt.internal.compiler.env.INameEnvironment;

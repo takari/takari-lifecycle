@@ -1,6 +1,8 @@
 package io.takari.maven.plugins.compile.jdt;
 
-import static org.apache.maven.plugin.testing.resources.TestResources.*;
+import static org.apache.maven.plugin.testing.resources.TestResources.cp;
+import static org.apache.maven.plugin.testing.resources.TestResources.rm;
+import static org.apache.maven.plugin.testing.resources.TestResources.touch;
 import io.takari.maven.plugins.compile.CompileRule;
 
 import java.io.File;
@@ -9,7 +11,9 @@ import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.testing.resources.TestResources;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
 
 public class CompileJdtTest {
 
