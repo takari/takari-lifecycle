@@ -66,7 +66,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
    * The compiler id of the compiler to use, one of {@code javac}, {@code forked-javac} or
    * {@code jdt}.
    */
-  @Parameter(property = "maven.compiler.compilerId", defaultValue = "jdt")
+  @Parameter(property = "maven.compiler.compilerId", defaultValue = "javac")
   private String compilerId;
 
   /**
