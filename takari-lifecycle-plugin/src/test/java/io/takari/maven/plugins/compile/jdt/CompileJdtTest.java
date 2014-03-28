@@ -263,4 +263,21 @@ public class CompileJdtTest {
     mojos.assertBuildOutputs(classes //
         , "secondary/SecondarySubclassClient.class");
   }
+
+  @Test
+  public void testRemovedTypes() throws Exception {
+    File basedir = mojos.compile(resources.getBasedir("compile-jdt/removed-types"));
+    File classes = new File(basedir, "target/classes");
+    mojos.assertBuildOutputs(classes //
+        , "removed/A.class" //
+        , "removed/B.class" //
+        , "removed/Dummy.class");
+
+    rm(basedir, "src/main/java/removed/A.java");
+    rm(basedir, "src/main/java/removed/B.java");
+    mojos.compile(basedir);
+    mojos.assertDeletedOutputs(classes //
+        , "removed/A.class" //
+        , "removed/B.class");
+  }
 }
