@@ -110,8 +110,7 @@ public class CompileJdtTest {
         "src/main/java/supertype/SuperClass.java");
     mojos.compile(basedir);
     mojos.assertBuildOutputs(basedir, "target/classes/supertype/SubClass.class",
-        "target/classes/supertype/SuperClass.class",
-        "target/classes/supertype/SuperInterface.class");
+        "target/classes/supertype/SuperClass.class");
   }
 
   @Test
@@ -136,8 +135,7 @@ public class CompileJdtTest {
         "src/main/java/supertype/SuperClass.java");
     mojos.compile(basedir);
     mojos.assertBuildOutputs(basedir, "target/classes/supertype/SubClass.class",
-        "target/classes/supertype/SuperClass.class",
-        "target/classes/supertype/SuperInterface.class");
+        "target/classes/supertype/SuperClass.class");
   }
 
   @Test
@@ -146,7 +144,7 @@ public class CompileJdtTest {
     mojos.assertBuildOutputs(basedir, "target/classes/circular/ClassA.class",
         "target/classes/circular/ClassB.class");
 
-    touch(basedir, "src/main/java/circular/ClassA.java");
+    cp(basedir, "src/main/java/circular/ClassA.java-changed", "src/main/java/circular/ClassA.java");
     mojos.compile(basedir);
     mojos.assertBuildOutputs(basedir, "target/classes/circular/ClassA.class",
         "target/classes/circular/ClassB.class");

@@ -81,9 +81,9 @@ public class ClasspathDirectory implements ClasspathEntry {
       try {
         File sourceFile = new File(directory, qualifiedFileName).getCanonicalFile();
         if (sourceFile.isFile() && matchQualifiedName(sourceFile, qualifiedFileName)) {
-          CompilationUnit compilationUnit =
+          CompilationUnit unit =
               new CompilationUnit(null, sourceFile.getAbsolutePath(), sourceEncoding);
-          return new NameEnvironmentAnswer(compilationUnit, null);
+          return new NameEnvironmentAnswer(unit, null);
         }
       } catch (IOException e) {
         // treat as if source file is missing

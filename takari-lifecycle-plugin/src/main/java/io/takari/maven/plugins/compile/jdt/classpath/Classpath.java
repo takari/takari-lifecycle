@@ -15,13 +15,13 @@ public class Classpath implements INameEnvironment, SuffixConstants {
 
   private final List<ClasspathEntry> entries;
 
-  private final List<SourcepathDirectory> localentries;
+  private final List<MutableClasspathEntry> mutableentries;
 
   private Map<String, Collection<ClasspathEntry>> packages;
 
-  public Classpath(List<ClasspathEntry> entries, List<SourcepathDirectory> localentries) {
+  public Classpath(List<ClasspathEntry> entries, List<MutableClasspathEntry> localentries) {
     this.entries = entries;
-    this.localentries = localentries;
+    this.mutableentries = localentries;
     this.packages = newPackageIndex(entries);
   }
 
@@ -93,10 +93,10 @@ public class Classpath implements INameEnvironment, SuffixConstants {
   }
 
   public void reset() {
-    if (localentries == null) {
+    if (mutableentries == null) {
       return;
     }
-    for (SourcepathDirectory entry : localentries) {
+    for (MutableClasspathEntry entry : mutableentries) {
       entry.reset();
     }
     packages = newPackageIndex(entries);

@@ -1,11 +1,15 @@
-package io.takari.maven.plugins.compile.jdt.classpath;
+package io.takari.maven.plugins.compile.jdt;
+
+import io.takari.maven.plugins.compile.jdt.classpath.ClasspathDirectory;
+import io.takari.maven.plugins.compile.jdt.classpath.ClasspathEntry;
+import io.takari.maven.plugins.compile.jdt.classpath.MutableClasspathEntry;
 
 import java.io.File;
 import java.util.Collection;
 
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 
-public class SourcepathDirectory implements ClasspathEntry {
+class OutputDirectoryClasspathEntry implements ClasspathEntry, MutableClasspathEntry {
 
   private final File directory;
   private final boolean sourcepath;
@@ -13,7 +17,7 @@ public class SourcepathDirectory implements ClasspathEntry {
 
   private ClasspathDirectory delegate;
 
-  public SourcepathDirectory(File directory, boolean sourcepath, String sourceEncoding) {
+  public OutputDirectoryClasspathEntry(File directory, boolean sourcepath, String sourceEncoding) {
     this.directory = directory;
     this.sourcepath = sourcepath;
     this.sourceEncoding = sourceEncoding;
@@ -31,6 +35,7 @@ public class SourcepathDirectory implements ClasspathEntry {
     return delegate.findType(packageName, binaryFileName);
   }
 
+  @Override
   public void reset() {
     this.delegate = new ClasspathDirectory(directory, sourcepath, sourceEncoding);
   }

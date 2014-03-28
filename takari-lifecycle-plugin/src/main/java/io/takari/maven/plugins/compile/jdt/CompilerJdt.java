@@ -11,7 +11,7 @@ import io.takari.maven.plugins.compile.AbstractCompiler;
 import io.takari.maven.plugins.compile.jdt.classpath.Classpath;
 import io.takari.maven.plugins.compile.jdt.classpath.ClasspathEntry;
 import io.takari.maven.plugins.compile.jdt.classpath.JavaInstallation;
-import io.takari.maven.plugins.compile.jdt.classpath.SourcepathDirectory;
+import io.takari.maven.plugins.compile.jdt.classpath.MutableClasspathEntry;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -198,33 +198,29 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   }
 
   private Classpath createClasspath() throws IOException {
-    final List<ClasspathEntry> classpath = new ArrayList<ClasspathEntry>();
-    final List<SourcepathDirectory> localpath = new ArrayList<SourcepathDirectory>();
+    final List<ClasspathEntry> entries = new ArrayList<ClasspathEntry>();
+    final List<MutableClasspathEntry> mutableentries = new ArrayList<MutableClasspathEntry>();
 
     // XXX detect change!
     for (File file : JavaInstallation.getDefault().getClasspath()) {
       ClasspathEntry entry = classpathCache.get(file);
       if (entry != null) {
-        classpath.add(entry);
+        entries.add(entry);
       }
     }
 
-    String encoding = getSourceEncoding() != null ? getSourceEncoding().name() : null;
-    for (String sourceRoot : getSourceRoots()) {
-      // TODO why do I need this here? unit test or take out
-      // XXX includes/excludes => access rules
-      SourcepathDirectory element = new SourcepathDirectory(new File(sourceRoot), true, encoding);
-      classpath.add(element);
-      localpath.add(element);
-    }
+    CompileQueueClasspathEntry queueEntry = new CompileQueueClasspathEntry(compileQueue);
+    entries.add(queueEntry);
+    mutableentries.add(queueEntry);
 
-    SourcepathDirectory output = new SourcepathDirectory(getOutputDirectory(), false, null);
-    classpath.add(output);
-    localpath.add(output);
+    OutputDirectoryClasspathEntry output =
+        new OutputDirectoryClasspathEntry(getOutputDirectory(), false, null);
+    entries.add(output);
+    mutableentries.add(output);
 
-    classpath.addAll(dependencypath.getEntries());
+    entries.addAll(dependencypath.getEntries());
 
-    return new Classpath(classpath, localpath);
+    return new Classpath(entries, mutableentries);
   }
 
   @Override

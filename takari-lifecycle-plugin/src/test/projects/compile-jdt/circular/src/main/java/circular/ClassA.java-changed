@@ -1,0 +1,13 @@
+package circular;
+
+public class ClassA
+{
+    public void method()
+    {
+    }
+
+    public ClassB getB()
+    {
+        return new ClassB();
+    }
+}
