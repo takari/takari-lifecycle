@@ -60,12 +60,12 @@ public class JarTest {
         fingerprint0, fingerprint1);
 
     // Make sure our maven properties file is written correctly
-    ZipFile zip = new ZipFile(jar1);
+    ZipFile zip0 = new ZipFile(jar1);
     try {
       String pomProperties = "META-INF/io.takari.lifecycle.its/test/pom.properties";
-      ZipEntry entry = zip.getEntry(pomProperties);
+      ZipEntry entry = zip0.getEntry(pomProperties);
       if (entry != null) {
-        InputStream is = zip.getInputStream(entry);
+        InputStream is = zip0.getInputStream(entry);
         Properties p = new Properties();
         p.load(is);
         assertEquals("io.takari.lifecycle.its", p.getProperty("groupId"));
@@ -75,13 +75,14 @@ public class JarTest {
         fail("We expected the standard pom.properties: " + pomProperties);
       }
     } finally {
-      zip.close();
+      zip0.close();
     }
 
+    ZipFile zip1 = new ZipFile(jar1);
     String manifest = "META-INF/MANIFEST.MF";
-    ZipEntry manifestEntry = zip.getEntry(manifest);
+    ZipEntry manifestEntry = zip1.getEntry(manifest);
     if (manifestEntry != null) {
-      InputStream is = zip.getInputStream(manifestEntry);
+      InputStream is = zip1.getInputStream(manifestEntry);
       Properties p = new Properties();
       p.load(is);
       assertNotNull(p.getProperty("Built-By"));
