@@ -7,11 +7,15 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+
+import com.google.common.io.Closer;
 
 @Mojo(name = "jar", defaultPhase = LifecyclePhase.PACKAGE)
 public class Jar extends TakariLifecycleMojo {
@@ -88,30 +92,39 @@ public class Jar extends TakariLifecycleMojo {
     if (!mavenPropertiesFile.getParentFile().exists()) {
       mavenPropertiesFile.getParentFile().mkdirs();
     }
-    OutputStream os = new FileOutputStream(mavenPropertiesFile);
-    p.store(os);
-    os.close();
+    Closer closer = Closer.create();
+    try {
+      OutputStream os = closer.register(new FileOutputStream(mavenPropertiesFile));
+      p.store(os);
+    } finally {
+      closer.close();
+    }
   }
 
   private void createManifestFile() throws IOException {
-    JarProperties p = new JarProperties();
-    p.setProperty("Manifest-Version", "1.0");
-    p.setProperty("Archiver-Version", "Provisio Archiver");
-    p.setProperty("Created-By", "Takari Inc.");
-    p.setProperty("Built-By", System.getProperty("user.name"));
-    p.setProperty("Build-Jdk", System.getProperty("java.version"));
-    p.setProperty("Specification-Title", project.getArtifactId());
-    p.setProperty("Specification-Version", project.getVersion());
-    p.setProperty("Implementation-Title", project.getArtifactId());
-    p.setProperty("Implementation-Version", project.getVersion());
-    p.setProperty("Implementation-Vendor-Id", project.getGroupId());
+    Manifest mf = new Manifest();
+    Attributes main = mf.getMainAttributes();
+    main.putValue("Manifest-Version", "1.0");
+    main.putValue("Archiver-Version", "Provisio Archiver");
+    main.putValue("Created-By", "Takari Inc.");
+    main.putValue("Built-By", System.getProperty("user.name"));
+    main.putValue("Build-Jdk", System.getProperty("java.version"));
+    main.putValue("Specification-Title", project.getArtifactId());
+    main.putValue("Specification-Version", project.getVersion());
+    main.putValue("Implementation-Title", project.getArtifactId());
+    main.putValue("Implementation-Version", project.getVersion());
+    main.putValue("Implementation-Vendor-Id", project.getGroupId());
     File mavenPropertiesFile = new File(classesDirectory, "META-INF/MANIFEST.MF");
     if (!mavenPropertiesFile.getParentFile().exists()) {
       mavenPropertiesFile.getParentFile().mkdirs();
     }
-    OutputStream os = new FileOutputStream(mavenPropertiesFile);
-    p.store(os);
-    os.close();
+    Closer closer = Closer.create();
+    try {
+      OutputStream os = closer.register(new FileOutputStream(mavenPropertiesFile));
+      mf.write(os);
+    } finally {
+      closer.close();
+    }
   }
 
 }
