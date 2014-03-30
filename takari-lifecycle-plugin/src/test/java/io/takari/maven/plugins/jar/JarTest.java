@@ -1,6 +1,7 @@
 package io.takari.maven.plugins.jar;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import io.takari.hash.FingerprintSha1Streaming;
@@ -76,5 +77,24 @@ public class JarTest {
     } finally {
       zip.close();
     }
+
+    String manifest = "META-INF/MANIFEST.MF";
+    ZipEntry manifestEntry = zip.getEntry(manifest);
+    if (manifestEntry != null) {
+      InputStream is = zip.getInputStream(manifestEntry);
+      Properties p = new Properties();
+      p.load(is);
+      assertNotNull(p.getProperty("Built-By"));
+      assertNotNull(p.getProperty("Build-Jdk"));
+      assertEquals("1.0", p.getProperty("Manifest-Version"));
+      assertEquals("test", p.getProperty("Implementation-Title"));
+      assertEquals("1.0", p.getProperty("Implementation-Version"));
+      assertEquals("io.takari.lifecycle.its", p.getProperty("Implementation-Vendor-Id"));
+    } else {
+      fail("We expected the standard META-INF/MANIFEST.MF");
+    }
+
   }
+
+
 }

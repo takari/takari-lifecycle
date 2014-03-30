@@ -49,6 +49,7 @@ public class Jar extends TakariLifecycleMojo {
     File jar = new File(outputDirectory, String.format("%s.jar", finalName));
     try {
       createPomPropertiesFile();
+      createManifestFile();
       archiver.archive(jar, classesDirectory);
       project.getArtifact().setFile(jar);
     } catch (IOException e) {
@@ -90,4 +91,25 @@ public class Jar extends TakariLifecycleMojo {
     OutputStream os = new FileOutputStream(mavenPropertiesFile);
     p.store(os);
   }
+
+  private void createManifestFile() throws IOException {
+    JarProperties p = new JarProperties();
+    p.setProperty("Manifest-Version", "1.0");
+    p.setProperty("Archiver-Version", "Provisio Archiver");
+    p.setProperty("Created-By", "Takari Inc.");
+    p.setProperty("Built-By", System.getProperty("user.name"));
+    p.setProperty("Build-Jdk", System.getProperty("java.version"));
+    p.setProperty("Specification-Title", project.getArtifactId());
+    p.setProperty("Specification-Version", project.getVersion());
+    p.setProperty("Implementation-Title", project.getArtifactId());
+    p.setProperty("Implementation-Version", project.getVersion());
+    p.setProperty("Implementation-Vendor-Id", project.getGroupId());
+    File mavenPropertiesFile = new File(classesDirectory, "META-INF/MANIFEST.MF");
+    if (!mavenPropertiesFile.getParentFile().exists()) {
+      mavenPropertiesFile.getParentFile().mkdirs();
+    }
+    OutputStream os = new FileOutputStream(mavenPropertiesFile);
+    p.store(os);
+  }
+
 }
