@@ -90,6 +90,7 @@ public class Jar extends TakariLifecycleMojo {
     }
     OutputStream os = new FileOutputStream(mavenPropertiesFile);
     p.store(os);
+    os.close();
   }
 
   private void createManifestFile() throws IOException {
@@ -110,6 +111,7 @@ public class Jar extends TakariLifecycleMojo {
     }
     OutputStream os = new FileOutputStream(mavenPropertiesFile);
     p.store(os);
+    os.close();
   }
 
 }
