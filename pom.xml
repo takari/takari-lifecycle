@@ -11,7 +11,7 @@
 
   <groupId>io.takari.maven.plugins</groupId>
   <artifactId>takari-lifecycle</artifactId>
-  <version>1.0.4-SNAPSHOT</version>
+  <version>1.0.4</version>
   <packaging>pom</packaging>
 
   <prerequisites>
