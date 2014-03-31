@@ -21,7 +21,7 @@
   <properties>
     <mavenVersion>3.2.1</mavenVersion>
     <aetherVersion>0.9.0.M2</aetherVersion>
-    <build.avoidance.version>0.2.0-SNAPSHOT</build.avoidance.version>
+    <build.avoidance.version>0.2.0</build.avoidance.version>
   </properties>
 
   <scm>
