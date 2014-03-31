@@ -56,6 +56,17 @@
     </component>        
     
     <!-- Maven JAR lifecycle with only the JAR plugin changed -->
+    <component>
+      <role>org.apache.maven.artifact.handler.ArtifactHandler</role>
+      <role-hint>takari-jar-00</role-hint>
+      <implementation>org.apache.maven.artifact.handler.DefaultArtifactHandler</implementation>
+      <configuration>
+        <type>takari-jar-00</type>
+        <extension>jar</extension>
+        <language>java</language>
+        <addedToClasspath>true</addedToClasspath>
+      </configuration>
+    </component>    
     <component>                                                                                                                                                    
       <role>org.apache.maven.lifecycle.mapping.LifecycleMapping</role>                                                                                             
       <role-hint>takari-jar-00</role-hint>                                                                                                                                   
@@ -96,6 +107,17 @@
     </component>          
     
     <!-- Maven JAR lifecycle with only the JAR and compiler plugin changed -->
+    <component>
+      <role>org.apache.maven.artifact.handler.ArtifactHandler</role>
+      <role-hint>takari-jar-01</role-hint>
+      <implementation>org.apache.maven.artifact.handler.DefaultArtifactHandler</implementation>
+      <configuration>
+        <type>takari-jar-01</type>
+        <extension>jar</extension>
+        <language>java</language>
+        <addedToClasspath>true</addedToClasspath>
+      </configuration>
+    </component>        
     <component>                                                                                                                                                    
       <role>org.apache.maven.lifecycle.mapping.LifecycleMapping</role>                                                                                             
       <role-hint>takari-jar-01</role-hint>                                                                                                                                   
