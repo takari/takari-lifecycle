@@ -62,30 +62,5 @@
         </plugin>
       </plugins>
     </pluginManagement>
-    <plugins>
-      <plugin>
-        <groupId>org.sonatype.plugins</groupId>
-        <artifactId>nexus-staging-maven-plugin</artifactId>
-        <extensions>true</extensions>
-        <inherited>true</inherited>
-        <configuration>
-          <serverId>nexus</serverId>
-          <nexusUrl>https://nexus.soma.salesforce.com/nexus/</nexusUrl>
-          <stagingProfileId>7a74670f41f92</stagingProfileId>
-        </configuration>
-      </plugin>    
-    </plugins>
-  </build>
-  
-  <distributionManagement>
-    <repository>
-      <id>nexus</id>
-      <url>https://nexus.soma.salesforce.com/nexus/service/local/staging/deploy/maven2/</url>
-    </repository>
-    <snapshotRepository>
-      <id>nexus</id>
-      <url>https://nexus.soma.salesforce.com/nexus/content/repositories/snapshots/</url>
-    </snapshotRepository>
-  </distributionManagement>
-  
+  </build>  
 </project>
