@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Properties;
+import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -30,7 +31,7 @@ public class JarTest {
   public final IncrementalBuildRule mojos = new IncrementalBuildRule();
 
   @Test
-  public void resources() throws Exception {
+  public void jarCreation() throws Exception {
     //
     // Generate some resources to JAR
     //
@@ -79,23 +80,20 @@ public class JarTest {
     }
 
     ZipFile zip1 = new ZipFile(jar1);
-    String manifest = "META-INF/MANIFEST.MF";
-    ZipEntry manifestEntry = zip1.getEntry(manifest);
+    String manifestEntryName = "META-INF/MANIFEST.MF";
+    ZipEntry manifestEntry = zip1.getEntry(manifestEntryName);
     if (manifestEntry != null) {
       InputStream is = zip1.getInputStream(manifestEntry);
-      Properties p = new Properties();
-      p.load(is);
-      assertNotNull(p.getProperty("Built-By"));
-      assertNotNull(p.getProperty("Build-Jdk"));
-      assertEquals("1.0", p.getProperty("Manifest-Version"));
-      assertEquals("test", p.getProperty("Implementation-Title"));
-      assertEquals("1.0", p.getProperty("Implementation-Version"));
-      assertEquals("io.takari.lifecycle.its", p.getProperty("Implementation-Vendor-Id"));
+      Manifest p = new Manifest(is);
+      assertNotNull(p.getMainAttributes().getValue("Built-By"));
+      assertNotNull(p.getMainAttributes().getValue("Build-Jdk"));
+      assertEquals("1.0", p.getMainAttributes().getValue("Manifest-Version"));
+      assertEquals("test", p.getMainAttributes().getValue("Implementation-Title"));
+      assertEquals("1.0", p.getMainAttributes().getValue("Implementation-Version"));
+      assertEquals("io.takari.lifecycle.its",
+          p.getMainAttributes().getValue("Implementation-Vendor-Id"));
     } else {
       fail("We expected the standard META-INF/MANIFEST.MF");
     }
-
   }
-
-
 }
