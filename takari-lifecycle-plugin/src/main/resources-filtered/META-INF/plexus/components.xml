@@ -201,7 +201,7 @@
                 org.apache.maven.plugins:maven-surefire-plugin:2.12.4:test
               </test>
               <package>
-                io.takari.maven.plugins:takari-lifecycle-plugin:${project.version},
+                io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:jar,
                 org.apache.maven.plugins:maven-plugin-plugin:3.2:addPluginArtifactMetadata
               </package>
               <install>
