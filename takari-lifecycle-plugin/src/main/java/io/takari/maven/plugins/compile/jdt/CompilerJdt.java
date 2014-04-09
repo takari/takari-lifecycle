@@ -16,9 +16,11 @@ import io.takari.maven.plugins.compile.jdt.classpath.MutableClasspathEntry;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -44,8 +46,6 @@ import org.eclipse.jdt.internal.compiler.batch.CompilationUnit;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
-import org.eclipse.jdt.internal.compiler.env.INameEnvironment;
-import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.eclipse.jdt.internal.compiler.util.SuffixConstants;
@@ -53,27 +53,32 @@ import org.eclipse.jdt.internal.core.builder.ProblemFactory;
 
 import com.google.common.base.Stopwatch;
 
+/**
+ * @TODO test classpath order changes triggers rebuild of affected sources (same type name,
+ *       different classes)
+ * @TODO figure out why JDT needs to worry about duplicate types (maybe related to classpath order
+ *       above)
+ * @TODO test affected sources are recompiled after source gets compile error
+ * @TODO test nested types because addDependentsOf has some special handling
+ */
 @Named(CompilerJdt.ID)
 public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor {
   public static final String ID = "jdt";
 
-  private static final String CAPABILITY_TYPE = "jdt.type";
-
-  private static final String CAPABILITY_PACKAGE = "jdt.package";
-
-  private static final String KEY_TYPE = "jdt.type";
-
-  private static final String KEY_HASH = "jdt.hash";
-
-  private static final String KEY_TYPEINDEX = "jdt.typeIndex";
-
-  private static final String KEY_PACKAGEINDEX = "jdt.packageIndex";
+  /**
+   * Output .class file structure hash
+   */
+  private static final String ATTR_CLASS_DIGEST = "jdt.class.digest";
 
   /**
-   * {@code KEY_TYPE} value used for local and anonymous types and also class files with
-   * corrupted/unsupported format.
+   * Classpath digest, map of accessible types to their .class structure hashes.
    */
-  private static final String TYPE_NOTYPE = ".";
+  private static final String ATTR_CLASSPATH_DIGEST = "jdt.classpath.digest";
+
+  /**
+   * Java source {@link ReferenceCollection}
+   */
+  private static final String ATTR_REFERENCES = "jdt.references";
 
   private Classpath dependencypath;
 
@@ -87,14 +92,24 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
    */
   private final Set<File> processedSources = new LinkedHashSet<File>();
 
+  private final Set<String> rootNames = new LinkedHashSet<String>();
+
+  private final Set<String> qualifiedNames = new LinkedHashSet<String>();
+
+  private final Set<String> simpleNames = new LinkedHashSet<String>();
+
   private final ClassfileDigester digester = new ClassfileDigester();
 
   private final ClasspathEntryCache classpathCache;
 
+  private final ClasspathDigester classpathDigester;
+
   @Inject
-  public CompilerJdt(DefaultBuildContext<?> context, ClasspathEntryCache classpathCache) {
+  public CompilerJdt(DefaultBuildContext<?> context, ClasspathEntryCache classpathCache,
+      ClasspathDigester classpathDigester) {
     super(context);
     this.classpathCache = classpathCache;
+    this.classpathDigester = classpathDigester;
   }
 
   @Override
@@ -130,38 +145,8 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       compileQueue.clear();
       compiler.compile(sourceFiles);
       namingEnvironment.reset();
+      enqueueAffectedSources();
     }
-
-    HashMap<String, byte[]> index = new HashMap<String, byte[]>();
-    HashMap<String, Boolean> packageIndex = new HashMap<String, Boolean>();
-    for (DefaultInputMetadata<File> input : context.getRegisteredInputs()) {
-      for (String type : input.getRequiredCapabilities(CAPABILITY_TYPE)) {
-        if (!index.containsKey(type)) {
-          index.put(type, digest(dependencypath, type));
-        }
-      }
-      for (String pkg : input.getRequiredCapabilities(CAPABILITY_PACKAGE)) {
-        if (!packageIndex.containsKey(pkg)) {
-          packageIndex.put(pkg, isPackage(dependencypath, pkg));
-        }
-      }
-    }
-    DefaultInput<File> pom = context.registerInput(getPom()).process();
-    pom.setValue(KEY_TYPEINDEX, index);
-    pom.setValue(KEY_PACKAGEINDEX, packageIndex);
-  }
-
-  private byte[] digest(INameEnvironment namingEnvironment, String type) {
-    NameEnvironmentAnswer answer =
-        namingEnvironment.findType(CharOperation.splitOn('.', type.toCharArray()));
-    if (answer != null && answer.isBinaryType()) {
-      return digester.digest(answer.getBinaryType());
-    }
-    return null;
-  }
-
-  private boolean isPackage(INameEnvironment namingEnvironment, String pkg) {
-    return namingEnvironment.isPackage(CharOperation.splitOn('.', pkg.toCharArray()), null);
   }
 
   @Override
@@ -170,24 +155,47 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
     // remove stale outputs and rebuild all sources that reference them
     for (DefaultOutputMetadata output : context.deleteStaleOutputs(false)) {
-      enqueueAffectedInputs(output);
+      addDependentsOf(getJavaType(output));
     }
+
+    enqueueAffectedSources();
 
     return !compileQueue.isEmpty();
   }
 
-  private void enqueueAffectedInputs(DefaultOutputMetadata output) {
-    for (String type : output.getCapabilities(CAPABILITY_TYPE)) {
-      for (InputMetadata<File> input : context.getDependentInputs(CAPABILITY_TYPE, type)) {
-        enqueue(input.getResource());
-      }
+  private String getJavaType(DefaultOutputMetadata output) {
+    String outputDirectory = getOutputDirectory().getAbsolutePath();
+    String path = output.getResource().getAbsolutePath();
+    if (!path.startsWith(outputDirectory) || !path.endsWith(".class")) {
+      return null;
     }
+    path = path.substring(outputDirectory.length(), path.length() - ".class".length());
+    if (path.startsWith(File.separator)) {
+      path = path.substring(1);
+    }
+    return path.replace(File.separatorChar, '.');
   }
 
   private void enqueue(Iterable<DefaultInput<File>> sources) {
     for (DefaultInput<File> source : sources) {
       enqueue(source.getResource());
     }
+  }
+
+  private void enqueueAffectedSources() throws IOException {
+    for (InputMetadata<File> input : context.getRegisteredInputs(File.class)) {
+      final File resource = input.getResource();
+      if (!processedSources.contains(resource) && resource.canRead()) {
+        ReferenceCollection references = input.getValue(ATTR_REFERENCES, ReferenceCollection.class);
+        if (references != null && references.includes(qualifiedNames, simpleNames, rootNames)) {
+          enqueue(resource);
+        }
+      }
+    }
+
+    qualifiedNames.clear();
+    simpleNames.clear();
+    rootNames.clear();
   }
 
   private void enqueue(File sourceFile) {
@@ -231,57 +239,74 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   @Override
   public boolean setClasspath(List<Artifact> dependencies) throws IOException {
     final List<ClasspathEntry> dependencypath = new ArrayList<ClasspathEntry>();
+    final List<File> files = new ArrayList<File>();
 
     for (Artifact dependency : dependencies) {
-      ClasspathEntry entry = classpathCache.get(dependency.getFile());
+      File file = dependency.getFile();
+      ClasspathEntry entry = classpathCache.get(file);
       if (entry != null) {
         dependencypath.add(entry);
+        files.add(file);
       }
     }
+
+    this.dependencypath = new Classpath(dependencypath, null);
 
     Stopwatch stopwatch = new Stopwatch().start();
     long typecount = 0, packagecount = 0;
 
-    this.dependencypath = new Classpath(dependencypath, null);
+    HashMap<String, byte[]> digest = classpathDigester.digestDependencies(files);
 
+    DefaultInputMetadata<File> metadata = context.registerInput(getPom());
     @SuppressWarnings("unchecked")
-    HashMap<String, byte[]> index =
-        context.registerInput(getPom()).getValue(KEY_TYPEINDEX, HashMap.class);
-    if (index != null) {
-      for (Map.Entry<String, byte[]> entry : index.entrySet()) {
-        typecount++;
+    Map<String, byte[]> oldDigest =
+        (Map<String, byte[]>) metadata.getValue(ATTR_CLASSPATH_DIGEST, Serializable.class);
+
+    boolean changed = false;
+
+    if (oldDigest != null) {
+      Set<String> changedPackages = new HashSet<String>();
+
+      for (Map.Entry<String, byte[]> entry : digest.entrySet()) {
         String type = entry.getKey();
-        byte[] hash = digest(this.dependencypath, type);
-        if (!Arrays.equals(entry.getValue(), hash)) {
-          for (DefaultInputMetadata<File> metadata : context.getDependentInputs(CAPABILITY_TYPE,
-              type)) {
-            enqueue(metadata.getResource());
-          }
+        byte[] hash = entry.getValue();
+        if (!Arrays.equals(hash, oldDigest.get(type))) {
+          changed = true;
+          addDependentsOf(type);
         }
+        changedPackages.add(getPackage(type));
       }
+
+      for (String oldType : oldDigest.keySet()) {
+        if (!digest.containsKey(oldType)) {
+          changed = true;
+          addDependentsOf(oldType);
+        }
+        changedPackages.remove(getPackage(oldType));
+      }
+
+      for (String changedPackage : changedPackages) {
+        addDependentsOf(changedPackage);
+      }
+    } else {
+      changed = true;
     }
 
-    @SuppressWarnings("unchecked")
-    HashMap<String, Boolean> packageIndex =
-        context.registerInput(getPom()).getValue(KEY_PACKAGEINDEX, HashMap.class);
-    if (packageIndex != null) {
-      for (Map.Entry<String, Boolean> entry : packageIndex.entrySet()) {
-        packagecount++;
-        String pkg = entry.getKey();
-        boolean isPackage = isPackage(this.dependencypath, pkg);
-        if (isPackage != entry.getValue()) {
-          for (DefaultInputMetadata<File> metadata : context.getDependentInputs(CAPABILITY_PACKAGE,
-              pkg)) {
-            enqueue(metadata.getResource());
-          }
-        }
-      }
+    if (changed) {
+      metadata.process().setValue(ATTR_CLASSPATH_DIGEST, digest);
     }
 
     log.debug("Verified {} types and {} packages in {} ms", typecount, packagecount,
         stopwatch.elapsed(TimeUnit.MILLISECONDS));
 
+    enqueueAffectedSources();
+
     return !compileQueue.isEmpty();
+  }
+
+  private String getPackage(String type) {
+    int idx = type.lastIndexOf('.');
+    return idx > 0 ? type.substring(0, idx) : null;
   }
 
   @Override
@@ -298,25 +323,16 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     // always register and process sources with build context
     DefaultInput<File> input = context.registerInput(sourceFile).process();
 
+    // track type references
+    input.setValue(ATTR_REFERENCES, new ReferenceCollection(result.rootReferences,
+        result.qualifiedReferences, result.simpleNameReferences));
+
     if (result.hasProblems()) {
       for (CategorizedProblem problem : result.getProblems()) {
         input.addMessage(problem.getSourceLineNumber(), ((DefaultProblem) problem).column, problem
             .getMessage(), problem.isError()
             ? BuildContext.Severity.ERROR
             : BuildContext.Severity.WARNING, null);
-      }
-    }
-
-    // track references
-    if (result.qualifiedReferences != null) {
-      for (char[][] reference : result.qualifiedReferences) {
-        input.addRequirement(CAPABILITY_TYPE, CharOperation.toString(reference));
-      }
-    }
-    if (result.packageReferences != null) {
-      for (char[][] reference : result.packageReferences) {
-        // TODO get rid of java.lang.* reference
-        input.addRequirement(CAPABILITY_PACKAGE, CharOperation.toString(reference));
       }
     }
 
@@ -337,6 +353,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         }
       }
     }
+    // XXX double check affected sources are recompiled when this source has errors
   }
 
   private void writeClassFile(DefaultInput<File> input, String relativeStringName,
@@ -345,13 +362,11 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     final File outputFile = new File(getOutputDirectory(), relativeStringName);
     final DefaultOutput output = input.associateOutput(outputFile);
 
-    String type = CharOperation.toString(classFile.getCompoundName());
-
-    boolean significantChange = digestClassFile(output, bytes, type);
+    boolean significantChange = digestClassFile(output, bytes);
 
     if (significantChange) {
-      // find all classes that reference this one and put them into work queue
-      enqueueAffectedInputs(output);
+      // find all sources that reference this type and put them into work queue
+      addDependentsOf(CharOperation.toString(classFile.getCompoundName()));
     }
 
     final BufferedOutputStream os = new BufferedOutputStream(output.newOutputStream());
@@ -363,24 +378,37 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     }
   }
 
-  private boolean digestClassFile(DefaultOutput output, byte[] definition, String type) {
+  private boolean digestClassFile(DefaultOutput output, byte[] definition) {
     boolean significantChange = true;
     try {
       ClassFileReader reader =
           new ClassFileReader(definition, output.getResource().getAbsolutePath().toCharArray());
       byte[] hash = digester.digest(reader);
       if (hash != null) {
-        output.setValue(KEY_TYPE, type);
-        output.addCapability(CAPABILITY_TYPE, type);
-        byte[] oldHash = (byte[]) output.setValue(KEY_HASH, hash);
+        byte[] oldHash = (byte[]) output.setValue(ATTR_CLASS_DIGEST, hash);
         significantChange = oldHash == null || !Arrays.equals(hash, oldHash);
-      } else {
-        output.setValue(KEY_TYPE, TYPE_NOTYPE);
       }
     } catch (ClassFormatException e) {
-      output.setValue(KEY_TYPE, TYPE_NOTYPE);
+      // ignore this class
     }
     return significantChange;
+  }
+
+  private void addDependentsOf(String typeOrPackage) {
+    if (typeOrPackage != null) {
+      // adopted from org.eclipse.jdt.internal.core.builder.IncrementalImageBuilder.addDependentsOf
+      // TODO deal with package-info
+      int idx = typeOrPackage.indexOf('.');
+      if (idx > 0) {
+        rootNames.add(typeOrPackage.substring(0, idx));
+        idx = typeOrPackage.lastIndexOf('.');
+        qualifiedNames.add(typeOrPackage.substring(0, idx));
+        simpleNames.add(typeOrPackage.substring(idx + 1));
+      } else {
+        rootNames.add(typeOrPackage);
+        simpleNames.add(typeOrPackage);
+      }
+    }
   }
 
   @Override

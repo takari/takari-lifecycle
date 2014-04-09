@@ -21,7 +21,7 @@
   <properties>
     <mavenVersion>3.2.1</mavenVersion>
     <aetherVersion>0.9.0.M2</aetherVersion>
-    <build.avoidance.version>0.3.0</build.avoidance.version>
+    <build.avoidance.version>0.4.0-SNAPSHOT</build.avoidance.version>
   </properties>
 
   <scm>
@@ -34,7 +34,6 @@
   <modules>
     <module>takari-lifecycle-plugin</module>
     <module>takari-lifecycle-plugin-its</module>
-    <module>org.eclipse.jdt.patches</module>
   </modules>
 
   <build>

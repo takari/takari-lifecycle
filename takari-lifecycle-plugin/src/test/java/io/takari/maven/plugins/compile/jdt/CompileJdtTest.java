@@ -59,6 +59,8 @@ public class CompileJdtTest {
     // no-change rebuild
     mojos.compile(basedir);
     mojos.assertBuildOutputs(basedir, new String[0]);
+    mojos.assertCarriedOverOutputs(basedir, "target/classes/basic/Basic1.class",
+        "target/classes/basic/Basic2.class");
 
     // one file changed
     cp(basedir, "src/main/java/basic/Basic1.java-changed", "src/main/java/basic/Basic1.java");
@@ -151,7 +153,7 @@ public class CompileJdtTest {
   }
 
   @Test
-  public void testRerence() throws Exception {
+  public void testReference() throws Exception {
     File basedir = mojos.compile(resources.getBasedir("compile-jdt/reference"));
     mojos.assertBuildOutputs(basedir, "target/classes/reference/Parameter.class",
         "target/classes/reference/Type.class");

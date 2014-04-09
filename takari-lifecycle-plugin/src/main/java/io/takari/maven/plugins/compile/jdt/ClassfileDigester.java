@@ -272,7 +272,7 @@ public class ClassfileDigester {
   }
 
   private void updateChar(char value) {
-    updateInt((int) value);
+    updateInt(value);
   }
 
   private void updateByte(byte value) {
