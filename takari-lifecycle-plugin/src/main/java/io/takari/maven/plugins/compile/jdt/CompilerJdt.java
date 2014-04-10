@@ -26,6 +26,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
@@ -50,7 +53,9 @@ import org.eclipse.jdt.internal.core.builder.ProblemFactory;
 
 import com.google.common.base.Stopwatch;
 
+@Named(CompilerJdt.ID)
 public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor {
+  public static final String ID = "jdt";
 
   private static final String CAPABILITY_TYPE = "jdt.type";
 
@@ -86,6 +91,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
   private final ClasspathEntryCache classpathCache;
 
+  @Inject
   public CompilerJdt(DefaultBuildContext<?> context, ClasspathEntryCache classpathCache) {
     super(context);
     this.classpathCache = classpathCache;

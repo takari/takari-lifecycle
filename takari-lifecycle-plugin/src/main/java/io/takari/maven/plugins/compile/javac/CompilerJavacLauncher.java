@@ -14,11 +14,17 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ShutdownHookProcessDestroyer;
 
+@Named(CompilerJavacLauncher.ID)
 public class CompilerJavacLauncher extends AbstractCompilerJavac {
+
+  public static final String ID = "forked-javac";
 
   private File jar;
 
@@ -30,6 +36,7 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
 
   private String maxmem;
 
+  @Inject
   public CompilerJavacLauncher(DefaultBuildContext<?> context, ProjectClasspathDigester digester) {
     super(context, digester);
   }

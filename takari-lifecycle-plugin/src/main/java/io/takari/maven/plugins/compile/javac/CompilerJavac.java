@@ -17,6 +17,8 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.inject.Inject;
+import javax.inject.Named;
 import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
 import javax.tools.DiagnosticCollector;
@@ -27,7 +29,10 @@ import javax.tools.ToolProvider;
 
 import org.apache.maven.plugin.MojoExecutionException;
 
+@Named(CompilerJavac.ID)
 public class CompilerJavac extends AbstractCompilerJavac {
+
+  public static final String ID = "javac";
 
   private static final boolean isJava7;
 
@@ -96,6 +101,7 @@ public class CompilerJavac extends AbstractCompilerJavac {
     }
   };
 
+  @Inject
   public CompilerJavac(DefaultBuildContext<?> context, ProjectClasspathDigester digester) {
     super(context, digester);
   }

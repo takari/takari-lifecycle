@@ -2,12 +2,7 @@ package io.takari.maven.plugins.compile;
 
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
-import io.takari.incrementalbuild.spi.DefaultBuildContext;
-import io.takari.maven.plugins.compile.javac.CompilerJavac;
 import io.takari.maven.plugins.compile.javac.CompilerJavacLauncher;
-import io.takari.maven.plugins.compile.javac.ProjectClasspathDigester;
-import io.takari.maven.plugins.compile.jdt.ClasspathEntryCache;
-import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,6 +10,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -147,15 +143,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   private Artifact artifact;
 
   @Component
-  private DefaultBuildContext<?> context;
-
-  // TODO this needs to be injected in AbstractCompilerJavac
-  @Component
-  private ProjectClasspathDigester digester;
-
-  // TODO this needs to be injected in CompilerJdt
-  @Component
-  private ClasspathEntryCache classpathCache;
+  private Map<String, AbstractCompiler> compilers;
 
   public Charset getSourceEncoding() {
     return encoding == null ? null : Charset.forName(encoding);
@@ -217,20 +205,8 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
     Stopwatch stopwatch = new Stopwatch().start();
 
-    final AbstractCompiler compiler;
-    if ("javac".equals(compilerId)) {
-      compiler = new CompilerJavac(context, digester);
-    } else if ("forked-javac".equals(compilerId)) {
-      CompilerJavacLauncher javacLauncher = new CompilerJavacLauncher(context, digester);
-      javacLauncher.setBasedir(basedir);
-      javacLauncher.setJar(pluginArtifact.getFile());
-      javacLauncher.setBuildDirectory(buildDirectory);
-      javacLauncher.setMeminitial(meminitial);
-      javacLauncher.setMaxmem(maxmem);
-      compiler = javacLauncher;
-    } else if ("jdt".equals(compilerId)) {
-      compiler = new CompilerJdt(context, classpathCache);
-    } else {
+    final AbstractCompiler compiler = compilers.get(compilerId);
+    if (compiler == null) {
       throw new MojoExecutionException("Unsupported compilerId" + compilerId);
     }
 
@@ -255,6 +231,14 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     compiler.setPom(pom);
     compiler.setSourceEncoding(getSourceEncoding());
     compiler.setSourceRoots(getSourceRoots());
+
+    if (compiler instanceof CompilerJavacLauncher) {
+      ((CompilerJavacLauncher) compiler).setBasedir(basedir);
+      ((CompilerJavacLauncher) compiler).setJar(pluginArtifact.getFile());
+      ((CompilerJavacLauncher) compiler).setBuildDirectory(buildDirectory);
+      ((CompilerJavacLauncher) compiler).setMeminitial(meminitial);
+      ((CompilerJavacLauncher) compiler).setMaxmem(maxmem);
+    }
 
     try {
       List<Artifact> classpath = getCompileArtifacts();
