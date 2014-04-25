@@ -31,7 +31,6 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 import org.eclipse.jdt.core.compiler.CharOperation;
@@ -237,16 +236,15 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   }
 
   @Override
-  public boolean setClasspath(List<Artifact> dependencies) throws IOException {
+  public boolean setClasspath(List<File> dependencies) throws IOException {
     final List<ClasspathEntry> dependencypath = new ArrayList<ClasspathEntry>();
     final List<File> files = new ArrayList<File>();
 
-    for (Artifact dependency : dependencies) {
-      File file = dependency.getFile();
-      ClasspathEntry entry = classpathCache.get(file);
+    for (File dependency : dependencies) {
+      ClasspathEntry entry = classpathCache.get(dependency);
       if (entry != null) {
         dependencypath.add(entry);
-        files.add(file);
+        files.add(dependency);
       }
     }
 

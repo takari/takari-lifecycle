@@ -9,7 +9,6 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -124,7 +123,7 @@ public abstract class AbstractCompiler {
     return sourceRoots;
   }
 
-  public abstract boolean setClasspath(List<Artifact> dependencies) throws IOException;
+  public abstract boolean setClasspath(List<File> dependencies) throws IOException;
 
   public abstract boolean setSources(List<File> sources) throws IOException;
 

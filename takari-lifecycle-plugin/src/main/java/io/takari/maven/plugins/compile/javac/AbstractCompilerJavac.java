@@ -16,8 +16,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.maven.artifact.Artifact;
-
 public abstract class AbstractCompilerJavac extends AbstractCompiler {
 
   private final ProjectClasspathDigester digester;
@@ -85,16 +83,15 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
   }
 
   @Override
-  public boolean setClasspath(List<Artifact> dependencies) throws IOException {
+  public boolean setClasspath(List<File> dependencies) throws IOException {
     StringBuilder cp = new StringBuilder();
     cp.append(getOutputDirectory().getAbsolutePath());
-    for (Artifact dependency : dependencies) {
-      File file = dependency.getFile();
-      if (file != null) {
+    for (File dependency : dependencies) {
+      if (dependency != null) {
         if (cp.length() > 0) {
           cp.append(File.pathSeparatorChar);
         }
-        cp.append(file.getAbsolutePath());
+        cp.append(dependency.getAbsolutePath());
       }
     }
     this.classpath = cp.toString();

@@ -14,7 +14,6 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.apache.maven.artifact.Artifact;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.execution.scope.MojoExecutionScoped;
 import org.apache.maven.project.MavenProject;
@@ -47,35 +46,33 @@ public class ProjectClasspathDigester {
   /**
    * Detects if classpath dependencies changed compared to the previous build or not.
    */
-  public boolean digestDependencies(List<Artifact> dependencies) throws IOException {
+  public boolean digestDependencies(List<File> dependencies) throws IOException {
     Stopwatch stopwatch = new Stopwatch().start();
 
     boolean changed = false;
 
     Map<File, ArtifactFile> previousArtifacts = getPreviousDependencies();
 
-    for (Artifact dependency : dependencies) {
-      File file = dependency.getFile();
-
-      ArtifactFile previousArtifact = previousArtifacts.get(file);
-      ArtifactFile artifact = CACHE.get(file);
+    for (File dependency : dependencies) {
+      ArtifactFile previousArtifact = previousArtifacts.get(dependency);
+      ArtifactFile artifact = CACHE.get(dependency);
       if (artifact == null) {
-        if (file.isFile()) {
-          artifact = newFileArtifact(file, previousArtifact);
-        } else if (file.isDirectory()) {
-          artifact = newDirectoryArtifact(file, previousArtifact);
+        if (dependency.isFile()) {
+          artifact = newFileArtifact(dependency, previousArtifact);
+        } else if (dependency.isDirectory()) {
+          artifact = newDirectoryArtifact(dependency, previousArtifact);
         } else {
           // happens with reactor dependencies with empty source folders
           continue;
         }
-        CACHE.put(file, artifact);
+        CACHE.put(dependency, artifact);
       }
 
       context.registerInput(new ArtifactFileHolder(artifact));
 
       if (hasChanged(artifact, previousArtifact)) {
         changed = true;
-        log.debug("New or changed classpath entry {}", file);
+        log.debug("New or changed classpath entry {}", dependency);
       }
     }
 
