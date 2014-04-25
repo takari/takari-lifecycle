@@ -28,8 +28,8 @@ public class CompileTest extends AbstractCompileTest {
 
   @Test
   public void testBasic_testCompile() throws Exception {
-    File basedir = resources.getBasedir("compile/basic");
-    File classes = new File(basedir, "target/test-classes");
+    File basedir = compile("compile/basic");
+    File testClasses = new File(basedir, "target/test-classes");
 
     MavenProject project = mojos.readMavenProject(basedir);
     MavenSession session = mojos.newMavenSession(project);
@@ -37,7 +37,7 @@ public class CompileTest extends AbstractCompileTest {
     execution.getConfiguration().addChild(newParameter("compilerId", compilerId));
     mojos.executeMojo(session, project, execution);
 
-    mojos.assertBuildOutputs(classes, "basic/BasicTest.class");
+    mojos.assertBuildOutputs(testClasses, "basic/BasicTest.class");
   }
 
   @Test

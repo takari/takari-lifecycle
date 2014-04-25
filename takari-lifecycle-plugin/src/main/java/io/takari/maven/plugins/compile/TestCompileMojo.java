@@ -4,6 +4,7 @@ import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -44,6 +45,12 @@ public class TestCompileMojo extends AbstractCompileMojo {
   private List<Artifact> compileArtifacts;
 
   /**
+   * Project main output directory, part of test classpath.
+   */
+  @Parameter(defaultValue = "${project.build.outputDirectory}", required = true, readonly = true)
+  private File mainOutputDirectory;
+
+  /**
    * The directory where compiled test classes go.
    */
   @Parameter(defaultValue = "${project.build.testOutputDirectory}", required = true, readonly = true)
@@ -59,7 +66,6 @@ public class TestCompileMojo extends AbstractCompileMojo {
    */
   @Parameter(defaultValue = "${project.build.directory}/generated-test-sources/test-annotations")
   private File generatedTestSourcesDirectory;
-
 
   @Override
   public Set<String> getSourceRoots() {
@@ -82,8 +88,16 @@ public class TestCompileMojo extends AbstractCompileMojo {
   }
 
   @Override
-  public List<Artifact> getCompileArtifacts() {
-    return compileArtifacts;
+  public List<File> getClasspath() {
+    List<File> classpath = new ArrayList<File>();
+    classpath.add(mainOutputDirectory);
+    for (Artifact artifact : compileArtifacts) {
+      File file = artifact.getFile();
+      if (file != null) {
+        classpath.add(file);
+      }
+    }
+    return classpath;
   }
 
   @Override

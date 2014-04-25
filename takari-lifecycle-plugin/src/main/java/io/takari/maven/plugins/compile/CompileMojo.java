@@ -4,6 +4,7 @@ import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -80,8 +81,15 @@ public class CompileMojo extends AbstractCompileMojo {
   }
 
   @Override
-  public List<Artifact> getCompileArtifacts() {
-    return compileArtifacts;
+  public List<File> getClasspath() {
+    List<File> classpath = new ArrayList<File>();
+    for (Artifact artifact : compileArtifacts) {
+      File file = artifact.getFile();
+      if (file != null) {
+        classpath.add(file);
+      }
+    }
+    return classpath;
   }
 
   @Override

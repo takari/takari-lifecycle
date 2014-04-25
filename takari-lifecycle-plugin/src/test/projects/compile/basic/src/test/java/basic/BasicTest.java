@@ -1,3 +1,5 @@
 package basic;
 
-public class BasicTest {}
+public class BasicTest {
+  private Basic subject = new Basic();
+}

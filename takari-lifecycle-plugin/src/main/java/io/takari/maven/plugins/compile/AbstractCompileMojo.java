@@ -196,7 +196,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
   protected abstract File getOutputDirectory();
 
-  protected abstract List<Artifact> getCompileArtifacts();
+  protected abstract List<File> getClasspath();
 
   protected abstract File getGeneratedSourcesDirectory();
 
@@ -241,11 +241,11 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     }
 
     try {
-      List<Artifact> classpath = getCompileArtifacts();
+      List<File> classpath = getClasspath();
       if (log.isDebugEnabled()) {
         StringBuilder msg = new StringBuilder();
-        for (Artifact artifact : classpath) {
-          msg.append("\n   ").append(artifact.getFile());
+        for (File element : classpath) {
+          msg.append("\n   ").append(element);
         }
         log.debug("Compile classpath: {} entries{}", classpath.size(), msg.toString());
       }
