@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public abstract class AbstractCompilerJavac extends AbstractCompiler {
@@ -72,6 +73,12 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
           processors.append(processor);
         }
         options.add(processors.toString());
+      }
+
+      if (getAnnotationProcessorOptions() != null) {
+        for (Map.Entry<String, String> option : getAnnotationProcessorOptions().entrySet()) {
+          options.add("-A" + option.getKey() + "=" + option.getValue());
+        }
       }
     }
 
