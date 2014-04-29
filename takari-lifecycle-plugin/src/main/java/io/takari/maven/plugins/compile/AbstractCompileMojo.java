@@ -115,6 +115,12 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   private String[] annotationProcessors;
 
   /**
+   * Annotation processors options
+   */
+  @Parameter
+  private Map<String, String> annotationProcessorOptions;
+
+  /**
    * Set to <code>true</code> to show messages about what the compiler is doing.
    */
   @Parameter(property = "maven.compiler.verbose", defaultValue = "false")
@@ -227,6 +233,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     compiler.setProc(proc);
     compiler.setGeneratedSourcesDirectory(getGeneratedSourcesDirectory());
     compiler.setAnnotationProcessors(annotationProcessors);
+    compiler.setAnnotationProcessorOptions(annotationProcessorOptions);
     compiler.setVerbose(verbose);
     compiler.setPom(pom);
     compiler.setSourceEncoding(getSourceEncoding());

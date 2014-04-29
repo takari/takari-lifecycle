@@ -184,4 +184,17 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     String message = messages.iterator().next();
     Assert.assertTrue(expected.isMatch(message));
   }
+
+  @Test
+  public void testProcessorOptions() throws Exception {
+    Assume.assumeTrue(isJava7 || !"javac".equals(compilerId));
+
+    Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
+    processors.addChild(newParameter("processor", "processor.ProcessorWithOptions"));
+
+    Xpp3Dom options = new Xpp3Dom("annotationProcessorOptions");
+    options.addChild(newParameter("optionA", "valueA"));
+    options.addChild(newParameter("optionB", "valueB"));
+    procCompile("compile/proc", Proc.proc, processors, options);
+  }
 }

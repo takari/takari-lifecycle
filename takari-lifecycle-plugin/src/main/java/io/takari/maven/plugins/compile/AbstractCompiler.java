@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.maven.plugin.MojoExecutionException;
@@ -38,6 +39,8 @@ public abstract class AbstractCompiler {
   private Charset sourceEncoding;
 
   private Set<String> sourceRoots;
+
+  private Map<String, String> annotationProcessorOptions;
 
   protected AbstractCompiler(DefaultBuildContext<?> context) {
     this.context = context;
@@ -89,6 +92,14 @@ public abstract class AbstractCompiler {
 
   protected String[] getAnnotationProcessors() {
     return annotationProcessors;
+  }
+
+  public void setAnnotationProcessorOptions(Map<String, String> annotationProcessorOptions) {
+    this.annotationProcessorOptions = annotationProcessorOptions;
+  }
+
+  protected Map<String, String> getAnnotationProcessorOptions() {
+    return annotationProcessorOptions;
   }
 
   public void setVerbose(boolean verbose) {
