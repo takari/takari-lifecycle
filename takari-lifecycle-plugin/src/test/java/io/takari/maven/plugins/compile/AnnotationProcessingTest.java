@@ -197,4 +197,30 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     options.addChild(newParameter("optionB", "valueB"));
     procCompile("compile/proc", Proc.proc, processors, options);
   }
+
+  @Test
+  public void testStaleGeneratedSourcesCleanup() throws Exception {
+    Assume.assumeTrue(isJava7 || !"javac".equals(compilerId));
+
+    File processor = compileAnnotationProcessor();
+    File basedir = resources.getBasedir("compile/proc");
+
+    processAnnotations(basedir, Proc.proc, processor);
+    mojos.assertBuildOutputs(new File(basedir, "target"), //
+        "classes/proc/Source.class", //
+        "generated-sources/annotations/proc/GeneratedSource.java", //
+        "classes/proc/GeneratedSource.class", //
+        "generated-sources/annotations/proc/AnotherGeneratedSource.java", //
+        "classes/proc/AnotherGeneratedSource.class");
+
+    // remove annotation
+    cp(basedir, "src/main/java/proc/Source.java-remove-annotation",
+        "src/main/java/proc/Source.java");
+    processAnnotations(basedir, Proc.proc, processor);
+    mojos.assertDeletedOutputs(new File(basedir, "target"), //
+        "generated-sources/annotations/proc/GeneratedSource.java", //
+        "classes/proc/GeneratedSource.class", //
+        "generated-sources/annotations/proc/AnotherGeneratedSource.java", //
+        "classes/proc/AnotherGeneratedSource.class");
+  }
 }
