@@ -5,9 +5,7 @@ import java.util.List;
 
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.*;
 
 @Mojo(name = "process-test-resources", defaultPhase = LifecyclePhase.PROCESS_TEST_RESOURCES)
 public class ProcessTestResources extends AbstractProcessResourcesMojo {
@@ -15,11 +13,12 @@ public class ProcessTestResources extends AbstractProcessResourcesMojo {
   @Parameter(defaultValue = "${project.build.testOutputDirectory}", property = "resources.testOutputDirectory")
   private File testOutputDirectory;
 
-  @Parameter(defaultValue = "${project.build.testResources}")
+  @Parameter
   private List<Resource> testResources;
 
   @Override
   protected void executeMojo() throws MojoExecutionException {
-    process(testResources, testOutputDirectory);
+    process(testResources != null ? testResources : project.getBuild().getTestResources(),
+        testOutputDirectory);
   }
 }

@@ -6,9 +6,7 @@ import java.io.File;
 import java.nio.charset.Charset;
 
 import org.apache.maven.plugin.testing.resources.TestResources;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
 import com.google.common.io.Files;
 
@@ -48,5 +46,12 @@ public class ResourcesBuildAvoidanceTest {
     Assert.assertTrue(resource.exists());
     String line = Files.readFirstLine(resource, Charset.defaultCharset());
     Assert.assertTrue(line.contains("resource.txt with takari"));
+  }
+
+  @Test
+  public void testCustomResources() throws Exception {
+    File basedir = resources.getBasedir("resources/project-with-custom-resources");
+    mojos.executeMojo(basedir, "process-resources");
+    mojos.assertBuildOutputs(basedir, "target/custom/custom.txt");
   }
 }
