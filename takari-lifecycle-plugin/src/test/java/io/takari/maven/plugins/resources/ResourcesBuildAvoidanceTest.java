@@ -54,4 +54,11 @@ public class ResourcesBuildAvoidanceTest {
     mojos.executeMojo(basedir, "process-resources");
     mojos.assertBuildOutputs(basedir, "target/custom/custom.txt");
   }
+
+  @Test
+  public void testRelativeResourcesDirectory() throws Exception {
+    File basedir = resources.getBasedir("resources/project-with-relative-resources-directory");
+    mojos.executeMojo(basedir, "process-resources");
+    mojos.assertBuildOutputs(basedir, "target/custom/custom.txt");
+  }
 }

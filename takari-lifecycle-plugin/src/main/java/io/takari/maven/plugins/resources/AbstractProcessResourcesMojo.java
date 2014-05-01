@@ -25,18 +25,19 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
       throws MojoExecutionException {
     for (Resource resource : resources) {
       boolean filter = Boolean.parseBoolean(resource.getFiltering());
-      File sourceDirectory = new File(resource.getDirectory());
-      // Ensure the sourceDirectory is actually present before attempting to process any resources
-      if (!sourceDirectory.exists()) {
-        continue;
-      }
-      File targetDirectory;
-      if (resource.getTargetPath() != null) {
-        targetDirectory = new File(outputDirectory, resource.getTargetPath());
-      } else {
-        targetDirectory = outputDirectory;
-      }
       try {
+        File sourceDirectory = new File(resource.getDirectory());
+        // Ensure the sourceDirectory is actually present before attempting to process any resources
+        if (!sourceDirectory.exists()) {
+          continue;
+        }
+        sourceDirectory = sourceDirectory.getCanonicalFile();
+        File targetDirectory;
+        if (resource.getTargetPath() != null) {
+          targetDirectory = new File(outputDirectory, resource.getTargetPath());
+        } else {
+          targetDirectory = outputDirectory;
+        }
         if (filter) {
           processor.process(sourceDirectory, targetDirectory, resource.getIncludes(),
               resource.getExcludes(), properties);
