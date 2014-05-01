@@ -72,9 +72,10 @@ public abstract class TakariLifecycleMojo extends AbstractMojo {
 
   protected abstract void executeMojo() throws MojoExecutionException;
 
-  public void execute() throws MojoExecutionException {
+  @Override
+  public final void execute() throws MojoExecutionException {
 
-    // skip actually doesn't work here becaues it's on a per mojo basis
+    // skip actually doesn't work here because it's on a per mojo basis
 
     if (skip) {
       logger.info(String.format("Skipping %s goal", mojoDescriptor.getExecuteGoal()));
