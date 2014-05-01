@@ -10,7 +10,7 @@ import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 
-public class InprocessCompileTest {
+public class Java6InprocessAnnotationProcessingTest {
 
   @Rule
   public final TestResources resources = new TestResources();
@@ -22,7 +22,9 @@ public class InprocessCompileTest {
   public void testAnnotationProcessing_java6() throws Exception {
     Assume.assumeFalse(AbstractCompileTest.isJava7);
 
-    File basedir = resources.getBasedir("compile/proc");
+    // the point of this test is to validate in-process annotation processing fails fast on java6
+
+    File basedir = resources.getBasedir("compile-proc/proc");
 
     Xpp3Dom proc = new Xpp3Dom("proc");
     proc.setValue("proc");

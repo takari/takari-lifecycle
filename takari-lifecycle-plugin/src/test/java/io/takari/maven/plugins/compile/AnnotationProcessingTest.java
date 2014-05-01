@@ -69,7 +69,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
   }
 
   private File compileAnnotationProcessor() throws Exception, IOException {
-    File processor = compile("compile/processor");
+    File processor = compile("compile-proc/processor");
     cp(processor, "src/main/resources/META-INF/services/javax.annotation.processing.Processor",
         "target/classes/META-INF/services/javax.annotation.processing.Processor");
     return processor;
@@ -78,26 +78,26 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
   @Test
   public void testProc_only() throws Exception {
-    File basedir = procCompile("compile/proc", Proc.only);
+    File basedir = procCompile("compile-proc/proc", Proc.only);
     mojos.assertBuildOutputs(new File(basedir, "target/generated-sources/annotations"),
         "proc/GeneratedSource.java", "proc/AnotherGeneratedSource.java");
   }
 
   @Test
   public void testProc_default() throws Exception {
-    File basedir = procCompile("compile/proc", null);
+    File basedir = procCompile("compile-proc/proc", null);
     mojos.assertBuildOutputs(new File(basedir, "target"), "classes/proc/Source.class");
   }
 
   @Test
   public void testProc_none() throws Exception {
-    File basedir = procCompile("compile/proc", Proc.none);
+    File basedir = procCompile("compile-proc/proc", Proc.none);
     mojos.assertBuildOutputs(new File(basedir, "target"), "classes/proc/Source.class");
   }
 
   @Test
   public void testProc_proc() throws Exception {
-    File basedir = procCompile("compile/proc", Proc.proc);
+    File basedir = procCompile("compile-proc/proc", Proc.proc);
     mojos.assertBuildOutputs(new File(basedir, "target"), //
         "classes/proc/Source.class", //
         "generated-sources/annotations/proc/GeneratedSource.java", //
@@ -108,7 +108,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
   @Test
   public void testProcTypeReference() throws Exception {
-    File basedir = procCompile("compile/proc-type-reference", Proc.proc);
+    File basedir = procCompile("compile-proc/proc-type-reference", Proc.proc);
     mojos.assertBuildOutputs(new File(basedir, "target"), //
         "classes/proc/Source.class", //
         "classes/proc/GeneratedSourceSubclass.class", //
@@ -122,7 +122,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
   public void testProc_annotationProcessors() throws Exception {
     Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
     processors.addChild(newParameter("processor", "processor.Processor"));
-    File basedir = procCompile("compile/proc", Proc.proc, processors);
+    File basedir = procCompile("compile-proc/proc", Proc.proc, processors);
     mojos.assertBuildOutputs(new File(basedir, "target"), //
         "classes/proc/Source.class", //
         "generated-sources/annotations/proc/GeneratedSource.java", //
@@ -135,7 +135,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     expected.setSnippets("javac", "ERROR BrokenSource.java [2:29]", "cannot find symbol");
 
     File processor = compileAnnotationProcessor();
-    File basedir = resources.getBasedir("compile/proc");
+    File basedir = resources.getBasedir("compile-proc/proc");
 
     Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
     processors.addChild(newParameter("processor", "processor.BrokenProcessor"));
@@ -182,13 +182,13 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     Xpp3Dom options = new Xpp3Dom("annotationProcessorOptions");
     options.addChild(newParameter("optionA", "valueA"));
     options.addChild(newParameter("optionB", "valueB"));
-    procCompile("compile/proc", Proc.proc, processors, options);
+    procCompile("compile-proc/proc", Proc.proc, processors, options);
   }
 
   @Test
   public void testStaleGeneratedSourcesCleanup() throws Exception {
     File processor = compileAnnotationProcessor();
-    File basedir = resources.getBasedir("compile/proc");
+    File basedir = resources.getBasedir("compile-proc/proc");
 
     processAnnotations(basedir, Proc.proc, processor);
     mojos.assertBuildOutputs(new File(basedir, "target"), //
