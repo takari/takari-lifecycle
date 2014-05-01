@@ -16,7 +16,6 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
 
@@ -79,8 +78,6 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
   @Test
   public void testProc_only() throws Exception {
-    Assume.assumeTrue(isJava7 || !"javac".equals(compilerId));
-
     File basedir = procCompile("compile/proc", Proc.only);
     mojos.assertBuildOutputs(new File(basedir, "target/generated-sources/annotations"),
         "proc/GeneratedSource.java", "proc/AnotherGeneratedSource.java");
@@ -100,8 +97,6 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
   @Test
   public void testProc_proc() throws Exception {
-    Assume.assumeTrue(isJava7 || !"javac".equals(compilerId));
-
     File basedir = procCompile("compile/proc", Proc.proc);
     mojos.assertBuildOutputs(new File(basedir, "target"), //
         "classes/proc/Source.class", //
@@ -113,8 +108,6 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
   @Test
   public void testProcTypeReference() throws Exception {
-    Assume.assumeTrue(isJava7 || !"javac".equals(compilerId));
-
     File basedir = procCompile("compile/proc-type-reference", Proc.proc);
     mojos.assertBuildOutputs(new File(basedir, "target"), //
         "classes/proc/Source.class", //
@@ -127,8 +120,6 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
   @Test
   public void testProc_annotationProcessors() throws Exception {
-    Assume.assumeTrue(isJava7 || !"javac".equals(compilerId));
-
     Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
     processors.addChild(newParameter("processor", "processor.Processor"));
     File basedir = procCompile("compile/proc", Proc.proc, processors);
@@ -140,8 +131,6 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
   @Test
   public void testProc_messages() throws Exception {
-    Assume.assumeTrue(isJava7 || !"javac".equals(compilerId));
-
     ErrorMessage expected = new ErrorMessage(compilerId);
     expected.setSnippets("javac", "ERROR BrokenSource.java [2:29]", "cannot find symbol");
 
@@ -187,8 +176,6 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
   @Test
   public void testProcessorOptions() throws Exception {
-    Assume.assumeTrue(isJava7 || !"javac".equals(compilerId));
-
     Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
     processors.addChild(newParameter("processor", "processor.ProcessorWithOptions"));
 
@@ -200,8 +187,6 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
   @Test
   public void testStaleGeneratedSourcesCleanup() throws Exception {
-    Assume.assumeTrue(isJava7 || !"javac".equals(compilerId));
-
     File processor = compileAnnotationProcessor();
     File basedir = resources.getBasedir("compile/proc");
 
