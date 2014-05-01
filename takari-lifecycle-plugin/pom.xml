@@ -55,7 +55,7 @@
     <dependency>
       <groupId>io.takari</groupId>
       <artifactId>incrementalbuild</artifactId>
-      <version>${build.avoidance.version}</version>
+      <version>${incrementalbuild.version}</version>
     </dependency>
     <!-- JDT compiler and matching APT support -->
     <dependency>
