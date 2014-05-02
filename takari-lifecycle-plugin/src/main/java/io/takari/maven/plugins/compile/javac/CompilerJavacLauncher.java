@@ -2,6 +2,7 @@ package io.takari.maven.plugins.compile.javac;
 
 import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.Input;
+import io.takari.incrementalbuild.BuildContext.InputMetadata;
 import io.takari.incrementalbuild.BuildContext.Output;
 import io.takari.incrementalbuild.BuildContext.Resource;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
@@ -54,7 +55,8 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
   }
 
   private void compile(File options, File output) throws IOException {
-    new CompilerConfiguration(getSourceEncoding(), getCompilerOptions(), sources).write(options);
+    new CompilerConfiguration(getSourceEncoding(), getCompilerOptions(), getSourceFiles())
+        .write(options);
 
     // use the same JVM as the one used to run Maven (the "java.home" one)
     String executable =
@@ -94,8 +96,8 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
     final Map<File, Output<File>> outputs = new HashMap<File, Output<File>>();
     final Map<File, Input<File>> inputs = new HashMap<File, Input<File>>();
 
-    for (File source : sources) {
-      inputs.put(source, context.registerInput(source).process());
+    for (InputMetadata<File> source : sources) {
+      inputs.put(source.getResource(), source.process());
     }
 
     CompilerOutput.process(output, new CompilerOutputProcessor() {

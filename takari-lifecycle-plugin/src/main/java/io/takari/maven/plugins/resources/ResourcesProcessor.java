@@ -1,7 +1,6 @@
 package io.takari.maven.plugins.resources;
 
 import io.takari.incrementalbuild.BuildContext;
-import io.takari.incrementalbuild.util.DirectoryScannerAdapter;
 
 import java.io.File;
 import java.io.FileReader;
@@ -15,8 +14,6 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
-
-import org.codehaus.plexus.util.DirectoryScanner;
 
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
@@ -53,15 +50,8 @@ public class ResourcesProcessor {
       // DirectoryScanner chokes on directories that do not exist
       return;
     }
-    if (includes.isEmpty()) {
-      includes.add("**/**");
-    }
-    DirectoryScanner scanner = new DirectoryScanner();
-    scanner.setBasedir(sourceDirectory);
-    scanner.setIncludes(includes.toArray(new String[0]));
-    scanner.setExcludes(excludes.toArray(new String[0]));
-    DirectoryScannerAdapter files = new DirectoryScannerAdapter(scanner);
-    for (BuildContext.Input<File> input : buildContext.registerAndProcessInputs(files)) {
+    for (BuildContext.Input<File> input : buildContext.registerAndProcessInputs(sourceDirectory,
+        includes, excludes)) {
       File outputFile = relativize(sourceDirectory, targetDirectory, input.getResource());
       BuildContext.Output<File> output = input.associateOutput(outputFile);
       Closer closer = Closer.create();

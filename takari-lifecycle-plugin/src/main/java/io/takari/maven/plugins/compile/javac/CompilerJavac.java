@@ -141,7 +141,7 @@ public class CompilerJavac extends AbstractCompilerJavac {
     final StandardJavaFileManager standardFileManager =
         compiler.getStandardFileManager(diagnosticCollector, null, sourceEncoding);
     final Iterable<? extends JavaFileObject> javaSources =
-        standardFileManager.getJavaFileObjectsFromFiles(sources);
+        standardFileManager.getJavaFileObjectsFromFiles(getSourceFiles());
 
     final Map<File, Output<File>> outputs = new HashMap<File, Output<File>>();
     final Map<File, Input<File>> inputs = new HashMap<File, Input<File>>();

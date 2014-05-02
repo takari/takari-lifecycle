@@ -1,5 +1,6 @@
 package io.takari.maven.plugins.compile;
 
+import io.takari.incrementalbuild.BuildContext.InputMetadata;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Debug;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
@@ -147,7 +148,7 @@ public abstract class AbstractCompiler {
 
   public abstract boolean setClasspath(List<File> dependencies) throws IOException;
 
-  public abstract boolean setSources(List<File> sources) throws IOException;
+  public abstract boolean setSources(List<InputMetadata<File>> sources) throws IOException;
 
   public abstract void compile() throws MojoExecutionException, IOException;
 

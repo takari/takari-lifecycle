@@ -1,5 +1,7 @@
 package io.takari.maven.plugins.compile;
 
+import io.takari.incrementalbuild.BuildContext;
+import io.takari.incrementalbuild.BuildContext.InputMetadata;
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
 import io.takari.maven.plugins.compile.javac.CompilerJavacLauncher;
@@ -22,7 +24,6 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.codehaus.plexus.util.DirectoryScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -167,12 +168,15 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Component
   private Map<String, AbstractCompiler> compilers;
 
+  @Component
+  private BuildContext context;
+
   public Charset getSourceEncoding() {
     return encoding == null ? null : Charset.forName(encoding);
   }
 
-  private List<File> getSources() {
-    List<File> sources = new ArrayList<File>();
+  private List<InputMetadata<File>> getSources() throws IOException {
+    List<InputMetadata<File>> sources = new ArrayList<InputMetadata<File>>();
     StringBuilder msg = new StringBuilder();
     for (String sourcePath : getSourceRoots()) {
       File sourceRoot = new File(sourcePath);
@@ -181,27 +185,21 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
         msg.append("\n   does not exist or not a directory, skiped");
         continue;
       }
-      DirectoryScanner scanner = new DirectoryScanner();
-      scanner.setBasedir(sourceRoot);
       // TODO this is a bug in project model, includes/excludes should be per sourceRoot
       Set<String> includes = getIncludes();
       if (includes == null || includes.isEmpty()) {
         includes = Collections.singleton("**/*.java");
       }
-      scanner.setIncludes(includes.toArray(new String[includes.size()]));
       Set<String> excludes = getExcludes();
-      if (excludes != null && !excludes.isEmpty()) {
-        scanner.setExcludes(excludes.toArray(new String[excludes.size()]));
-      }
-      scanner.scan();
-      String[] includedFiles = scanner.getIncludedFiles();
-      for (String relpath : includedFiles) {
-        sources.add(new File(sourceRoot, relpath));
+      int sourceCount = 0;
+      for (InputMetadata<File> source : context.registerInputs(sourceRoot, includes, excludes)) {
+        sources.add(source);
+        sourceCount++;
       }
       if (log.isDebugEnabled()) {
         msg.append("\n   includes=").append(includes.toString());
         msg.append(" excludes=").append(excludes != null ? excludes.toString() : "[]");
-        msg.append(" matched=").append(includedFiles.length);
+        msg.append(" matched=").append(sourceCount);
       }
     }
     if (log.isDebugEnabled()) {
@@ -240,39 +238,39 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       throw new MojoExecutionException("Unsupported compilerId" + compilerId);
     }
 
-    final List<File> sources = getSources();
-    if (sources.isEmpty()) {
-      log.info("No sources, skipping compilation");
-      return;
-    }
-
-    mkdirs(getOutputDirectory());
-    if (proc != Proc.none) {
-      mkdirs(getGeneratedSourcesDirectory());
-    }
-
-    compiler.setOutputDirectory(getOutputDirectory());
-    compiler.setSource(source);
-    compiler.setTarget(getTarget(target, source));
-    compiler.setProc(proc);
-    compiler.setGeneratedSourcesDirectory(getGeneratedSourcesDirectory());
-    compiler.setAnnotationProcessors(annotationProcessors);
-    compiler.setAnnotationProcessorOptions(annotationProcessorOptions);
-    compiler.setVerbose(verbose);
-    compiler.setPom(pom);
-    compiler.setSourceEncoding(getSourceEncoding());
-    compiler.setSourceRoots(getSourceRoots());
-    compiler.setDebug(parseDebug(debug));
-
-    if (compiler instanceof CompilerJavacLauncher) {
-      ((CompilerJavacLauncher) compiler).setBasedir(basedir);
-      ((CompilerJavacLauncher) compiler).setJar(pluginArtifact.getFile());
-      ((CompilerJavacLauncher) compiler).setBuildDirectory(buildDirectory);
-      ((CompilerJavacLauncher) compiler).setMeminitial(meminitial);
-      ((CompilerJavacLauncher) compiler).setMaxmem(maxmem);
-    }
-
     try {
+      final List<InputMetadata<File>> sources = getSources();
+      if (sources.isEmpty()) {
+        log.info("No sources, skipping compilation");
+        return;
+      }
+
+      mkdirs(getOutputDirectory());
+      if (proc != Proc.none) {
+        mkdirs(getGeneratedSourcesDirectory());
+      }
+
+      compiler.setOutputDirectory(getOutputDirectory());
+      compiler.setSource(source);
+      compiler.setTarget(getTarget(target, source));
+      compiler.setProc(proc);
+      compiler.setGeneratedSourcesDirectory(getGeneratedSourcesDirectory());
+      compiler.setAnnotationProcessors(annotationProcessors);
+      compiler.setAnnotationProcessorOptions(annotationProcessorOptions);
+      compiler.setVerbose(verbose);
+      compiler.setPom(pom);
+      compiler.setSourceEncoding(getSourceEncoding());
+      compiler.setSourceRoots(getSourceRoots());
+      compiler.setDebug(parseDebug(debug));
+
+      if (compiler instanceof CompilerJavacLauncher) {
+        ((CompilerJavacLauncher) compiler).setBasedir(basedir);
+        ((CompilerJavacLauncher) compiler).setJar(pluginArtifact.getFile());
+        ((CompilerJavacLauncher) compiler).setBuildDirectory(buildDirectory);
+        ((CompilerJavacLauncher) compiler).setMeminitial(meminitial);
+        ((CompilerJavacLauncher) compiler).setMaxmem(maxmem);
+      }
+
       List<File> classpath = getClasspath();
       if (log.isDebugEnabled()) {
         StringBuilder msg = new StringBuilder();

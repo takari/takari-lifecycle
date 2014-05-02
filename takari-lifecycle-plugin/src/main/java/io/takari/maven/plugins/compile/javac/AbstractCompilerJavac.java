@@ -13,6 +13,7 @@ import io.takari.maven.plugins.compile.AbstractCompiler;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +23,7 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
 
   private final ProjectClasspathDigester digester;
 
-  protected final List<File> sources = new ArrayList<File>();
+  protected final List<InputMetadata<File>> sources = new ArrayList<InputMetadata<File>>();
 
   private String classpath;
 
@@ -124,7 +125,7 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
   }
 
   @Override
-  public boolean setSources(List<File> sources) {
+  public boolean setSources(List<InputMetadata<File>> sources) {
     this.sources.addAll(sources);
 
     // always register pom.xml. pom.xml is used to track message general compiler messages
@@ -133,7 +134,7 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
 
     List<InputMetadata<File>> modifiedSources = new ArrayList<InputMetadata<File>>();
     List<InputMetadata<File>> inputs = new ArrayList<InputMetadata<File>>();
-    for (InputMetadata<File> input : context.registerInputs(sources)) {
+    for (InputMetadata<File> input : sources) {
       inputs.add(input);
       if (input.getStatus() != ResourceStatus.UNMODIFIED) {
         modifiedSources.add(input);
@@ -181,4 +182,13 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
       context.carryOverOutput(output.getResource());
     }
   }
+
+  protected Collection<File> getSourceFiles() {
+    Collection<File> files = new ArrayList<File>(sources.size());
+    for (InputMetadata<File> input : sources) {
+      files.add(input.getResource());
+    }
+    return files;
+  }
+
 }

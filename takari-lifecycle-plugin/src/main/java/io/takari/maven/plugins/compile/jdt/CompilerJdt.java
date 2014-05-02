@@ -2,6 +2,7 @@ package io.takari.maven.plugins.compile.jdt;
 
 import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
+import io.takari.incrementalbuild.BuildContext.ResourceStatus;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.incrementalbuild.spi.DefaultInput;
 import io.takari.incrementalbuild.spi.DefaultInputMetadata;
@@ -180,8 +181,12 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   }
 
   @Override
-  public boolean setSources(List<File> sources) throws IOException {
-    enqueue(context.registerAndProcessInputs(sources));
+  public boolean setSources(List<InputMetadata<File>> sources) throws IOException {
+    for (InputMetadata<File> source : sources) {
+      if (source.getStatus() != ResourceStatus.UNMODIFIED) {
+        enqueue(source.process().getResource());
+      }
+    }
 
     // remove stale outputs and rebuild all sources that reference them
     for (DefaultOutputMetadata output : context.deleteStaleOutputs(false)) {
@@ -204,12 +209,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       path = path.substring(1);
     }
     return path.replace(File.separatorChar, '.');
-  }
-
-  private void enqueue(Iterable<DefaultInput<File>> sources) {
-    for (DefaultInput<File> source : sources) {
-      enqueue(source.getResource());
-    }
   }
 
   private void enqueueAffectedSources() throws IOException {
