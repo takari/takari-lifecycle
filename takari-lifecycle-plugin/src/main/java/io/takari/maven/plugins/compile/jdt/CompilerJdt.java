@@ -215,7 +215,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     for (InputMetadata<File> input : context.getRegisteredInputs(File.class)) {
       final File resource = input.getResource();
       if (!processedSources.contains(resource) && resource.canRead()) {
-        ReferenceCollection references = input.getValue(ATTR_REFERENCES, ReferenceCollection.class);
+        ReferenceCollection references = input.getAttribute(ATTR_REFERENCES, ReferenceCollection.class);
         if (references != null && references.includes(qualifiedNames, simpleNames, rootNames)) {
           enqueue(resource);
         }
@@ -288,7 +288,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     DefaultInputMetadata<File> metadata = context.registerInput(getPom());
     @SuppressWarnings("unchecked")
     Map<String, byte[]> oldDigest =
-        (Map<String, byte[]>) metadata.getValue(ATTR_CLASSPATH_DIGEST, Serializable.class);
+        (Map<String, byte[]>) metadata.getAttribute(ATTR_CLASSPATH_DIGEST, Serializable.class);
 
     boolean changed = false;
 
@@ -321,7 +321,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     }
 
     if (changed) {
-      metadata.process().setValue(ATTR_CLASSPATH_DIGEST, digest);
+      metadata.process().setAttribute(ATTR_CLASSPATH_DIGEST, digest);
     }
 
     log.debug("Verified {} types and {} packages in {} ms", typecount, packagecount,
@@ -352,7 +352,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     DefaultInput<File> input = context.registerInput(sourceFile).process();
 
     // track type references
-    input.setValue(ATTR_REFERENCES, new ReferenceCollection(result.rootReferences,
+    input.setAttribute(ATTR_REFERENCES, new ReferenceCollection(result.rootReferences,
         result.qualifiedReferences, result.simpleNameReferences));
 
     if (result.hasProblems()) {
@@ -413,7 +413,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
           new ClassFileReader(definition, output.getResource().getAbsolutePath().toCharArray());
       byte[] hash = digester.digest(reader);
       if (hash != null) {
-        byte[] oldHash = (byte[]) output.setValue(ATTR_CLASS_DIGEST, hash);
+        byte[] oldHash = (byte[]) output.setAttribute(ATTR_CLASS_DIGEST, hash);
         significantChange = oldHash == null || !Arrays.equals(hash, oldHash);
       }
     } catch (ClassFormatException e) {
