@@ -1,6 +1,7 @@
 package io.takari.maven.plugins.compile;
 
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
+import io.takari.maven.plugins.compile.AbstractCompileMojo.Debug;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 
 import java.io.File;
@@ -42,6 +43,8 @@ public abstract class AbstractCompiler {
 
   private Map<String, String> annotationProcessorOptions;
 
+  private Set<Debug> debug;
+
   protected AbstractCompiler(DefaultBuildContext<?> context) {
     this.context = context;
   }
@@ -72,6 +75,14 @@ public abstract class AbstractCompiler {
 
   public void setProc(Proc proc) {
     this.proc = proc;
+  }
+
+  public void setDebug(Set<Debug> debug) {
+    this.debug = debug;
+  }
+
+  protected Set<Debug> getDebug() {
+    return debug;
   }
 
   protected Proc getProc() {

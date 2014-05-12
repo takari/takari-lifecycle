@@ -7,6 +7,7 @@ import io.takari.incrementalbuild.spi.DefaultInput;
 import io.takari.incrementalbuild.spi.DefaultInputMetadata;
 import io.takari.incrementalbuild.spi.DefaultOutput;
 import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
+import io.takari.maven.plugins.compile.AbstractCompileMojo.Debug;
 import io.takari.maven.plugins.compile.AbstractCompiler;
 import io.takari.maven.plugins.compile.jdt.classpath.Classpath;
 import io.takari.maven.plugins.compile.jdt.classpath.ClasspathEntry;
@@ -120,6 +121,36 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     args.put(CompilerOptions.OPTION_TargetPlatform, getTarget()); // support 5/6/7 aliases
     args.put(CompilerOptions.OPTION_Compliance, getTarget()); // support 5/6/7 aliases
     args.put(CompilerOptions.OPTION_Source, getSource()); // support 5/6/7 aliases
+    Set<Debug> debug = getDebug();
+    if (debug == null || debug.contains(Debug.all)) {
+      args.put(CompilerOptions.OPTION_LocalVariableAttribute, CompilerOptions.GENERATE);
+      args.put(CompilerOptions.OPTION_LineNumberAttribute, CompilerOptions.GENERATE);
+      args.put(CompilerOptions.OPTION_SourceFileAttribute, CompilerOptions.GENERATE);
+    } else if (debug.contains(Debug.none)) {
+      args.put(CompilerOptions.OPTION_LocalVariableAttribute, CompilerOptions.DO_NOT_GENERATE);
+      args.put(CompilerOptions.OPTION_LineNumberAttribute, CompilerOptions.DO_NOT_GENERATE);
+      args.put(CompilerOptions.OPTION_SourceFileAttribute, CompilerOptions.DO_NOT_GENERATE);
+    } else {
+      args.put(CompilerOptions.OPTION_LocalVariableAttribute, CompilerOptions.DO_NOT_GENERATE);
+      args.put(CompilerOptions.OPTION_LineNumberAttribute, CompilerOptions.DO_NOT_GENERATE);
+      args.put(CompilerOptions.OPTION_SourceFileAttribute, CompilerOptions.DO_NOT_GENERATE);
+      for (Debug keyword : debug) {
+        switch (keyword) {
+          case lines:
+            args.put(CompilerOptions.OPTION_LineNumberAttribute, CompilerOptions.GENERATE);
+            break;
+          case source:
+            args.put(CompilerOptions.OPTION_SourceFileAttribute, CompilerOptions.GENERATE);
+            break;
+          case vars:
+            args.put(CompilerOptions.OPTION_LocalVariableAttribute, CompilerOptions.GENERATE);
+            break;
+          default:
+            throw new IllegalArgumentException();
+        }
+      }
+    }
+
     CompilerOptions compilerOptions = new CompilerOptions(args);
     compilerOptions.performMethodsFullRecovery = false;
     compilerOptions.performStatementsRecovery = false;

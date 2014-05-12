@@ -6,6 +6,7 @@ import io.takari.incrementalbuild.BuildContext.ResourceStatus;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.incrementalbuild.spi.DefaultInputMetadata;
 import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
+import io.takari.maven.plugins.compile.AbstractCompileMojo.Debug;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 import io.takari.maven.plugins.compile.AbstractCompiler;
 
@@ -84,6 +85,22 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
 
     if (isVerbose()) {
       options.add("-verbose");
+    }
+
+    Set<Debug> debug = getDebug();
+    if (debug == null || debug.contains(Debug.all)) {
+      options.add("-g");
+    } else if (debug.contains(Debug.none)) {
+      options.add("-g:none");
+    } else {
+      StringBuilder keywords = new StringBuilder();
+      for (Debug keyword : debug) {
+        if (keywords.length() > 0) {
+          keywords.append(',');
+        }
+        keywords.append(keyword.name());
+      }
+      options.add("-g:" + keywords.toString());
     }
 
     return options;

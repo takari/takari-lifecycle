@@ -9,9 +9,11 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.maven.artifact.Artifact;
@@ -33,6 +35,10 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
   public static enum Proc {
     proc, only, none
+  }
+
+  public static enum Debug {
+    all, none, source, lines, vars;
   }
 
   /**
@@ -125,6 +131,26 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
    */
   @Parameter(property = "maven.compiler.verbose", defaultValue = "false")
   private boolean verbose;
+
+  /**
+   * Sets whether generated class files include debug information or not.
+   * <p>
+   * Allowed values
+   * <ul>
+   * <li><strong>all</strong> Generate all debugging information, including local variables. This is
+   * the default.</li>
+   * <li><strong>none</strong> Do not generate any debugging information.</li>
+   * <li>Comma-separated list of
+   * <ul>
+   * <li><strong>source</strong> Source file debugging information.</li>
+   * <li><strong>lines</strong> Line number debugging information.</li>
+   * <li><strong>vars</strong> Local variable debugging information.</li>
+   * </ul>
+   * </li>
+   * </ul>
+   */
+  @Parameter(property = "maven.compiler.debug", defaultValue = "all")
+  private String debug;
 
   //
 
@@ -238,6 +264,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     compiler.setPom(pom);
     compiler.setSourceEncoding(getSourceEncoding());
     compiler.setSourceRoots(getSourceRoots());
+    compiler.setDebug(parseDebug(debug));
 
     if (compiler instanceof CompilerJavacLauncher) {
       ((CompilerJavacLauncher) compiler).setBasedir(basedir);
@@ -276,6 +303,18 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     } catch (IOException e) {
       throw new MojoExecutionException("Could not compile project", e);
     }
+  }
+
+  private static Set<Debug> parseDebug(String debug) {
+    Set<Debug> result = new HashSet<AbstractCompileMojo.Debug>();
+    StringTokenizer st = new StringTokenizer(debug, ",");
+    while (st.hasMoreTokens()) {
+      result.add(Debug.valueOf(st.nextToken()));
+    }
+    if (result.size() > 1 && (result.contains(Debug.all) || result.contains(Debug.none))) {
+      throw new IllegalArgumentException("'all' and 'none' must be used alone: " + debug);
+    }
+    return result;
   }
 
   private File mkdirs(File dir) throws MojoExecutionException {

@@ -1,5 +1,12 @@
 package io.takari.maven.plugins.compile;
 
+import static io.takari.maven.plugins.compile.ClassfileMatchers.hasDebugLines;
+import static io.takari.maven.plugins.compile.ClassfileMatchers.hasDebugSource;
+import static io.takari.maven.plugins.compile.ClassfileMatchers.hasDebugVars;
+import static org.hamcrest.core.AllOf.allOf;
+import static org.hamcrest.core.IsNot.not;
+import static org.junit.Assert.assertThat;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
@@ -66,6 +73,29 @@ public class CompileTest extends AbstractCompileTest {
     project = mojos.readMavenProject(basedir);
     mojos.compile(project);
     Assert.assertEquals(new File(basedir, "target/classes"), project.getArtifact().getFile());
+  }
+
+  @Test
+  public void testBasic_debugInfo() throws Exception {
+    File basedir;
+
+    basedir = compile("compile/basic");
+    assertThat(new File(basedir, "target/classes/basic/Basic.class"),
+        allOf(hasDebugSource(), hasDebugLines(), hasDebugVars()));
+
+    basedir = compile("compile/basic", newParameter("debug", "none"));
+    assertThat(new File(basedir, "target/classes/basic/Basic.class"),
+        allOf(not(hasDebugSource()), not(hasDebugLines()), not(hasDebugVars())));
+
+    basedir = compile("compile/basic", newParameter("debug", "source"));
+    assertThat(new File(basedir, "target/classes/basic/Basic.class"),
+        allOf(hasDebugSource(), not(hasDebugLines()), not(hasDebugVars())));
+    basedir = compile("compile/basic", newParameter("debug", "source,lines"));
+    assertThat(new File(basedir, "target/classes/basic/Basic.class"),
+        allOf(hasDebugSource(), hasDebugLines(), not(hasDebugVars())));
+    basedir = compile("compile/basic", newParameter("debug", "source,lines,vars"));
+    assertThat(new File(basedir, "target/classes/basic/Basic.class"),
+        allOf(hasDebugSource(), hasDebugLines(), hasDebugVars()));
   }
 
   @Test
