@@ -9,7 +9,12 @@ import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 
 import java.io.File;
 import java.io.InputStream;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.Properties;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
@@ -95,5 +100,26 @@ public class JarTest {
     } else {
       fail("We expected the standard META-INF/MANIFEST.MF");
     }
+  }
+
+  @Test
+  public void testClassloader_getResources() throws Exception {
+    File basedir = resources.getBasedir("jar/project-with-resources");
+    mojos.executeMojo(basedir, "process-resources");
+    mojos.executeMojo(basedir, "jar");
+    File jar = new File(basedir, "target/test-1.0.jar");
+    URLClassLoader cl = new URLClassLoader(new URL[] {jar.toURI().toURL()}, null);
+    List<URL> list = toList(cl.getResources("subdir"));
+    Assert.assertEquals(1, list.size());
+    Assert.assertTrue(list.get(0).toString(),
+        list.get(0).toString().endsWith("test-1.0.jar!/subdir"));
+  }
+
+  private static <T> List<T> toList(Enumeration<T> e) {
+    ArrayList<T> l = new ArrayList<T>();
+    while (e.hasMoreElements()) {
+      l.add(e.nextElement());
+    }
+    return l;
   }
 }

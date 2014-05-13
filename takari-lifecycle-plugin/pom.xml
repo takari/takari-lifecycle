@@ -88,9 +88,9 @@
     </dependency>      
     <!-- JAR -->
     <dependency>
-      <groupId>io.provis</groupId>
-      <artifactId>provisio-archive</artifactId>
-      <version>0.0.9</version>
+      <groupId>io.takari</groupId>
+      <artifactId>takari-archiver</artifactId>
+      <version>0.1.0</version>
     </dependency>
     <!-- Dependency -->
     <dependency>
