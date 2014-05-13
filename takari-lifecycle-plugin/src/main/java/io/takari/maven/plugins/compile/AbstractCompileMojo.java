@@ -137,9 +137,9 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
    * <p>
    * Allowed values
    * <ul>
-   * <li><strong>all</strong> Generate all debugging information, including local variables. This is
-   * the default.</li>
-   * <li><strong>none</strong> Do not generate any debugging information.</li>
+   * <li><strong>all</strong> or <strong>true</strong> Generate all debugging information, including
+   * local variables. This is the default.</li>
+   * <li><strong>none</strong> or <strong>false</strong> Do not generate any debugging information.</li>
    * <li>Comma-separated list of
    * <ul>
    * <li><strong>source</strong> Source file debugging information.</li>
@@ -309,7 +309,16 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     Set<Debug> result = new HashSet<AbstractCompileMojo.Debug>();
     StringTokenizer st = new StringTokenizer(debug, ",");
     while (st.hasMoreTokens()) {
-      result.add(Debug.valueOf(st.nextToken()));
+      String token = st.nextToken();
+      Debug keyword;
+      if ("true".equalsIgnoreCase(token)) {
+        keyword = Debug.all;
+      } else if ("false".equalsIgnoreCase(token)) {
+        keyword = Debug.none;
+      } else {
+        keyword = Debug.valueOf(token);
+      }
+      result.add(keyword);
     }
     if (result.size() > 1 && (result.contains(Debug.all) || result.contains(Debug.none))) {
       throw new IllegalArgumentException("'all' and 'none' must be used alone: " + debug);

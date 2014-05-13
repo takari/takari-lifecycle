@@ -79,14 +79,26 @@ public class CompileTest extends AbstractCompileTest {
   public void testBasic_debugInfo() throws Exception {
     File basedir;
 
+    // all
     basedir = compile("compile/basic");
     assertThat(new File(basedir, "target/classes/basic/Basic.class"),
         allOf(hasDebugSource(), hasDebugLines(), hasDebugVars()));
+    basedir = compile("compile/basic", newParameter("debug", "all"));
+    assertThat(new File(basedir, "target/classes/basic/Basic.class"),
+        allOf(hasDebugSource(), hasDebugLines(), hasDebugVars()));
+    basedir = compile("compile/basic", newParameter("debug", "true"));
+    assertThat(new File(basedir, "target/classes/basic/Basic.class"),
+        allOf(hasDebugSource(), hasDebugLines(), hasDebugVars()));
 
+    // none
     basedir = compile("compile/basic", newParameter("debug", "none"));
     assertThat(new File(basedir, "target/classes/basic/Basic.class"),
         allOf(not(hasDebugSource()), not(hasDebugLines()), not(hasDebugVars())));
+    basedir = compile("compile/basic", newParameter("debug", "false"));
+    assertThat(new File(basedir, "target/classes/basic/Basic.class"),
+        allOf(not(hasDebugSource()), not(hasDebugLines()), not(hasDebugVars())));
 
+    // keywords
     basedir = compile("compile/basic", newParameter("debug", "source"));
     assertThat(new File(basedir, "target/classes/basic/Basic.class"),
         allOf(hasDebugSource(), not(hasDebugLines()), not(hasDebugVars())));
