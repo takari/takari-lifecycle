@@ -68,7 +68,7 @@ public class JarTest {
     // Make sure our maven properties file is written correctly
     ZipFile zip0 = new ZipFile(jar1);
     try {
-      String pomProperties = "META-INF/io.takari.lifecycle.its/test/pom.properties";
+      String pomProperties = "META-INF/maven/io.takari.lifecycle.its/test/pom.properties";
       ZipEntry entry = zip0.getEntry(pomProperties);
       if (entry != null) {
         InputStream is = zip0.getInputStream(entry);
@@ -100,6 +100,13 @@ public class JarTest {
     } else {
       fail("We expected the standard META-INF/MANIFEST.MF");
     }
+  }
+
+  @Test
+  public void sourceJarCreation() throws Exception {
+    File basedir = resources.getBasedir("jar/project-with-sourcejar");
+    mojos.executeMojo(basedir, "process-resources");
+    mojos.executeMojo(basedir, "jar");
   }
 
   @Test
