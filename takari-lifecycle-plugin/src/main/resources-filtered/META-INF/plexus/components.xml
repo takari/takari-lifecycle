@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component-set>
   <components>
+    <component>
+      <role>org.codehaus.plexus.component.configurator.ComponentConfigurator</role>
+      <role-hint>takari-mojo</role-hint>
+      <implementation>io.takari.maven.plugins.configurator.TakariMojoConfigurator</implementation>
+    </component>
     <!--
      | TAKARI JAR
      |-->
