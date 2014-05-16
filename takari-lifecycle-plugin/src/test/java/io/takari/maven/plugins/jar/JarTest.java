@@ -107,6 +107,12 @@ public class JarTest {
     File basedir = resources.getBasedir("jar/project-with-sourcejar");
     mojos.executeMojo(basedir, "process-resources");
     mojos.executeMojo(basedir, "jar");
+    // test-1.0.jar
+    File jar = new File(basedir, "target/test-1.0.jar");
+    assertTrue(jar.exists());
+    // test-1.0-sources.jar
+    File sourceJar = new File(basedir, "target/test-1.0.jar");
+    assertTrue(sourceJar.exists());
   }
 
   @Test

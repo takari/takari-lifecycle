@@ -19,6 +19,7 @@
         <configuration>
           <jar>
             <sourceJar>true</sourceJar>
+            <testJar>false</testJar>
           </jar>
         </configuration>
       </plugin>
