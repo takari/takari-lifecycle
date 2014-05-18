@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>io.takari.maven.plugins</groupId>
@@ -74,17 +75,15 @@
       <artifactId>compiler</artifactId>
       <version>0.8.13</version>
     </dependency>
-    <!--
-    We can use 15.0 at runtime because of the classloader isolation in Maven, but we cannot
-    use 15.0 during testing because sisu will not work with Guava 15.0 because they
-    are incompatible. The eventual solution is to have the realms for testing created
-    in the same way that the core is.
-    -->
+    <!-- We can use 15.0 at runtime because of the classloader isolation 
+      in Maven, but we cannot use 15.0 during testing because sisu will not work 
+      with Guava 15.0 because they are incompatible. The eventual solution is to 
+      have the realms for testing created in the same way that the core is. -->
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>${guava.version}</version> <!-- Would like 15.0 -->
-    </dependency>      
+    </dependency>
     <!-- JAR -->
     <dependency>
       <groupId>io.takari</groupId>
@@ -96,7 +95,7 @@
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
       <version>2.2.4</version>
-    </dependency>    
+    </dependency>
     <!-- Logging -->
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -116,6 +115,11 @@
       <artifactId>junit</artifactId>
       <version>4.11</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>xmlunit</groupId>
+      <artifactId>xmlunit</artifactId>
+      <version>1.5</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
