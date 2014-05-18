@@ -4,7 +4,7 @@
     <component>
       <role>org.codehaus.plexus.component.configurator.ComponentConfigurator</role>
       <role-hint>takari-mojo</role-hint>
-      <implementation>io.takari.maven.plugins.configurator.TakariMojoConfigurator</implementation>
+      <implementation>io.takari.maven.plugins.configurator.MojoConfigurator</implementation>
     </component>
     <!--
      | TAKARI JAR
