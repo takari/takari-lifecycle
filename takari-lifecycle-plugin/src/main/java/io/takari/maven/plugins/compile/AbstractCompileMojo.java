@@ -232,10 +232,18 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
   protected abstract File getGeneratedSourcesDirectory();
 
+  protected abstract boolean isSkip();
+
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
 
     Stopwatch stopwatch = new Stopwatch().start();
+
+    if (isSkip()) {
+      log.info("Skipping compilation");
+      // TODO this triggers cleanup of generated classes, consider making this configurable
+      return;
+    }
 
     final AbstractCompiler compiler = compilers.get(compilerId);
     if (compiler == null) {

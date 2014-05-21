@@ -111,6 +111,27 @@ public class CompileTest extends AbstractCompileTest {
   }
 
   @Test
+  public void testBasic_skipMain() throws Exception {
+    File basedir = compile("compile/basic", newParameter("skipMain", "true"));
+    mojos.assertBuildOutputs(new File(basedir, "target/classes"), new String[0]);
+  }
+
+  @Test
+  public void testBasic_skip() throws Exception {
+    File basedir = compile("compile/basic");
+    File testClasses = new File(basedir, "target/test-classes");
+
+    MavenProject project = mojos.readMavenProject(basedir);
+    MavenSession session = mojos.newMavenSession(project);
+    MojoExecution execution = mojos.newMojoExecution("testCompile");
+    execution.getConfiguration().addChild(newParameter("compilerId", compilerId));
+    execution.getConfiguration().addChild(newParameter("skip", "true"));
+    mojos.executeMojo(session, project, execution);
+
+    mojos.assertBuildOutputs(testClasses, new String[0]);
+  }
+
+  @Test
   public void testIncludes() throws Exception {
     Xpp3Dom includes = new Xpp3Dom("includes");
     includes.addChild(newParameter("include", "basic/Basic.java"));

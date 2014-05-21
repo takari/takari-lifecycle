@@ -67,6 +67,13 @@ public class TestCompileMojo extends AbstractCompileMojo {
   @Parameter(defaultValue = "${project.build.directory}/generated-test-sources/test-annotations")
   private File generatedTestSourcesDirectory;
 
+  /**
+   * Set this to 'true' to bypass compilation of test sources. Its use is NOT RECOMMENDED, but quite
+   * convenient on occasion.
+   */
+  @Parameter(property = "maven.test.skip")
+  private boolean skip;
+
   @Override
   public Set<String> getSourceRoots() {
     return new LinkedHashSet<String>(compileSourceRoots);
@@ -105,4 +112,8 @@ public class TestCompileMojo extends AbstractCompileMojo {
     return generatedTestSourcesDirectory;
   }
 
+  @Override
+  protected boolean isSkip() {
+    return skip;
+  }
 }

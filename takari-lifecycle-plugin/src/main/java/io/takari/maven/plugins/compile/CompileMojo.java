@@ -60,6 +60,13 @@ public class CompileMojo extends AbstractCompileMojo {
   @Parameter(defaultValue = "${project.build.directory}/generated-sources/annotations")
   private File generatedSourcesDirectory;
 
+  /**
+   * Set this to 'true' to bypass compilation of main sources. Its use is NOT RECOMMENDED, but quite
+   * convenient on occasion.
+   */
+  @Parameter(property = "maven.main.skip")
+  private boolean skipMain;
+
   @Override
   public Set<String> getSourceRoots() {
     return new LinkedHashSet<String>(compileSourceRoots);
@@ -95,5 +102,10 @@ public class CompileMojo extends AbstractCompileMojo {
   @Override
   public File getGeneratedSourcesDirectory() {
     return generatedSourcesDirectory;
+  }
+
+  @Override
+  protected boolean isSkip() {
+    return skipMain;
   }
 }
