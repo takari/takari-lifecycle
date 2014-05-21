@@ -2,15 +2,15 @@
   <pluginExecutions>
     <pluginExecution>
       <pluginExecutionFilter>
-        <groupId>io.tesla.maven.plugin</groupId>
-        <artifactId>tesla-plugin-plugin</artifactId>
-        <versionRange>[0.0.4,)</versionRange>
         <goals>
-          <goal>descriptor</goal>
+          <goal>process-resources</goal>
+          <goal>process-test-resources</goal>
         </goals>
       </pluginExecutionFilter>
       <action>
-        <ignore></ignore>
+        <configurator>
+          <id>io.takari.m2e.incrementalbuild.mojoExecutionConfigurator</id>
+        </configurator>
       </action>
     </pluginExecution>
   </pluginExecutions>
