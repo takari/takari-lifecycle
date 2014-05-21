@@ -174,7 +174,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Incremental(configuration = Configuration.ignore)
   private Artifact artifact;
 
-  @Parameter(defaultValue = "${project.packaging", readonly = true)
+  @Parameter(defaultValue = "${project.packaging}", readonly = true)
   private String packaging;
 
   @Component

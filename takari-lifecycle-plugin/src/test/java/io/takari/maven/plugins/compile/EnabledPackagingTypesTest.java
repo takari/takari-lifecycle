@@ -15,7 +15,7 @@ public class EnabledPackagingTypesTest {
   public final CompileRule mojos = new CompileRule();
 
   @Test
-  public void test() throws Exception {
+  public void testDisabled() throws Exception {
     File basedir = resources.getBasedir("compile/basic");
 
     Xpp3Dom type = new Xpp3Dom("type");
@@ -25,5 +25,18 @@ public class EnabledPackagingTypesTest {
 
     mojos.compile(basedir, types);
     mojos.assertBuildOutputs(basedir, new String[0]);
+  }
+
+  @Test
+  public void testEnabled() throws Exception {
+    File basedir = resources.getBasedir("compile/basic");
+
+    Xpp3Dom type = new Xpp3Dom("type");
+    type.setValue("jar");
+    Xpp3Dom types = new Xpp3Dom("enabledPackagingTypes");
+    types.addChild(type);
+
+    mojos.compile(basedir, types);
+    mojos.assertBuildOutputs(basedir, "target/classes/basic/Basic.class");
   }
 }
