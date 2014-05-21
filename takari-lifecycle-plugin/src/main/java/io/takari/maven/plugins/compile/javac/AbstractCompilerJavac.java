@@ -3,20 +3,14 @@ package io.takari.maven.plugins.compile.javac;
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
 import io.takari.incrementalbuild.BuildContext.OutputMetadata;
 import io.takari.incrementalbuild.BuildContext.ResourceStatus;
-import io.takari.incrementalbuild.spi.DefaultBuildContext;
-import io.takari.incrementalbuild.spi.DefaultInputMetadata;
-import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
+import io.takari.incrementalbuild.spi.*;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Debug;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
-import io.takari.maven.plugins.compile.AbstractCompiler;
+import io.takari.maven.plugins.compile.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public abstract class AbstractCompilerJavac extends AbstractCompiler {
 
@@ -176,7 +170,7 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
   public void skipCompilation() {
     // javac does not track input/output association
     // need to manually carry-over output metadata
-    // otherwise outouts are deleted during BuildContext#commit
+    // otherwise outputs are deleted during BuildContext#commit
     for (OutputMetadata<File> output : context.getProcessedOutputs()) {
       context.carryOverOutput(output.getResource());
     }

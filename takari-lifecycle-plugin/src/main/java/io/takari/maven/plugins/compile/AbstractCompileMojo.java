@@ -2,24 +2,17 @@ package io.takari.maven.plugins.compile;
 
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
+import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.maven.plugins.compile.javac.CompilerJavacLauncher;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.*;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.codehaus.plexus.util.DirectoryScanner;
@@ -152,6 +145,13 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Parameter(property = "maven.compiler.debug", defaultValue = "all")
   private String debug;
 
+  /**
+   * Only compile project of these packaging types and skip projects with other packaging types.
+   * Useful when compile/testCompile mojo execution is configured in the parent pom.
+   */
+  @Parameter
+  private Set<String> enabledPackagingTypes;
+
   //
 
   @Parameter(defaultValue = "${project.file}", readonly = true)
@@ -174,8 +174,14 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Incremental(configuration = Configuration.ignore)
   private Artifact artifact;
 
+  @Parameter(defaultValue = "${project.packaging", readonly = true)
+  private String packaging;
+
   @Component
   private Map<String, AbstractCompiler> compilers;
+
+  @Component
+  private DefaultBuildContext<?> context;
 
   public Charset getSourceEncoding() {
     return encoding == null ? null : Charset.forName(encoding);
@@ -234,6 +240,14 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
+
+    if (enabledPackagingTypes != null && !enabledPackagingTypes.isEmpty()
+        && !enabledPackagingTypes.contains(packaging)) {
+      log.info("Not enabled for packaging {}, skipping compilation", packaging);
+      // don't carry over any state
+      // if compilation used to be enabled, let build context remove any generated outputs
+      return;
+    }
 
     Stopwatch stopwatch = new Stopwatch().start();
 
