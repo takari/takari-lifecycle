@@ -54,8 +54,6 @@ public class CompileMojo extends AbstractCompileMojo {
    * Specify where to place generated source files created by annotation processing. Only applies to
    * JDK 1.6+
    * </p>
-   * 
-   * @since 2.2
    */
   @Parameter(defaultValue = "${project.build.directory}/generated-sources/annotations")
   private File generatedSourcesDirectory;

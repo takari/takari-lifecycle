@@ -43,8 +43,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
   /**
    * The -encoding argument for the Java compiler.
-   *
-   * @since 2.1
    */
   @Parameter(property = "encoding", defaultValue = "${project.build.sourceEncoding}")
   private String encoding;
@@ -74,8 +72,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   /**
    * Initial size, in megabytes, of the memory allocation pool, ex. "64", "64m" if {@link #fork} is
    * set to <code>true</code>.
-   *
-   * @since 2.0.1
    */
   @Parameter(property = "maven.compiler.meminitial")
   private String meminitial;
@@ -83,8 +79,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   /**
    * Sets the maximum size, in megabytes, of the memory allocation pool, ex. "128", "128m" if
    * {@link #fork} is set to <code>true</code>.
-   *
-   * @since 2.0.1
    */
   @Parameter(property = "maven.compiler.maxmem")
   private String maxmem;
@@ -103,8 +97,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
    * <li><code>none</code> - no annotation processing is performed.</li>
    * <li><code>only</code> - only annotation processing is done, no compilation.</li>
    * </ul>
-   * 
-   * @since 2.2
    */
   @Parameter(defaultValue = "none")
   private Proc proc = Proc.none;
@@ -114,8 +106,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
    * Names of annotation processors to run. Only applies to JDK 1.6+ If not set, the default
    * annotation processors discovery process applies.
    * </p>
-   *
-   * @since 2.2
    */
   @Parameter
   private String[] annotationProcessors;
