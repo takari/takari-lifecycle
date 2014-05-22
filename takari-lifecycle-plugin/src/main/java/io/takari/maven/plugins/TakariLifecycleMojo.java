@@ -8,6 +8,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.descriptor.MojoDescriptor;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -23,10 +24,8 @@ import org.slf4j.Logger;
 // idempotent
 // how can we skip whole phases or at least be consistent
 // how to decorate the lifecycle with additions i.e. a DAG within a phase
-// integrate incremental build
 // include all the dependencies in the distribution, either use it as a repository or push them to
 // the local repo on startup the first time
-// builds must be idempotent
 // we ultimately want simple JSR330 components
 // offline model
 //
@@ -58,6 +57,10 @@ public abstract class TakariLifecycleMojo extends AbstractMojo {
   @Parameter(defaultValue = "${project.remoteRepositories}")
   @Incremental(configuration = Configuration.ignore)
   protected List<RemoteRepository> remoteRepositories;
+
+  @Parameter(defaultValue = "${mojoExecution}")
+  @Incremental(configuration = Configuration.ignore)
+  protected MojoExecution mojoExecution;
 
   @Parameter(defaultValue = "${mojoExecution.mojoDescriptor}")
   @Incremental(configuration = Configuration.ignore)
