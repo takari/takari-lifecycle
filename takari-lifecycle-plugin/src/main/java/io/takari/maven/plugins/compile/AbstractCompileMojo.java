@@ -253,7 +253,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
     compiler.setOutputDirectory(getOutputDirectory());
     compiler.setSource(source);
-    compiler.setTarget(target);
+    compiler.setTarget(getTarget(target, source));
     compiler.setProc(proc);
     compiler.setGeneratedSourcesDirectory(getGeneratedSourcesDirectory());
     compiler.setAnnotationProcessors(annotationProcessors);
@@ -301,6 +301,19 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     } catch (IOException e) {
       throw new MojoExecutionException("Could not compile project", e);
     }
+  }
+
+  private static String getTarget(String target, String source) {
+    if (target != null) {
+      return target;
+    }
+    if (source != null) {
+      if ("1.2".equals(source) || "1.3".equals(source)) {
+        return "1.4";
+      }
+      return source;
+    }
+    return "1.6";
   }
 
   private static Set<Debug> parseDebug(String debug) {
