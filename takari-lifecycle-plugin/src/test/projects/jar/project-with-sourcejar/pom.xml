@@ -17,10 +17,8 @@
         <groupId>io.takari.maven.plugins</groupId>
         <artifactId>takari-lifecycle-plugin</artifactId>
         <configuration>
-          <jar>
-            <sourceJar>true</sourceJar>
-            <testJar>false</testJar>
-          </jar>
+          <sourceJar>true</sourceJar>
+          <testJar>false</testJar>
         </configuration>
       </plugin>
     </plugins>
