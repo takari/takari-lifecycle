@@ -6,11 +6,13 @@ import java.io.File;
 import java.nio.charset.Charset;
 
 import org.apache.maven.plugin.testing.resources.TestResources;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
 
 import com.google.common.io.Files;
 
-public class ResourcesBuildAvoidanceTest {
+public class ResourcesTest {
 
   @Rule
   public final TestResources resources = new TestResources();

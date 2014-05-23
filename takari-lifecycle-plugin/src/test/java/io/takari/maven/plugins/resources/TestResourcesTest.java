@@ -12,7 +12,7 @@ import org.junit.Test;
 
 import com.google.common.io.Files;
 
-public class TestResourcesBuildAvoidanceTest {
+public class TestResourcesTest {
 
   @Rule
   public final TestResources resources = new TestResources();
