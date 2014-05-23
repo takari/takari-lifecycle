@@ -31,6 +31,8 @@ import com.google.common.base.Stopwatch;
 
 public abstract class AbstractCompileMojo extends AbstractMojo {
 
+  private static final String DEFAULT_COMPILER_LEVEL = "1.7";
+
   // I much prefer slf4j over plexus logger api
   private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -51,7 +53,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   /**
    * The -source argument for the Java compiler.
    */
-  @Parameter(property = "maven.compiler.source", defaultValue = "1.6")
+  @Parameter(property = "maven.compiler.source", defaultValue = DEFAULT_COMPILER_LEVEL)
   private String source;
 
   /**
@@ -311,7 +313,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       }
       return source;
     }
-    return "1.6";
+    return DEFAULT_COMPILER_LEVEL;
   }
 
   private static Set<Debug> parseDebug(String debug) {

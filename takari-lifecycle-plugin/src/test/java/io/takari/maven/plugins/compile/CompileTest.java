@@ -204,7 +204,7 @@ public class CompileTest extends AbstractCompileTest {
 
     File basedir = resources.getBasedir("compile/source-target-version");
     try {
-      compile(basedir);
+      compile(basedir, newParameter("source", "1.6"));
     } catch (MojoExecutionException e) {
       Assert.assertEquals("1 error(s) encountered, see previous message(s) for details",
           e.getMessage());
