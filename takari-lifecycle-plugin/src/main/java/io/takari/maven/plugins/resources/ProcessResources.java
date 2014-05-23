@@ -9,7 +9,7 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
-@Mojo(name = "process-resources", defaultPhase = LifecyclePhase.PROCESS_RESOURCES, configurator = "takari-mojo")
+@Mojo(name = "process-resources", defaultPhase = LifecyclePhase.PROCESS_RESOURCES)
 public class ProcessResources extends AbstractProcessResourcesMojo {
 
   @Parameter(defaultValue = "${project.build.outputDirectory}", property = "resources.outputDirectory")
