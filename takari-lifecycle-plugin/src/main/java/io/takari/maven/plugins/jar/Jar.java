@@ -44,6 +44,9 @@ public class Jar extends TakariLifecycleMojo {
   @Parameter(defaultValue = "${project.build.testOutputDirectory}")
   private File testClassesDirectory;
 
+  @Parameter
+  private ArchiveConfiguration archive;
+
   @Override
   protected void executeMojo() throws MojoExecutionException {
 
@@ -58,10 +61,12 @@ public class Jar extends TakariLifecycleMojo {
     if (mainJar) {
       File jar = new File(outputDirectory, String.format("%s.jar", finalName));
       try {
-        archiver.archive(jar, //
+        archiver.archive(
+            jar, //
             new DirectorySource(classesDirectory), //
-            new FileSource(String.format("META-INF/maven/%s/%s/pom.properties", project.getGroupId(), project.getArtifactId()), createPomPropertiesFile(project)), //
-            new FileSource("META-INF/MANIFEST.MF", createManifestFile(project)));
+            new FileSource(String.format("META-INF/maven/%s/%s/pom.properties",
+                project.getGroupId(), project.getArtifactId()), createPomPropertiesFile(project)), //
+            new FileSource("META-INF/MANIFEST.MF", getMainManifest()));
         project.getArtifact().setFile(jar);
       } catch (IOException e) {
         throw new MojoExecutionException(e.getMessage(), e);
@@ -150,5 +155,16 @@ public class Jar extends TakariLifecycleMojo {
       closer.close();
     }
     return manifestFile;
+  }
+
+  private File getMainManifest() throws IOException {
+    if (archive != null && archive.getManifestFile() != null) {
+      File manifest = archive.getManifestFile();
+      if (!manifest.isFile() || !manifest.canRead()) {
+        throw new IOException(String.format("Manifest %s cannot be read", manifest));
+      }
+      return manifest;
+    }
+    return createManifestFile(project);
   }
 }

@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
+import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -62,7 +63,8 @@ public class JarTest {
     File jar1 = new File(basedir, "target/test-1.0.jar");
     Assert.assertTrue(jar1.exists());
     String fingerprint1 = new FingerprintSha1Streaming().fingerprint(jar1);
-    assertEquals("We expect the JAR to have the same fingerprint after repeated builds.", fingerprint0, fingerprint1);
+    assertEquals("We expect the JAR to have the same fingerprint after repeated builds.",
+        fingerprint0, fingerprint1);
 
     // Make sure our maven properties file is written correctly
     ZipFile zip0 = new ZipFile(jar1);
@@ -94,7 +96,8 @@ public class JarTest {
       assertEquals("1.0", p.getMainAttributes().getValue("Manifest-Version"));
       assertEquals("test", p.getMainAttributes().getValue("Implementation-Title"));
       assertEquals("1.0", p.getMainAttributes().getValue("Implementation-Version"));
-      assertEquals("io.takari.lifecycle.its", p.getMainAttributes().getValue("Implementation-Vendor-Id"));
+      assertEquals("io.takari.lifecycle.its",
+          p.getMainAttributes().getValue("Implementation-Vendor-Id"));
     } else {
       fail("We expected the standard META-INF/MANIFEST.MF");
     }
@@ -122,7 +125,8 @@ public class JarTest {
     URLClassLoader cl = new URLClassLoader(new URL[] {jar.toURI().toURL()}, null);
     List<URL> list = toList(cl.getResources("subdir"));
     Assert.assertEquals(1, list.size());
-    Assert.assertTrue(list.get(0).toString(), list.get(0).toString().endsWith("test-1.0.jar!/subdir"));
+    Assert.assertTrue(list.get(0).toString(),
+        list.get(0).toString().endsWith("test-1.0.jar!/subdir"));
   }
 
   private static <T> List<T> toList(Enumeration<T> e) {
@@ -131,5 +135,19 @@ public class JarTest {
       l.add(e.nextElement());
     }
     return l;
+  }
+
+  @Test
+  public void testCustomManifest() throws Exception {
+    File basedir = resources.getBasedir("jar/project-with-manifest");
+    new File(basedir, "target/classes").mkdirs(); // TODO this shouldn't be necessary
+    mojos.executeMojo(basedir, "jar");
+    JarFile jar = new JarFile(new File(basedir, "target/test-1.0.jar"));
+    try {
+      Manifest mf = jar.getManifest();
+      Assert.assertEquals("custom-value", mf.getMainAttributes().getValue("Custom-Entry"));
+    } finally {
+      jar.close();
+    }
   }
 }
