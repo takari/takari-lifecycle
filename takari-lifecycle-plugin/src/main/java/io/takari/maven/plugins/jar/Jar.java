@@ -20,7 +20,7 @@ import org.apache.maven.project.MavenProject;
 
 import com.google.common.io.Closer;
 
-@Mojo(name = "jar", defaultPhase = LifecyclePhase.PACKAGE, configurator = "takari-mojo")
+@Mojo(name = "jar", defaultPhase = LifecyclePhase.PACKAGE)
 public class Jar extends TakariLifecycleMojo {
 
   @Parameter(defaultValue = "${project.build.outputDirectory}")
@@ -31,6 +31,9 @@ public class Jar extends TakariLifecycleMojo {
 
   @Parameter(defaultValue = "${project.build.directory}")
   private File outputDirectory;
+
+  @Parameter(defaultValue = "true", property = "mainJar")
+  private boolean mainJar;
 
   @Parameter(defaultValue = "false", property = "sourceJar")
   private boolean sourceJar;
@@ -52,20 +55,21 @@ public class Jar extends TakariLifecycleMojo {
       outputDirectory.mkdir();
     }
 
-    File jar = new File(outputDirectory, String.format("%s.jar", finalName));
-    try {
-      archiver.archive(
-          jar, //
-          new DirectorySource(classesDirectory), //
-          new FileSource(String.format("META-INF/maven/%s/%s/pom.properties", project.getGroupId(),
-              project.getArtifactId()), createPomPropertiesFile(project)), //
-          new FileSource("META-INF/MANIFEST.MF", createManifestFile(project)));
-      project.getArtifact().setFile(jar);
-    } catch (IOException e) {
-      throw new MojoExecutionException(e.getMessage(), e);
+    if (mainJar) {
+      File jar = new File(outputDirectory, String.format("%s.jar", finalName));
+      try {
+        archiver.archive(jar, //
+            new DirectorySource(classesDirectory), //
+            new FileSource(String.format("META-INF/maven/%s/%s/pom.properties", project.getGroupId(), project.getArtifactId()), createPomPropertiesFile(project)), //
+            new FileSource("META-INF/MANIFEST.MF", createManifestFile(project)));
+        project.getArtifact().setFile(jar);
+      } catch (IOException e) {
+        throw new MojoExecutionException(e.getMessage(), e);
+      }
     }
 
     if (sourceJar) {
+      logger.info("Building source Jar.");
       Archiver sourceArchiver = Archiver.builder() //
           .useRoot(false) // Step into the source directories
           .build();
@@ -84,6 +88,7 @@ public class Jar extends TakariLifecycleMojo {
     }
 
     if (testJar && testClassesDirectory.exists()) {
+      logger.info("Building test Jar.");
       Archiver testArchiver = Archiver.builder() //
           .useRoot(false) //
           .build();
