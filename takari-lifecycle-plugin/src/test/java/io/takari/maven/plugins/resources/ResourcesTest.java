@@ -1,5 +1,6 @@
 package io.takari.maven.plugins.resources;
 
+import static org.apache.maven.plugin.testing.resources.TestResources.assertFileContents;
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 
 import java.io.File;
@@ -44,10 +45,7 @@ public class ResourcesTest {
   public void resourcesWithFiltering() throws Exception {
     File basedir = resources.getBasedir("resources/project-with-resources-filtered");
     mojos.executeMojo(basedir, "process-resources");
-    File resource = new File(basedir, "target/classes/resource.txt");
-    Assert.assertTrue(resource.exists());
-    String line = Files.readFirstLine(resource, Charset.defaultCharset());
-    Assert.assertTrue(line.contains("resource.txt with takari"));
+    assertFileContents(basedir, "expected-resource.txt", "target/classes/resource.txt");
   }
 
   @Test

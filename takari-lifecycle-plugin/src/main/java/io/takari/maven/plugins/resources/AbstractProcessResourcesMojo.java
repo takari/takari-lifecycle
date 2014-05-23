@@ -4,13 +4,14 @@ import io.takari.maven.plugins.TakariLifecycleMojo;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
-
-import javax.inject.Inject;
 
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
 
 public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
@@ -18,7 +19,7 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
   @Parameter(defaultValue = "${project.properties}")
   private Properties properties;
 
-  @Inject
+  @Component
   private ResourcesProcessor processor;
 
   protected void process(List<Resource> resources, File outputDirectory)
@@ -39,6 +40,8 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
           targetDirectory = outputDirectory;
         }
         if (filter) {
+          Map<Object, Object> properties = new HashMap<Object, Object>(this.properties);
+          properties.put("project", project);
           processor.process(sourceDirectory, targetDirectory, resource.getIncludes(),
               resource.getExcludes(), properties);
         } else {

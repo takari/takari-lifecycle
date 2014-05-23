@@ -1,0 +1,4 @@
+resource.txt with takari
+property with dots t.a.k.a.r.i
+property with dashes t-a-k-a-r-i
+reflective property test

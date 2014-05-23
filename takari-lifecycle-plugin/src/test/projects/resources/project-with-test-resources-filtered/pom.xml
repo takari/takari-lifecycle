@@ -9,6 +9,8 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <name>takari</name>
+    <dotted.name>t.a.k.a.r.i</dotted.name>
+    <dashed-name>t-a-k-a-r-i</dashed-name>
   </properties>
 
   <build>
@@ -20,6 +22,6 @@
         <directory>src/test/resources-filtered</directory>
         <filtering>true</filtering>
       </testResource>
-    </testResources>    
+    </testResources>
   </build>
 </project>
