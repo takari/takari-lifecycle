@@ -86,7 +86,6 @@ public class Jar extends TakariLifecycleMojo {
             new DirectorySource(project.getCompileSourceRoots()), //
             new FileSource("META-INF/MANIFEST.MF", createManifestFile(project)));
         projectHelper.attachArtifact(project, "source-jar", "sources", sourceJar);
-        project.getArtifact().setFile(sourceJar);
       } catch (IOException e) {
         throw new MojoExecutionException(e.getMessage(), e);
       }
@@ -104,7 +103,6 @@ public class Jar extends TakariLifecycleMojo {
             new DirectorySource(testClassesDirectory), //
             new FileSource("META-INF/MANIFEST.MF", createManifestFile(project)));
         projectHelper.attachArtifact(project, "test-jar", "tests", testJar);
-        project.getArtifact().setFile(testJar);
       } catch (IOException e) {
         throw new MojoExecutionException(e.getMessage(), e);
       }

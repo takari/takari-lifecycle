@@ -2,6 +2,7 @@ package io.takari.maven.plugins.jar;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import io.takari.hash.FingerprintSha1Streaming;
@@ -14,14 +15,21 @@ import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.testing.resources.TestResources;
+import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -103,17 +111,34 @@ public class JarTest {
     }
   }
 
-  // @Test Need to fix the configuration processing in maven before this will work
-  public void sourceJarCreation() throws Exception {
-    File basedir = resources.getBasedir("jar/project-with-sourcejar");
-    mojos.executeMojo(basedir, "process-resources");
-    mojos.executeMojo(basedir, "jar");
-    // test-1.0.jar
+  @Test
+  public void testBasic_attachedArtifacts() throws Exception {
+    File basedir = resources.getBasedir("jar/basic");
+
+    MavenProject project = mojos.readMavenProject(basedir);
+    executeMojo(project, "process-resources");
+    executeMojo(project, "process-test-resources");
+    executeMojo(project, "jar", newParameter("sourceJar", "true"), newParameter("testJar", "true"));
+
+    Map<String, Artifact> attachedArtifacts = new HashMap<String, Artifact>();
+    for (Artifact artifact : project.getAttachedArtifacts()) {
+      assertNull(attachedArtifacts.put(artifact.getClassifier(), artifact));
+    }
+
+    // main artifact (test-1.0.jar)
     File jar = new File(basedir, "target/test-1.0.jar");
     assertTrue(jar.exists());
-    // test-1.0-sources.jar
+    assertEquals(jar, project.getArtifact().getFile());
+
+    // sources (test-1.0-sources.jar)
     File sourceJar = new File(basedir, "target/test-1.0-sources.jar");
     assertTrue(sourceJar.exists());
+    assertEquals(sourceJar, attachedArtifacts.get("sources").getFile());
+
+    // tests (test-1.0-tests.jar)
+    File testJar = new File(basedir, "target/test-1.0-tests.jar");
+    assertTrue(testJar.exists());
+    assertEquals(testJar, attachedArtifacts.get("tests").getFile());
   }
 
   @Test
@@ -150,4 +175,28 @@ public class JarTest {
       jar.close();
     }
   }
+
+  // TODO move to a shared helper, possibly IncrementalBuildRule or MojoRule
+
+  protected Xpp3Dom newParameter(String name, String value) {
+    Xpp3Dom child = new Xpp3Dom(name);
+    child.setValue(value);
+    return child;
+  }
+
+  public void executeMojo(MavenProject project, String goal, Xpp3Dom... parameters)
+      throws Exception {
+    MavenSession session = mojos.newMavenSession(project);
+    MojoExecution execution = mojos.newMojoExecution(goal);
+
+    if (parameters != null) {
+      Xpp3Dom configuration = execution.getConfiguration();
+      for (Xpp3Dom parameter : parameters) {
+        configuration.addChild(parameter);
+      }
+    }
+
+    mojos.executeMojo(session, project, execution);
+  }
+
 }
