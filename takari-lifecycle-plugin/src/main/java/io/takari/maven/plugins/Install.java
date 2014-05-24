@@ -19,17 +19,7 @@ public class Install extends TakariLifecycleMojo {
 
   @Override
   public void executeMojo() throws MojoExecutionException {
-
-    MavenProject lastProject = reactorProjects.get(reactorProjects.size() - 1);
-    if (lastProject.equals(project)) {
-      for (MavenProject reactorProject : reactorProjects) {
-        installProject(reactorProject);
-      }
-    } else {
-      getLog().info(
-          "Installing " + project.getGroupId() + ":" + project.getArtifactId() + ":"
-              + project.getVersion() + " at end");
-    }
+    installProject(project);
   }
 
   private void installProject(MavenProject project) throws MojoExecutionException {
