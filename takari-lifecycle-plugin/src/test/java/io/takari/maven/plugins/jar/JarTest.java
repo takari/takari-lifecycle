@@ -1,6 +1,7 @@
 package io.takari.maven.plugins.jar;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -174,6 +175,16 @@ public class JarTest {
     } finally {
       jar.close();
     }
+  }
+
+  @Test
+  public void testEmpty() throws Exception {
+    File basedir = resources.getBasedir("jar/empty");
+    mojos.executeMojo(basedir, "jar");
+
+    assertTrue(new File(basedir, "target/test-1.0.jar").exists());
+    assertTrue(new File(basedir, "target/test-1.0-sources.jar").exists());
+    assertFalse(new File(basedir, "target/test-1.0-tests.jar").exists());
   }
 
   // TODO move to a shared helper, possibly IncrementalBuildRule or MojoRule

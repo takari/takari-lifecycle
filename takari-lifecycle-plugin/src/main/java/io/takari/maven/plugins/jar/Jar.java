@@ -2,6 +2,7 @@ package io.takari.maven.plugins.jar;
 
 import io.takari.maven.plugins.TakariLifecycleMojo;
 import io.tesla.proviso.archive.Archiver;
+import io.tesla.proviso.archive.Source;
 import io.tesla.proviso.archive.source.DirectorySource;
 import io.tesla.proviso.archive.source.FileSource;
 
@@ -9,6 +10,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -50,23 +53,27 @@ public class Jar extends TakariLifecycleMojo {
   @Override
   protected void executeMojo() throws MojoExecutionException {
 
-    Archiver archiver = Archiver.builder() //
-        .useRoot(false) // Step into the classes/ directory
-        .build();
-
     if (!outputDirectory.exists()) {
       outputDirectory.mkdir();
     }
 
     if (mainJar) {
+      Archiver archiver = Archiver.builder() //
+          .useRoot(false) // Step into the classes/ directory
+          .build();
+
       File jar = new File(outputDirectory, String.format("%s.jar", finalName));
       try {
-        archiver.archive(
-            jar, //
-            new DirectorySource(classesDirectory), //
-            new FileSource(String.format("META-INF/maven/%s/%s/pom.properties",
-                project.getGroupId(), project.getArtifactId()), createPomPropertiesFile(project)), //
-            new FileSource("META-INF/MANIFEST.MF", getMainManifest()));
+        List<Source> sources = new ArrayList<Source>();
+        if (classesDirectory.isDirectory()) {
+          sources.add(new DirectorySource(classesDirectory));
+        } else {
+          logger.warn("Main classes directory {} does not exist", classesDirectory);
+        }
+        sources.add(new FileSource(String.format("META-INF/maven/%s/%s/pom.properties",
+            project.getGroupId(), project.getArtifactId()), createPomPropertiesFile(project)));
+        sources.add(new FileSource("META-INF/MANIFEST.MF", getMainManifest()));
+        archiver.archive(jar, sources.toArray(new Source[sources.size()]));
         project.getArtifact().setFile(jar);
       } catch (IOException e) {
         throw new MojoExecutionException(e.getMessage(), e);
@@ -81,17 +88,23 @@ public class Jar extends TakariLifecycleMojo {
 
       File sourceJar = new File(outputDirectory, String.format("%s-%s.jar", finalName, "sources"));
       try {
-        sourceArchiver.archive( //
-            sourceJar, //
-            new DirectorySource(project.getCompileSourceRoots()), //
-            new FileSource("META-INF/MANIFEST.MF", createManifestFile(project)));
+        List<Source> sources = new ArrayList<Source>();
+        for (String sourceRoot : project.getCompileSourceRoots()) {
+          File dir = new File(sourceRoot);
+          if (dir.isDirectory()) {
+            sources.add(new DirectorySource(dir));
+          }
+        }
+        sources.add(new FileSource("META-INF/MANIFEST.MF", createManifestFile(project)));
+
+        sourceArchiver.archive(sourceJar, sources.toArray(new Source[sources.size()]));
         projectHelper.attachArtifact(project, "source-jar", "sources", sourceJar);
       } catch (IOException e) {
         throw new MojoExecutionException(e.getMessage(), e);
       }
     }
 
-    if (testJar && testClassesDirectory.exists()) {
+    if (testJar && testClassesDirectory.isDirectory()) {
       logger.info("Building test Jar.");
       Archiver testArchiver = Archiver.builder() //
           .useRoot(false) //
@@ -99,9 +112,11 @@ public class Jar extends TakariLifecycleMojo {
 
       File testJar = new File(outputDirectory, String.format("%s-%s.jar", finalName, "tests"));
       try {
-        testArchiver.archive(testJar, //
-            new DirectorySource(testClassesDirectory), //
-            new FileSource("META-INF/MANIFEST.MF", createManifestFile(project)));
+        List<Source> sources = new ArrayList<Source>();
+        sources.add(new DirectorySource(testClassesDirectory));
+        sources.add(new FileSource("META-INF/MANIFEST.MF", createManifestFile(project)));
+
+        testArchiver.archive(testJar, sources.toArray(new Source[sources.size()]));
         projectHelper.attachArtifact(project, "test-jar", "tests", testJar);
       } catch (IOException e) {
         throw new MojoExecutionException(e.getMessage(), e);
