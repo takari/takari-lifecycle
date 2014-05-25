@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project>
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>io.takari.lifecycle.its.basic</groupId>
-  <artifactId>basic</artifactId>
+  <groupId>io.takari.lifecycle.its.multimodule-skip-install-deploy</groupId>
+  <artifactId>parent</artifactId>
   <version>1.0</version>
-  <packaging>takari-jar</packaging>
+  <packaging>pom</packaging>
 
   <distributionManagement>
     <repository>
@@ -20,6 +19,16 @@
     </snapshotRepository>
   </distributionManagement>
 
+  <description>
+  The point of this test is to verify install/deploy works 
+  when last module of multi-module build has install/deploy executions skipped
+  </description>
+
+  <modules>
+    <module>modulea</module>
+    <module>moduleb</module>
+  </modules>
+
   <build>
     <plugins>
       <plugin>
@@ -27,11 +36,8 @@
         <artifactId>takari-lifecycle-plugin</artifactId>
         <version>${lifecycle-plugin.version}</version>
         <extensions>true</extensions>
-        <configuration>
-          <sourceJar>true</sourceJar>
-          <testJar>true</testJar>
-        </configuration>
       </plugin>
     </plugins>
   </build>
+
 </project>

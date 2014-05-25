@@ -11,14 +11,35 @@ public class BasicTest extends AbstractIntegrationTest {
   @Test
   public void testBasic() throws Exception {
     File basedir = resources.getBasedir("basic");
+
+    File remoterepo = new File(basedir, "remoterepo");
+    Assert.assertTrue(remoterepo.mkdirs());
+
+    File localrepo = new File(getTestProperties().get("localRepository"));
+
     Verifier verifier = getVerifier(basedir);
-    verifier.executeGoal("install"); // TODO deploy
+    verifier.addCliOption("-Drepopath=" + remoterepo.getCanonicalPath());
+    verifier.executeGoal("deploy");
     verifier.verifyErrorFreeLog();
 
     // TODO assert expected mojos were executed
     // TODO assertFileExist, etc
     // TODO assert jar content
-    Assert.assertTrue(new File(basedir, "target/basic-1.0.0-SNAPSHOT.jar").canRead());
+    Assert.assertTrue(new File(basedir, "target/basic-1.0.jar").canRead());
+    Assert.assertTrue(new File(basedir, "target/basic-1.0-sources.jar").canRead());
+    Assert.assertTrue(new File(basedir, "target/basic-1.0-tests.jar").canRead());
+
+    File localGroup = new File(localrepo, "io/takari/lifecycle/its/basic");
+    Assert.assertTrue(new File(localGroup, "basic/1.0/basic-1.0.pom").canRead());
+    Assert.assertTrue(new File(localGroup, "basic/1.0/basic-1.0.jar").canRead());
+    Assert.assertTrue(new File(localGroup, "basic/1.0/basic-1.0-sources.jar").canRead());
+    Assert.assertTrue(new File(localGroup, "basic/1.0/basic-1.0-tests.jar").canRead());
+
+    File remoteGroup = new File(remoterepo, "io/takari/lifecycle/its/basic");
+    Assert.assertTrue(new File(remoteGroup, "basic/1.0/basic-1.0.pom").canRead());
+    Assert.assertTrue(new File(remoteGroup, "basic/1.0/basic-1.0.jar").canRead());
+    Assert.assertTrue(new File(remoteGroup, "basic/1.0/basic-1.0-sources.jar").canRead());
+    Assert.assertTrue(new File(remoteGroup, "basic/1.0/basic-1.0-tests.jar").canRead());
   }
 
 }

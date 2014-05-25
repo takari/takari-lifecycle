@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project>
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>io.takari.lifecycle.its.multimodule-skip-install-deploy</groupId>
+    <artifactId>parent</artifactId>
+    <version>1.0</version>
+  </parent>
+  <artifactId>moduleb</artifactId>
+  <packaging>takari-jar</packaging>
+
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>io.takari.maven.plugins</groupId>
+          <artifactId>takari-lifecycle-plugin</artifactId>
+          <executions>
+            <execution>
+              <id>default-install</id>
+              <configuration>
+                <skip>true</skip>
+              </configuration>
+            </execution>
+            <execution>
+              <id>default-deploy</id>
+              <configuration>
+                <skip>true</skip>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>

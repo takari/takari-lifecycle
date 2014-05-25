@@ -24,24 +24,15 @@ import org.eclipse.aether.util.repository.AuthenticationBuilder;
 @Mojo(name = "deploy", defaultPhase = LifecyclePhase.DEPLOY)
 public class Deploy extends TakariLifecycleMojo {
 
-  // deploy at the end to prevent corruption
+  // TODO deploy at the end to prevent corruption
+
   // polyglot conversion to detect the project type and convert on the way out the door
   // how to help people fork projects and deploy elsewhere: the alt deployment repo may have issues
   // - a standard property to replace in a conventional way?
 
   @Override
   public void executeMojo() throws MojoExecutionException {
-
-    MavenProject lastProject = reactorProjects.get(reactorProjects.size() - 1);
-    if (lastProject.equals(project)) {
-      for (MavenProject reactorProject : reactorProjects) {
-        installProject(reactorProject);
-      }
-    } else {
-      getLog().info(
-          "Installing " + project.getGroupId() + ":" + project.getArtifactId() + ":"
-              + project.getVersion() + " at end");
-    }
+    installProject(project);
   }
 
   private void installProject(MavenProject project) throws MojoExecutionException {
