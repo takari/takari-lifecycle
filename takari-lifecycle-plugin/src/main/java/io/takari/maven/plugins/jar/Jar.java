@@ -98,7 +98,7 @@ public class Jar extends TakariLifecycleMojo {
         sources.add(new FileSource("META-INF/MANIFEST.MF", createManifestFile(project)));
 
         sourceArchiver.archive(sourceJar, sources.toArray(new Source[sources.size()]));
-        projectHelper.attachArtifact(project, "source-jar", "sources", sourceJar);
+        projectHelper.attachArtifact(project, "jar", "sources", sourceJar);
       } catch (IOException e) {
         throw new MojoExecutionException(e.getMessage(), e);
       }
@@ -117,7 +117,7 @@ public class Jar extends TakariLifecycleMojo {
         sources.add(new FileSource("META-INF/MANIFEST.MF", createManifestFile(project)));
 
         testArchiver.archive(testJar, sources.toArray(new Source[sources.size()]));
-        projectHelper.attachArtifact(project, "test-jar", "tests", testJar);
+        projectHelper.attachArtifact(project, "jar", "tests", testJar);
       } catch (IOException e) {
         throw new MojoExecutionException(e.getMessage(), e);
       }

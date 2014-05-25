@@ -131,16 +131,19 @@ public class JarTest {
     File jar = new File(basedir, "target/test-1.0.jar");
     assertTrue(jar.exists());
     assertEquals(jar, project.getArtifact().getFile());
+    assertEquals("jar", project.getArtifact().getType());
 
     // sources (test-1.0-sources.jar)
     File sourceJar = new File(basedir, "target/test-1.0-sources.jar");
     assertTrue(sourceJar.exists());
     assertEquals(sourceJar, attachedArtifacts.get("sources").getFile());
+    assertEquals("jar", attachedArtifacts.get("sources").getType());
 
     // tests (test-1.0-tests.jar)
     File testJar = new File(basedir, "target/test-1.0-tests.jar");
     assertTrue(testJar.exists());
     assertEquals(testJar, attachedArtifacts.get("tests").getFile());
+    assertEquals("jar", attachedArtifacts.get("tests").getType());
   }
 
   @Test
