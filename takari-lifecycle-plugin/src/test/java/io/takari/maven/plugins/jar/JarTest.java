@@ -1,5 +1,6 @@
 package io.takari.maven.plugins.jar;
 
+import static org.apache.maven.plugin.testing.resources.TestResources.cp;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -115,10 +116,10 @@ public class JarTest {
   @Test
   public void testBasic_attachedArtifacts() throws Exception {
     File basedir = resources.getBasedir("jar/basic");
+    cp(basedir, "src/main/resources/resource.txt", "target/classes/resource.txt");
+    cp(basedir, "src/test/resources/test-resource.txt", "target/test-classes/resource.txt");
 
     MavenProject project = mojos.readMavenProject(basedir);
-    executeMojo(project, "process-resources");
-    executeMojo(project, "process-test-resources");
     executeMojo(project, "jar", newParameter("sourceJar", "true"), newParameter("testJar", "true"));
 
     Map<String, Artifact> attachedArtifacts = new HashMap<String, Artifact>();
