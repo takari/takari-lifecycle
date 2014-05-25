@@ -1,5 +1,6 @@
 package io.takari.maven.plugins.jar;
 
+import static io.takari.maven.plugins.IncrementalBuildRule2.newParameter;
 import static org.apache.maven.plugin.testing.resources.TestResources.cp;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -8,7 +9,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import io.takari.hash.FingerprintSha1Streaming;
-import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
+import io.takari.maven.plugins.IncrementalBuildRule2;
 
 import java.io.File;
 import java.io.InputStream;
@@ -27,11 +28,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.execution.MavenSession;
-import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.testing.resources.TestResources;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -44,7 +42,7 @@ public class JarTest {
   public final TestResources resources = new TestResources();
 
   @Rule
-  public final IncrementalBuildRule mojos = new IncrementalBuildRule();
+  public final IncrementalBuildRule2 mojos = new IncrementalBuildRule2();
 
   @Test
   public void jarCreation() throws Exception {
@@ -120,7 +118,8 @@ public class JarTest {
     cp(basedir, "src/test/resources/test-resource.txt", "target/test-classes/resource.txt");
 
     MavenProject project = mojos.readMavenProject(basedir);
-    executeMojo(project, "jar", newParameter("sourceJar", "true"), newParameter("testJar", "true"));
+    mojos.executeMojo(project, "jar", newParameter("sourceJar", "true"),
+        newParameter("testJar", "true"));
 
     Map<String, Artifact> attachedArtifacts = new HashMap<String, Artifact>();
     for (Artifact artifact : project.getAttachedArtifacts()) {
@@ -189,29 +188,6 @@ public class JarTest {
     assertTrue(new File(basedir, "target/test-1.0.jar").exists());
     assertTrue(new File(basedir, "target/test-1.0-sources.jar").exists());
     assertFalse(new File(basedir, "target/test-1.0-tests.jar").exists());
-  }
-
-  // TODO move to a shared helper, possibly IncrementalBuildRule or MojoRule
-
-  protected Xpp3Dom newParameter(String name, String value) {
-    Xpp3Dom child = new Xpp3Dom(name);
-    child.setValue(value);
-    return child;
-  }
-
-  public void executeMojo(MavenProject project, String goal, Xpp3Dom... parameters)
-      throws Exception {
-    MavenSession session = mojos.newMavenSession(project);
-    MojoExecution execution = mojos.newMojoExecution(goal);
-
-    if (parameters != null) {
-      Xpp3Dom configuration = execution.getConfiguration();
-      for (Xpp3Dom parameter : parameters) {
-        configuration.addChild(parameter);
-      }
-    }
-
-    mojos.executeMojo(session, project, execution);
   }
 
 }
