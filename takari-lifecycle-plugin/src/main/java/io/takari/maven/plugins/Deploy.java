@@ -2,21 +2,15 @@ package io.takari.maven.plugins;
 
 import io.takari.maven.plugins.util.AetherUtils;
 
-import org.apache.maven.artifact.ArtifactUtils;
-import org.apache.maven.model.DeploymentRepository;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.settings.Server;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.deployment.DeployRequest;
 import org.eclipse.aether.deployment.DeploymentException;
-import org.eclipse.aether.repository.Authentication;
 import org.eclipse.aether.repository.RemoteRepository;
-import org.eclipse.aether.repository.RemoteRepository.Builder;
 import org.eclipse.aether.util.artifact.SubArtifact;
-import org.eclipse.aether.util.repository.AuthenticationBuilder;
 
 /**
  * @author Jason van Zyl
@@ -72,34 +66,6 @@ public class Deploy extends TakariLifecycleMojo {
   // All this logic about finding the right repository needs to be standardized
   //
   public RemoteRepository remoteRepository(MavenProject project) {
-
-    // alternate repository
-    // make it easy to fork and deploy
-    // offline
-
-    DeploymentRepository deploymentRepository;
-
-    if (ArtifactUtils.isSnapshot(project.getVersion())) {
-      deploymentRepository = project.getDistributionManagement().getSnapshotRepository();
-    } else {
-      deploymentRepository = project.getDistributionManagement().getRepository();
-    }
-
-    Builder remoteRepositoryBuilder =
-        new RemoteRepository.Builder(deploymentRepository.getId(), "default",
-            deploymentRepository.getUrl());
-
-    Server server = settings.getServer(deploymentRepository.getId());
-    if (server != null) {
-      if (server.getUsername() != null && server.getPassword() != null) {
-        Authentication authentication = new AuthenticationBuilder() //
-            .addUsername(server.getUsername()) //
-            .addPassword(server.getPassword()) //
-            .build();
-        remoteRepositoryBuilder.setAuthentication(authentication);
-      }
-    }
-
-    return remoteRepositoryBuilder.build();
+    return AetherUtils.toRepo(project.getDistributionManagementArtifactRepository());
   }
 }
