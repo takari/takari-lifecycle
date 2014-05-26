@@ -55,10 +55,8 @@ import org.eclipse.jdt.internal.core.builder.ProblemFactory;
 import com.google.common.base.Stopwatch;
 
 /**
- * @TODO test classpath order changes triggers rebuild of affected sources (same type name,
- *       different classes)
- * @TODO figure out why JDT needs to worry about duplicate types (maybe related to classpath order
- *       above)
+ * @TODO test classpath order changes triggers rebuild of affected sources (same type name, different classes)
+ * @TODO figure out why JDT needs to worry about duplicate types (maybe related to classpath order above)
  * @TODO test affected sources are recompiled after source gets compile error
  * @TODO test nested types because addDependentsOf has some special handling
  */
@@ -106,8 +104,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   private final ClasspathDigester classpathDigester;
 
   @Inject
-  public CompilerJdt(DefaultBuildContext<?> context, ClasspathEntryCache classpathCache,
-      ClasspathDigester classpathDigester) {
+  public CompilerJdt(DefaultBuildContext<?> context, ClasspathEntryCache classpathCache, ClasspathDigester classpathDigester) {
     super(context);
     this.classpathCache = classpathCache;
     this.classpathDigester = classpathDigester;
@@ -159,8 +156,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     compilerOptions.suppressWarnings = true;
     IProblemFactory problemFactory = ProblemFactory.getProblemFactory(Locale.getDefault());
     Classpath namingEnvironment = createClasspath();
-    Compiler compiler =
-        new Compiler(namingEnvironment, errorHandlingPolicy, compilerOptions, this, problemFactory);
+    Compiler compiler = new Compiler(namingEnvironment, errorHandlingPolicy, compilerOptions, this, problemFactory);
     compiler.options.produceReferenceInfo = true;
 
     // TODO optimize full build.
@@ -171,8 +167,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
     // keep calling the compiler while there are sources in the queue
     while (!compileQueue.isEmpty()) {
-      ICompilationUnit[] sourceFiles =
-          compileQueue.toArray(new ICompilationUnit[compileQueue.size()]);
+      ICompilationUnit[] sourceFiles = compileQueue.toArray(new ICompilationUnit[compileQueue.size()]);
       compileQueue.clear();
       compiler.compile(sourceFiles);
       namingEnvironment.reset();
@@ -236,8 +231,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   private CompilationUnit newSourceFile(File source) {
     final String fileName = source.getAbsolutePath();
     final String encoding = getSourceEncoding() != null ? getSourceEncoding().name() : null;
-    return new CompilationUnit(null, fileName, encoding, getOutputDirectory().getAbsolutePath(),
-        false);
+    return new CompilationUnit(null, fileName, encoding, getOutputDirectory().getAbsolutePath(), false);
   }
 
   private Classpath createClasspath() throws IOException {
@@ -287,8 +281,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
     DefaultInputMetadata<File> metadata = context.registerInput(getPom());
     @SuppressWarnings("unchecked")
-    Map<String, byte[]> oldDigest =
-        (Map<String, byte[]>) metadata.getAttribute(ATTR_CLASSPATH_DIGEST, Serializable.class);
+    Map<String, byte[]> oldDigest = (Map<String, byte[]>) metadata.getAttribute(ATTR_CLASSPATH_DIGEST, Serializable.class);
 
     boolean changed = false;
 
@@ -324,8 +317,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       metadata.process().setAttribute(ATTR_CLASSPATH_DIGEST, digest);
     }
 
-    log.debug("Verified {} types and {} packages in {} ms", typecount, packagecount,
-        stopwatch.elapsed(TimeUnit.MILLISECONDS));
+    log.debug("Verified {} types and {} packages in {} ms", typecount, packagecount, stopwatch.elapsed(TimeUnit.MILLISECONDS));
 
     enqueueAffectedSources();
 
@@ -352,15 +344,11 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     DefaultInput<File> input = context.registerInput(sourceFile).process();
 
     // track type references
-    input.setAttribute(ATTR_REFERENCES, new ReferenceCollection(result.rootReferences,
-        result.qualifiedReferences, result.simpleNameReferences));
+    input.setAttribute(ATTR_REFERENCES, new ReferenceCollection(result.rootReferences, result.qualifiedReferences, result.simpleNameReferences));
 
     if (result.hasProblems()) {
       for (CategorizedProblem problem : result.getProblems()) {
-        input.addMessage(problem.getSourceLineNumber(), ((DefaultProblem) problem).column, problem
-            .getMessage(), problem.isError()
-            ? BuildContext.Severity.ERROR
-            : BuildContext.Severity.WARNING, null);
+        input.addMessage(problem.getSourceLineNumber(), ((DefaultProblem) problem).column, problem.getMessage(), problem.isError() ? BuildContext.Severity.ERROR : BuildContext.Severity.WARNING, null);
       }
     }
 
@@ -384,8 +372,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     // XXX double check affected sources are recompiled when this source has errors
   }
 
-  private void writeClassFile(DefaultInput<File> input, String relativeStringName,
-      ClassFile classFile) throws IOException {
+  private void writeClassFile(DefaultInput<File> input, String relativeStringName, ClassFile classFile) throws IOException {
     final byte[] bytes = classFile.getBytes();
     final File outputFile = new File(getOutputDirectory(), relativeStringName);
     final DefaultOutput output = input.associateOutput(outputFile);
@@ -409,8 +396,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   private boolean digestClassFile(DefaultOutput output, byte[] definition) {
     boolean significantChange = true;
     try {
-      ClassFileReader reader =
-          new ClassFileReader(definition, output.getResource().getAbsolutePath().toCharArray());
+      ClassFileReader reader = new ClassFileReader(definition, output.getResource().getAbsolutePath().toCharArray());
       byte[] hash = digester.digest(reader);
       if (hash != null) {
         byte[] oldHash = (byte[]) output.setAttribute(ATTR_CLASS_DIGEST, hash);

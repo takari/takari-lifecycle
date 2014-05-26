@@ -25,8 +25,7 @@ public class ReferenceCollection implements Serializable {
   Set<String> simpleNameReferences;
   Set<String> rootReferences;
 
-  protected ReferenceCollection(char[][] rootReferences, char[][][] qualifiedNameReferences,
-      char[][] simpleNameReferences) {
+  protected ReferenceCollection(char[][] rootReferences, char[][][] qualifiedNameReferences, char[][] simpleNameReferences) {
     this.qualifiedNameReferences = toStringSet(qualifiedNameReferences);
     this.simpleNameReferences = toStringSet(simpleNameReferences);
     this.rootReferences = toStringSet(rootReferences);
@@ -48,8 +47,7 @@ public class ReferenceCollection implements Serializable {
     return set;
   }
 
-  public boolean includes(Collection<String> qualifiedNames, Collection<String> simpleNames,
-      Collection<String> rootNames) {
+  public boolean includes(Collection<String> qualifiedNames, Collection<String> simpleNames, Collection<String> rootNames) {
 
     if (rootNames != null) {
       boolean foundRoot = false;
@@ -67,9 +65,7 @@ public class ReferenceCollection implements Serializable {
     for (String simpleName : simpleNames) {
       if (simpleNameReferences.contains(simpleName)) {
         for (String qualifiedName : qualifiedNames) {
-          if (qualifiedName.indexOf('.') > 0
-              ? qualifiedNameReferences.contains(qualifiedName)
-              : simpleNameReferences.contains(qualifiedName)) {
+          if (qualifiedName.indexOf('.') > 0 ? qualifiedNameReferences.contains(qualifiedName) : simpleNameReferences.contains(qualifiedName)) {
             return true;
           }
         }

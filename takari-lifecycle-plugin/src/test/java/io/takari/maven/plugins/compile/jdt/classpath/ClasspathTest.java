@@ -26,8 +26,7 @@ public class ClasspathTest {
       }
     }
     Classpath classpath = new Classpath(entries, null);
-    Assert.assertTrue(classpath.isPackage(CharOperation.splitOn('.', "org".toCharArray()),
-        "xml".toCharArray()));
+    Assert.assertTrue(classpath.isPackage(CharOperation.splitOn('.', "org".toCharArray()), "xml".toCharArray()));
   }
 
   @Test

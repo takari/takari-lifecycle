@@ -70,8 +70,7 @@ public class Jar extends TakariLifecycleMojo {
         } else {
           logger.warn("Main classes directory {} does not exist", classesDirectory);
         }
-        sources.add(new FileSource(String.format("META-INF/maven/%s/%s/pom.properties",
-            project.getGroupId(), project.getArtifactId()), createPomPropertiesFile(project)));
+        sources.add(new FileSource(String.format("META-INF/maven/%s/%s/pom.properties", project.getGroupId(), project.getArtifactId()), createPomPropertiesFile(project)));
         sources.add(new FileSource("META-INF/MANIFEST.MF", getMainManifest()));
         archiver.archive(jar, sources.toArray(new Source[sources.size()]));
         project.getArtifact().setFile(jar);

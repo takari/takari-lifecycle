@@ -24,8 +24,7 @@ public class JavaInstallation {
   }
 
   /**
-   * Returns default classpath associated with this java installation. The classpath includes
-   * bootstrap, extendion and endorsed entries.
+   * Returns default classpath associated with this java installation. The classpath includes bootstrap, extendion and endorsed entries.
    */
   public List<File> getClasspath() throws IOException {
     // See org.eclipse.jdt.internal.compiler.batch.Main.setPaths

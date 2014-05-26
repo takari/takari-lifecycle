@@ -47,41 +47,30 @@ public class InstallDeployTest {
     properties.put("repopath", remoterepo.getCanonicalPath());
     MavenProject project = mojos.readMavenProject(basedir, properties);
 
-    mojos.executeMojo(project, "jar", newParameter("sourceJar", "true"),
-        newParameter("testJar", "true"));
+    mojos.executeMojo(project, "jar", newParameter("sourceJar", "true"), newParameter("testJar", "true"));
     Assert.assertEquals(2, project.getAttachedArtifacts().size());
 
     MavenSession session = newSession(project, localrepo);
 
     mojos.executeMojo(session, project, "install");
-    Assert.assertTrue(new File(localrepo, "io/takari/lifecycle/its/test/1.0/test-1.0.jar")
-        .canRead());
-    Assert.assertTrue(new File(localrepo, "io/takari/lifecycle/its/test/1.0/test-1.0.pom")
-        .canRead());
-    Assert.assertTrue(new File(localrepo, "io/takari/lifecycle/its/test/1.0/test-1.0-sources.jar")
-        .canRead());
-    Assert.assertTrue(new File(localrepo, "io/takari/lifecycle/its/test/1.0/test-1.0-tests.jar")
-        .canRead());
+    Assert.assertTrue(new File(localrepo, "io/takari/lifecycle/its/test/1.0/test-1.0.jar").canRead());
+    Assert.assertTrue(new File(localrepo, "io/takari/lifecycle/its/test/1.0/test-1.0.pom").canRead());
+    Assert.assertTrue(new File(localrepo, "io/takari/lifecycle/its/test/1.0/test-1.0-sources.jar").canRead());
+    Assert.assertTrue(new File(localrepo, "io/takari/lifecycle/its/test/1.0/test-1.0-tests.jar").canRead());
 
     mojos.executeMojo(session, project, "deploy");
-    Assert.assertTrue(new File(remoterepo, "io/takari/lifecycle/its/test/1.0/test-1.0.jar")
-        .canRead());
-    Assert.assertTrue(new File(remoterepo, "io/takari/lifecycle/its/test/1.0/test-1.0.pom")
-        .canRead());
-    Assert.assertTrue(new File(remoterepo, "io/takari/lifecycle/its/test/1.0/test-1.0-sources.jar")
-        .canRead());
-    Assert.assertTrue(new File(remoterepo, "io/takari/lifecycle/its/test/1.0/test-1.0-tests.jar")
-        .canRead());
+    Assert.assertTrue(new File(remoterepo, "io/takari/lifecycle/its/test/1.0/test-1.0.jar").canRead());
+    Assert.assertTrue(new File(remoterepo, "io/takari/lifecycle/its/test/1.0/test-1.0.pom").canRead());
+    Assert.assertTrue(new File(remoterepo, "io/takari/lifecycle/its/test/1.0/test-1.0-sources.jar").canRead());
+    Assert.assertTrue(new File(remoterepo, "io/takari/lifecycle/its/test/1.0/test-1.0-tests.jar").canRead());
   }
 
-  private MavenSession newSession(MavenProject project, File localrepo)
-      throws NoLocalRepositoryManagerException {
+  private MavenSession newSession(MavenProject project, File localrepo) throws NoLocalRepositoryManagerException {
     MavenExecutionRequest request = new DefaultMavenExecutionRequest();
     MavenExecutionResult result = new DefaultMavenExecutionResult();
     DefaultRepositorySystemSession repoSession = MavenRepositorySystemUtils.newSession();
     LocalRepository localRepo = new LocalRepository(localrepo);
-    repoSession.setLocalRepositoryManager(new SimpleLocalRepositoryManagerFactory().newInstance(
-        repoSession, localRepo));
+    repoSession.setLocalRepositoryManager(new SimpleLocalRepositoryManagerFactory().newInstance(repoSession, localRepo));
     MavenSession session = new MavenSession(mojos.getContainer(), repoSession, request, result);
     session.setCurrentProject(project);
     session.setProjects(Arrays.asList(project));

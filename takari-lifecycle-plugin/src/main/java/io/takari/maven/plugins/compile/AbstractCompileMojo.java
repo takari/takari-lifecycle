@@ -57,8 +57,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   private String source;
 
   /**
-   * The -target argument for the Java compiler. The default depends on the value of {@code source}
-   * as defined in javac documentation.
+   * The -target argument for the Java compiler. The default depends on the value of {@code source} as defined in javac documentation.
    * 
    * @see http://docs.oracle.com/javase/6/docs/technotes/tools/solaris/javac.html
    */
@@ -66,37 +65,32 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   private String target;
 
   /**
-   * The compiler id of the compiler to use, one of {@code javac}, {@code forked-javac} or
-   * {@code jdt}.
+   * The compiler id of the compiler to use, one of {@code javac}, {@code forked-javac} or {@code jdt}.
    */
   @Parameter(property = "maven.compiler.compilerId", defaultValue = "javac")
   private String compilerId;
 
   /**
-   * Initial size, in megabytes, of the memory allocation pool, ex. "64", "64m" if {@link #fork} is
-   * set to <code>true</code>.
+   * Initial size, in megabytes, of the memory allocation pool, ex. "64", "64m" if {@link #fork} is set to <code>true</code>.
    */
   @Parameter(property = "maven.compiler.meminitial")
   private String meminitial;
 
   /**
-   * Sets the maximum size, in megabytes, of the memory allocation pool, ex. "128", "128m" if
-   * {@link #fork} is set to <code>true</code>.
+   * Sets the maximum size, in megabytes, of the memory allocation pool, ex. "128", "128m" if {@link #fork} is set to <code>true</code>.
    */
   @Parameter(property = "maven.compiler.maxmem")
   private String maxmem;
 
   /**
    * <p>
-   * Sets whether annotation processing is performed or not. Only applies to JDK 1.6+ If not set, no
-   * annotation processing is performed.
+   * Sets whether annotation processing is performed or not. Only applies to JDK 1.6+ If not set, no annotation processing is performed.
    * </p>
    * <p>
    * Allowed values are:
    * </p>
    * <ul>
-   * <li><code>proc</code> - both compilation and annotation processing are performed at the same
-   * time.</li>
+   * <li><code>proc</code> - both compilation and annotation processing are performed at the same time.</li>
    * <li><code>none</code> - no annotation processing is performed.</li>
    * <li><code>only</code> - only annotation processing is done, no compilation.</li>
    * </ul>
@@ -106,8 +100,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
   /**
    * <p>
-   * Names of annotation processors to run. Only applies to JDK 1.6+ If not set, the default
-   * annotation processors discovery process applies.
+   * Names of annotation processors to run. Only applies to JDK 1.6+ If not set, the default annotation processors discovery process applies.
    * </p>
    */
   @Parameter
@@ -130,8 +123,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
    * <p>
    * Allowed values
    * <ul>
-   * <li><strong>all</strong> or <strong>true</strong> Generate all debugging information, including
-   * local variables. This is the default.</li>
+   * <li><strong>all</strong> or <strong>true</strong> Generate all debugging information, including local variables. This is the default.</li>
    * <li><strong>none</strong> or <strong>false</strong> Do not generate any debugging information.</li>
    * <li>Comma-separated list of
    * <ul>
@@ -288,8 +280,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
         log.info("Compiling {} sources to {}", sources.size(), getOutputDirectory());
         compiler.compile();
         // TODO report actual number of sources compiled
-        log.info("Compiled {} sources ({} ms)", sources.size(),
-            stopwatch.elapsed(TimeUnit.MILLISECONDS));
+        log.info("Compiled {} sources ({} ms)", sources.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
       } else {
         // TODO this should be something like "cleanup after skipped compilation"
         compiler.skipCompilation();

@@ -163,8 +163,7 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
       if (!modifiedOutputs.isEmpty()) {
         StringBuilder outputsMsg = new StringBuilder("Modified outputs:");
         for (OutputMetadata<File> output : modifiedOutputs) {
-          outputsMsg.append("\n   ").append(output.getStatus()).append(" ")
-              .append(output.getResource());
+          outputsMsg.append("\n   ").append(output.getStatus()).append(" ").append(output.getResource());
         }
         log.debug(outputsMsg.toString());
       }

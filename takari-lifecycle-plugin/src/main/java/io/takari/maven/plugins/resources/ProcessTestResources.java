@@ -18,7 +18,6 @@ public class ProcessTestResources extends AbstractProcessResourcesMojo {
 
   @Override
   protected void executeMojo() throws MojoExecutionException {
-    process(testResources != null ? testResources : project.getBuild().getTestResources(),
-        testOutputDirectory);
+    process(testResources != null ? testResources : project.getBuild().getTestResources(), testOutputDirectory);
   }
 }

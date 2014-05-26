@@ -58,8 +58,7 @@ public class CompileIncrementalTest extends AbstractCompileTest {
   @Test
   public void testDelete() throws Exception {
     File basedir = compile("compile-incremental/delete");
-    mojos.assertBuildOutputs(new File(basedir, "target/classes"), "delete/Delete.class",
-        "delete/Keep.class");
+    mojos.assertBuildOutputs(new File(basedir, "target/classes"), "delete/Delete.class", "delete/Keep.class");
 
     Assert.assertTrue(new File(basedir, "src/main/java/delete/Delete.java").delete());
     compile(basedir);
@@ -75,16 +74,14 @@ public class CompileIncrementalTest extends AbstractCompileTest {
   public void testError() throws Exception {
     ErrorMessage expected = new ErrorMessage(compilerId);
     expected.setSnippets("jdt", "ERROR Error.java [4:11] Errorr cannot be resolved to a type");
-    expected.setSnippets("javac", "ERROR Error.java [4:11]", "cannot find symbol", "class Errorr",
-        "location", "class error.Error");
+    expected.setSnippets("javac", "ERROR Error.java [4:11]", "cannot find symbol", "class Errorr", "location", "class error.Error");
 
     File basedir = resources.getBasedir("compile-incremental/error");
     try {
       compile(basedir);
       Assert.fail();
     } catch (MojoExecutionException e) {
-      Assert.assertEquals("1 error(s) encountered, see previous message(s) for details",
-          e.getMessage());
+      Assert.assertEquals("1 error(s) encountered, see previous message(s) for details", e.getMessage());
     }
     mojos.assertBuildOutputs(basedir, new String[0]);
     mojos.assertMessage(basedir, "src/main/java/error/Error.java", expected);
@@ -94,8 +91,7 @@ public class CompileIncrementalTest extends AbstractCompileTest {
       compile(basedir);
       Assert.fail();
     } catch (MojoExecutionException e) {
-      Assert.assertEquals("1 error(s) encountered, see previous message(s) for details",
-          e.getMessage());
+      Assert.assertEquals("1 error(s) encountered, see previous message(s) for details", e.getMessage());
     }
     mojos.assertBuildOutputs(basedir, new String[0]);
     mojos.assertMessage(basedir, "src/main/java/error/Error.java", expected);

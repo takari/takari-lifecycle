@@ -34,8 +34,7 @@ public class ProjectClasspathDigester {
   private final DefaultBuildContext<?> context;
 
   @Inject
-  public ProjectClasspathDigester(DefaultBuildContext<?> context, MavenProject project,
-      MavenSession session) {
+  public ProjectClasspathDigester(DefaultBuildContext<?> context, MavenProject project, MavenSession session) {
     this.context = context;
 
     // this is only needed for unit tests, but won't hurt in general
@@ -81,8 +80,7 @@ public class ProjectClasspathDigester {
       log.debug("Removed classpath entry {}", removedArtifact.getResource().file);
     }
 
-    log.debug("Analyzed {} classpath dependencies ({} ms)", dependencies.size(),
-        stopwatch.elapsed(TimeUnit.MILLISECONDS));
+    log.debug("Analyzed {} classpath dependencies ({} ms)", dependencies.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
 
     return changed;
   }
@@ -91,8 +89,7 @@ public class ProjectClasspathDigester {
     if (previousArtifact == null) {
       return true;
     }
-    return artifact.lastModified != previousArtifact.lastModified
-        || artifact.length != previousArtifact.length;
+    return artifact.lastModified != previousArtifact.lastModified || artifact.length != previousArtifact.length;
   }
 
   private ArtifactFile newDirectoryArtifact(File directory, ArtifactFile previousArtifact) {
@@ -113,8 +110,7 @@ public class ProjectClasspathDigester {
     }
 
     if (previousArtifact != null && previousArtifact.length != fileCount) {
-      msg.append("\n   classfolder member count changed (new ").append(fileCount)
-          .append(" previous ").append(previousArtifact.length).append(')');
+      msg.append("\n   classfolder member count changed (new ").append(fileCount).append(" previous ").append(previousArtifact.length).append(')');
     }
 
     if (msg.length() > 0) {

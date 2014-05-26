@@ -44,9 +44,8 @@ import org.eclipse.aether.repository.RepositoryPolicy;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
 
 /**
- * <strong>Warning:</strong> This is an internal utility class that is only public for technical
- * reasons, it is not part of the public API. In particular, this class can be changed or deleted
- * without prior notice.
+ * <strong>Warning:</strong> This is an internal utility class that is only public for technical reasons, it is not part of the public API. In particular, this class can be changed or deleted without
+ * prior notice.
  * 
  * @author Benjamin Bentmann
  */
@@ -80,14 +79,11 @@ public class AetherUtils {
     ArtifactHandler handler = newHandler(artifact);
 
     /*
-     * NOTE: From Artifact.hasClassifier(), an empty string and a null both denote "no classifier".
-     * However, some plugins only check for null, so be sure to nullify an empty classifier.
+     * NOTE: From Artifact.hasClassifier(), an empty string and a null both denote "no classifier". However, some plugins only check for null, so be sure to nullify an empty classifier.
      */
     org.apache.maven.artifact.Artifact result =
-        new org.apache.maven.artifact.DefaultArtifact(artifact.getGroupId(),
-            artifact.getArtifactId(), artifact.getVersion(), null, artifact.getProperty(
-                ArtifactProperties.TYPE, artifact.getExtension()),
-            nullify(artifact.getClassifier()), handler);
+        new org.apache.maven.artifact.DefaultArtifact(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion(), null, artifact.getProperty(ArtifactProperties.TYPE,
+            artifact.getExtension()), nullify(artifact.getClassifier()), handler);
 
     result.setFile(artifact.getFile());
     result.setResolved(artifact.getFile() != null);
@@ -99,8 +95,7 @@ public class AetherUtils {
     return result;
   }
 
-  public static void toArtifacts(Collection<org.apache.maven.artifact.Artifact> artifacts,
-      Collection<? extends DependencyNode> nodes, List<String> trail, DependencyFilter filter) {
+  public static void toArtifacts(Collection<org.apache.maven.artifact.Artifact> artifacts, Collection<? extends DependencyNode> nodes, List<String> trail, DependencyFilter filter) {
     for (DependencyNode node : nodes) {
       org.apache.maven.artifact.Artifact artifact = toArtifact(node.getDependency());
 
@@ -134,16 +129,14 @@ public class AetherUtils {
     }
 
     Artifact result =
-        new DefaultArtifact(artifact.getGroupId(), artifact.getArtifactId(),
-            artifact.getClassifier(), artifact.getArtifactHandler().getExtension(), version, props,
-            newArtifactType(artifact.getType(), artifact.getArtifactHandler()));
+        new DefaultArtifact(artifact.getGroupId(), artifact.getArtifactId(), artifact.getClassifier(), artifact.getArtifactHandler().getExtension(), version, props, newArtifactType(
+            artifact.getType(), artifact.getArtifactHandler()));
     result = result.setFile(artifact.getFile());
 
     return result;
   }
 
-  public static Dependency toDependency(org.apache.maven.artifact.Artifact artifact,
-      Collection<org.apache.maven.model.Exclusion> exclusions) {
+  public static Dependency toDependency(org.apache.maven.artifact.Artifact artifact, Collection<org.apache.maven.model.Exclusion> exclusions) {
     if (artifact == null) {
       return null;
     }
@@ -176,8 +169,7 @@ public class AetherUtils {
   public static RemoteRepository toRepo(ArtifactRepository repo) {
     RemoteRepository result = null;
     if (repo != null) {
-      RemoteRepository.Builder builder =
-          new RemoteRepository.Builder(repo.getId(), getLayout(repo), repo.getUrl());
+      RemoteRepository.Builder builder = new RemoteRepository.Builder(repo.getId(), getLayout(repo), repo.getUrl());
       builder.setSnapshotPolicy(toPolicy(repo.getSnapshots()));
       builder.setReleasePolicy(toPolicy(repo.getReleases()));
       builder.setAuthentication(toAuthentication(repo.getAuthentication()));
@@ -193,8 +185,7 @@ public class AetherUtils {
       return repo.getLayout().getId();
     } catch (LinkageError e) {
       /*
-       * NOTE: getId() was added in 3.x and is as such not implemented by plugins compiled against
-       * 2.x APIs.
+       * NOTE: getId() was added in 3.x and is as such not implemented by plugins compiled against 2.x APIs.
        */
       String className = repo.getLayout().getClass().getSimpleName();
       if (className.endsWith("RepositoryLayout")) {
@@ -211,15 +202,12 @@ public class AetherUtils {
   private static RepositoryPolicy toPolicy(ArtifactRepositoryPolicy policy) {
     RepositoryPolicy result = null;
     if (policy != null) {
-      result =
-          new RepositoryPolicy(policy.isEnabled(), policy.getUpdatePolicy(),
-              policy.getChecksumPolicy());
+      result = new RepositoryPolicy(policy.isEnabled(), policy.getUpdatePolicy(), policy.getChecksumPolicy());
     }
     return result;
   }
 
-  private static Authentication toAuthentication(
-      org.apache.maven.artifact.repository.Authentication auth) {
+  private static Authentication toAuthentication(org.apache.maven.artifact.repository.Authentication auth) {
     Authentication result = null;
     if (auth != null) {
       AuthenticationBuilder authBuilder = new AuthenticationBuilder();
@@ -235,8 +223,7 @@ public class AetherUtils {
     if (proxy != null) {
       AuthenticationBuilder authBuilder = new AuthenticationBuilder();
       authBuilder.addUsername(proxy.getUserName()).addPassword(proxy.getPassword());
-      result =
-          new Proxy(proxy.getProtocol(), proxy.getHost(), proxy.getPort(), authBuilder.build());
+      result = new Proxy(proxy.getProtocol(), proxy.getHost(), proxy.getPort(), authBuilder.build());
     }
     return result;
   }
@@ -246,20 +233,16 @@ public class AetherUtils {
     DefaultArtifactHandler handler = new DefaultArtifactHandler(type);
     handler.setExtension(artifact.getExtension());
     handler.setLanguage(artifact.getProperty(ArtifactProperties.LANGUAGE, null));
-    handler.setAddedToClasspath(Boolean.parseBoolean(artifact.getProperty(
-        ArtifactProperties.CONSTITUTES_BUILD_PATH, "")));
-    handler.setIncludesDependencies(Boolean.parseBoolean(artifact.getProperty(
-        ArtifactProperties.INCLUDES_DEPENDENCIES, "")));
+    handler.setAddedToClasspath(Boolean.parseBoolean(artifact.getProperty(ArtifactProperties.CONSTITUTES_BUILD_PATH, "")));
+    handler.setIncludesDependencies(Boolean.parseBoolean(artifact.getProperty(ArtifactProperties.INCLUDES_DEPENDENCIES, "")));
     return handler;
   }
 
   public static ArtifactType newArtifactType(String id, ArtifactHandler handler) {
-    return new DefaultArtifactType(id, handler.getExtension(), handler.getClassifier(),
-        handler.getLanguage(), handler.isAddedToClasspath(), handler.isIncludesDependencies());
+    return new DefaultArtifactType(id, handler.getExtension(), handler.getClassifier(), handler.getLanguage(), handler.isAddedToClasspath(), handler.isIncludesDependencies());
   }
 
-  public static Dependency toDependency(org.apache.maven.model.Dependency dependency,
-      ArtifactTypeRegistry stereotypes) {
+  public static Dependency toDependency(org.apache.maven.model.Dependency dependency, ArtifactTypeRegistry stereotypes) {
     ArtifactType stereotype = stereotypes.get(dependency.getType());
     if (stereotype == null) {
       stereotype = new DefaultArtifactType(dependency.getType());
@@ -272,17 +255,14 @@ public class AetherUtils {
       props = Collections.singletonMap(ArtifactProperties.LOCAL_PATH, dependency.getSystemPath());
     }
 
-    Artifact artifact =
-        new DefaultArtifact(dependency.getGroupId(), dependency.getArtifactId(),
-            dependency.getClassifier(), null, dependency.getVersion(), props, stereotype);
+    Artifact artifact = new DefaultArtifact(dependency.getGroupId(), dependency.getArtifactId(), dependency.getClassifier(), null, dependency.getVersion(), props, stereotype);
 
     List<Exclusion> exclusions = new ArrayList<Exclusion>(dependency.getExclusions().size());
     for (org.apache.maven.model.Exclusion exclusion : dependency.getExclusions()) {
       exclusions.add(toExclusion(exclusion));
     }
 
-    Dependency result =
-        new Dependency(artifact, dependency.getScope(), dependency.isOptional(), exclusions);
+    Dependency result = new Dependency(artifact, dependency.getScope(), dependency.isOptional(), exclusions);
 
     return result;
   }
@@ -317,18 +297,14 @@ public class AetherUtils {
     Artifact pomArtifact = artifact;
 
     if (pomArtifact.getClassifier().length() > 0 || !"pom".equals(pomArtifact.getExtension())) {
-      pomArtifact =
-          new DefaultArtifact(artifact.getGroupId(), artifact.getArtifactId(), "pom",
-              artifact.getVersion());
+      pomArtifact = new DefaultArtifact(artifact.getGroupId(), artifact.getArtifactId(), "pom", artifact.getVersion());
     }
 
     return pomArtifact;
   }
 
   public static RemoteRepository toRemoteRepository(Repository repository) {
-    RemoteRepository.Builder builder =
-        new RemoteRepository.Builder(repository.getId(), repository.getLayout(),
-            repository.getUrl());
+    RemoteRepository.Builder builder = new RemoteRepository.Builder(repository.getId(), repository.getLayout(), repository.getUrl());
     builder.setSnapshotPolicy(toRepositoryPolicy(repository.getSnapshots()));
     builder.setReleasePolicy(toRepositoryPolicy(repository.getReleases()));
     return builder.build();

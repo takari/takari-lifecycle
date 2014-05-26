@@ -66,9 +66,7 @@ public class JarProperties extends Properties {
           if (c == '\r' && current != len - 1 && comments.charAt(current + 1) == '\n') {
             current++;
           }
-          if (current == len - 1
-              || (comments.charAt(current + 1) != '#' && comments.charAt(current + 1) != '!'))
-            bw.write("#");
+          if (current == len - 1 || (comments.charAt(current + 1) != '#' && comments.charAt(current + 1) != '!')) bw.write("#");
         }
         last = current + 1;
       }
@@ -88,8 +86,7 @@ public class JarProperties extends Properties {
   }
 
   /** A table of hex digits */
-  private static final char[] hexDigit = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A',
-      'B', 'C', 'D', 'E', 'F'};
+  private static final char[] hexDigit = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
   /*
    * Converts unicodes to encoded &#92;uxxxx and escapes special characters with a preceding slash

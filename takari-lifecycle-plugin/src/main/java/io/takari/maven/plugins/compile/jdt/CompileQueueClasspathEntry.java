@@ -49,8 +49,7 @@ class CompileQueueClasspathEntry implements ClasspathEntry, MutableClasspathEntr
     Map<String, ICompilationUnit> units = new HashMap<String, ICompilationUnit>();
     for (ICompilationUnit unit : compileQueue) {
       String packageName = new String(CharOperation.concatWith(unit.getPackageName(), '/'));
-      String binaryFileName =
-          new String(unit.getMainTypeName()) + SuffixConstants.SUFFIX_STRING_CLASS;
+      String binaryFileName = new String(unit.getMainTypeName()) + SuffixConstants.SUFFIX_STRING_CLASS;
       packageNames.add(packageName);
       units.put(packageName + "/" + binaryFileName, unit);
       // index empty packages

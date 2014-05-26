@@ -39,19 +39,16 @@ public class ResourcesProcessor {
     this.mustacheFactory.setObjectHandler(new MapReflectionObjectHandler());
   }
 
-  public void process(File sourceDirectory, File targetDirectory, List<String> includes,
-      List<String> excludes) throws IOException {
+  public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes) throws IOException {
     process(sourceDirectory, targetDirectory, includes, excludes, null);
   }
 
-  public void process(File sourceDirectory, File targetDirectory, List<String> includes,
-      List<String> excludes, Map<Object, Object> filterProperties) throws IOException {
+  public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes, Map<Object, Object> filterProperties) throws IOException {
     if (!sourceDirectory.isDirectory()) {
       // DirectoryScanner chokes on directories that do not exist
       return;
     }
-    for (BuildContext.Input<File> input : buildContext.registerAndProcessInputs(sourceDirectory,
-        includes, excludes)) {
+    for (BuildContext.Input<File> input : buildContext.registerAndProcessInputs(sourceDirectory, includes, excludes)) {
       File outputFile = relativize(sourceDirectory, targetDirectory, input.getResource());
       BuildContext.Output<File> output = input.associateOutput(outputFile);
       Closer closer = Closer.create();
@@ -80,8 +77,7 @@ public class ResourcesProcessor {
     return new File(targetDirectory, relative);
   }
 
-  public void filter(Reader reader, Writer writer, Map<Object, Object> properties)
-      throws IOException {
+  public void filter(Reader reader, Writer writer, Map<Object, Object> properties) throws IOException {
     Mustache mustache = mustacheFactory.compile(reader, "maven", "${", "}");
     mustache.execute(writer, properties).close();
   }

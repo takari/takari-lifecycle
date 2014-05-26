@@ -37,16 +37,14 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     return compilers;
   }
 
-  private File procCompile(String projectName, Proc proc, Xpp3Dom... parameters) throws Exception,
-      IOException {
+  private File procCompile(String projectName, Proc proc, Xpp3Dom... parameters) throws Exception, IOException {
     File processor = compileAnnotationProcessor();
 
     File basedir = resources.getBasedir(projectName);
     return processAnnotations(basedir, proc, processor, parameters);
   }
 
-  private File processAnnotations(File basedir, Proc proc, File processor, Xpp3Dom... parameters)
-      throws Exception {
+  private File processAnnotations(File basedir, Proc proc, File processor, Xpp3Dom... parameters) throws Exception {
     MavenProject project = mojos.readMavenProject(basedir);
     MavenSession session = mojos.newMavenSession(project);
     MojoExecution execution = mojos.newMojoExecution();
@@ -70,8 +68,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
   private File compileAnnotationProcessor() throws Exception, IOException {
     File processor = compile("compile-proc/processor");
-    cp(processor, "src/main/resources/META-INF/services/javax.annotation.processing.Processor",
-        "target/classes/META-INF/services/javax.annotation.processing.Processor");
+    cp(processor, "src/main/resources/META-INF/services/javax.annotation.processing.Processor", "target/classes/META-INF/services/javax.annotation.processing.Processor");
     return processor;
   }
 
@@ -79,8 +76,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
   @Test
   public void testProc_only() throws Exception {
     File basedir = procCompile("compile-proc/proc", Proc.only);
-    mojos.assertBuildOutputs(new File(basedir, "target/generated-sources/annotations"),
-        "proc/GeneratedSource.java", "proc/AnotherGeneratedSource.java");
+    mojos.assertBuildOutputs(new File(basedir, "target/generated-sources/annotations"), "proc/GeneratedSource.java", "proc/AnotherGeneratedSource.java");
   }
 
   @Test
@@ -143,32 +139,27 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
       processAnnotations(basedir, Proc.proc, processor, processors);
       Assert.fail();
     } catch (MojoExecutionException e) {
-      Assert.assertEquals("2 error(s) encountered, see previous message(s) for details",
-          e.getMessage());
+      Assert.assertEquals("2 error(s) encountered, see previous message(s) for details", e.getMessage());
     }
     mojos.assertBuildOutputs(new File(basedir, "target"), //
         "generated-sources/annotations/proc/BrokenSource.java");
-    assertProcMessage(basedir, "target/generated-sources/annotations/proc/BrokenSource.java",
-        expected);
+    assertProcMessage(basedir, "target/generated-sources/annotations/proc/BrokenSource.java", expected);
 
     // no change rebuild should produce the same messages
     try {
       processAnnotations(basedir, Proc.proc, processor, processors);
       Assert.fail();
     } catch (MojoExecutionException e) {
-      Assert.assertEquals("1 error(s) encountered, see previous message(s) for details",
-          e.getMessage());
+      Assert.assertEquals("1 error(s) encountered, see previous message(s) for details", e.getMessage());
     }
     mojos.assertCarriedOverOutputs(new File(basedir, "target"), //
         "generated-sources/annotations/proc/BrokenSource.java");
-    assertProcMessage(basedir, "target/generated-sources/annotations/proc/BrokenSource.java",
-        expected);
+    assertProcMessage(basedir, "target/generated-sources/annotations/proc/BrokenSource.java", expected);
   }
 
   private void assertProcMessage(File basedir, String path, ErrorMessage expected) throws Exception {
     // javac reports the same compilation error twice when Proc.proc
-    Set<String> messages =
-        new HashSet<String>(mojos.getBuildContextLog().getMessages(new File(basedir, path)));
+    Set<String> messages = new HashSet<String>(mojos.getBuildContextLog().getMessages(new File(basedir, path)));
     Assert.assertEquals(messages.toString(), 1, messages.size());
     String message = messages.iterator().next();
     Assert.assertTrue(expected.isMatch(message));
@@ -199,8 +190,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         "classes/proc/AnotherGeneratedSource.class");
 
     // remove annotation
-    cp(basedir, "src/main/java/proc/Source.java-remove-annotation",
-        "src/main/java/proc/Source.java");
+    cp(basedir, "src/main/java/proc/Source.java-remove-annotation", "src/main/java/proc/Source.java");
     processAnnotations(basedir, Proc.proc, processor);
     mojos.assertDeletedOutputs(new File(basedir, "target"), //
         "generated-sources/annotations/proc/GeneratedSource.java", //

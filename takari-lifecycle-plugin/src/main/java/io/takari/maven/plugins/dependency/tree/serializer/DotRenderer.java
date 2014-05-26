@@ -81,8 +81,7 @@ public class DotRenderer extends AbstractRenderer {
         children.add(childId);
 
         // tesla_lifecycle_plugin0 [label="tesla-lifecycle-plugin"]
-        String parentLabel =
-            parent.getArtifact().getArtifactId() + " " + parent.getArtifact().getVersion();
+        String parentLabel = parent.getArtifact().getArtifactId() + " " + parent.getArtifact().getVersion();
         if (!labels.contains(parentId)) {
           out.print(currentIndent);
           out.println(parentId + "[ label = \"" + parentLabel + "\" ]");
@@ -91,8 +90,7 @@ public class DotRenderer extends AbstractRenderer {
 
         // this is wrong!! checking the wrong thing
         // tesla_lifecycle_plugin0 [label="tesla-lifecycle-plugin"]
-        String childLabel =
-            node.getArtifact().getArtifactId() + " " + node.getArtifact().getVersion();
+        String childLabel = node.getArtifact().getArtifactId() + " " + node.getArtifact().getVersion();
         if (!labels.contains(childId)) {
           out.print(currentIndent);
           out.println(childId + "[ label = \"" + childLabel + "\" ]");
@@ -130,8 +128,7 @@ public class DotRenderer extends AbstractRenderer {
 
   private String childId(DependencyNode node) {
     if (node == null) return "no parent";
-    String nodeId =
-        node.getArtifact().getArtifactId().replace("-", "_").replace(".", "_") + (z + 1);
+    String nodeId = node.getArtifact().getArtifactId().replace("-", "_").replace(".", "_") + (z + 1);
     return nodeId;
   }
 

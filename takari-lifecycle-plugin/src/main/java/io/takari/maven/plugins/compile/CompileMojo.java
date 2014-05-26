@@ -51,16 +51,14 @@ public class CompileMojo extends AbstractCompileMojo {
 
   /**
    * <p>
-   * Specify where to place generated source files created by annotation processing. Only applies to
-   * JDK 1.6+
+   * Specify where to place generated source files created by annotation processing. Only applies to JDK 1.6+
    * </p>
    */
   @Parameter(defaultValue = "${project.build.directory}/generated-sources/annotations")
   private File generatedSourcesDirectory;
 
   /**
-   * Set this to 'true' to bypass compilation of main sources. Its use is NOT RECOMMENDED, but quite
-   * convenient on occasion.
+   * Set this to 'true' to bypass compilation of main sources. Its use is NOT RECOMMENDED, but quite convenient on occasion.
    */
   @Parameter(property = "maven.main.skip")
   private boolean skipMain;

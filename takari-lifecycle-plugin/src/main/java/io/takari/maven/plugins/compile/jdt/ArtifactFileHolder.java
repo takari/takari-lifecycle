@@ -30,9 +30,7 @@ class ArtifactFileHolder implements ResourceHolder<ArtifactFile> {
   public ResourceStatus getStatus() {
     final File file = artifact.file;
     if (file.isFile()) {
-      return lastModified == file.lastModified() && length == file.length()
-          ? ResourceStatus.UNMODIFIED
-          : ResourceStatus.MODIFIED;
+      return lastModified == file.lastModified() && length == file.length() ? ResourceStatus.UNMODIFIED : ResourceStatus.MODIFIED;
     } else if (file.isDirectory()) {
       // dependency changes are handled with in ProjectClasspathDigester
       return ResourceStatus.UNMODIFIED;

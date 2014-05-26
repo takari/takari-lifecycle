@@ -26,14 +26,12 @@ public class IncrementalBuildRule2 extends IncrementalBuildRule {
     return child;
   }
 
-  public void executeMojo(MavenProject project, String goal, Xpp3Dom... parameters)
-      throws Exception {
+  public void executeMojo(MavenProject project, String goal, Xpp3Dom... parameters) throws Exception {
     MavenSession session = newMavenSession(project);
     executeMojo(session, project, goal, parameters);
   }
 
-  public void executeMojo(MavenSession session, MavenProject project, String goal,
-      Xpp3Dom... parameters) throws Exception {
+  public void executeMojo(MavenSession session, MavenProject project, String goal, Xpp3Dom... parameters) throws Exception {
     MojoExecution execution = newMojoExecution(goal);
     if (parameters != null) {
       Xpp3Dom configuration = execution.getConfiguration();

@@ -58,16 +58,14 @@ public class TestCompileMojo extends AbstractCompileMojo {
 
   /**
    * <p>
-   * Specify where to place generated source files created by annotation processing. Only applies to
-   * JDK 1.6+
+   * Specify where to place generated source files created by annotation processing. Only applies to JDK 1.6+
    * </p>
    */
   @Parameter(defaultValue = "${project.build.directory}/generated-test-sources/test-annotations")
   private File generatedTestSourcesDirectory;
 
   /**
-   * Set this to 'true' to bypass compilation of test sources. Its use is NOT RECOMMENDED, but quite
-   * convenient on occasion.
+   * Set this to 'true' to bypass compilation of test sources. Its use is NOT RECOMMENDED, but quite convenient on occasion.
    */
   @Parameter(property = "maven.test.skip")
   private boolean skip;

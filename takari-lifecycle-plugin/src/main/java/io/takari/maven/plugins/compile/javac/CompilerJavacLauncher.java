@@ -55,12 +55,10 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
   }
 
   private void compile(File options, File output) throws IOException {
-    new CompilerConfiguration(getSourceEncoding(), getCompilerOptions(), getSourceFiles())
-        .write(options);
+    new CompilerConfiguration(getSourceEncoding(), getCompilerOptions(), getSourceFiles()).write(options);
 
     // use the same JVM as the one used to run Maven (the "java.home" one)
-    String executable =
-        System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
+    String executable = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
     if (File.separatorChar == '\\') {
       executable = executable + ".exe";
     }
@@ -107,8 +105,7 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
       }
 
       @Override
-      public void addMessage(String path, int line, int column, String message,
-          BuildContext.Severity kind) {
+      public void addMessage(String path, int line, int column, String message, BuildContext.Severity kind) {
         if (".".equals(path)) {
           // TODO
         } else {

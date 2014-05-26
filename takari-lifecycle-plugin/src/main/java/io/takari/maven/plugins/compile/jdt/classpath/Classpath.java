@@ -25,10 +25,8 @@ public class Classpath implements INameEnvironment, SuffixConstants {
     this.packages = newPackageIndex(entries);
   }
 
-  private static Map<String, Collection<ClasspathEntry>> newPackageIndex(
-      List<ClasspathEntry> entries) {
-    Map<String, Collection<ClasspathEntry>> classpath =
-        new HashMap<String, Collection<ClasspathEntry>>();
+  private static Map<String, Collection<ClasspathEntry>> newPackageIndex(List<ClasspathEntry> entries) {
+    Map<String, Collection<ClasspathEntry>> classpath = new HashMap<String, Collection<ClasspathEntry>>();
     for (ClasspathEntry entry : entries) {
       for (String packageName : entry.getPackageNames()) {
         Collection<ClasspathEntry> packageEntries = classpath.get(packageName);
@@ -49,8 +47,7 @@ public class Classpath implements INameEnvironment, SuffixConstants {
     }
     int typeNameIndex = compoundTypeName.length - 1;
     char[][] packageName = CharOperation.subarray(compoundTypeName, 0, typeNameIndex);
-    return findType(new String(CharOperation.concatWith(packageName, '/')), new String(
-        compoundTypeName[typeNameIndex]));
+    return findType(new String(CharOperation.concatWith(packageName, '/')), new String(compoundTypeName[typeNameIndex]));
   }
 
   @Override
@@ -60,8 +57,7 @@ public class Classpath implements INameEnvironment, SuffixConstants {
 
   private NameEnvironmentAnswer findType(String packageName, String typeName) {
     NameEnvironmentAnswer suggestedAnswer = null;
-    Collection<ClasspathEntry> entries =
-        !packageName.isEmpty() ? packages.get(packageName) : this.entries;
+    Collection<ClasspathEntry> entries = !packageName.isEmpty() ? packages.get(packageName) : this.entries;
     if (entries != null) {
       String binaryFileName = typeName + SUFFIX_STRING_class;
       for (ClasspathEntry entry : entries) {

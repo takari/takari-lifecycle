@@ -22,8 +22,7 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
   @Component
   private ResourcesProcessor processor;
 
-  protected void process(List<Resource> resources, File outputDirectory)
-      throws MojoExecutionException {
+  protected void process(List<Resource> resources, File outputDirectory) throws MojoExecutionException {
     for (Resource resource : resources) {
       boolean filter = Boolean.parseBoolean(resource.getFiltering());
       try {
@@ -43,11 +42,9 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
           Map<Object, Object> properties = new HashMap<Object, Object>(this.properties);
           properties.put("project", project);
           properties.put("settings", settings);
-          processor.process(sourceDirectory, targetDirectory, resource.getIncludes(),
-              resource.getExcludes(), properties);
+          processor.process(sourceDirectory, targetDirectory, resource.getIncludes(), resource.getExcludes(), properties);
         } else {
-          processor.process(sourceDirectory, targetDirectory, resource.getIncludes(),
-              resource.getExcludes());
+          processor.process(sourceDirectory, targetDirectory, resource.getIncludes(), resource.getExcludes());
         }
       } catch (IOException e) {
         throw new MojoExecutionException(e.getMessage(), e);

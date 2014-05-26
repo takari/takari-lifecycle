@@ -48,26 +48,22 @@ public abstract class AbstractTree extends AbstractMojo {
     if (lastProject.equals(project)) {
       if (reactorProjects.size() > 1) {
         getLog().info("");
-        getLog()
-            .info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        getLog().info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         getLog().info("");
         getLog().info("You can't run this from an aggregator. Step into a project.");
         getLog().info("");
-        getLog()
-            .info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        getLog().info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         getLog().info("");
         return;
       }
 
       if (project.getPackaging().equals("pom")) {
         getLog().info("");
-        getLog()
-            .info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        getLog().info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         getLog().info("");
         getLog().info("You can't run this from a parent pom. Step into a project.");
         getLog().info("");
-        getLog()
-            .info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        getLog().info("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         getLog().info("");
         return;
       }
@@ -75,17 +71,13 @@ public abstract class AbstractTree extends AbstractMojo {
       return;
     }
 
-    DefaultRepositorySystemSession repositorySystemSessionForTree =
-        new DefaultRepositorySystemSession(repositorySystemSession);
+    DefaultRepositorySystemSession repositorySystemSessionForTree = new DefaultRepositorySystemSession(repositorySystemSession);
     repositorySystemSessionForTree.setConfigProperty(ConflictResolver.CONFIG_PROP_VERBOSE, true);
-    repositorySystemSessionForTree.setConfigProperty(DependencyManagerUtils.CONFIG_PROP_VERBOSE,
-        true);
+    repositorySystemSessionForTree.setConfigProperty(DependencyManagerUtils.CONFIG_PROP_VERBOSE, true);
     Artifact artifact = mavenToAetherArtifact(project.getArtifact());
 
     try {
-      ArtifactDescriptorResult descriptorResult =
-          repositorySystem.readArtifactDescriptor(repositorySystemSessionForTree,
-              new ArtifactDescriptorRequest(artifact, remoteRepos, ""));
+      ArtifactDescriptorResult descriptorResult = repositorySystem.readArtifactDescriptor(repositorySystemSessionForTree, new ArtifactDescriptorRequest(artifact, remoteRepos, ""));
 
       CollectRequest collectRequest = new CollectRequest();
       collectRequest.setRootArtifact(descriptorResult.getArtifact());
@@ -95,8 +87,7 @@ public abstract class AbstractTree extends AbstractMojo {
         collectRequest.addRepository(repo);
       }
 
-      CollectResult collectResult =
-          repositorySystem.collectDependencies(repositorySystemSessionForTree, collectRequest);
+      CollectResult collectResult = repositorySystem.collectDependencies(repositorySystemSessionForTree, collectRequest);
       renderer().render(collectResult.getRoot());
       //
       // dot -T pdf | open -a /Applications/Preview.app -f
@@ -118,20 +109,17 @@ public abstract class AbstractTree extends AbstractMojo {
       //
       // <groupId>:<artifactId>:<extension>:<classifier>:<version>
       //
-      return new DefaultArtifact(String.format("%s:%s:%s:%s:%s", ma.getGroupId(),
-          ma.getArtifactId(), ma.getType(), ma.getClassifier(), ma.getVersion()));
+      return new DefaultArtifact(String.format("%s:%s:%s:%s:%s", ma.getGroupId(), ma.getArtifactId(), ma.getType(), ma.getClassifier(), ma.getVersion()));
     } else if (ma.getType() != null) {
       //
       // <groupId>:<artifactId>:<extension>:<version>
       //
-      return new DefaultArtifact(String.format("%s:%s:%s:%s", ma.getGroupId(), ma.getArtifactId(),
-          ma.getType(), ma.getVersion()));
+      return new DefaultArtifact(String.format("%s:%s:%s:%s", ma.getGroupId(), ma.getArtifactId(), ma.getType(), ma.getVersion()));
     } else {
       //
       // <groupId>:<artifactId>:<version>
       //
-      return new DefaultArtifact(String.format("%s:%s:%s", ma.getGroupId(), ma.getArtifactId(),
-          ma.getVersion()));
+      return new DefaultArtifact(String.format("%s:%s:%s", ma.getGroupId(), ma.getArtifactId(), ma.getVersion()));
     }
   }
 }

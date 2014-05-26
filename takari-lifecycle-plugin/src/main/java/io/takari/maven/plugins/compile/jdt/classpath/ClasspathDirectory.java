@@ -34,8 +34,7 @@ public class ClasspathDirectory implements ClasspathEntry {
     return packages;
   }
 
-  private static void initializePackageCache(Set<String> packages, File directory,
-      String packageName) {
+  private static void initializePackageCache(Set<String> packages, File directory, String packageName) {
     if (!packageName.isEmpty()) {
       packages.add(packageName);
     }

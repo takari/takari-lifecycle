@@ -32,12 +32,10 @@ class ClassfileMatchers {
     }
 
     @Override
-    public MethodVisitor visitMethod(int access, String name, String desc, String signature,
-        String[] exceptions) {
+    public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
       return new MethodVisitor(Opcodes.ASM4) {
         @Override
-        public void visitLocalVariable(String name, String desc, String signature, Label start,
-            Label end, int index) {
+        public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
           hasVars = true;
         }
 

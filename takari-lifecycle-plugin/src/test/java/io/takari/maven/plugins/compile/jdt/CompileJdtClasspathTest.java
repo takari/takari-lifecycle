@@ -47,14 +47,12 @@ public class CompileJdtClasspathTest {
     mojos.assertCarriedOverOutputs(parent, "module-a/target/classes/reactor/modulea/ModuleA.class");
 
     // comment changes do NOT propagate
-    cp(new File(parent, "module-b/src/main/java/reactor/moduleb"), "ModuleB.java-comment",
-        "ModuleB.java");
+    cp(new File(parent, "module-b/src/main/java/reactor/moduleb"), "ModuleB.java-comment", "ModuleB.java");
     compileReactor(parent);
     mojos.assertCarriedOverOutputs(parent, "module-a/target/classes/reactor/modulea/ModuleA.class");
 
     // API changes DO propagate
-    cp(new File(parent, "module-b/src/main/java/reactor/moduleb"), "ModuleB.java-method",
-        "ModuleB.java");
+    cp(new File(parent, "module-b/src/main/java/reactor/moduleb"), "ModuleB.java-method", "ModuleB.java");
     compileReactor(parent);
     mojos.assertBuildOutputs(parent, "module-a/target/classes/reactor/modulea/ModuleA.class");
   }
@@ -67,18 +65,14 @@ public class CompileJdtClasspathTest {
       compileReactor(parent);
       Assert.fail();
     } catch (MojoExecutionException e) {
-      Assert.assertEquals("3 error(s) encountered, see previous message(s) for details",
-          e.getMessage());
+      Assert.assertEquals("3 error(s) encountered, see previous message(s) for details", e.getMessage());
     }
     mojos.assertBuildOutputs(parent, new String[0]);
-    mojos.assertMessages(parent, "module-a/src/main/java/modulea/Error.java",
-        "ERROR Error.java [3:8] The import moduleb cannot be resolved",
-        "ERROR Error.java [8:12] Missing cannot be resolved to a type",
-        "ERROR Error.java [10:20] Missing cannot be resolved to a type");
+    mojos.assertMessages(parent, "module-a/src/main/java/modulea/Error.java", "ERROR Error.java [3:8] The import moduleb cannot be resolved",
+        "ERROR Error.java [8:12] Missing cannot be resolved to a type", "ERROR Error.java [10:20] Missing cannot be resolved to a type");
 
     // fix the problem and rebuild
-    cp(parent, "module-b/src/main/java/moduleb/Missing.java-missing",
-        "module-b/src/main/java/moduleb/Missing.java");
+    cp(parent, "module-b/src/main/java/moduleb/Missing.java-missing", "module-b/src/main/java/moduleb/Missing.java");
     compileReactor(parent);
     mojos.assertBuildOutputs(parent, "module-a/target/classes/modulea/Error.class");
   }
@@ -91,16 +85,13 @@ public class CompileJdtClasspathTest {
       compileReactor(parent);
       Assert.fail();
     } catch (MojoExecutionException e) {
-      Assert.assertEquals("1 error(s) encountered, see previous message(s) for details",
-          e.getMessage());
+      Assert.assertEquals("1 error(s) encountered, see previous message(s) for details", e.getMessage());
     }
     mojos.assertBuildOutputs(parent, new String[0]);
-    mojos.assertMessages(parent, "module-a/src/main/java/modulea/Error.java",
-        "ERROR Error.java [3:8] The import moduleb cannot be resolved");
+    mojos.assertMessages(parent, "module-a/src/main/java/modulea/Error.java", "ERROR Error.java [3:8] The import moduleb cannot be resolved");
 
     // fix the problem and rebuild
-    cp(parent, "module-b/src/main/java/moduleb/Missing.java-missing",
-        "module-b/src/main/java/moduleb/Missing.java");
+    cp(parent, "module-b/src/main/java/moduleb/Missing.java-missing", "module-b/src/main/java/moduleb/Missing.java");
     compileReactor(parent);
     mojos.assertBuildOutputs(parent, "module-a/target/classes/modulea/Error.class");
   }
@@ -113,17 +104,14 @@ public class CompileJdtClasspathTest {
       compileReactor(parent);
       Assert.fail();
     } catch (MojoExecutionException e) {
-      Assert.assertEquals("2 error(s) encountered, see previous message(s) for details",
-          e.getMessage());
+      Assert.assertEquals("2 error(s) encountered, see previous message(s) for details", e.getMessage());
     }
     mojos.assertBuildOutputs(parent, new String[0]);
-    mojos.assertMessages(parent, "module-a/src/main/java/missing/Error.java",
-        "ERROR Error.java [6:12] Missing cannot be resolved to a type",
+    mojos.assertMessages(parent, "module-a/src/main/java/missing/Error.java", "ERROR Error.java [6:12] Missing cannot be resolved to a type",
         "ERROR Error.java [8:20] Missing cannot be resolved to a type");
 
     // fix the problem and rebuild
-    cp(parent, "module-b/src/main/java/missing/Missing.java-missing",
-        "module-b/src/main/java/missing/Missing.java");
+    cp(parent, "module-b/src/main/java/missing/Missing.java-missing", "module-b/src/main/java/missing/Missing.java");
     compileReactor(parent);
     mojos.assertBuildOutputs(parent, "module-a/target/classes/missing/Error.class");
   }
@@ -191,8 +179,7 @@ public class CompileJdtClasspathTest {
 
   private void addDependency(MavenProject project, String artifactId, File file) throws Exception {
     ArtifactHandler handler = mojos.getContainer().lookup(ArtifactHandler.class, "jar");
-    DefaultArtifact artifact =
-        new DefaultArtifact("test", artifactId, "1.0", Artifact.SCOPE_COMPILE, "jar", null, handler);
+    DefaultArtifact artifact = new DefaultArtifact("test", artifactId, "1.0", Artifact.SCOPE_COMPILE, "jar", null, handler);
     artifact.setFile(file);
     Set<Artifact> artifacts = project.getArtifacts();
     artifacts.add(artifact);

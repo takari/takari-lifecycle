@@ -35,16 +35,14 @@ public class ClasspathDigester {
 
   private final Logger log = LoggerFactory.getLogger(getClass());
 
-  private static final Map<File, Map<String, byte[]>> CACHE =
-      new ConcurrentHashMap<File, Map<String, byte[]>>();
+  private static final Map<File, Map<String, byte[]>> CACHE = new ConcurrentHashMap<File, Map<String, byte[]>>();
 
   private final DefaultBuildContext<?> context;
 
   private final ClassfileDigester digester;
 
   @Inject
-  public ClasspathDigester(DefaultBuildContext<?> context, MavenProject project,
-      MavenSession session, ClassfileDigester digester) {
+  public ClasspathDigester(DefaultBuildContext<?> context, MavenProject project, MavenSession session, ClassfileDigester digester) {
     this.context = context;
     this.digester = digester;
 
@@ -62,8 +60,7 @@ public class ClasspathDigester {
     for (int i = dependencies.size() - 1; i >= 0; i--) {
       File file = dependencies.get(i);
 
-      DefaultInputMetadata<ArtifactFile> metadata =
-          context.registerInput(new ArtifactFileHolder(file));
+      DefaultInputMetadata<ArtifactFile> metadata = context.registerInput(new ArtifactFileHolder(file));
 
       if (file.isFile()) {
         digest.putAll(digestJar(metadata));
@@ -75,8 +72,7 @@ public class ClasspathDigester {
       }
     }
 
-    log.debug("Analyzed {} classpath dependencies ({} ms)", dependencies.size(),
-        stopwatch.elapsed(TimeUnit.MILLISECONDS));
+    log.debug("Analyzed {} classpath dependencies ({} ms)", dependencies.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
 
     return digest;
   }
@@ -109,8 +105,7 @@ public class ClasspathDigester {
     return digest;
   }
 
-  private Map<String, byte[]> digestDirectory(InputMetadata<ArtifactFile> metadata)
-      throws IOException {
+  private Map<String, byte[]> digestDirectory(InputMetadata<ArtifactFile> metadata) throws IOException {
     final File directory = metadata.getResource().file;
     Map<String, byte[]> digest = CACHE.get(directory);
     if (digest == null) {

@@ -81,33 +81,25 @@ public class CompileTest extends AbstractCompileTest {
 
     // all
     basedir = compile("compile/basic");
-    assertThat(new File(basedir, "target/classes/basic/Basic.class"),
-        allOf(hasDebugSource(), hasDebugLines(), hasDebugVars()));
+    assertThat(new File(basedir, "target/classes/basic/Basic.class"), allOf(hasDebugSource(), hasDebugLines(), hasDebugVars()));
     basedir = compile("compile/basic", newParameter("debug", "all"));
-    assertThat(new File(basedir, "target/classes/basic/Basic.class"),
-        allOf(hasDebugSource(), hasDebugLines(), hasDebugVars()));
+    assertThat(new File(basedir, "target/classes/basic/Basic.class"), allOf(hasDebugSource(), hasDebugLines(), hasDebugVars()));
     basedir = compile("compile/basic", newParameter("debug", "true"));
-    assertThat(new File(basedir, "target/classes/basic/Basic.class"),
-        allOf(hasDebugSource(), hasDebugLines(), hasDebugVars()));
+    assertThat(new File(basedir, "target/classes/basic/Basic.class"), allOf(hasDebugSource(), hasDebugLines(), hasDebugVars()));
 
     // none
     basedir = compile("compile/basic", newParameter("debug", "none"));
-    assertThat(new File(basedir, "target/classes/basic/Basic.class"),
-        allOf(not(hasDebugSource()), not(hasDebugLines()), not(hasDebugVars())));
+    assertThat(new File(basedir, "target/classes/basic/Basic.class"), allOf(not(hasDebugSource()), not(hasDebugLines()), not(hasDebugVars())));
     basedir = compile("compile/basic", newParameter("debug", "false"));
-    assertThat(new File(basedir, "target/classes/basic/Basic.class"),
-        allOf(not(hasDebugSource()), not(hasDebugLines()), not(hasDebugVars())));
+    assertThat(new File(basedir, "target/classes/basic/Basic.class"), allOf(not(hasDebugSource()), not(hasDebugLines()), not(hasDebugVars())));
 
     // keywords
     basedir = compile("compile/basic", newParameter("debug", "source"));
-    assertThat(new File(basedir, "target/classes/basic/Basic.class"),
-        allOf(hasDebugSource(), not(hasDebugLines()), not(hasDebugVars())));
+    assertThat(new File(basedir, "target/classes/basic/Basic.class"), allOf(hasDebugSource(), not(hasDebugLines()), not(hasDebugVars())));
     basedir = compile("compile/basic", newParameter("debug", "source,lines"));
-    assertThat(new File(basedir, "target/classes/basic/Basic.class"),
-        allOf(hasDebugSource(), hasDebugLines(), not(hasDebugVars())));
+    assertThat(new File(basedir, "target/classes/basic/Basic.class"), allOf(hasDebugSource(), hasDebugLines(), not(hasDebugVars())));
     basedir = compile("compile/basic", newParameter("debug", "source,lines,vars"));
-    assertThat(new File(basedir, "target/classes/basic/Basic.class"),
-        allOf(hasDebugSource(), hasDebugLines(), hasDebugVars()));
+    assertThat(new File(basedir, "target/classes/basic/Basic.class"), allOf(hasDebugSource(), hasDebugLines(), hasDebugVars()));
   }
 
   @Test
@@ -176,16 +168,14 @@ public class CompileTest extends AbstractCompileTest {
   public void testError() throws Exception {
     ErrorMessage expected = new ErrorMessage(compilerId);
     expected.setSnippets("jdt", "ERROR Error.java [4:11] Foo cannot be resolved to a type");
-    expected.setSnippets("javac", "ERROR Error.java [4:11]", "cannot find symbol", "class Foo",
-        "location", "class basic.Error");
+    expected.setSnippets("javac", "ERROR Error.java [4:11]", "cannot find symbol", "class Foo", "location", "class basic.Error");
 
     File basedir = resources.getBasedir("compile/error");
     try {
       compile(basedir);
       Assert.fail();
     } catch (MojoExecutionException e) {
-      Assert.assertEquals("1 error(s) encountered, see previous message(s) for details",
-          e.getMessage());
+      Assert.assertEquals("1 error(s) encountered, see previous message(s) for details", e.getMessage());
     }
     mojos.assertBuildOutputs(basedir, new String[0]);
     mojos.assertMessage(basedir, "src/main/java/error/Error.java", expected);
@@ -196,18 +186,14 @@ public class CompileTest extends AbstractCompileTest {
     Assume.assumeTrue(isJava7);
 
     ErrorMessage expected = new ErrorMessage(compilerId);
-    expected.setSnippets("jdt",
-        "ERROR RequiresJava7.java [9:40] '<>' operator is not allowed for source level below 1.7");
-    expected.setSnippets("javac",
-        "ERROR RequiresJava7.java [9:50] diamond operator is not supported in -source 1.6\n"
-            + "  (use -source 7 or higher to enable diamond operator)");
+    expected.setSnippets("jdt", "ERROR RequiresJava7.java [9:40] '<>' operator is not allowed for source level below 1.7");
+    expected.setSnippets("javac", "ERROR RequiresJava7.java [9:50] diamond operator is not supported in -source 1.6\n" + "  (use -source 7 or higher to enable diamond operator)");
 
     File basedir = resources.getBasedir("compile/source-target-version");
     try {
       compile(basedir, newParameter("source", "1.6"));
     } catch (MojoExecutionException e) {
-      Assert.assertEquals("1 error(s) encountered, see previous message(s) for details",
-          e.getMessage());
+      Assert.assertEquals("1 error(s) encountered, see previous message(s) for details", e.getMessage());
     }
     mojos.assertMessage(basedir, "src/main/java/version/RequiresJava7.java", expected);
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), new String[0]);
@@ -225,15 +211,13 @@ public class CompileTest extends AbstractCompileTest {
     } catch (MojoExecutionException e) {
       //
     }
-    mojos.assertMessageContains(new File(basedir, "src/main/java/encoding/ISO8859p5.java"),
-        "\u043f\u043e\u0440\u0443\u0441\u0441\u043a\u0438"); // "inrussian" in UTF8 Russian
+    mojos.assertMessageContains(new File(basedir, "src/main/java/encoding/ISO8859p5.java"), "\u043f\u043e\u0440\u0443\u0441\u0441\u043a\u0438"); // "inrussian" in UTF8 Russian
   }
 
   @Test
   public void testEmpty() throws Exception {
     File basedir = compile("compile/empty");
     mojos.assertBuildOutputs(basedir, new String[0]);
-    Assert.assertFalse("outputDirectory was not created",
-        new File(basedir, "target/classes").exists());
+    Assert.assertFalse("outputDirectory was not created", new File(basedir, "target/classes").exists());
   }
 }

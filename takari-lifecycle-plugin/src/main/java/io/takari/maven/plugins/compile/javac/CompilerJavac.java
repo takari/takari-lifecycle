@@ -49,8 +49,7 @@ public class CompilerJavac extends AbstractCompilerJavac {
   static JavaCompiler getSystemJavaCompiler() throws MojoExecutionException {
     JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     if (compiler == null) {
-      throw new MojoExecutionException("No compiler is provided in this environment. "
-          + "Perhaps you are running on a JRE rather than a JDK?");
+      throw new MojoExecutionException("No compiler is provided in this environment. " + "Perhaps you are running on a JRE rather than a JDK?");
     }
     return compiler;
   }
@@ -136,24 +135,20 @@ public class CompilerJavac extends AbstractCompilerJavac {
 
   private void compile(JavaCompiler compiler) {
     final Charset sourceEncoding = getSourceEncoding();
-    final DiagnosticCollector<JavaFileObject> diagnosticCollector =
-        new DiagnosticCollector<JavaFileObject>();
-    final StandardJavaFileManager standardFileManager =
-        compiler.getStandardFileManager(diagnosticCollector, null, sourceEncoding);
-    final Iterable<? extends JavaFileObject> javaSources =
-        standardFileManager.getJavaFileObjectsFromFiles(getSourceFiles());
+    final DiagnosticCollector<JavaFileObject> diagnosticCollector = new DiagnosticCollector<JavaFileObject>();
+    final StandardJavaFileManager standardFileManager = compiler.getStandardFileManager(diagnosticCollector, null, sourceEncoding);
+    final Iterable<? extends JavaFileObject> javaSources = standardFileManager.getJavaFileObjectsFromFiles(getSourceFiles());
 
     final Map<File, Output<File>> outputs = new HashMap<File, Output<File>>();
     final Map<File, Input<File>> inputs = new HashMap<File, Input<File>>();
 
     final Iterable<String> options = getCompilerOptions();
-    final RecordingJavaFileManager recordingFileManager =
-        new RecordingJavaFileManager(standardFileManager) {
-          @Override
-          protected void record(File outputFile) {
-            outputs.put(outputFile, context.processOutput(outputFile));
-          }
-        };
+    final RecordingJavaFileManager recordingFileManager = new RecordingJavaFileManager(standardFileManager) {
+      @Override
+      protected void record(File outputFile) {
+        outputs.put(outputFile, context.processOutput(outputFile));
+      }
+    };
 
     Writer stdout = new PrintWriter(System.out, true);
     final JavaCompiler.CompilationTask task = compiler.getTask(stdout, // Writer out
@@ -176,8 +171,7 @@ public class CompilerJavac extends AbstractCompilerJavac {
       // javac appears to report errors even when compilation was success.
       // I was only able to reproduce this with annotation processing on java 6
       // for consistency with forked mode, downgrade errors to warning here too
-      Severity severity =
-          success ? BuildContext.Severity.WARNING : toSeverity(diagnostic.getKind());
+      Severity severity = success ? BuildContext.Severity.WARNING : toSeverity(diagnostic.getKind());
 
       if (source != null) {
         File file = FileObjects.toFile(source);
@@ -186,8 +180,7 @@ public class CompilerJavac extends AbstractCompilerJavac {
           resource = outputs.get(file);
         }
         if (resource != null) {
-          resource.addMessage((int) diagnostic.getLineNumber(), (int) diagnostic.getColumnNumber(),
-              diagnostic.getMessage(null), severity, null);
+          resource.addMessage((int) diagnostic.getLineNumber(), (int) diagnostic.getColumnNumber(), diagnostic.getMessage(null), severity, null);
         } else {
           log.warn("Unexpected java {} resource {}", source.getKind(), file);
         }

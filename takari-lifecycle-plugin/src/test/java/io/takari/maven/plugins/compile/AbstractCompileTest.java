@@ -70,8 +70,7 @@ public abstract class AbstractCompileTest {
 
   protected void addDependency(MavenProject project, String artifactId, File file) throws Exception {
     ArtifactHandler handler = mojos.getContainer().lookup(ArtifactHandler.class, "jar");
-    DefaultArtifact artifact =
-        new DefaultArtifact("test", artifactId, "1.0", Artifact.SCOPE_COMPILE, "jar", null, handler);
+    DefaultArtifact artifact = new DefaultArtifact("test", artifactId, "1.0", Artifact.SCOPE_COMPILE, "jar", null, handler);
     artifact.setFile(file);
     Set<Artifact> artifacts = project.getArtifacts();
     artifacts.add(artifact);

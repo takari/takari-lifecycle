@@ -196,8 +196,7 @@ public class CompilerJavacForked {
   public static interface CompilerOutputProcessor {
     public void processOutput(File file);
 
-    public void addMessage(String path, int line, int column, String message,
-        BuildContext.Severity kind);
+    public void addMessage(String path, int line, int column, String message, BuildContext.Severity kind);
   }
 
   static Writer newWriter(File file) throws IOException {
@@ -222,26 +221,21 @@ public class CompilerJavacForked {
 
     final JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     if (compiler == null) {
-      output.addMessage(".", 0, 0, "No compiler is provided in this environment. "
-          + "Perhaps you are running on a JRE rather than a JDK?", Kind.ERROR);
+      output.addMessage(".", 0, 0, "No compiler is provided in this environment. " + "Perhaps you are running on a JRE rather than a JDK?", Kind.ERROR);
       return;
     }
 
     final Charset sourceEncoding = config.getSourceEncoding();
-    final DiagnosticCollector<JavaFileObject> diagnosticCollector =
-        new DiagnosticCollector<JavaFileObject>();
-    final StandardJavaFileManager standardFileManager =
-        compiler.getStandardFileManager(diagnosticCollector, null, sourceEncoding);
-    final Iterable<? extends JavaFileObject> fileObjects =
-        standardFileManager.getJavaFileObjectsFromFiles(config.getSources());
+    final DiagnosticCollector<JavaFileObject> diagnosticCollector = new DiagnosticCollector<JavaFileObject>();
+    final StandardJavaFileManager standardFileManager = compiler.getStandardFileManager(diagnosticCollector, null, sourceEncoding);
+    final Iterable<? extends JavaFileObject> fileObjects = standardFileManager.getJavaFileObjectsFromFiles(config.getSources());
     final Iterable<String> options = config.getCompilerOptions();
-    final RecordingJavaFileManager recordingFileManager =
-        new RecordingJavaFileManager(standardFileManager) {
-          @Override
-          protected void record(File outputFile) {
-            output.processOutput(outputFile);
-          }
-        };
+    final RecordingJavaFileManager recordingFileManager = new RecordingJavaFileManager(standardFileManager) {
+      @Override
+      protected void record(File outputFile) {
+        output.processOutput(outputFile);
+      }
+    };
 
     Writer stdout = new PrintWriter(System.out, true);
     final JavaCompiler.CompilationTask task = compiler.getTask(stdout, // Writer out
@@ -262,8 +256,7 @@ public class CompilerJavacForked {
       Kind kind = success ? Kind.WARNING : diagnostic.getKind();
 
       if (source != null) {
-        output.addMessage(source.toUri().getPath(), (int) diagnostic.getLineNumber(),
-            (int) diagnostic.getColumnNumber(), diagnostic.getMessage(null), kind);
+        output.addMessage(source.toUri().getPath(), (int) diagnostic.getLineNumber(), (int) diagnostic.getColumnNumber(), diagnostic.getMessage(null), kind);
       } else {
         output.addMessage(".", 0, 0, diagnostic.getMessage(null), kind);
       }
