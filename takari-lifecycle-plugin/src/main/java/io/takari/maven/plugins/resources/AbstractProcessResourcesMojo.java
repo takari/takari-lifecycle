@@ -41,7 +41,7 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
         if (filter) {
           Map<Object, Object> properties = new HashMap<Object, Object>(this.properties);
           properties.put("project", project);
-          properties.put("settings", settings);
+          properties.put("localRepository", settings.getLocalRepository());
           processor.process(sourceDirectory, targetDirectory, resource.getIncludes(), resource.getExcludes(), properties);
         } else {
           processor.process(sourceDirectory, targetDirectory, resource.getIncludes(), resource.getExcludes());
