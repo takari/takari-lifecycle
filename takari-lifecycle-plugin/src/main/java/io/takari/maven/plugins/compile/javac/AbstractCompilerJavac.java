@@ -176,10 +176,8 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
   public void skipCompilation() {
     // javac does not track input/output association
     // need to manually carry-over output metadata
-    // otherwise outouts are deleted during BuildContext#commit
-    for (OutputMetadata<File> output : context.getProcessedOutputs()) {
-      context.carryOverOutput(output.getResource());
-    }
+    // otherwise outputs are deleted during BuildContext#commit
+    context.markOutputsAsUptodate();
   }
 
   protected Collection<File> getSourceFiles() {
