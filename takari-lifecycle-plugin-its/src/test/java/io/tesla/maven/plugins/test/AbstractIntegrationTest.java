@@ -1,7 +1,11 @@
 package io.tesla.maven.plugins.test;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
@@ -35,11 +39,16 @@ public abstract class AbstractIntegrationTest {
     final File localRepo = new File(testProperties.get("localRepository"));
     Assert.assertTrue("Can't locate maven local repository': " //
         + localRepo, localRepo.isDirectory());
+    final File userSettingsFile = new File(testProperties.get("userSettingsFile"));
+    Assert.assertTrue("Can't locate maven settings.xml file': " //
+        + userSettingsFile, userSettingsFile.isFile());
     // XXX somebody needs to fix this in maven-verifier already
-    System.setProperty("maven.home", mavenHome.getAbsolutePath());
-    Verifier verifier = new Verifier(basedir.getAbsolutePath());
+    System.setProperty("maven.home", mavenHome.getCanonicalPath());
+    Verifier verifier = new Verifier(basedir.getCanonicalPath());
     verifier.getCliOptions().add("-Dlifecycle-plugin.version=" + getPluginVersion());
     verifier.setLocalRepo(localRepo.getCanonicalPath());
+    verifier.getCliOptions().add("-s");
+    verifier.getCliOptions().add(userSettingsFile.getCanonicalPath());
     return verifier;
   }
 
