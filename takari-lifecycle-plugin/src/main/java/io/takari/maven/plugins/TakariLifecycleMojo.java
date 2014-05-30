@@ -19,6 +19,7 @@ import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // integrate buildinfo: really this can't be packaged up in the JAR as it will prevent being
 // idempotent
@@ -31,13 +32,10 @@ import org.slf4j.Logger;
 //
 public abstract class TakariLifecycleMojo extends AbstractMojo {
 
-  // TODO review @Configuration(ignored=true) parameters and if they should not be ignored
+  protected final Logger logger = LoggerFactory.getLogger(getClass());
 
   @Inject
   protected RepositorySystem repositorySystem;
-
-  @Inject
-  protected Logger logger;
 
   @Inject
   protected MavenProjectHelper projectHelper;
