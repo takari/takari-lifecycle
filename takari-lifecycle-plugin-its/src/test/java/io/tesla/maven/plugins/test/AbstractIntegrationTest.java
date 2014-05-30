@@ -40,15 +40,15 @@ public abstract class AbstractIntegrationTest {
     Assert.assertTrue("Can't locate maven local repository': " //
         + localRepo, localRepo.isDirectory());
     final File userSettingsFile = new File(testProperties.get("userSettingsFile"));
-    Assert.assertTrue("Can't locate maven settings.xml file': " //
-        + userSettingsFile, userSettingsFile.isFile());
     // XXX somebody needs to fix this in maven-verifier already
     System.setProperty("maven.home", mavenHome.getCanonicalPath());
     Verifier verifier = new Verifier(basedir.getCanonicalPath());
     verifier.getCliOptions().add("-Dlifecycle-plugin.version=" + getPluginVersion());
     verifier.setLocalRepo(localRepo.getCanonicalPath());
-    verifier.getCliOptions().add("-s");
-    verifier.getCliOptions().add(userSettingsFile.getCanonicalPath());
+    if (userSettingsFile != null && userSettingsFile.isFile()) {
+      verifier.getCliOptions().add("-s");
+      verifier.getCliOptions().add(userSettingsFile.getCanonicalPath());
+    }
     return verifier;
   }
 
