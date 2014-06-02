@@ -33,18 +33,28 @@ public class Deploy extends TakariLifecycleMojo {
 
     DeployRequest deployRequest = new DeployRequest();
 
-    //
-    // Primary artifact
-    //
-    Artifact artifact = AetherUtils.toArtifact(project.getArtifact());
-    deployRequest.addArtifact(artifact);
+    if ("pom".equals(project.getPackaging())) {
+      //
+      // POM-project primary artifact
+      //
+      Artifact artifact = AetherUtils.toArtifact(project.getArtifact());
+      artifact = artifact.setFile(project.getFile());
+      deployRequest.addArtifact(artifact);
 
-    //
-    // POM
-    //
-    Artifact pomArtifact = new SubArtifact(artifact, "", "pom");
-    pomArtifact = pomArtifact.setFile(project.getFile());
-    deployRequest.addArtifact(pomArtifact);
+    } else {
+      //
+      // Primary artifact
+      //
+      Artifact artifact = AetherUtils.toArtifact(project.getArtifact());
+      deployRequest.addArtifact(artifact);
+
+      //
+      // POM
+      //
+      Artifact pomArtifact = new SubArtifact(artifact, "", "pom");
+      pomArtifact = pomArtifact.setFile(project.getFile());
+      deployRequest.addArtifact(pomArtifact);
+    }
 
     //
     // Attached artifacts

@@ -1,6 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component-set>
   <components>
+    <!-- *Shadow* packaging pom lifecycle mapping defined in the core  -->
+    <component>
+      <role>org.apache.maven.lifecycle.mapping.LifecycleMapping</role>
+      <role-hint>pom</role-hint>
+      <implementation>org.apache.maven.lifecycle.mapping.DefaultLifecycleMapping</implementation>
+      <configuration>
+        <lifecycles>
+          <lifecycle>
+            <id>default</id>
+            <phases>
+              <install>
+                io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:install
+              </install>
+              <deploy>
+                io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:deploy
+              </deploy>
+            </phases>
+          </lifecycle>
+        </lifecycles>
+      </configuration>
+    </component>
+
     <!--
     
     We will need to patch Maven first before we can use our own configurator properly.

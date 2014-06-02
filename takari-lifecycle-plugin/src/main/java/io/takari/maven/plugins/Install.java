@@ -26,18 +26,28 @@ public class Install extends TakariLifecycleMojo {
 
     InstallRequest installRequest = new InstallRequest();
 
-    //
-    // Primary artifact
-    //
-    Artifact artifact = AetherUtils.toArtifact(project.getArtifact());
-    installRequest.addArtifact(artifact);
+    if ("pom".equals(project.getPackaging())) {
+      //
+      // POM-project primary artifact
+      //
+      Artifact artifact = AetherUtils.toArtifact(project.getArtifact());
+      artifact = artifact.setFile(project.getFile());
+      installRequest.addArtifact(artifact);
 
-    //
-    // POM
-    //
-    Artifact pomArtifact = new SubArtifact(artifact, "", "pom");
-    pomArtifact = pomArtifact.setFile(project.getFile());
-    installRequest.addArtifact(pomArtifact);
+    } else {
+      //
+      // Primary artifact
+      //
+      Artifact artifact = AetherUtils.toArtifact(project.getArtifact());
+      installRequest.addArtifact(artifact);
+
+      //
+      // POM
+      //
+      Artifact pomArtifact = new SubArtifact(artifact, "", "pom");
+      pomArtifact = pomArtifact.setFile(project.getFile());
+      installRequest.addArtifact(pomArtifact);
+    }
 
     //
     // Attached artifacts
