@@ -19,6 +19,18 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
   @Parameter(defaultValue = "${project.properties}")
   private Properties properties;
 
+  //
+  // use explicit reflective properties instead of wider objects like MavenSession or Settings
+  // this way resources will be properly reprocessed whenever the properties change
+  //
+
+  // oddly, ${localRepository} did not work
+  @Parameter(defaultValue = "${settings.localRepository}")
+  private File localRepository;
+
+  @Parameter(defaultValue = "${session.request.userSettingsFile}")
+  private File userSettingsFile;
+
   @Component
   private ResourcesProcessor processor;
 
@@ -41,7 +53,8 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
         if (filter) {
           Map<Object, Object> properties = new HashMap<Object, Object>(this.properties);
           properties.put("project", project);
-          properties.put("localRepository", settings.getLocalRepository());
+          properties.put("localRepository", localRepository);
+          properties.put("userSettingsFile", userSettingsFile);
           processor.process(sourceDirectory, targetDirectory, resource.getIncludes(), resource.getExcludes(), properties);
         } else {
           processor.process(sourceDirectory, targetDirectory, resource.getIncludes(), resource.getExcludes());
@@ -51,5 +64,4 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
       }
     }
   }
-
 }
