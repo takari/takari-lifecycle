@@ -47,12 +47,11 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
   public void compile() throws IOException {
     File options = File.createTempFile("javac-forked", ".options", buildDirectory);
     File output = File.createTempFile("javac-forked", ".output", buildDirectory);
-    try {
-      compile(options, output);
-    } finally {
-      options.delete();
-      output.delete();
-    }
+    compile(options, output);
+    // don't delete temp files in case of an exception
+    // they maybe useful to debug the problem
+    options.delete();
+    output.delete();
   }
 
   private void compile(File options, File output) throws IOException {
