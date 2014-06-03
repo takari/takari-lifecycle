@@ -20,6 +20,7 @@ import javax.inject.Named;
 
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.exec.ShutdownHookProcessDestroyer;
 
 @Named(CompilerJavacLauncher.ID)
@@ -89,7 +90,15 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
     executor.setProcessDestroyer(new ShutdownHookProcessDestroyer());
     executor.setWorkingDirectory(basedir);
 
-    executor.execute(cli); // this throws ExecuteException if process return code != 0
+    log.debug("External java process command line:\n   {}", cli);
+    try {
+      executor.execute(cli); // this throws ExecuteException if process return code != 0
+    } catch (ExecuteException e) {
+      if (!log.isDebugEnabled()) {
+        log.info("External java process command line:\n   {}", cli);
+      }
+      throw e;
+    }
 
     final Map<File, Output<File>> outputs = new HashMap<File, Output<File>>();
     final Map<File, Input<File>> inputs = new HashMap<File, Input<File>>();
