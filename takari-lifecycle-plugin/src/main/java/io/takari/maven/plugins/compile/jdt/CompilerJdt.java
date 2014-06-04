@@ -3,7 +3,6 @@ package io.takari.maven.plugins.compile.jdt;
 import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
 import io.takari.incrementalbuild.BuildContext.ResourceStatus;
-import io.takari.incrementalbuild.BuildContext.Severity;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.incrementalbuild.spi.DefaultInput;
 import io.takari.incrementalbuild.spi.DefaultInputMetadata;
@@ -33,7 +32,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.tools.JavaFileObject.Kind;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
@@ -225,10 +223,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   }
 
   private void enqueue(File sourceFile) {
-    if (!sourceFile.getName().endsWith(Kind.SOURCE.extension)) {
-      DefaultInput<File> input = context.registerInput(sourceFile).process();
-      input.process().addMessage(0, 0, "Java source file must have extension " + Kind.SOURCE.extension, Severity.ERROR, null);
-    } else if (processedSources.add(sourceFile)) {
+    if (processedSources.add(sourceFile)) {
       compileQueue.add(newSourceFile(sourceFile));
     }
   }

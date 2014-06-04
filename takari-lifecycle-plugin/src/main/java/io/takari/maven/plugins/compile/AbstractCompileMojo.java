@@ -12,11 +12,14 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.TimeUnit;
+
+import javax.tools.JavaFileObject.Kind;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
@@ -169,7 +172,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     return encoding == null ? null : Charset.forName(encoding);
   }
 
-  private List<InputMetadata<File>> getSources() throws IOException {
+  private List<InputMetadata<File>> getSources() throws IOException, MojoExecutionException {
     List<InputMetadata<File>> sources = new ArrayList<InputMetadata<File>>();
     StringBuilder msg = new StringBuilder();
     for (String sourcePath : getSourceRoots()) {
@@ -183,6 +186,16 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       Set<String> includes = getIncludes();
       if (includes == null || includes.isEmpty()) {
         includes = Collections.singleton("**/*.java");
+      } else {
+        for (String include : includes) {
+          Set<String> illegal = new LinkedHashSet<>();
+          if (!include.endsWith(Kind.SOURCE.extension)) {
+            illegal.add(include);
+          }
+          if (!illegal.isEmpty()) {
+            throw new MojoExecutionException(String.format("<includes> patterns must end with %s. Illegal patterns: %s", Kind.SOURCE.extension, illegal.toString()));
+          }
+        }
       }
       Set<String> excludes = getExcludes();
       int sourceCount = 0;

@@ -227,9 +227,8 @@ public class CompileTest extends AbstractCompileTest {
     try {
       compile(basedir);
     } catch (MojoExecutionException e) {
-      Assert.assertEquals("1 error(s) encountered, see previous message(s) for details", e.getMessage());
+      Assert.assertEquals("<includes> patterns must end with .java. Illegal patterns: [**]", e.getMessage());
     }
-    mojos.assertBuildOutputs(basedir, "target/classes/nonjava/Basic.class");
-    mojos.assertMessages(new File(basedir, "src/main/java/nonjava/NonJava.nonjava"), "Java source file must have extension .java");
+    mojos.assertBuildOutputs(basedir, new String[0]);
   }
 }

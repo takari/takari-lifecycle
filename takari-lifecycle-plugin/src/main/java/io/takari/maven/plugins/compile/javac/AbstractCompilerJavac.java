@@ -3,7 +3,6 @@ package io.takari.maven.plugins.compile.javac;
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
 import io.takari.incrementalbuild.BuildContext.OutputMetadata;
 import io.takari.incrementalbuild.BuildContext.ResourceStatus;
-import io.takari.incrementalbuild.BuildContext.Severity;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.incrementalbuild.spi.DefaultInputMetadata;
 import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
@@ -19,8 +18,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import javax.tools.JavaFileObject.Kind;
 
 public abstract class AbstractCompilerJavac extends AbstractCompiler {
 
@@ -186,12 +183,7 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
   protected Collection<File> getSourceFiles() {
     Collection<File> files = new ArrayList<File>(sources.size());
     for (InputMetadata<File> input : sources) {
-      final File inputFile = input.getResource();
-      if (inputFile.getName().endsWith(Kind.SOURCE.extension)) {
-        files.add(inputFile);
-      } else {
-        input.process().addMessage(0, 0, "Java source file must have extension " + Kind.SOURCE.extension, Severity.ERROR, null);
-      }
+      files.add(input.getResource());
     }
     return files;
   }
