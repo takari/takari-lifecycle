@@ -220,4 +220,16 @@ public class CompileTest extends AbstractCompileTest {
     mojos.assertBuildOutputs(basedir, new String[0]);
     Assert.assertFalse("outputDirectory was not created", new File(basedir, "target/classes").exists());
   }
+
+  @Test
+  public void testIncludeNonJavaSources() throws Exception {
+    File basedir = resources.getBasedir("compile/unexpected-sources");
+    try {
+      compile(basedir);
+    } catch (MojoExecutionException e) {
+      Assert.assertEquals("1 error(s) encountered, see previous message(s) for details", e.getMessage());
+    }
+    mojos.assertBuildOutputs(basedir, "target/classes/nonjava/Basic.class");
+    mojos.assertMessages(new File(basedir, "src/main/java/nonjava/NonJava.nonjava"), "Java source file must have extension .java");
+  }
 }
