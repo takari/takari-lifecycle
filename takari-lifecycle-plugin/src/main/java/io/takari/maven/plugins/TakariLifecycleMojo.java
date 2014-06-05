@@ -79,7 +79,7 @@ public abstract class TakariLifecycleMojo extends AbstractMojo {
     // skip actually doesn't work here because it's on a per mojo basis
 
     if (skip) {
-      logger.info(String.format("Skipping %s goal", mojoDescriptor.getExecuteGoal()));
+      logger.info(String.format("Skipping %s goal", mojoDescriptor.getGoal()));
       return;
     }
 
