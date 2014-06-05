@@ -134,9 +134,9 @@ public class CompileTest extends AbstractCompileTest {
 
   @Test
   public void testExcludes() throws Exception {
-    Xpp3Dom includes = new Xpp3Dom("excludes");
-    includes.addChild(newParameter("exclude", "basic/Garbage.java"));
-    File basedir = compile("compile/source-filtering", includes);
+    Xpp3Dom excludes = new Xpp3Dom("excludes");
+    excludes.addChild(newParameter("exclude", "basic/Garbage.java"));
+    File basedir = compile("compile/source-filtering", excludes);
 
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), "basic/Basic.class");
   }
