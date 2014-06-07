@@ -49,6 +49,7 @@ public abstract class AbstractIntegrationTest {
       verifier.getCliOptions().add("-s");
       verifier.getCliOptions().add(userSettingsFile.getCanonicalPath());
     }
+    verifier.getCliOptions().add("-U");
     return verifier;
   }
 
