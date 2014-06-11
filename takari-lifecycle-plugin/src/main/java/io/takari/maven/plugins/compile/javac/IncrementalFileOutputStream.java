@@ -16,6 +16,8 @@ import java.io.RandomAccessFile;
  */
 class IncrementalFileOutputStream extends OutputStream {
 
+  public static final int BUF_SIZE = 1024 * 16;
+
   private final RandomAccessFile raf;
 
   private final byte[] buffer;
@@ -36,7 +38,7 @@ class IncrementalFileOutputStream extends OutputStream {
     modified = !file.exists();
 
     raf = new RandomAccessFile(file, "rw");
-    buffer = new byte[1024 * 16];
+    buffer = new byte[BUF_SIZE];
   }
 
   @Override
@@ -61,7 +63,8 @@ class IncrementalFileOutputStream extends OutputStream {
           if (read > 0) {
             raf.seek(raf.getFilePointer() - read);
           }
-          raf.write(b, off, len);
+          int bpos = off + len - n;
+          raf.write(b, bpos, b.length - bpos);
           break;
         } else {
           n -= read;
