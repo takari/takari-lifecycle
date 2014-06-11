@@ -1,0 +1,9 @@
+package modulea;
+
+public class ModuleA {
+
+  public String getValue() {
+    return moving.Moving.VALUE;
+  }
+
+}

@@ -1,6 +1,7 @@
 package io.takari.maven.plugins.compile;
 
 import static org.apache.maven.plugin.testing.resources.TestResources.cp;
+import static org.apache.maven.plugin.testing.resources.TestResources.rm;
 import static org.apache.maven.plugin.testing.resources.TestResources.touch;
 
 import java.io.File;
@@ -169,5 +170,26 @@ public class CompileIncrementalTest extends AbstractCompileTest {
     addDependency(projectA, "module-b", new File(moduleB, "module-b-method.jar"));
     mojos.compile(projectA);
     mojos.assertBuildOutputs(moduleA, "target/classes/modulea/ModuleA.class");
+  }
+
+  @Test
+  public void testClasspath_changedClassMovedFromProjectToDependency() throws Exception {
+    File basedir = resources.getBasedir("compile-incremental/move");
+    File moduleB = new File(basedir, "module-b");
+    File moduleA = new File(basedir, "module-a");
+
+    compile(moduleB);
+    MavenProject projectA = mojos.readMavenProject(moduleA);
+    addDependency(projectA, "module-b", new File(moduleB, "target/classes"));
+    mojos.compile(projectA);
+    mojos.assertBuildOutputs(moduleA, "target/classes/modulea/ModuleA.class", "target/classes/moving/Moving.class");
+
+    // change and move class to the dependency
+    rm(moduleA, "src/main/java/moving/Moving.java");
+    cp(moduleA, "src/main/java/modulea/ModuleA.java-changed", "src/main/java/modulea/ModuleA.java");
+    cp(moduleB, "src/main/java/moving/Moving.java-changed", "src/main/java/moving/Moving.java");
+    compile(moduleB);
+    mojos.compile(projectA);
+    mojos.assertDeletedOutputs(moduleA, "target/classes/moving/Moving.class");
   }
 }

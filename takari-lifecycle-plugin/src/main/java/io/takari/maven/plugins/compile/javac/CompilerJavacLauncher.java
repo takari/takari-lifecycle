@@ -55,6 +55,8 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
   }
 
   private void compile(File options, File output) throws IOException {
+    context.deleteStaleOutputs(false);
+
     new CompilerConfiguration(getSourceEncoding(), getCompilerOptions(), getSourceFiles()).write(options);
 
     // use the same JVM as the one used to run Maven (the "java.home" one)
@@ -99,7 +101,7 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
       throw e;
     }
 
-    final Map<File, Output<File>> outputs = new HashMap<File, Output<File>>();
+    final Map<File, Output<File>> looseOutputs = new HashMap<File, Output<File>>();
     final Map<File, Input<File>> inputs = new HashMap<File, Input<File>>();
 
     for (InputMetadata<File> source : sources) {
@@ -108,8 +110,13 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
 
     CompilerOutput.process(output, new CompilerOutputProcessor() {
       @Override
-      public void processOutput(File file) {
-        outputs.put(file, context.processOutput(file));
+      public void processOutput(File inputFile, File outputFile) {
+        Input<File> input = inputs.get(inputFile);
+        if (input != null) {
+          input.associateOutput(outputFile);
+        } else {
+          looseOutputs.put(outputFile, context.processOutput(outputFile));
+        }
       }
 
       @Override
@@ -120,7 +127,7 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
           File file = new File(path);
           Resource<File> resource = inputs.get(file);
           if (resource == null) {
-            resource = outputs.get(file);
+            resource = looseOutputs.get(file);
           }
           if (resource != null) {
             resource.addMessage(line, column, message, kind, null);

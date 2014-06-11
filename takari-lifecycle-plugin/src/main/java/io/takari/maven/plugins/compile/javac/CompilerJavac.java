@@ -9,6 +9,7 @@ import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
@@ -106,7 +107,7 @@ public class CompilerJavac extends AbstractCompilerJavac {
   }
 
   @Override
-  public void compile() throws MojoExecutionException {
+  public void compile() throws MojoExecutionException, IOException {
     // java 6 limitations
     // - there is severe performance penalty using new JavaCompiler instance
     // - the same JavaCompiler cannot be used concurrently
@@ -133,20 +134,32 @@ public class CompilerJavac extends AbstractCompilerJavac {
     }
   }
 
-  private void compile(JavaCompiler compiler) {
+  private void compile(JavaCompiler compiler) throws IOException {
+    context.deleteStaleOutputs(false);
+
     final Charset sourceEncoding = getSourceEncoding();
     final DiagnosticCollector<JavaFileObject> diagnosticCollector = new DiagnosticCollector<JavaFileObject>();
     final StandardJavaFileManager standardFileManager = compiler.getStandardFileManager(diagnosticCollector, null, sourceEncoding);
     final Iterable<? extends JavaFileObject> javaSources = standardFileManager.getJavaFileObjectsFromFiles(getSourceFiles());
 
-    final Map<File, Output<File>> outputs = new HashMap<File, Output<File>>();
+    final Map<File, Output<File>> looseOutputs = new HashMap<File, Output<File>>();
     final Map<File, Input<File>> inputs = new HashMap<File, Input<File>>();
+
+    for (JavaFileObject source : javaSources) {
+      File sourceFile = FileObjects.toFile(source);
+      inputs.put(sourceFile, context.registerInput(sourceFile).process());
+    }
 
     final Iterable<String> options = getCompilerOptions();
     final RecordingJavaFileManager recordingFileManager = new RecordingJavaFileManager(standardFileManager) {
       @Override
-      protected void record(File outputFile) {
-        outputs.put(outputFile, context.processOutput(outputFile));
+      protected void record(File inputFile, File outputFile) {
+        Input<File> input = inputs.get(inputFile);
+        if (input != null) {
+          input.associateOutput(outputFile);
+        } else {
+          looseOutputs.put(outputFile, context.processOutput(outputFile));
+        }
       }
     };
 
@@ -160,11 +173,6 @@ public class CompilerJavac extends AbstractCompilerJavac {
 
     boolean success = task.call();
 
-    for (JavaFileObject source : javaSources) {
-      File sourceFile = FileObjects.toFile(source);
-      inputs.put(sourceFile, context.registerInput(sourceFile).process());
-    }
-
     for (Diagnostic<? extends JavaFileObject> diagnostic : diagnosticCollector.getDiagnostics()) {
       JavaFileObject source = diagnostic.getSource();
 
@@ -177,7 +185,7 @@ public class CompilerJavac extends AbstractCompilerJavac {
         File file = FileObjects.toFile(source);
         Resource<File> resource = inputs.get(file);
         if (resource == null) {
-          resource = outputs.get(file);
+          resource = looseOutputs.get(file);
         }
         if (resource != null) {
           resource.addMessage((int) diagnostic.getLineNumber(), (int) diagnostic.getColumnNumber(), diagnostic.getMessage(null), severity, null);

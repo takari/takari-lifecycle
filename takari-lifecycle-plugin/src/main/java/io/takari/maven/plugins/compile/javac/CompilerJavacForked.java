@@ -125,10 +125,12 @@ public class CompilerJavacForked {
       this.writer = newWriter(file);
     }
 
-    public void processOutput(File outputFile) {
+    public void processOutput(File inputFile, File outputFile) {
       try {
         writer.write('O');
-        writer.write(outputFile.getCanonicalPath());
+        writer.write(inputFile != null ? URLEncoder.encode(inputFile.getCanonicalPath(), ENCODING) : ".");
+        writer.write(' ');
+        writer.write(URLEncoder.encode(outputFile.getCanonicalPath(), ENCODING));
         writer.write(EOL);
       } catch (IOException e) {
         handleException(e);
@@ -169,9 +171,13 @@ public class CompilerJavacForked {
         while ((str = reader.readLine()) != null) {
           String value = str.substring(1);
           switch (str.charAt(0)) {
-            case 'O':
-              callback.processOutput(new File(value));
+            case 'O': {
+              StringTokenizer st = new StringTokenizer(value, " ");
+              String inputPath = URLDecoder.decode(st.nextToken(), ENCODING);
+              String outputPath = URLDecoder.decode(st.nextToken(), ENCODING);
+              callback.processOutput(!".".equals(inputPath) ? new File(inputPath) : null, new File(outputPath));
               break;
+            }
             case 'M': {
               StringTokenizer st = new StringTokenizer(value, " ");
               String path = URLDecoder.decode(st.nextToken(), ENCODING);
@@ -180,6 +186,7 @@ public class CompilerJavacForked {
               BuildContext.Severity severity = toSeverity(st.nextToken());
               String message = URLDecoder.decode(st.nextToken(), ENCODING);
               callback.addMessage(path, line, column, message, severity);
+              break;
             }
           }
         }
@@ -194,7 +201,7 @@ public class CompilerJavacForked {
   }
 
   public static interface CompilerOutputProcessor {
-    public void processOutput(File file);
+    public void processOutput(File inputFile, File outputFile);
 
     public void addMessage(String path, int line, int column, String message, BuildContext.Severity kind);
   }
@@ -232,8 +239,8 @@ public class CompilerJavacForked {
     final Iterable<String> options = config.getCompilerOptions();
     final RecordingJavaFileManager recordingFileManager = new RecordingJavaFileManager(standardFileManager) {
       @Override
-      protected void record(File outputFile) {
-        output.processOutput(outputFile);
+      protected void record(File inputFile, File outputFile) {
+        output.processOutput(inputFile, outputFile);
       }
     };
 
