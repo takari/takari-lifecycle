@@ -8,6 +8,7 @@ import java.io.File;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 
 import com.google.common.base.Charsets;
@@ -53,6 +54,25 @@ public class CompileIncrementalTest extends AbstractCompileTest {
     Files.write("test", file, Charsets.UTF_8);
     compile(basedir);
     mojos.assertBuildOutputs(classes, "basic/Basic.class");
+  }
+
+  @Test
+  public void testBasic_identicalClassfile() throws Exception {
+    Assume.assumeFalse("Need to move IncrementalFileOutputStream to BuildContext", "jdt".equals(compilerId));
+
+    File basedir = compile("compile-incremental/basic");
+    File classes = new File(basedir, "target/classes");
+    mojos.assertBuildOutputs(classes, "basic/Basic.class");
+
+    // move back timestamp, round to 10s to accommodate filesystem timestamp rounding
+    long timestamp = System.currentTimeMillis() - 20000L;
+    timestamp = timestamp - (timestamp % 10000L);
+    new File(classes, "basic/Basic.class").setLastModified(timestamp);
+
+    cp(basedir, "src/main/java/basic/Basic.java-comment", "src/main/java/basic/Basic.java");
+    compile(basedir);
+    mojos.assertBuildOutputs(classes, "basic/Basic.class");
+    Assert.assertEquals(timestamp, new File(classes, "basic/Basic.class").lastModified());
   }
 
   @Test
