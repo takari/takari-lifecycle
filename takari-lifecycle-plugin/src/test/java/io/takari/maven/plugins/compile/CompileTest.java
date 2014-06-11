@@ -231,4 +231,25 @@ public class CompileTest extends AbstractCompileTest {
     }
     mojos.assertBuildOutputs(basedir, new String[0]);
   }
+
+  @Test
+  public void testMultipleExecutions() throws Exception {
+    File basedir = resources.getBasedir("compile/multiple-executions");
+
+    // compile "other" sources, must use unique execution id
+    Xpp3Dom otherSources = new Xpp3Dom("compileSourceRoots");
+    otherSources.addChild(newParameter("root", new File(basedir, "src/other/java").getCanonicalPath()));
+    MavenProject project = mojos.readMavenProject(basedir);
+    MavenSession session = mojos.newMavenSession(project);
+    MojoExecution execution = mojos.newMojoExecution();
+    Xpp3Dom configuration = execution.getConfiguration();
+    configuration.addChild(otherSources);
+    execution = new MojoExecution(execution.getMojoDescriptor(), "other", execution.getSource());
+    execution.setConfiguration(configuration);
+    mojos.executeMojo(session, project, execution);
+    mojos.assertBuildOutputs(new File(basedir, "target/classes"), "other/Other.class");
+
+    compile(basedir);
+    mojos.assertBuildOutputs(new File(basedir, "target/classes"), "main/Main.class");
+  }
 }
