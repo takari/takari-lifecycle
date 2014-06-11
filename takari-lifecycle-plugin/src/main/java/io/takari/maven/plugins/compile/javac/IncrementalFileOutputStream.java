@@ -64,7 +64,7 @@ class IncrementalFileOutputStream extends OutputStream {
             raf.seek(raf.getFilePointer() - read);
           }
           int bpos = off + len - n;
-          raf.write(b, bpos, b.length - bpos);
+          raf.write(b, bpos, n);
           break;
         } else {
           n -= read;

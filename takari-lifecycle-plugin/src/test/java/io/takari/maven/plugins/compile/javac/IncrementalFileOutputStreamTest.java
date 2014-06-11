@@ -2,6 +2,7 @@ package io.takari.maven.plugins.compile.javac;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Random;
 
 import org.junit.Assert;
@@ -152,5 +153,24 @@ public class IncrementalFileOutputStreamTest {
     Files.write(data, file);
     data = resize(data, +10);
     writeAndAssertBuff(file, data);
+  }
+
+  @Test
+  public void testBuff_subbuffer_diff_extend() throws Exception {
+    File file = temp.newFile();
+    byte[] data = data(100);
+
+    try (IncrementalFileOutputStream os = new IncrementalFileOutputStream(file)) {
+      os.write(data, 30, 50);
+    }
+    Assert.assertArrayEquals(Arrays.copyOfRange(data, 30, 30 + 50), Files.asByteSource(file).read());
+
+    change(data, 50);
+
+    try (IncrementalFileOutputStream os = new IncrementalFileOutputStream(file)) {
+      os.write(data, 30, 60);
+    }
+
+    Assert.assertArrayEquals(Arrays.copyOfRange(data, 30, 30 + 60), Files.asByteSource(file).read());
   }
 }
