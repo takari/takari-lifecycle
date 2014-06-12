@@ -16,6 +16,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
 
@@ -46,6 +47,11 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
   private File processAnnotations(File basedir, Proc proc, File processor, Xpp3Dom... parameters) throws Exception {
     MavenProject project = mojos.readMavenProject(basedir);
+    processAnnotations(project, processor, proc, parameters);
+    return basedir;
+  }
+
+  protected void processAnnotations(MavenProject project, File processor, Proc proc, Xpp3Dom... parameters) throws Exception {
     MavenSession session = mojos.newMavenSession(project);
     MojoExecution execution = mojos.newMojoExecution();
 
@@ -63,7 +69,6 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     }
 
     mojos.executeMojo(session, project, execution);
-    return basedir;
   }
 
   private File compileAnnotationProcessor() throws Exception, IOException {
@@ -197,5 +202,46 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         "classes/proc/GeneratedSource.class", //
         "generated-sources/annotations/proc/AnotherGeneratedSource.java", //
         "classes/proc/AnotherGeneratedSource.class");
+  }
+
+  @Test
+  @Ignore("not supported with javac, see test comment")
+  public void testConvertGeneratedSourceToHandwritten() throws Exception {
+    // this test demonstrates the following scenario not currently supported by javac compiler
+    // 1. annotation processor generates java source and the generated source is compiled by javac
+    // 2. annotation is removed from original source and the generated source is moved to a dependency
+    // because javac does not provide originalSource->generatedSource association, it is not possible
+    // to eagerly cleanup generatedSource.java and generatedSource.class, which means old version
+    // of the generatedSource.class will be used during compilation
+
+    File processor = compileAnnotationProcessor();
+    File basedir = resources.getBasedir("compile-proc/proc-incremental-move");
+    File moduleA = new File(basedir, "module-a");
+    File moduleB = new File(basedir, "module-b");
+
+    Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
+    processors.addChild(newParameter("processor", "processor.Processor"));
+
+    mojos.compile(moduleB);
+    MavenProject projectA = mojos.readMavenProject(moduleA);
+    addDependency(projectA, "module-b", new File(moduleB, "target/classes"));
+    processAnnotations(projectA, processor, Proc.proc, processors);
+    mojos.assertBuildOutputs(new File(moduleA, "target"), //
+        "classes/proc/Source.class", //
+        "generated-sources/annotations/proc/GeneratedSource.java", //
+        "classes/proc/GeneratedSource.class");
+
+    // move generated source to module-b/src/main/java
+    cp(moduleB, "src/main/java/proc/GeneratedSource.java-moved", "src/main/java/proc/GeneratedSource.java");
+    cp(moduleA, "src/main/java/modulea/ModuleA.java-new", "src/main/java/modulea/ModuleA.java");
+    cp(moduleA, "src/main/java/proc/Source.java-remove-annotation", "src/main/java/proc/Source.java");
+    mojos.compile(moduleB);
+    mojos.assertBuildOutputs(moduleB, "target/classes/proc/GeneratedSource.class");
+    processAnnotations(projectA, processor, Proc.proc, processors);
+    mojos.assertBuildOutputs(new File(moduleA, "target"), //
+        "classes/proc/Source.class");
+    mojos.assertDeletedOutputs(new File(moduleA, "target"), //
+        "generated-sources/annotations/proc/GeneratedSource.java", //
+        "classes/proc/GeneratedSource.class");
   }
 }
