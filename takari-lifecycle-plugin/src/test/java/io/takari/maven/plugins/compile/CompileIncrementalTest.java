@@ -9,7 +9,6 @@ import java.io.File;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Test;
 
 import com.google.common.base.Charsets;
@@ -59,8 +58,6 @@ public class CompileIncrementalTest extends AbstractCompileTest {
 
   @Test
   public void testBasic_identicalClassfile() throws Exception {
-    Assume.assumeFalse("Need to move IncrementalFileOutputStream to BuildContext", "jdt".equals(compilerId));
-
     File basedir = compile("compile-incremental/basic");
     File classes = new File(basedir, "target/classes");
     mojos.assertBuildOutputs(classes, "basic/Basic.class");

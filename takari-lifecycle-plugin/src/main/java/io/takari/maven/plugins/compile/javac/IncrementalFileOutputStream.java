@@ -11,9 +11,13 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 
-/**
- * Output stream that only modifies destination file if new file contents actually changed.
- */
+// duplicates io.takari.incrementalbuild.spi.IncrementalFileOutputStream
+// this is necessary to provide IncrementalFileOutputStream for forked compiler executions
+// ideally, this class should be moved to a helper library also used by incrementalbuild,
+// but is not currently supported by mojo unit test harness, and likely will never be
+// (in order to add helper library to classpath of forked compiler execution during unit tests, 
+// the test harness will need to resolve the plugin dependency artifacts somehow, something that
+// can only be done in the "outer" build and then passed into the test. doable, but a lot of work)
 class IncrementalFileOutputStream extends OutputStream {
 
   public static final int BUF_SIZE = 1024 * 16;
@@ -42,7 +46,7 @@ class IncrementalFileOutputStream extends OutputStream {
   }
 
   @Override
-  public synchronized void close() throws IOException {
+  public void close() throws IOException {
     long pos = raf.getFilePointer();
     if (pos < raf.length()) {
       modified = true;
@@ -52,7 +56,7 @@ class IncrementalFileOutputStream extends OutputStream {
   }
 
   @Override
-  public synchronized void write(byte[] b, int off, int len) throws IOException {
+  public void write(byte[] b, int off, int len) throws IOException {
     if (modified) {
       raf.write(b, off, len);
     } else {
@@ -63,8 +67,7 @@ class IncrementalFileOutputStream extends OutputStream {
           if (read > 0) {
             raf.seek(raf.getFilePointer() - read);
           }
-          int bpos = off + len - n;
-          raf.write(b, bpos, n);
+          raf.write(b, off + len - n, n);
           break;
         } else {
           n -= read;
@@ -83,7 +86,7 @@ class IncrementalFileOutputStream extends OutputStream {
   }
 
   @Override
-  public synchronized void write(int b) throws IOException {
+  public void write(int b) throws IOException {
     if (modified) {
       raf.write(b);
     } else {

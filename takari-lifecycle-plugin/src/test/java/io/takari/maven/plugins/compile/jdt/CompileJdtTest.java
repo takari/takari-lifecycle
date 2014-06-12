@@ -67,17 +67,22 @@ public class CompileJdtTest {
   @Test
   public void testBasic_timestampChangeRebuild() throws Exception {
     File basedir = resources.getBasedir("compile-jdt/basic");
+    File classes = new File(basedir, "target/classes");
 
     // initial build
     mojos.compile(basedir);
-    mojos.assertBuildOutputs(basedir, "target/classes/basic/Basic1.class", "target/classes/basic/Basic2.class");
+    mojos.assertBuildOutputs(classes, "basic/Basic1.class", "basic/Basic2.class");
 
-    // timestamp changed, assume output is regenerated with updated timestamp
+    // move back timestamp, round to 10s to accommodate filesystem timestamp rounding
+    long timestamp = System.currentTimeMillis() - 20000L;
+    timestamp = timestamp - (timestamp % 10000L);
+    new File(classes, "basic/Basic1.class").setLastModified(timestamp);
+
     touch(basedir, "src/main/java/basic/Basic1.java");
     mojos.compile(basedir);
-    // assertBuildOutputs( basedir, "target/classes/basic/Basic1.class" );
-
-    assertBuildOutput(basedir, "src/main/java/basic/Basic1.java", "target/classes/basic/Basic1.class");
+    mojos.assertBuildOutputs(classes, "basic/Basic1.class");
+    // timestamp is the same if the file is the same
+    Assert.assertEquals(timestamp, new File(classes, "basic/Basic1.class").lastModified());
   }
 
   @Test
