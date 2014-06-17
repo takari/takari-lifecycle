@@ -166,7 +166,7 @@ public class CompileJdtTest {
       mojos.compile(basedir);
       Assert.fail();
     } catch (MojoExecutionException expected) {
-      Assert.assertEquals("2 error(s) encountered, see previous message(s) for details", expected.getMessage());
+      // expected
     }
     mojos.assertBuildOutputs(basedir, "target/classes/missing/Other.class");
     Assert.assertFalse(new File(basedir, "target/classes/missing/Error.class").exists());
@@ -178,7 +178,7 @@ public class CompileJdtTest {
       mojos.compile(basedir);
       Assert.fail();
     } catch (MojoExecutionException expected) {
-      Assert.assertEquals("2 error(s) encountered, see previous message(s) for details", expected.getMessage());
+      // expected
     }
     mojos.assertBuildOutputs(basedir, new String[0]);
     mojos.assertMessages(basedir, "src/main/java/missing/Error.java", messages);
@@ -194,7 +194,7 @@ public class CompileJdtTest {
       mojos.compile(basedir);
       Assert.fail();
     } catch (MojoExecutionException expected) {
-      Assert.assertEquals("2 error(s) encountered, see previous message(s) for details", expected.getMessage());
+      // expected
     }
     mojos.assertDeletedOutputs(basedir, "target/classes/missing/Error.class", "target/classes/missing/Missing.class");
   }
@@ -210,7 +210,7 @@ public class CompileJdtTest {
       mojos.compile(basedir);
       Assert.fail();
     } catch (MojoExecutionException expected) {
-      Assert.assertEquals("1 error(s) encountered, see previous message(s) for details", expected.getMessage());
+      // expected
     }
     // TODO assert expected error messages
     mojos.assertBuildOutputs(basedir, "target/classes/multifile/ClassB.class");

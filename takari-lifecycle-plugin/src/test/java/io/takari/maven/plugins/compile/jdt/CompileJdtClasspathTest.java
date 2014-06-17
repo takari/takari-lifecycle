@@ -65,7 +65,7 @@ public class CompileJdtClasspathTest {
       compileReactor(parent);
       Assert.fail();
     } catch (MojoExecutionException e) {
-      Assert.assertEquals("3 error(s) encountered, see previous message(s) for details", e.getMessage());
+      // expected
     }
     mojos.assertBuildOutputs(parent, new String[0]);
     mojos.assertMessages(parent, "module-a/src/main/java/modulea/Error.java", "ERROR Error.java [3:8] The import moduleb cannot be resolved",
@@ -85,7 +85,7 @@ public class CompileJdtClasspathTest {
       compileReactor(parent);
       Assert.fail();
     } catch (MojoExecutionException e) {
-      Assert.assertEquals("1 error(s) encountered, see previous message(s) for details", e.getMessage());
+      // expected
     }
     mojos.assertBuildOutputs(parent, new String[0]);
     mojos.assertMessages(parent, "module-a/src/main/java/modulea/Error.java", "ERROR Error.java [3:8] The import moduleb cannot be resolved");
@@ -104,7 +104,7 @@ public class CompileJdtClasspathTest {
       compileReactor(parent);
       Assert.fail();
     } catch (MojoExecutionException e) {
-      Assert.assertEquals("2 error(s) encountered, see previous message(s) for details", e.getMessage());
+      // expected
     }
     mojos.assertBuildOutputs(parent, new String[0]);
     mojos.assertMessages(parent, "module-a/src/main/java/missing/Error.java", "ERROR Error.java [6:12] Missing cannot be resolved to a type",

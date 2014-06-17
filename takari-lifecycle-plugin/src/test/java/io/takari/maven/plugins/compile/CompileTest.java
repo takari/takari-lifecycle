@@ -175,7 +175,7 @@ public class CompileTest extends AbstractCompileTest {
       compile(basedir);
       Assert.fail();
     } catch (MojoExecutionException e) {
-      Assert.assertEquals("1 error(s) encountered, see previous message(s) for details", e.getMessage());
+      // expected
     }
     mojos.assertBuildOutputs(basedir, new String[0]);
     mojos.assertMessage(basedir, "src/main/java/error/Error.java", expected);
@@ -193,7 +193,7 @@ public class CompileTest extends AbstractCompileTest {
     try {
       compile(basedir, newParameter("source", "1.6"));
     } catch (MojoExecutionException e) {
-      Assert.assertEquals("1 error(s) encountered, see previous message(s) for details", e.getMessage());
+      // expected
     }
     mojos.assertMessage(basedir, "src/main/java/version/RequiresJava7.java", expected);
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), new String[0]);

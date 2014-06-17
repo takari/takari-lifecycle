@@ -144,7 +144,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
       processAnnotations(basedir, Proc.proc, processor, processors);
       Assert.fail();
     } catch (MojoExecutionException e) {
-      Assert.assertEquals("2 error(s) encountered, see previous message(s) for details", e.getMessage());
+      // expected
     }
     mojos.assertBuildOutputs(new File(basedir, "target"), //
         "generated-sources/annotations/proc/BrokenSource.java");
@@ -155,7 +155,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
       processAnnotations(basedir, Proc.proc, processor, processors);
       Assert.fail();
     } catch (MojoExecutionException e) {
-      Assert.assertEquals("1 error(s) encountered, see previous message(s) for details", e.getMessage());
+      // expected
     }
     mojos.assertCarriedOverOutputs(new File(basedir, "target"), //
         "generated-sources/annotations/proc/BrokenSource.java");
