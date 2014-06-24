@@ -12,12 +12,12 @@
 
   <properties>
     <guava.version>14.0.1</guava.version>
-    <mavenPluginPluginVersion>3.2</mavenPluginPluginVersion>
+    <mavenPluginPluginVersion>3.2</mavenPluginPluginVersion>    
   </properties>
 
   <!-- not inherited, IIRC -->
   <prerequisites>
-    <maven>[3.2.1,)</maven>
+    <maven>[${mavenVersion},)</maven>
   </prerequisites>
 
   <dependencies>
@@ -197,26 +197,5 @@
         <artifactId>animal-sniffer-maven-plugin</artifactId>
       </plugin>
     </plugins>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-plugin-plugin</artifactId>
-          <version>${mavenPluginPluginVersion}</version>
-          <configuration>
-            <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
-          </configuration>
-          <executions>
-            <execution>
-              <id>mojo-descriptor</id>
-              <phase>process-classes</phase>
-              <goals>
-                <goal>descriptor</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
-      </plugins>
-    </pluginManagement>
   </build>
 </project>
