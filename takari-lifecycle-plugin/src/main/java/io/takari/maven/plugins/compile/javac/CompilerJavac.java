@@ -21,6 +21,7 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.tools.Diagnostic;
+import javax.tools.Diagnostic.Kind;
 import javax.tools.DiagnosticCollector;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
@@ -170,16 +171,11 @@ public class CompilerJavac extends AbstractCompilerJavac {
         null, // Iterable<String> classes to process by annotation processor(s)
         javaSources);
 
-    boolean success = task.call();
+    final boolean success = task.call();
 
     for (Diagnostic<? extends JavaFileObject> diagnostic : diagnosticCollector.getDiagnostics()) {
       final JavaFileObject source = diagnostic.getSource();
-
-      // javac appears to report errors even when compilation was success.
-      // I was only able to reproduce this with annotation processing on java 6
-      // for consistency with forked mode, downgrade errors to warning here too
-      final Severity severity = success ? BuildContext.Severity.WARNING : toSeverity(diagnostic.getKind());
-
+      final Severity severity = toSeverity(diagnostic.getKind(), success);
       final String message = diagnostic.getMessage(null);
 
       if (source != null) {
@@ -205,7 +201,27 @@ public class CompilerJavac extends AbstractCompilerJavac {
     }
   }
 
-  private BuildContext.Severity toSeverity(Diagnostic.Kind kind) {
-    return kind == Diagnostic.Kind.ERROR ? BuildContext.Severity.ERROR : BuildContext.Severity.WARNING;
+  private BuildContext.Severity toSeverity(Diagnostic.Kind kind, boolean success) {
+    // javac appears to report errors even when compilation was success.
+    // I was only able to reproduce this with annotation processing on java 6
+    // for consistency with forked mode, downgrade errors to warning here too
+    if (success && kind == Kind.ERROR) {
+      kind = Kind.WARNING;
+    }
+
+    BuildContext.Severity severity;
+    switch (kind) {
+      case ERROR:
+        severity = BuildContext.Severity.ERROR;
+        break;
+      case NOTE:
+        severity = BuildContext.Severity.INFO;
+        break;
+      default:
+        severity = BuildContext.Severity.WARNING;
+        break;
+    }
+
+    return severity;
   }
 }

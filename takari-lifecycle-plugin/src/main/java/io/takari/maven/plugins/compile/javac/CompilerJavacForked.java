@@ -146,7 +146,17 @@ public class CompilerJavacForked {
         writer.write(' ');
         writer.write(Integer.toString(column));
         writer.write(' ');
-        writer.write(kind == Kind.ERROR ? 'E' : 'W');
+        switch (kind) {
+          case ERROR:
+            writer.write('E');
+            break;
+          case NOTE:
+            writer.write('I');
+            break;
+          default:
+            writer.write('W');
+            break;
+        }
         writer.write(' ');
         writer.write(URLEncoder.encode(message, ENCODING));
         writer.write(EOL);
@@ -212,7 +222,14 @@ public class CompilerJavacForked {
     }
 
     private static BuildContext.Severity toSeverity(String token) {
-      return "E".equals(token) ? BuildContext.Severity.ERROR : BuildContext.Severity.WARNING;
+      switch (token) {
+        case "E":
+          return BuildContext.Severity.ERROR;
+        case "I":
+          return BuildContext.Severity.INFO;
+        default:
+          return BuildContext.Severity.WARNING;
+      }
     }
   }
 
@@ -278,7 +295,10 @@ public class CompilerJavacForked {
       // when doing annotation processing, javac 6 reports errors when handwritten sources
       // depend on generated sources even when overall compilation is reported as success
       // to prevent false build failures, never issue ERROR messages after successful compilation
-      Kind kind = success ? Kind.WARNING : diagnostic.getKind();
+      Kind kind = diagnostic.getKind();
+      if (success && kind == Kind.ERROR) {
+        kind = Kind.WARNING;
+      }
 
       if (source != null) {
         File file = FileObjects.toFile(source);
