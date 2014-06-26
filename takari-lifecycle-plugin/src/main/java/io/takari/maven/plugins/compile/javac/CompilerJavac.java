@@ -21,7 +21,6 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.tools.Diagnostic;
-import javax.tools.Diagnostic.Kind;
 import javax.tools.DiagnosticCollector;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
@@ -174,33 +173,39 @@ public class CompilerJavac extends AbstractCompilerJavac {
     boolean success = task.call();
 
     for (Diagnostic<? extends JavaFileObject> diagnostic : diagnosticCollector.getDiagnostics()) {
-      JavaFileObject source = diagnostic.getSource();
+      final JavaFileObject source = diagnostic.getSource();
 
       // javac appears to report errors even when compilation was success.
       // I was only able to reproduce this with annotation processing on java 6
       // for consistency with forked mode, downgrade errors to warning here too
-      Severity severity = success ? BuildContext.Severity.WARNING : toSeverity(diagnostic.getKind());
+      final Severity severity = success ? BuildContext.Severity.WARNING : toSeverity(diagnostic.getKind());
+
+      final String message = diagnostic.getMessage(null);
 
       if (source != null) {
         File file = FileObjects.toFile(source);
-        Resource<File> resource = inputs.get(file);
-        if (resource == null) {
-          resource = looseOutputs.get(file);
-        }
-        if (resource != null) {
-          resource.addMessage((int) diagnostic.getLineNumber(), (int) diagnostic.getColumnNumber(), diagnostic.getMessage(null), severity, null);
+        if (file != null) {
+          Resource<File> resource = inputs.get(file);
+          if (resource == null) {
+            resource = looseOutputs.get(file);
+          }
+          if (resource != null) {
+            resource.addMessage((int) diagnostic.getLineNumber(), (int) diagnostic.getColumnNumber(), message, severity, null);
+          } else {
+            log.warn("Unexpected java {} resource {}", source.getKind(), source.toUri().toASCIIString());
+          }
         } else {
-          log.warn("Unexpected java {} resource {}", source.getKind(), file);
+          log.warn("Unsupported compiler message on {} resource {}: {}", source.getKind(), source.toUri(), message);
         }
       } else {
         Input<File> input = context.registerInput(getPom()).process();
         // TODO execution line/column
-        input.addMessage(0, 0, diagnostic.getMessage(null), severity, null);
+        input.addMessage(0, 0, message, severity, null);
       }
     }
   }
 
-  private BuildContext.Severity toSeverity(Kind kind) {
-    return kind == Kind.ERROR ? BuildContext.Severity.ERROR : BuildContext.Severity.WARNING;
+  private BuildContext.Severity toSeverity(Diagnostic.Kind kind) {
+    return kind == Diagnostic.Kind.ERROR ? BuildContext.Severity.ERROR : BuildContext.Severity.WARNING;
   }
 }

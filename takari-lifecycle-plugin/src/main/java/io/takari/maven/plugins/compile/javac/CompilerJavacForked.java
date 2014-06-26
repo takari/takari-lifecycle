@@ -155,13 +155,23 @@ public class CompilerJavacForked {
       }
     }
 
+    public void addLogMessage(String message) {
+      try {
+        writer.write('L');
+        writer.write(message);
+        writer.write(EOL);
+      } catch (IOException e) {
+        handleException(e);
+      }
+    }
+
     public void close() throws IOException {
       writer.close();
     }
 
     private void handleException(IOException e) {
       e.printStackTrace();
-      System.exit(1); // this will trigger ExecutionExceptio in Maven plugin
+      System.exit(1); // this will trigger ExecutionException in Maven plugin
     }
 
     public static void process(File file, CompilerOutputProcessor callback) throws IOException {
@@ -188,6 +198,12 @@ public class CompilerJavacForked {
               callback.addMessage(path, line, column, message, severity);
               break;
             }
+            case 'L': {
+              callback.addLogMessage(value);
+              break;
+            }
+            default:
+              throw new IllegalArgumentException();
           }
         }
       } finally {
@@ -204,6 +220,8 @@ public class CompilerJavacForked {
     public void processOutput(File inputFile, File outputFile);
 
     public void addMessage(String path, int line, int column, String message, BuildContext.Severity kind);
+
+    public void addLogMessage(String message);
   }
 
   static Writer newWriter(File file) throws IOException {
@@ -263,7 +281,12 @@ public class CompilerJavacForked {
       Kind kind = success ? Kind.WARNING : diagnostic.getKind();
 
       if (source != null) {
-        output.addMessage(source.toUri().getPath(), (int) diagnostic.getLineNumber(), (int) diagnostic.getColumnNumber(), diagnostic.getMessage(null), kind);
+        File file = FileObjects.toFile(source);
+        if (file != null) {
+          output.addMessage(file.getAbsolutePath(), (int) diagnostic.getLineNumber(), (int) diagnostic.getColumnNumber(), diagnostic.getMessage(null), kind);
+        } else {
+          output.addLogMessage(String.format("Unsupported compiler message on %s resource %s: %s", source.getKind(), source.toUri(), diagnostic.getMessage(null)));
+        }
       } else {
         output.addMessage(".", 0, 0, diagnostic.getMessage(null), kind);
       }

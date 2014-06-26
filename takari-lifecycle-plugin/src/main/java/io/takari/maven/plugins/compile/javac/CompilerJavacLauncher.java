@@ -136,6 +136,11 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
           }
         }
       }
+
+      @Override
+      public void addLogMessage(String message) {
+        log.warn(message);
+      }
     });
   }
 

@@ -252,4 +252,20 @@ public class CompileTest extends AbstractCompileTest {
     compile(basedir);
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), "main/Main.class");
   }
+
+  @Test
+  public void testBinaryTypeMessage() throws Exception {
+    // javac (tested with 1.8.0_05 and 1.7.0_45) produce warning messages for dependency .class files in some cases
+    // the point of this test is to verify compile mojo tolerates this messages, i.e. does not fail
+    // in this particular test, the message is triggered by missing @annotation referenced from a dependency class
+
+    File basedir = resources.getBasedir("compile/binary-class-message");
+
+    MavenProject project = mojos.readMavenProject(new File(basedir, "project"));
+    MavenSession session = mojos.newMavenSession(project);
+    MojoExecution execution = mojos.newMojoExecution();
+    addDependency(project, "dependency", new File(basedir, "annotated.zip"));
+    mojos.executeMojo(session, project, execution);
+    mojos.assertBuildOutputs(new File(basedir, "project/target/classes"), "project/Project.class");
+  }
 }
