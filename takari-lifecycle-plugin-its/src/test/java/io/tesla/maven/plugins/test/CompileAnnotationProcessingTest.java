@@ -7,6 +7,10 @@ import org.junit.Test;
 
 public class CompileAnnotationProcessingTest extends AbstractIntegrationTest {
 
+  public CompileAnnotationProcessingTest(String mavenVersion) {
+    super(mavenVersion);
+  }
+
   @Test
   public void testBasic() throws Exception {
     File basedir = resources.getBasedir("compile-proc");

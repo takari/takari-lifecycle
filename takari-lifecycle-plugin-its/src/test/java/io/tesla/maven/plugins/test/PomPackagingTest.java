@@ -7,6 +7,10 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class PomPackagingTest extends AbstractIntegrationTest {
+  public PomPackagingTest(String mavenVersion) {
+    super(mavenVersion);
+  }
+
   @Test
   public void testPomPackaging() throws Exception {
     File basedir = resources.getBasedir("pom-packaging");

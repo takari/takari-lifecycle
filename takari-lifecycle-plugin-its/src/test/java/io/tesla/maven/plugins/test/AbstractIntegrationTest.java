@@ -3,6 +3,7 @@ package io.tesla.maven.plugins.test;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -13,11 +14,29 @@ import org.apache.maven.plugin.testing.resources.TestResources;
 import org.codehaus.plexus.util.IOUtil;
 import org.junit.Assert;
 import org.junit.Rule;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
+@RunWith(Parameterized.class)
 public abstract class AbstractIntegrationTest {
+
+  private final String mavenVersion;
 
   @Rule
   public final TestResources resources = new TestResources("src/it", "target/it/");
+
+  @Parameters(name = "maven-{0}")
+  public static Iterable<Object[]> mavenVersions() {
+    return Arrays.<Object[]>asList( //
+        new Object[] {"3.2.1"} //
+        , new Object[] {"3.2.2"} //
+        );
+  }
+
+  public AbstractIntegrationTest(String mavenVersion) {
+    this.mavenVersion = mavenVersion;
+  }
 
   protected Map<String, String> getTestProperties() throws IOException {
     Properties p = new Properties();
@@ -32,8 +51,7 @@ public abstract class AbstractIntegrationTest {
 
   protected Verifier getVerifier(File basedir) throws VerificationException, IOException {
     Map<String, String> testProperties = getTestProperties();
-    final File mavenHome =
-        new File("target/dependency/apache-maven-" + testProperties.get("mavenVersion"));
+    final File mavenHome = new File("target/dependency/apache-maven-" + mavenVersion);
     Assert.assertTrue("Can't locate maven home, make sure to run 'mvn generate-test-resources': "
         + mavenHome, mavenHome.isDirectory());
     final File localRepo = new File(testProperties.get("localRepository"));

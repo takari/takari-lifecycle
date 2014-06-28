@@ -7,6 +7,10 @@ import org.junit.Test;
 
 public class CompileClasspathTest extends AbstractIntegrationTest {
 
+  public CompileClasspathTest(String mavenVersion) {
+    super(mavenVersion);
+  }
+
   @Test
   public void testClasspath() throws Exception {
     File basedir = resources.getBasedir("compile-classpath");

@@ -8,6 +8,10 @@ import org.junit.Test;
 
 public class BasicTest extends AbstractIntegrationTest {
 
+  public BasicTest(String mavenVersion) {
+    super(mavenVersion);
+  }
+
   @Test
   public void testBasic() throws Exception {
     File basedir = resources.getBasedir("basic");

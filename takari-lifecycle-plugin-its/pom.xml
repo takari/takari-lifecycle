@@ -62,7 +62,14 @@
                 <artifactItem>
                   <groupId>org.apache.maven</groupId>
                   <artifactId>apache-maven</artifactId>
-                  <version>${mavenVersion}</version>
+                  <version>3.2.1</version>
+                  <classifier>bin</classifier>
+                  <type>tar.gz</type>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.apache.maven</groupId>
+                  <artifactId>apache-maven</artifactId>
+                  <version>3.2.2</version>
                   <classifier>bin</classifier>
                   <type>tar.gz</type>
                 </artifactItem>

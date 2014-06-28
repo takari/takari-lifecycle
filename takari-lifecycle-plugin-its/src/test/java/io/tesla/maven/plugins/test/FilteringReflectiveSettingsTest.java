@@ -14,6 +14,10 @@ import org.junit.Test;
 // settings with configured localRepository
 public class FilteringReflectiveSettingsTest extends AbstractIntegrationTest {
 
+  public FilteringReflectiveSettingsTest(String mavenVersion) {
+    super(mavenVersion);
+  }
+
   private Properties properties;
 
   @Before

@@ -8,6 +8,10 @@ import org.junit.Test;
 
 public class MultimoduleSkipInstallDeployTest extends AbstractIntegrationTest {
 
+  public MultimoduleSkipInstallDeployTest(String mavenVersion) {
+    super(mavenVersion);
+  }
+
   @Test
   public void testBasic() throws Exception {
     File basedir = resources.getBasedir("multimodule-skip-install-deploy");
