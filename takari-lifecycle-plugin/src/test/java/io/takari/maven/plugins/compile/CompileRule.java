@@ -1,6 +1,6 @@
 package io.takari.maven.plugins.compile;
 
-import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
+import io.takari.maven.plugins.IncrementalBuildRule2;
 
 import java.io.File;
 import java.util.Collection;
@@ -11,7 +11,7 @@ import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
 
-public class CompileRule extends IncrementalBuildRule {
+public class CompileRule extends IncrementalBuildRule2 {
 
   public File compile(File basedir, Xpp3Dom... parameters) throws Exception {
     MavenProject project = readMavenProject(basedir);

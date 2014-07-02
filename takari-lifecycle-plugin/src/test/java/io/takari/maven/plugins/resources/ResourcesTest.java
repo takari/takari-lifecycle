@@ -2,6 +2,7 @@ package io.takari.maven.plugins.resources;
 
 import static org.apache.maven.plugin.testing.resources.TestResources.assertFileContents;
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
+import io.takari.maven.plugins.IncrementalBuildRule2;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -19,7 +20,7 @@ public class ResourcesTest {
   public final TestResources resources = new TestResources();
 
   @Rule
-  public final IncrementalBuildRule mojos = new IncrementalBuildRule();
+  public final IncrementalBuildRule mojos = new IncrementalBuildRule2();
 
   @Test
   public void resources() throws Exception {
