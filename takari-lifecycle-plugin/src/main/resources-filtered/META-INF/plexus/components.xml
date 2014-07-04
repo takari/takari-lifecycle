@@ -121,7 +121,8 @@
                 org.apache.maven.plugins:maven-plugin-plugin:3.2:descriptor
               </process-classes>
               <process-test-resources>
-                io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:process-test-resources
+                io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:process-test-resources,
+                io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:testProperties
               </process-test-resources>
               <test-compile>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:testCompile

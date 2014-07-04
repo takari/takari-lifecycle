@@ -1,0 +1,360 @@
+package io.takari.maven.testing.it;
+
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more contributor license
+ * agreements. See the NOTICE file distributed with this work for additional information regarding
+ * copyright ownership. The ASF licenses this file to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License. You may obtain a
+ * copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+import java.io.BufferedInputStream;
+import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+
+import org.codehaus.plexus.classworlds.ClassWorldException;
+import org.codehaus.plexus.classworlds.launcher.ConfigurationException;
+import org.codehaus.plexus.classworlds.launcher.ConfigurationHandler;
+import org.codehaus.plexus.classworlds.launcher.ConfigurationParser;
+import org.codehaus.plexus.classworlds.realm.DuplicateRealmException;
+import org.codehaus.plexus.classworlds.realm.NoSuchRealmException;
+
+
+/**
+ * Launches an embedded Maven 3.x instance from some Maven installation directory.
+ * 
+ * @author Benjamin Bentmann
+ */
+class Embedded3xLauncher implements MavenLauncher {
+
+  private static final String MAVEN_CORE_POMPROPERTIES =
+      "/META-INF/maven/org.apache.maven/maven-core/pom.properties";
+
+  private static class ClassworldsConfiguration implements ConfigurationHandler {
+
+    private String mainType;
+    private String mainRealm;
+    private LinkedHashMap<String, List<String>> realms = new LinkedHashMap<>();
+    private List<String> curEntries;
+
+    @Override
+    public void setAppMain(String mainType, String mainRealm) {
+      this.mainType = mainType;
+      this.mainRealm = mainRealm;
+    }
+
+    @Override
+    public void addRealm(String realm) throws DuplicateRealmException {
+      if (!realms.containsKey(realm)) {
+        curEntries = new ArrayList<>();
+        realms.put(realm, curEntries);
+      }
+    }
+
+    @Override
+    public void addImportFrom(String relamName, String importSpec) throws NoSuchRealmException {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void addLoadFile(File file) {
+      if (curEntries == null) {
+        throw new IllegalStateException();
+      }
+      curEntries.add(file.getAbsolutePath());
+    }
+
+    public void addEntries(String realm, List<String> locations) {
+      List<String> entries = realms.get(realm);
+      if (entries == null) {
+        throw new IllegalStateException();
+      }
+      entries.addAll(0, locations);
+    }
+
+    @Override
+    public void addLoadURL(URL url) {
+      if (curEntries == null) {
+        throw new IllegalStateException();
+      }
+      curEntries.add(url.toExternalForm());
+    }
+
+    public void store(OutputStream os) throws IOException {
+      BufferedWriter out = new BufferedWriter(new OutputStreamWriter(os, "UTF-8")); //$NON-NLS-1$
+      out.write(String.format("main is %s from %s\n", mainType, mainRealm));
+      for (Map.Entry<String, List<String>> realm : realms.entrySet()) {
+        out.write(String.format("[%s]\n", realm.getKey()));
+        for (String entry : realm.getValue()) {
+          out.write(String.format("load %s\n", entry));
+        }
+      }
+      out.flush();
+    }
+
+  }
+
+  private static class Key {
+
+    private final File mavenHome;
+    private final String classworldConf;
+    private final List<URL> bootclasspath;
+    private final List<String> extensions;
+    private final List<String> args;
+
+    public Key(File mavenHome, String classworldConf, List<URL> bootclasspath,
+        List<String> extensions, List<String> args) {
+      this.mavenHome = mavenHome;
+      this.classworldConf = classworldConf;
+      this.bootclasspath = clone(bootclasspath);
+      this.extensions = clone(extensions);
+      this.args = clone(args);
+    }
+
+    @Override
+    public int hashCode() {
+      int hash = 17;
+      hash = hash * 31 + mavenHome.hashCode();
+      hash = hash * 31 + (classworldConf != null ? classworldConf.hashCode() : 0);
+      hash = hash * 31 + (bootclasspath != null ? bootclasspath.hashCode() : 0);
+      hash = hash * 31 + (extensions != null ? extensions.hashCode() : 0);
+      hash = hash * 31 + (args != null ? args.hashCode() : 0);
+      return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (!(obj instanceof Key)) {
+        return false;
+      }
+      Key other = (Key) obj;
+      return eq(mavenHome, other.mavenHome) && eq(classworldConf, other.classworldConf)
+          && eq(bootclasspath, other.bootclasspath) && eq(extensions, other.extensions)
+          && eq(args, other.args);
+    }
+
+    private static <T> List<T> clone(List<T> origin) {
+      return origin != null ? new ArrayList<>(origin) : null;
+    }
+
+    private static <T> boolean eq(T a, T b) {
+      return a != null ? a.equals(b) : b == null;
+    }
+  }
+
+  private static final Map<Key, Embedded3xLauncher> CACHE = new HashMap<>();
+
+  private final Object mavenCli;
+
+  private final Method doMain;
+
+  private final List<String> args;
+
+  private Embedded3xLauncher(Object mavenCli, Method doMain, List<String> args) {
+    this.mavenCli = mavenCli;
+    this.doMain = doMain;
+    this.args = args;
+  }
+
+  /**
+   * Launches an embedded Maven 3.x instance from some Maven installation directory.
+   */
+  public static Embedded3xLauncher createFromMavenHome(File mavenHome, String classworldConf,
+      List<URL> bootclasspath, List<String> extensions, List<String> args) throws LauncherException {
+    if (mavenHome == null || !mavenHome.isDirectory()) {
+      throw new LauncherException("Invalid Maven home directory " + mavenHome);
+    }
+
+    // don't bother with multi-threading here
+    // maven relies on system properties, multiple instances can't coexist in the same jvm
+
+    System.setProperty("maven.home", mavenHome.getAbsolutePath());
+
+    final Key key = new Key(mavenHome, classworldConf, bootclasspath, extensions, args);
+    Embedded3xLauncher launcher = CACHE.get(key);
+    if (launcher == null) {
+      launcher = createFromMavenHome0(mavenHome, classworldConf, bootclasspath, extensions, args);
+      CACHE.put(key, launcher);
+    }
+    return launcher;
+  }
+
+  private static Embedded3xLauncher createFromMavenHome0(File mavenHome, String classworldConf,
+      List<URL> bootclasspath, List<String> extensions, List<String> args) throws LauncherException {
+    File configFile;
+    if (classworldConf != null) {
+      configFile = new File(classworldConf);
+    } else {
+      configFile = new File(mavenHome, "bin/m2.conf");
+    }
+
+    ClassLoader bootLoader = getBootLoader(mavenHome, bootclasspath);
+
+    ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
+    Thread.currentThread().setContextClassLoader(bootLoader);
+    try {
+      Class<?> launcherClass =
+          bootLoader.loadClass("org.codehaus.plexus.classworlds.launcher.Launcher");
+
+      Object launcher = launcherClass.newInstance();
+
+      Method configure = launcherClass.getMethod("configure", new Class[] {InputStream.class});
+
+      ClassworldsConfiguration config = new ClassworldsConfiguration();
+      ConfigurationParser configParser = new ConfigurationParser(config, System.getProperties());
+      try (InputStream is = new BufferedInputStream(new FileInputStream(configFile))) {
+        configParser.parse(is);
+      }
+      if (extensions != null && !extensions.isEmpty()) {
+        config.addEntries("plexus.core", extensions);
+      }
+      ByteArrayOutputStream buf = new ByteArrayOutputStream();
+      config.store(buf);
+      configure.invoke(launcher, new ByteArrayInputStream(buf.toByteArray()));
+
+      Method getWorld = launcherClass.getMethod("getWorld");
+      Object classWorld = getWorld.invoke(launcher);
+
+      Method getMainClass = launcherClass.getMethod("getMainClass");
+      Class<?> cliClass = (Class<?>) getMainClass.invoke(launcher);
+
+      Constructor<?> newMavenCli = cliClass.getConstructor(classWorld.getClass());
+      Object mavenCli = newMavenCli.newInstance(classWorld);
+
+      Method doMain = cliClass.getMethod("doMain", //
+          String[].class, String.class, PrintStream.class, PrintStream.class);
+
+      return new Embedded3xLauncher(mavenCli, doMain, args);
+    } catch (ReflectiveOperationException | IOException | ClassWorldException
+        | ConfigurationException e) {
+      throw new LauncherException("Invalid Maven home directory " + mavenHome, e);
+    } finally {
+      Thread.currentThread().setContextClassLoader(oldClassLoader);
+    }
+  }
+
+  private static ClassLoader getBootLoader(File mavenHome, List<URL> classpath) {
+    List<URL> urls = classpath;
+
+    if (urls == null) {
+      urls = new ArrayList<URL>();
+
+      File bootDir = new File(mavenHome, "boot");
+      addUrls(urls, bootDir);
+    }
+
+    if (urls.isEmpty()) {
+      throw new IllegalArgumentException("Invalid Maven home directory " + mavenHome);
+    }
+
+    URL[] ucp = (URL[]) urls.toArray(new URL[urls.size()]);
+
+    return new URLClassLoader(ucp, ClassLoader.getSystemClassLoader().getParent());
+  }
+
+  private static void addUrls(List<URL> urls, File directory) {
+    File[] jars = directory.listFiles();
+
+    if (jars != null) {
+      for (int i = 0; i < jars.length; i++) {
+        File jar = jars[i];
+
+        if (jar.getName().endsWith(".jar")) {
+          try {
+            urls.add(jar.toURI().toURL());
+          } catch (MalformedURLException e) {
+            throw (RuntimeException) new IllegalStateException().initCause(e);
+          }
+        }
+      }
+    }
+  }
+
+  public int run(String[] cliArgs, String workingDirectory, File logFile) throws IOException,
+      LauncherException {
+    PrintStream out =
+        (logFile != null) ? new PrintStream(new FileOutputStream(logFile)) : System.out;
+    try {
+      Properties originalProperties = System.getProperties();
+      System.setProperties(null);
+      System.setProperty("maven.home", originalProperties.getProperty("maven.home", ""));
+      System.setProperty("user.dir", new File(workingDirectory).getAbsolutePath());
+
+
+      ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
+      Thread.currentThread().setContextClassLoader(mavenCli.getClass().getClassLoader());
+      try {
+        List<String> args = new ArrayList<>(this.args);
+        args.addAll(Arrays.asList(cliArgs));
+        Object result = doMain.invoke(mavenCli, //
+            args.toArray(new String[args.size()]), workingDirectory, out, out);
+
+        return ((Number) result).intValue();
+      } finally {
+        Thread.currentThread().setContextClassLoader(originalClassLoader);
+
+        System.setProperties(originalProperties);
+      }
+    } catch (IllegalAccessException e) {
+      throw new LauncherException("Failed to run Maven: " + e.getMessage(), e);
+    } catch (InvocationTargetException e) {
+      throw new LauncherException("Failed to run Maven: " + e.getMessage(), e);
+    } finally {
+      if (logFile != null) {
+        out.close();
+      }
+    }
+  }
+
+  public String getMavenVersion() throws LauncherException {
+    Properties props = new Properties();
+
+    try (InputStream is = mavenCli.getClass().getResourceAsStream(MAVEN_CORE_POMPROPERTIES)) {
+      if (is != null) {
+        props.load(is);
+      }
+    } catch (IOException e) {
+      throw new LauncherException("Failed to read Maven version", e);
+    }
+
+    String version = props.getProperty("version");
+    if (version != null) {
+      return version;
+    }
+
+    throw new LauncherException("Could not determine embedded Maven version");
+  }
+
+}
