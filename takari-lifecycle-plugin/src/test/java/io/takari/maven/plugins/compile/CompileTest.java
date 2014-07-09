@@ -105,7 +105,15 @@ public class CompileTest extends AbstractCompileTest {
   @Test
   public void testBasic_skipMain() throws Exception {
     File basedir = compile("compile/basic", newParameter("skipMain", "true"));
-    mojos.assertBuildOutputs(new File(basedir, "target/classes"), new String[0]);
+    File classes = new File(basedir, "target/classes");
+    mojos.assertBuildOutputs(classes, new String[0]);
+
+    compile(basedir);
+    mojos.assertBuildOutputs(classes, "basic/Basic.class");
+
+    compile(basedir, newParameter("skipMain", "true"));
+    mojos.assertBuildOutputs(classes, new String[0]);
+    mojos.assertDeletedOutputs(classes, new String[0]);
   }
 
   @Test
@@ -119,8 +127,19 @@ public class CompileTest extends AbstractCompileTest {
     execution.getConfiguration().addChild(newParameter("compilerId", compilerId));
     execution.getConfiguration().addChild(newParameter("skip", "true"));
     mojos.executeMojo(session, project, execution);
-
     mojos.assertBuildOutputs(testClasses, new String[0]);
+
+    execution = mojos.newMojoExecution("testCompile");
+    execution.getConfiguration().addChild(newParameter("compilerId", compilerId));
+    mojos.executeMojo(session, project, execution);
+    mojos.assertBuildOutputs(testClasses, "basic/BasicTest.class");
+
+    execution = mojos.newMojoExecution("testCompile");
+    execution.getConfiguration().addChild(newParameter("compilerId", compilerId));
+    execution.getConfiguration().addChild(newParameter("skip", "true"));
+    mojos.executeMojo(session, project, execution);
+    mojos.assertBuildOutputs(testClasses, new String[0]);
+    mojos.assertDeletedOutputs(testClasses, new String[0]);
   }
 
   @Test

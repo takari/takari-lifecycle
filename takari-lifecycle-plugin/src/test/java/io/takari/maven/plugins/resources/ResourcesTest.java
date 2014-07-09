@@ -6,7 +6,11 @@ import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 import java.io.File;
 import java.nio.charset.Charset;
 
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.testing.resources.TestResources;
+import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -29,6 +33,35 @@ public class ResourcesTest {
     Assert.assertTrue(resource.exists());
     String line = Files.readFirstLine(resource, Charset.defaultCharset());
     Assert.assertTrue(line.contains("resource.txt"));
+  }
+
+  @Test
+  public void resources_skip() throws Exception {
+    File basedir = resources.getBasedir("resources/project-with-resources");
+    File resource = new File(basedir, "target/classes/resource.txt");
+
+    MavenProject project = mojos.readMavenProject(basedir);
+    MavenSession session = mojos.newMavenSession(project);
+
+    MojoExecution execution = mojos.newMojoExecution("process-resources");
+    execution.getConfiguration().addChild(newParameter("skip", "true"));
+    mojos.executeMojo(session, project, execution);
+    Assert.assertFalse(resource.exists());
+
+    mojos.executeMojo(basedir, "process-resources");
+    Assert.assertTrue(resource.exists());
+
+    execution = mojos.newMojoExecution("process-resources");
+    execution.getConfiguration().addChild(newParameter("skip", "true"));
+    mojos.executeMojo(session, project, execution);
+    Assert.assertTrue(resource.exists());
+  }
+
+  // XXX remove when upgraded to maven plugin testing 3.2.0
+  protected Xpp3Dom newParameter(String name, String value) {
+    Xpp3Dom child = new Xpp3Dom(name);
+    child.setValue(value);
+    return child;
   }
 
   @Test

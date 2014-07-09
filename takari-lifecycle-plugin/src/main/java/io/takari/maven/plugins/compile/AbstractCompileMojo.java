@@ -4,6 +4,7 @@ import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
+import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.maven.plugins.compile.javac.CompilerJavacLauncher;
 
 import java.io.File;
@@ -166,7 +167,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   private Map<String, AbstractCompiler> compilers;
 
   @Component
-  private BuildContext context;
+  private DefaultBuildContext context;
 
   public Charset getSourceEncoding() {
     return encoding == null ? null : Charset.forName(encoding);
@@ -199,7 +200,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       }
       Set<String> excludes = getExcludes();
       int sourceCount = 0;
-      for (InputMetadata<File> source : context.registerInputs(sourceRoot, includes, excludes)) {
+      for (InputMetadata<File> source : ((BuildContext) context).registerInputs(sourceRoot, includes, excludes)) {
         sources.add(source);
         sourceCount++;
       }
@@ -236,7 +237,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
     if (isSkip()) {
       log.info("Skipping compilation");
-      // TODO this triggers cleanup of generated classes, consider making this configurable
+      context.markSkipExecution();
       return;
     }
 

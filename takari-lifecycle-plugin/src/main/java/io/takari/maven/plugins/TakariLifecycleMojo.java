@@ -2,6 +2,7 @@ package io.takari.maven.plugins;
 
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
+import io.takari.incrementalbuild.spi.DefaultBuildContext;
 
 import java.util.List;
 
@@ -39,6 +40,9 @@ public abstract class TakariLifecycleMojo extends AbstractMojo {
 
   @Inject
   protected MavenProjectHelper projectHelper;
+
+  @Inject
+  private DefaultBuildContext<?> context;
 
   @Parameter(defaultValue = "${project}")
   @Incremental(configuration = Configuration.ignore)
@@ -80,6 +84,7 @@ public abstract class TakariLifecycleMojo extends AbstractMojo {
 
     if (skip) {
       logger.info(String.format("Skipping %s goal", mojoDescriptor.getGoal()));
+      context.markSkipExecution();
       return;
     }
 

@@ -15,13 +15,13 @@
   <packaging>pom</packaging>
 
   <prerequisites>
-    <maven>[3.1.0,)</maven>
+    <maven>[3.2.1,)</maven>
   </prerequisites>
 
   <properties>
     <mavenVersion>3.2.1</mavenVersion>
     <aetherVersion>0.9.0.M2</aetherVersion>
-    <incrementalbuild.version>0.7.1</incrementalbuild.version>
+    <incrementalbuild.version>0.8.0-SNAPSHOT</incrementalbuild.version>
   </properties>
 
   <scm>
