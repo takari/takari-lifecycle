@@ -68,6 +68,7 @@ public class TestCompileMojo extends AbstractCompileMojo {
    * Set this to 'true' to bypass compilation of test sources. Its use is NOT RECOMMENDED, but quite convenient on occasion.
    */
   @Parameter(property = "maven.test.skip")
+  @Incremental(configuration = Configuration.ignore)
   private boolean skip;
 
   @Override

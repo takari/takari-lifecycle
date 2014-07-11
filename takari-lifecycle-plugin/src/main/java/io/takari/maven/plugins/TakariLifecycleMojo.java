@@ -73,6 +73,7 @@ public abstract class TakariLifecycleMojo extends AbstractMojo {
   protected Settings settings;
 
   @Parameter(defaultValue = "false", property = "skip")
+  @Incremental(configuration = Configuration.ignore)
   protected boolean skip;
 
   protected abstract void executeMojo() throws MojoExecutionException;

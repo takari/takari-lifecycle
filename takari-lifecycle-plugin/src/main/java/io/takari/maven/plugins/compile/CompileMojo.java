@@ -61,6 +61,7 @@ public class CompileMojo extends AbstractCompileMojo {
    * Set this to 'true' to bypass compilation of main sources. Its use is NOT RECOMMENDED, but quite convenient on occasion.
    */
   @Parameter(property = "maven.main.skip")
+  @Incremental(configuration = Configuration.ignore)
   private boolean skipMain;
 
   @Override
