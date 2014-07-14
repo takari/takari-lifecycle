@@ -5,7 +5,7 @@ import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.incrementalbuild.spi.DefaultInputMetadata;
-import io.takari.maven.plugins.resources.ResourcesProcessor;
+import io.takari.resources.filtering.ResourcesProcessor;
 
 import java.io.File;
 import java.io.FileInputStream;

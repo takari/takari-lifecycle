@@ -1,6 +1,7 @@
 package io.takari.maven.plugins.resources;
 
 import io.takari.maven.plugins.TakariLifecycleMojo;
+import io.takari.resources.filtering.ResourcesProcessor;
 
 import java.io.File;
 import java.io.IOException;

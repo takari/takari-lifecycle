@@ -1,4 +1,4 @@
-package io.takari.maven.plugins.resources;
+package io.takari.resources.filtering;
 
 import io.takari.incrementalbuild.BuildContext;
 

@@ -66,9 +66,9 @@
     </dependency>
     <!-- Resources -->
     <dependency>
-      <groupId>com.github.spullara.mustache.java</groupId>
-      <artifactId>compiler</artifactId>
-      <version>0.8.15</version>
+      <groupId>io.takari.maven.plugins</groupId>
+      <artifactId>takari-resource-filtering</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <!-- We can use 15.0 at runtime because of the classloader isolation 
       in Maven, but we cannot use 15.0 during testing because sisu will not work 

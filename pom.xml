@@ -41,6 +41,7 @@
     <module>takari-lifecycle-plugin-its</module>
     <module>takari-plugin-testing</module>
     <module>takari-plugin-testing-plugin</module>
+    <module>takari-resource-filtering</module>
   </modules>
 
   <build>

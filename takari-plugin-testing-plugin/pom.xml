@@ -36,8 +36,13 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>io.takari</groupId>
+      <artifactId>incrementalbuild</artifactId>
+      <version>${incrementalbuild.version}</version>
+    </dependency>
+    <dependency>
       <groupId>io.takari.maven.plugins</groupId>
-      <artifactId>takari-lifecycle-plugin</artifactId>
+      <artifactId>takari-resource-filtering</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
