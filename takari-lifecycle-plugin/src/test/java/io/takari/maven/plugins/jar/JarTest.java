@@ -1,6 +1,6 @@
 package io.takari.maven.plugins.jar;
 
-import static io.takari.maven.plugins.IncrementalBuildRule2.newParameter;
+import static org.apache.maven.plugin.testing.MojoParameters.newParameter;
 import static org.apache.maven.plugin.testing.resources.TestResources.cp;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -9,7 +9,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import io.takari.hash.FingerprintSha1Streaming;
-import io.takari.maven.plugins.IncrementalBuildRule2;
+import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 
 import java.io.File;
 import java.io.InputStream;
@@ -42,7 +42,7 @@ public class JarTest {
   public final TestResources resources = new TestResources();
 
   @Rule
-  public final IncrementalBuildRule2 mojos = new IncrementalBuildRule2();
+  public final IncrementalBuildRule mojos = new IncrementalBuildRule();
 
   @Test
   public void jarCreation() throws Exception {

@@ -1,5 +1,6 @@
 package io.takari.maven.plugins.resources;
 
+import static org.apache.maven.plugin.testing.MojoParameters.newParameter;
 import static org.apache.maven.plugin.testing.resources.TestResources.assertFileContents;
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 
@@ -10,7 +11,6 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.testing.resources.TestResources;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -55,13 +55,6 @@ public class ResourcesTest {
     execution.getConfiguration().addChild(newParameter("skip", "true"));
     mojos.executeMojo(session, project, execution);
     Assert.assertTrue(resource.exists());
-  }
-
-  // XXX remove when upgraded to maven plugin testing 3.2.0
-  protected Xpp3Dom newParameter(String name, String value) {
-    Xpp3Dom child = new Xpp3Dom(name);
-    child.setValue(value);
-    return child;
   }
 
   @Test

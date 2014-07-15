@@ -1,8 +1,8 @@
 package io.takari.maven.plugins.install_deploy;
 
-import static io.takari.maven.plugins.IncrementalBuildRule2.create;
-import static io.takari.maven.plugins.IncrementalBuildRule2.newParameter;
-import io.takari.maven.plugins.IncrementalBuildRule2;
+import static org.apache.maven.plugin.testing.MojoParameters.newParameter;
+import static org.apache.maven.plugin.testing.resources.TestResources.create;
+import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 
 import java.io.File;
 import java.util.Arrays;
@@ -15,6 +15,8 @@ import org.apache.maven.execution.MavenExecutionResult;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.testing.resources.TestResources;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.ProjectBuilder;
+import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.internal.impl.SimpleLocalRepositoryManagerFactory;
@@ -29,7 +31,7 @@ public class InstallDeployTest {
   public final TestResources resources = new TestResources();
 
   @Rule
-  public final IncrementalBuildRule2 mojos = new IncrementalBuildRule2();
+  public final IncrementalBuildRule mojos = new IncrementalBuildRule();
 
   @Test
   public void testBasic_release() throws Exception {
@@ -45,7 +47,7 @@ public class InstallDeployTest {
     Properties properties = new Properties();
     properties.put("version", "1.0");
     properties.put("repopath", remoterepo.getCanonicalPath());
-    MavenProject project = mojos.readMavenProject(basedir, properties);
+    MavenProject project = readMavenProject(basedir, properties);
 
     mojos.executeMojo(project, "jar", newParameter("sourceJar", "true"), newParameter("testJar", "true"));
     Assert.assertEquals(2, project.getAttachedArtifacts().size());
@@ -75,6 +77,17 @@ public class InstallDeployTest {
     session.setCurrentProject(project);
     session.setProjects(Arrays.asList(project));
     return session;
+  }
+
+  private MavenProject readMavenProject(File basedir, Properties properties) throws Exception {
+    File pom = new File(basedir, "pom.xml");
+    MavenExecutionRequest request = new DefaultMavenExecutionRequest();
+    request.setUserProperties(properties);
+    request.setBaseDirectory(basedir);
+    ProjectBuildingRequest configuration = request.getProjectBuildingRequest();
+    MavenProject project = mojos.lookup(ProjectBuilder.class).build(pom, configuration).getProject();
+    Assert.assertNotNull(project);
+    return project;
   }
 
 }
