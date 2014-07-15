@@ -1,13 +1,15 @@
 package io.tesla.maven.plugins.test;
 
+import io.takari.maven.testing.TestResources;
+import io.takari.maven.testing.it.VerifierResult;
+
 import java.io.File;
 
-import org.apache.maven.it.Verifier;
 import org.junit.Test;
 
 public class CompileAnnotationProcessingTest extends AbstractIntegrationTest {
 
-  public CompileAnnotationProcessingTest(String mavenVersion) {
+  public CompileAnnotationProcessingTest(String mavenVersion) throws Exception {
     super(mavenVersion);
   }
 
@@ -15,10 +17,10 @@ public class CompileAnnotationProcessingTest extends AbstractIntegrationTest {
   public void testBasic() throws Exception {
     File basedir = resources.getBasedir("compile-proc");
 
-    Verifier verifier = getVerifier(basedir);
-    verifier.executeGoal("package");
-    verifier.verifyErrorFreeLog();
+    VerifierResult result = verifier.forProject(basedir).execute("package");
+    result.assertErrorFreeLog();
 
-    verifier.assertFilePresent("project/target/classes/project/MyMyAnnotationClient.class");
+    TestResources.assertFilesPresent(basedir,
+        "project/target/classes/project/MyMyAnnotationClient.class");
   }
 }

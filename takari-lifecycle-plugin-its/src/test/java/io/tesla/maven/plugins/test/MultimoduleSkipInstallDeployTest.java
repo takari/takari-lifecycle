@@ -1,14 +1,15 @@
 package io.tesla.maven.plugins.test;
 
+import io.takari.maven.testing.it.VerifierResult;
+
 import java.io.File;
 
-import org.apache.maven.it.Verifier;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class MultimoduleSkipInstallDeployTest extends AbstractIntegrationTest {
 
-  public MultimoduleSkipInstallDeployTest(String mavenVersion) {
+  public MultimoduleSkipInstallDeployTest(String mavenVersion) throws Exception {
     super(mavenVersion);
   }
 
@@ -19,10 +20,11 @@ public class MultimoduleSkipInstallDeployTest extends AbstractIntegrationTest {
     File remoterepo = new File(basedir, "remoterepo");
     Assert.assertTrue(remoterepo.mkdirs());
 
-    Verifier verifier = getVerifier(basedir);
-    verifier.addCliOption("-Drepopath=" + remoterepo.getCanonicalPath());
-    verifier.executeGoal("deploy");
-    verifier.verifyErrorFreeLog();
+    VerifierResult result = verifier.forProject(basedir) //
+        .withCliOption("-Drepopath=" + remoterepo.getCanonicalPath()) //
+        .execute("deploy");
+
+    result.assertErrorFreeLog();
 
     File group = new File(remoterepo, "io/takari/lifecycle/its/multimodule-skip-install-deploy");
     Assert.assertTrue(new File(group, "parent/1.0/parent-1.0.pom").canRead());

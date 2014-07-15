@@ -1,14 +1,15 @@
 package io.tesla.maven.plugins.test;
 
+import io.takari.maven.testing.it.VerifierResult;
+
 import java.io.File;
 
-import org.apache.maven.it.Verifier;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class BasicTest extends AbstractIntegrationTest {
 
-  public BasicTest(String mavenVersion) {
+  public BasicTest(String mavenVersion) throws Exception {
     super(mavenVersion);
   }
 
@@ -19,12 +20,13 @@ public class BasicTest extends AbstractIntegrationTest {
     File remoterepo = new File(basedir, "remoterepo");
     Assert.assertTrue(remoterepo.mkdirs());
 
-    File localrepo = new File(getTestProperties().get("localRepository"));
+    File localrepo = properties.getLocalRepository();
 
-    Verifier verifier = getVerifier(basedir);
-    verifier.addCliOption("-Drepopath=" + remoterepo.getCanonicalPath());
-    verifier.executeGoal("deploy");
-    verifier.verifyErrorFreeLog();
+    VerifierResult result = verifier.forProject(basedir) //
+        .withCliOption("-Drepopath=" + remoterepo.getCanonicalPath()) //
+        .execute("deploy");
+
+    result.assertErrorFreeLog();
 
     // TODO assert expected mojos were executed
     // TODO assertFileExist, etc

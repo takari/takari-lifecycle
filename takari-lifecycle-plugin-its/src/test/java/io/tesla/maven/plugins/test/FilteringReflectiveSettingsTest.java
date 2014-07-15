@@ -1,11 +1,12 @@
 package io.tesla.maven.plugins.test;
 
+import io.takari.maven.testing.it.VerifierResult;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Properties;
 
-import org.apache.maven.it.Verifier;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,7 +15,7 @@ import org.junit.Test;
 // settings with configured localRepository
 public class FilteringReflectiveSettingsTest extends AbstractIntegrationTest {
 
-  public FilteringReflectiveSettingsTest(String mavenVersion) {
+  public FilteringReflectiveSettingsTest(String mavenVersion) throws Exception {
     super(mavenVersion);
   }
 
@@ -24,9 +25,9 @@ public class FilteringReflectiveSettingsTest extends AbstractIntegrationTest {
   public void setUp() throws Exception {
     File basedir = resources.getBasedir("filtering-reflective-settings");
 
-    Verifier verifier = getVerifier(basedir);
-    verifier.executeGoal("process-resources");
-    verifier.verifyErrorFreeLog();
+    VerifierResult result = verifier.forProject(basedir).execute("process-resources");
+
+    result.assertErrorFreeLog();
 
     Properties properties = new Properties();
     InputStream is = new FileInputStream(new File(basedir, "target/classes/settings.properties"));
