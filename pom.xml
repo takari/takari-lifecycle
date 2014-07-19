@@ -11,7 +11,7 @@
 
   <groupId>io.takari.maven.plugins</groupId>
   <artifactId>takari-lifecycle</artifactId>
-  <version>1.8.0-SNAPSHOT</version>
+  <version>1.7.4</version>
   <packaging>pom</packaging>
 
   <prerequisites>
@@ -28,7 +28,7 @@
     <connection>scm:git:git@github.com/takari/takari-lifecycle-plugin.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/takari/takari-lifecycle-plugin.git</developerConnection>
     <url>http://github.com/takari/takari-lifecycle-plugin</url>
-    <tag>HEAD</tag>
+    <tag>takari-lifecycle-1.7.4</tag>
   </scm>
 
   <modules>
