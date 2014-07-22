@@ -16,6 +16,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
@@ -29,19 +30,19 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
   @Parameters(name = "{0}")
   public static Iterable<Object[]> compilers() {
     List<Object[]> compilers = new ArrayList<Object[]>();
-    if (isJava7) {
-      // in-process annotation processing is not supported on java 6
-      compilers.add(new Object[] {"javac"});
-    }
+    compilers.add(new Object[] {"javac"});
     compilers.add(new Object[] {"forked-javac"});
     // compilers.add(new Object[] {"jdt"});
     return compilers;
   }
 
   private File procCompile(String projectName, Proc proc, Xpp3Dom... parameters) throws Exception, IOException {
-    File processor = compileAnnotationProcessor();
-
     File basedir = resources.getBasedir(projectName);
+    return procCompile(basedir, proc, parameters);
+  }
+
+  private File procCompile(File basedir, Proc proc, Xpp3Dom... parameters) throws Exception, IOException {
+    File processor = compileAnnotationProcessor();
     return processAnnotations(basedir, proc, processor, parameters);
   }
 
@@ -128,6 +129,21 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         "classes/proc/Source.class", //
         "generated-sources/annotations/proc/GeneratedSource.java", //
         "classes/proc/GeneratedSource.class");
+  }
+
+  @Test
+  public void testProc_processorErrorMessage() throws Exception {
+    Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
+    processors.addChild(newParameter("processor", "processor.ErrorMessageProcessor"));
+    File basedir = resources.getBasedir("compile-proc/proc");
+    try {
+      procCompile(basedir, Proc.only, processors);
+      Assert.fail();
+    } catch (MojoExecutionException e) {
+      // expected
+    }
+    mojos.assertBuildOutputs(new File(basedir, "target"), new String[0]);
+    mojos.assertMessages(basedir, "src/main/java/proc/Source.java", "ERROR Source.java [6:8] test error message");
   }
 
   @Test
@@ -243,5 +259,22 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     mojos.assertDeletedOutputs(new File(moduleA, "target"), //
         "generated-sources/annotations/proc/GeneratedSource.java", //
         "classes/proc/GeneratedSource.class");
+  }
+
+  @Test
+  public void testMissingType() throws Exception {
+    Assume.assumeFalse("java 8 does not tolerate missing types during annotation processing", isJava8orBetter);
+
+    Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
+    processors.addChild(newParameter("processor", "processor.Processor"));
+
+    File basedir = procCompile("compile-proc/missing-type", Proc.only, processors, newParameter("verbose", "true"));
+    File generatedSources = new File(basedir, "target/generated-sources/annotations");
+    mojos.assertBuildOutputs(generatedSources, "proc/GeneratedSource.java");
+    mojos.assertMessages(basedir, "src/main/java/warn/Source.java", new String[0]);
+
+    basedir = procCompile("compile-proc/missing-type", Proc.only, processors, newParameter("showWarnings", "true"));
+    mojos.assertBuildOutputs(generatedSources, "proc/GeneratedSource.java");
+    mojos.assertMessages(basedir, "src/main/java/warn/Source.java", "WARNING Source.java [9:17] package missing does not exist");
   }
 }

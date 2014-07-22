@@ -20,7 +20,7 @@ public class Java6InprocessAnnotationProcessingTest {
 
   @Test
   public void testAnnotationProcessing_java6() throws Exception {
-    Assume.assumeFalse(AbstractCompileTest.isJava7);
+    Assume.assumeFalse(AbstractCompileTest.isJava7orBetter);
 
     // the point of this test is to validate in-process annotation processing fails fast on java6
 

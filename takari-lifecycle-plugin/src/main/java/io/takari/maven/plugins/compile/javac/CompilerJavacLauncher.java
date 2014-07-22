@@ -5,6 +5,7 @@ import io.takari.incrementalbuild.BuildContext.Input;
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
 import io.takari.incrementalbuild.BuildContext.Output;
 import io.takari.incrementalbuild.BuildContext.Resource;
+import io.takari.incrementalbuild.BuildContext.Severity;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerConfiguration;
 import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerOutput;
@@ -130,7 +131,9 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
             resource = looseOutputs.get(file);
           }
           if (resource != null) {
-            resource.addMessage(line, column, message, kind, null);
+            if (isShowWarnings() || kind != Severity.WARNING) {
+              resource.addMessage(line, column, message, kind, null);
+            }
           } else {
             log.warn("Unexpected java resource {}", file);
           }

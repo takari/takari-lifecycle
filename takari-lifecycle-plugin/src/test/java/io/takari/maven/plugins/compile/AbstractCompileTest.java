@@ -3,6 +3,7 @@ package io.takari.maven.plugins.compile;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Set;
+import java.util.StringTokenizer;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
@@ -19,16 +20,25 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public abstract class AbstractCompileTest {
 
-  public static final boolean isJava7;
+  public static final boolean isJava7orBetter;
+
+  public static final boolean isJava8orBetter;
 
   static {
-    boolean isJava7x = true;
-    try {
-      Class.forName("java.nio.file.Files");
-    } catch (Exception e) {
-      isJava7x = false;
+    boolean _isJava7orBetter = false, _isJava8orBetter = false;
+
+    String version = System.getProperty("java.specification.version");
+    if (version != null) {
+      StringTokenizer st = new StringTokenizer(version, ".");
+      /* int major = */Integer.parseInt(st.nextToken());
+      int minor = Integer.parseInt(st.nextToken());
+
+      _isJava7orBetter = minor >= 7;
+      _isJava8orBetter = minor >= 8;
     }
-    isJava7 = isJava7x;
+
+    isJava7orBetter = _isJava7orBetter;
+    isJava8orBetter = _isJava8orBetter;
   }
 
   @Rule

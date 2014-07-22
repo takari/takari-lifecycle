@@ -104,6 +104,12 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
       options.add("-g:" + keywords.toString());
     }
 
+    if (isShowWarnings()) {
+      options.add("-Xlint:all");
+    } else {
+      options.add("-Xlint:none");
+    }
+
     return options;
   }
 

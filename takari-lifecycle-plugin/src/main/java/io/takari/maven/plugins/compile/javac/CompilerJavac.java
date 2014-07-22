@@ -178,25 +178,27 @@ public class CompilerJavac extends AbstractCompilerJavac {
       final Severity severity = toSeverity(diagnostic.getKind(), success);
       final String message = diagnostic.getMessage(null);
 
-      if (source != null) {
-        File file = FileObjects.toFile(source);
-        if (file != null) {
-          Resource<File> resource = inputs.get(file);
-          if (resource == null) {
-            resource = looseOutputs.get(file);
-          }
-          if (resource != null) {
-            resource.addMessage((int) diagnostic.getLineNumber(), (int) diagnostic.getColumnNumber(), message, severity, null);
+      if (isShowWarnings() || severity != Severity.WARNING) {
+        if (source != null) {
+          File file = FileObjects.toFile(source);
+          if (file != null) {
+            Resource<File> resource = inputs.get(file);
+            if (resource == null) {
+              resource = looseOutputs.get(file);
+            }
+            if (resource != null) {
+              resource.addMessage((int) diagnostic.getLineNumber(), (int) diagnostic.getColumnNumber(), message, severity, null);
+            } else {
+              log.warn("Unexpected java {} resource {}", source.getKind(), source.toUri().toASCIIString());
+            }
           } else {
-            log.warn("Unexpected java {} resource {}", source.getKind(), source.toUri().toASCIIString());
+            log.warn("Unsupported compiler message on {} resource {}: {}", source.getKind(), source.toUri(), message);
           }
         } else {
-          log.warn("Unsupported compiler message on {} resource {}: {}", source.getKind(), source.toUri(), message);
+          Input<File> input = context.registerInput(getPom()).process();
+          // TODO execution line/column
+          input.addMessage(0, 0, message, severity, null);
         }
-      } else {
-        Input<File> input = context.registerInput(getPom()).process();
-        // TODO execution line/column
-        input.addMessage(0, 0, message, severity, null);
       }
     }
   }

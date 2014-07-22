@@ -46,6 +46,8 @@ public abstract class AbstractCompiler {
 
   private Set<Debug> debug;
 
+  private boolean showWarnings;
+
   protected AbstractCompiler(DefaultBuildContext<?> context) {
     this.context = context;
   }
@@ -144,6 +146,14 @@ public abstract class AbstractCompiler {
 
   protected Set<String> getSourceRoots() {
     return sourceRoots;
+  }
+
+  public void setShowWarnings(boolean showWarnings) {
+    this.showWarnings = showWarnings;
+  }
+
+  protected boolean isShowWarnings() {
+    return showWarnings;
   }
 
   public abstract boolean setClasspath(List<File> dependencies) throws IOException;

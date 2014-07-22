@@ -48,6 +48,7 @@ import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
 import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
+import org.eclipse.jdt.internal.compiler.impl.IrritantSet;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.eclipse.jdt.internal.compiler.util.SuffixConstants;
 import org.eclipse.jdt.internal.core.builder.ProblemFactory;
@@ -149,11 +150,23 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       }
     }
 
-    CompilerOptions compilerOptions = new CompilerOptions(args);
+    class _CompilerOptions extends CompilerOptions {
+      public void setShowWarnings(boolean showWarnings) {
+        if (showWarnings) {
+          warningThreshold = IrritantSet.ALL;
+        } else {
+          warningThreshold = new IrritantSet(0);
+        }
+      }
+    }
+    _CompilerOptions compilerOptions = new _CompilerOptions();
+
+    compilerOptions.set(args);
     compilerOptions.performMethodsFullRecovery = false;
     compilerOptions.performStatementsRecovery = false;
     compilerOptions.verbose = isVerbose();
     compilerOptions.suppressWarnings = true;
+    compilerOptions.setShowWarnings(isShowWarnings());
     IProblemFactory problemFactory = ProblemFactory.getProblemFactory(Locale.getDefault());
     Classpath namingEnvironment = createClasspath();
     Compiler compiler = new Compiler(namingEnvironment, errorHandlingPolicy, compilerOptions, this, problemFactory);

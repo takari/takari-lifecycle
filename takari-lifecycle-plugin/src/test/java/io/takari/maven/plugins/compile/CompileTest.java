@@ -201,8 +201,24 @@ public class CompileTest extends AbstractCompileTest {
   }
 
   @Test
+  public void testWarn() throws Exception {
+    File basedir = resources.getBasedir("compile/warn");
+    compile(basedir); // no warnings by default
+    mojos.assertBuildOutputs(new File(basedir, "target/classes"), "warn/Warn.class");
+    mojos.assertMessages(basedir, "src/main/java/warn/Warn.java", new String[0]);
+
+    ErrorMessage expected = new ErrorMessage(compilerId);
+    expected.setSnippets("jdt", "WARNING Warn.java [5:23] Unnecessary cast from String to String");
+    expected.setSnippets("javac", "WARNING Warn.java [5:23] redundant cast to java.lang.String");
+
+    compile(basedir, newParameter("showWarnings", "true"));
+    mojos.assertBuildOutputs(new File(basedir, "target/classes"), "warn/Warn.class");
+    mojos.assertMessage(basedir, "src/main/java/warn/Warn.java", expected);
+  }
+
+  @Test
   public void testSourceTargetVersion() throws Exception {
-    Assume.assumeTrue(isJava7);
+    Assume.assumeTrue(isJava7orBetter);
 
     ErrorMessage expected = new ErrorMessage(compilerId);
     expected.setSnippets("jdt", "ERROR RequiresJava7.java [9:40] '<>' operator is not allowed for source level below 1.7");

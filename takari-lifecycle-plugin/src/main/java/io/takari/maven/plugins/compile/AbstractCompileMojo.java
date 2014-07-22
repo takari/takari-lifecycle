@@ -141,6 +141,12 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Parameter(property = "maven.compiler.debug", defaultValue = "all")
   private String debug;
 
+  /**
+   * Set to <code>true</code> to show compilation warnings.
+   */
+  @Parameter(property = "maven.compiler.showWarnings", defaultValue = "false")
+  private boolean showWarnings;
+
   //
 
   @Parameter(defaultValue = "${project.file}", readonly = true)
@@ -270,6 +276,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       compiler.setSourceEncoding(getSourceEncoding());
       compiler.setSourceRoots(getSourceRoots());
       compiler.setDebug(parseDebug(debug));
+      compiler.setShowWarnings(showWarnings);
 
       if (compiler instanceof CompilerJavacLauncher) {
         ((CompilerJavacLauncher) compiler).setBasedir(basedir);
