@@ -34,8 +34,7 @@ public class VerifierRuntime {
     VerifierRuntimeBuilder(TestProperties properties, String mavenVersion) {
       this.properties = properties;
       this.mavenHome = new File("target/maven-installation/apache-maven-" + mavenVersion);
-      Assert.assertTrue("Can't locate maven home, make sure to run 'mvn generate-test-resources': "
-          + mavenHome, mavenHome.isDirectory());
+      Assert.assertTrue("Can't locate maven home, make sure to run 'mvn generate-test-resources': " + mavenHome, mavenHome.isDirectory());
 
       // workspace resolution is already fully configured if the test is invoked from m2e directly
       if (System.getProperty("mavendev.testclasspath") == null) {

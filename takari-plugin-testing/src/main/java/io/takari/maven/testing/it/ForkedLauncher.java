@@ -50,8 +50,7 @@ class ForkedLauncher implements MavenLauncher {
 
   private final List<String> args;
 
-  public ForkedLauncher(File mavenHome, List<String> extensions, Map<String, String> envVars,
-      List<String> args) {
+  public ForkedLauncher(File mavenHome, List<String> extensions, Map<String, String> envVars, List<String> args) {
     this.args = args;
     if (mavenHome == null) {
       throw new NullPointerException();
@@ -63,8 +62,7 @@ class ForkedLauncher implements MavenLauncher {
     this.executable = new File(mavenHome, "bin/mvn");
   }
 
-  public int run(String[] cliArgs, Map<String, String> envVars, String workingDirectory,
-      File logFile) throws IOException, LauncherException {
+  public int run(String[] cliArgs, Map<String, String> envVars, String workingDirectory, File logFile) throws IOException, LauncherException {
     CommandLine cli = new CommandLine(executable);
     cli.addArguments(args.toArray(new String[args.size()]));
     cli.addArguments(cliArgs);
@@ -109,8 +107,7 @@ class ForkedLauncher implements MavenLauncher {
     return sb.toString();
   }
 
-  public int run(String[] cliArgs, String workingDirectory, File logFile) throws IOException,
-      LauncherException {
+  public int run(String[] cliArgs, String workingDirectory, File logFile) throws IOException, LauncherException {
     return run(cliArgs, envVars, workingDirectory, logFile);
   }
 
@@ -135,9 +132,7 @@ class ForkedLauncher implements MavenLauncher {
     String version = extractMavenVersion(logLines);
 
     if (version == null) {
-      throw new LauncherException(
-          "Illegal Maven output: String 'Maven' not found in the following output:\n"
-              + join(logLines, "\n"));
+      throw new LauncherException("Illegal Maven output: String 'Maven' not found in the following output:\n" + join(logLines, "\n"));
     } else {
       return version;
     }

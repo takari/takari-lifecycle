@@ -56,8 +56,7 @@ import org.codehaus.plexus.classworlds.realm.NoSuchRealmException;
  */
 class Embedded3xLauncher implements MavenLauncher {
 
-  private static final String MAVEN_CORE_POMPROPERTIES =
-      "/META-INF/maven/org.apache.maven/maven-core/pom.properties";
+  private static final String MAVEN_CORE_POMPROPERTIES = "/META-INF/maven/org.apache.maven/maven-core/pom.properties";
 
   private static class ClassworldsConfiguration implements ConfigurationHandler {
 
@@ -131,8 +130,7 @@ class Embedded3xLauncher implements MavenLauncher {
     private final List<String> extensions;
     private final List<String> args;
 
-    public Key(File mavenHome, String classworldConf, List<URL> bootclasspath,
-        List<String> extensions, List<String> args) {
+    public Key(File mavenHome, String classworldConf, List<URL> bootclasspath, List<String> extensions, List<String> args) {
       this.mavenHome = mavenHome;
       this.classworldConf = classworldConf;
       this.bootclasspath = clone(bootclasspath);
@@ -160,9 +158,7 @@ class Embedded3xLauncher implements MavenLauncher {
         return false;
       }
       Key other = (Key) obj;
-      return eq(mavenHome, other.mavenHome) && eq(classworldConf, other.classworldConf)
-          && eq(bootclasspath, other.bootclasspath) && eq(extensions, other.extensions)
-          && eq(args, other.args);
+      return eq(mavenHome, other.mavenHome) && eq(classworldConf, other.classworldConf) && eq(bootclasspath, other.bootclasspath) && eq(extensions, other.extensions) && eq(args, other.args);
     }
 
     private static <T> List<T> clone(List<T> origin) {
@@ -191,8 +187,7 @@ class Embedded3xLauncher implements MavenLauncher {
   /**
    * Launches an embedded Maven 3.x instance from some Maven installation directory.
    */
-  public static Embedded3xLauncher createFromMavenHome(File mavenHome, String classworldConf,
-      List<URL> bootclasspath, List<String> extensions, List<String> args) throws LauncherException {
+  public static Embedded3xLauncher createFromMavenHome(File mavenHome, String classworldConf, List<URL> bootclasspath, List<String> extensions, List<String> args) throws LauncherException {
     if (mavenHome == null || !mavenHome.isDirectory()) {
       throw new LauncherException("Invalid Maven home directory " + mavenHome);
     }
@@ -211,8 +206,7 @@ class Embedded3xLauncher implements MavenLauncher {
     return launcher;
   }
 
-  private static Embedded3xLauncher createFromMavenHome0(File mavenHome, String classworldConf,
-      List<URL> bootclasspath, List<String> extensions, List<String> args) throws LauncherException {
+  private static Embedded3xLauncher createFromMavenHome0(File mavenHome, String classworldConf, List<URL> bootclasspath, List<String> extensions, List<String> args) throws LauncherException {
     File configFile;
     if (classworldConf != null) {
       configFile = new File(classworldConf);
@@ -225,8 +219,7 @@ class Embedded3xLauncher implements MavenLauncher {
     ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
     Thread.currentThread().setContextClassLoader(bootLoader);
     try {
-      Class<?> launcherClass =
-          bootLoader.loadClass("org.codehaus.plexus.classworlds.launcher.Launcher");
+      Class<?> launcherClass = bootLoader.loadClass("org.codehaus.plexus.classworlds.launcher.Launcher");
 
       Object launcher = launcherClass.newInstance();
 
@@ -257,8 +250,7 @@ class Embedded3xLauncher implements MavenLauncher {
           String[].class, String.class, PrintStream.class, PrintStream.class);
 
       return new Embedded3xLauncher(mavenCli, doMain, args);
-    } catch (ReflectiveOperationException | IOException | ClassWorldException
-        | ConfigurationException e) {
+    } catch (ReflectiveOperationException | IOException | ClassWorldException | ConfigurationException e) {
       throw new LauncherException("Invalid Maven home directory " + mavenHome, e);
     } finally {
       Thread.currentThread().setContextClassLoader(oldClassLoader);
@@ -302,10 +294,8 @@ class Embedded3xLauncher implements MavenLauncher {
     }
   }
 
-  public int run(String[] cliArgs, String workingDirectory, File logFile) throws IOException,
-      LauncherException {
-    PrintStream out =
-        (logFile != null) ? new PrintStream(new FileOutputStream(logFile)) : System.out;
+  public int run(String[] cliArgs, String workingDirectory, File logFile) throws IOException, LauncherException {
+    PrintStream out = (logFile != null) ? new PrintStream(new FileOutputStream(logFile)) : System.out;
     try {
       Properties originalProperties = System.getProperties();
       System.setProperties(null);

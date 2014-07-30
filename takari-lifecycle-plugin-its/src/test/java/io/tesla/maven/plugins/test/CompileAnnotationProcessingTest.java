@@ -20,7 +20,6 @@ public class CompileAnnotationProcessingTest extends AbstractIntegrationTest {
     VerifierResult result = verifier.forProject(basedir).execute("package");
     result.assertErrorFreeLog();
 
-    TestResources.assertFilesPresent(basedir,
-        "project/target/classes/project/MyMyAnnotationClient.class");
+    TestResources.assertFilesPresent(basedir, "project/target/classes/project/MyMyAnnotationClient.class");
   }
 }
