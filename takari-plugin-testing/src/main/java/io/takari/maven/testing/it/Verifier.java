@@ -50,4 +50,11 @@ public class Verifier {
     cliOptions.add(string);
     return this;
   }
+
+  public Verifier withCliOptions(String... strings) {
+    for (String string : strings) {
+      cliOptions.add(string);
+    }
+    return this;
+  }
 }

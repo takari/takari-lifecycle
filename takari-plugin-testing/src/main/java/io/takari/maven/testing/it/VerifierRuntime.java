@@ -48,6 +48,11 @@ public class VerifierRuntime {
       }
     }
 
+    public VerifierRuntimeBuilder withExtension(File extensionLocation) {
+      extensions.add(extensionLocation.getAbsolutePath());
+      return this;
+    }
+
     public VerifierRuntime build() throws Exception {
       String classworldConf = System.getProperty("classworlds.conf");
       List<URL> bootclasspath = toClasspath(System.getProperty("maven.bootclasspath"));
