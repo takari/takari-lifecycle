@@ -40,11 +40,20 @@ public class TestPropertiesMojo extends AbstractMojo {
   @Incremental(configuration = Configuration.ignore)
   protected MavenProject project;
 
+  @Parameter(defaultValue = "${project.groupId}", readonly = true)
+  private String groupId;
+
+  @Parameter(defaultValue = "${project.artifactId}", readonly = true)
+  private String artifactId;
+
+  @Parameter(defaultValue = "${project.version}", readonly = true)
+  private String version;
+
   // oddly, ${localRepository} did not work
-  @Parameter(defaultValue = "${settings.localRepository}")
+  @Parameter(defaultValue = "${settings.localRepository}", readonly = true)
   private File localRepository;
 
-  @Parameter(defaultValue = "${session.request.userSettingsFile}")
+  @Parameter(defaultValue = "${session.request.userSettingsFile}", readonly = true)
   private File userSettingsFile;
 
   @Parameter(defaultValue = "${project.basedir}/src/test/test.properties")
@@ -88,9 +97,9 @@ public class TestPropertiesMojo extends AbstractMojo {
       // well-known properties
       putIfAbsent(properties, "localRepository", localRepository.getAbsolutePath());
       putIfAbsent(properties, "userSettingsFile", userSettingsFile.getAbsolutePath());
-      putIfAbsent(properties, "project.groupId", project.getGroupId());
-      putIfAbsent(properties, "project.artifactId", project.getArtifactId());
-      putIfAbsent(properties, "project.version", project.getVersion());
+      putIfAbsent(properties, "project.groupId", groupId);
+      putIfAbsent(properties, "project.artifactId", artifactId);
+      putIfAbsent(properties, "project.version", version);
       putIfAbsent(properties, "workspaceStateProperties", workspaceState.getAbsolutePath());
       putIfAbsent(properties, "workspaceResolver", workspaceResolver.getFile().getAbsolutePath());
 
@@ -115,7 +124,7 @@ public class TestPropertiesMojo extends AbstractMojo {
     }
   }
 
-  private void putProject(MutableWorkspaceState state, MavenProject other) {
+  private static void putProject(MutableWorkspaceState state, MavenProject other) {
     state.putPom(other.getFile(), other.getGroupId(), other.getArtifactId(), other.getVersion());
     if (other.getArtifact().getFile() != null) {
       putArtifact(state, other.getArtifact());
@@ -125,11 +134,9 @@ public class TestPropertiesMojo extends AbstractMojo {
     }
   }
 
-  private void putArtifact(MutableWorkspaceState state, Artifact artifact) {
-    state.putArtifact(artifact.getFile(), artifact.getGroupId(),
-        artifact.getArtifactId(), //
-        artifact.getArtifactHandler().getExtension(), artifact.getClassifier(),
-        artifact.getBaseVersion());
+  private static void putArtifact(MutableWorkspaceState state, Artifact artifact) {
+    state.putArtifact(artifact.getFile(), artifact.getGroupId(), artifact.getArtifactId(), //
+        artifact.getArtifactHandler().getExtension(), artifact.getClassifier(), artifact.getBaseVersion());
   }
 
   private void mergeCustomTestProperties(Properties properties) throws MojoExecutionException {
@@ -147,7 +154,7 @@ public class TestPropertiesMojo extends AbstractMojo {
     }
   }
 
-  private void putIfAbsent(Properties properties, String key, String value) {
+  private static void putIfAbsent(Properties properties, String key, String value) {
     if (!properties.containsKey(key)) {
       properties.put(key, value);
     }
