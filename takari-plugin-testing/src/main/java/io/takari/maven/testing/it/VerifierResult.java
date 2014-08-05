@@ -13,9 +13,11 @@ import org.junit.Assert;
 // wraps maven invocation results
 public class VerifierResult {
 
+  private final File basedir;
   private final List<String> log;
 
   VerifierResult(File basedir, File logFile) throws IOException {
+    this.basedir = basedir;
     List<String> log = new ArrayList<>();
     if (logFile.canRead()) {
       for (String line : Files.readAllLines(logFile.toPath(), Charset.defaultCharset())) {
@@ -42,6 +44,10 @@ public class VerifierResult {
       }
     }
     Assert.fail("Log line present: " + text);
+  }
+
+  public File getBasedir() {
+    return basedir;
   }
 
 }
