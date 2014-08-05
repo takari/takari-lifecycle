@@ -148,7 +148,7 @@ public class TestPropertiesMojo extends AbstractMojo {
     try (OutputStream os = context.processOutput(workspaceState).newOutputStream()) {
       state.store(os);
     } catch (IOException e) {
-      throw new MojoExecutionException("Could not create reactory state file " + workspaceState, e);
+      throw new MojoExecutionException("Could not create reactor state file " + workspaceState, e);
     }
   }
 
