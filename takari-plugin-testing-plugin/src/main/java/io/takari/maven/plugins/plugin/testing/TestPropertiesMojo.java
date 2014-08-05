@@ -38,6 +38,9 @@ public class TestPropertiesMojo extends AbstractMojo {
   @Parameter(defaultValue = "${project.properties}")
   private Properties properties;
 
+  @Parameter(defaultValue = "${session.executionProperties}")
+  private Properties sessionProperties;
+
   @Parameter(defaultValue = "${project}")
   @Incremental(configuration = Configuration.ignore)
   protected MavenProject project;
@@ -189,6 +192,7 @@ public class TestPropertiesMojo extends AbstractMojo {
     // resource filtering configuration should match AbstractProcessResourcesMojo
     // TODO figure out how to move this to a common component
     Map<Object, Object> properties = new HashMap<Object, Object>(this.properties);
+    properties.putAll(sessionProperties);
     properties.put("project", project);
     properties.put("localRepository", localRepository);
     properties.put("userSettingsFile", userSettingsFile);

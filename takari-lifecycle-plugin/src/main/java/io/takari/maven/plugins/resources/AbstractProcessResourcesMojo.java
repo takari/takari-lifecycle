@@ -20,6 +20,9 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
   @Parameter(defaultValue = "${project.properties}")
   private Properties properties;
 
+  @Parameter(defaultValue = "${session.executionProperties}")
+  private Properties sessionProperties;
+
   //
   // use explicit reflective properties instead of wider objects like MavenSession or Settings
   // this way resources will be properly reprocessed whenever the properties change
@@ -53,6 +56,7 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
         }
         if (filter) {
           Map<Object, Object> properties = new HashMap<Object, Object>(this.properties);
+          properties.putAll(sessionProperties); // command line parameters win over project properties
           properties.put("project", project);
           properties.put("localRepository", localRepository);
           properties.put("userSettingsFile", userSettingsFile);
