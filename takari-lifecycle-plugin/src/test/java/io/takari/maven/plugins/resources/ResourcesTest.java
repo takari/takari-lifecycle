@@ -2,6 +2,8 @@ package io.takari.maven.plugins.resources;
 
 import static org.apache.maven.plugin.testing.MojoParameters.newParameter;
 import static org.apache.maven.plugin.testing.resources.TestResources.assertFileContents;
+import static org.apache.maven.plugin.testing.resources.TestResources.cp;
+import static org.apache.maven.plugin.testing.resources.TestResources.rm;
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 
 import java.io.File;
@@ -87,4 +89,63 @@ public class ResourcesTest {
     mojos.executeMojo(basedir, "process-resources");
     mojos.assertBuildOutputs(basedir, "target/custom/custom.txt");
   }
+
+  @Test
+  public void testIncremental() throws Exception {
+    File basedir = resources.getBasedir("resources/resources-incremental");
+
+    mojos.executeMojo(basedir, "process-resources");
+    mojos.assertBuildOutputs(basedir, "target/classes/resource.txt");
+
+    // no change rebuild
+    mojos.executeMojo(basedir, "process-resources");
+    mojos.assertCarriedOverOutputs(basedir, "target/classes/resource.txt");
+
+    // pom.xml change, non-filtered resources are carried over as-is
+    cp(basedir, "pom.xml-description", "pom.xml");
+    mojos.executeMojo(basedir, "process-resources");
+    mojos.assertCarriedOverOutputs(basedir, "target/classes/resource.txt");
+
+    // resource change
+    cp(basedir, "resource.txt-changed", "src/main/resources/resource.txt");
+    mojos.executeMojo(basedir, "process-resources");
+    mojos.assertBuildOutputs(basedir, "target/classes/resource.txt");
+
+    // resource delete
+    rm(basedir, "src/main/resources/resource.txt");
+    mojos.executeMojo(basedir, "process-resources");
+    mojos.assertDeletedOutputs(basedir, "target/classes/resource.txt");
+  }
+
+  @Test
+  public void testIncrementalFiltering() throws Exception {
+    File basedir = resources.getBasedir("resources/resources-incremental-filtering");
+
+    mojos.executeMojo(basedir, "process-resources");
+    mojos.assertBuildOutputs(basedir, "target/classes/filtered-resource.txt");
+    assertFileContents(basedir, "expected/filtered-resource.txt", "target/classes/filtered-resource.txt");
+
+    // no change rebuild, note that filtered resources are always processed
+    mojos.executeMojo(basedir, "process-resources");
+    mojos.assertBuildOutputs(basedir, "target/classes/filtered-resource.txt");
+    assertFileContents(basedir, "expected/filtered-resource.txt", "target/classes/filtered-resource.txt");
+
+    // pom change
+    cp(basedir, "pom.xml-description", "pom.xml");
+    mojos.executeMojo(basedir, "process-resources");
+    mojos.assertBuildOutputs(basedir, "target/classes/filtered-resource.txt");
+    assertFileContents(basedir, "expected/filtered-resource.txt-pomChanged", "target/classes/filtered-resource.txt");
+
+    // resource change
+    cp(basedir, "filtered-resource.txt-changed", "src/main/resources/filtered-resource.txt");
+    mojos.executeMojo(basedir, "process-resources");
+    mojos.assertBuildOutputs(basedir, "target/classes/filtered-resource.txt");
+    assertFileContents(basedir, "expected/filtered-resource.txt-resourceChanged", "target/classes/filtered-resource.txt");
+
+    // resource delete
+    rm(basedir, "src/main/resources/filtered-resource.txt");
+    mojos.executeMojo(basedir, "process-resources");
+    mojos.assertDeletedOutputs(basedir, "target/classes/filtered-resource.txt");
+  }
+
 }

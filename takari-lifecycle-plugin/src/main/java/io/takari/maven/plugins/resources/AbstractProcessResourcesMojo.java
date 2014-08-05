@@ -1,5 +1,7 @@
 package io.takari.maven.plugins.resources;
 
+import io.takari.incrementalbuild.Incremental;
+import io.takari.incrementalbuild.Incremental.Configuration;
 import io.takari.maven.plugins.TakariLifecycleMojo;
 import io.takari.resources.filtering.ResourcesProcessor;
 
@@ -18,9 +20,11 @@ import org.apache.maven.plugins.annotations.Parameter;
 public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
 
   @Parameter(defaultValue = "${project.properties}")
+  @Incremental(configuration = Configuration.ignore)
   private Properties properties;
 
   @Parameter(defaultValue = "${session.executionProperties}")
+  @Incremental(configuration = Configuration.ignore)
   private Properties sessionProperties;
 
   //
@@ -30,9 +34,11 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
 
   // oddly, ${localRepository} did not work
   @Parameter(defaultValue = "${settings.localRepository}")
+  @Incremental(configuration = Configuration.ignore)
   private File localRepository;
 
   @Parameter(defaultValue = "${session.request.userSettingsFile}")
+  @Incremental(configuration = Configuration.ignore)
   private File userSettingsFile;
 
   @Component

@@ -3,6 +3,7 @@ package io.takari.resources.filtering;
 import io.takari.incrementalbuild.BuildContext;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -40,30 +41,32 @@ public class ResourcesProcessor {
   }
 
   public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes) throws IOException {
-    process(sourceDirectory, targetDirectory, includes, excludes, null);
+    for (BuildContext.Input<File> input : buildContext.registerAndProcessInputs(sourceDirectory, includes, excludes)) {
+      filterResource(input, sourceDirectory, targetDirectory, null);
+    }
   }
 
   public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes, Map<Object, Object> filterProperties) throws IOException {
-    if (!sourceDirectory.isDirectory()) {
-      // DirectoryScanner chokes on directories that do not exist
-      return;
+    for (BuildContext.InputMetadata<File> metadata : buildContext.registerInputs(sourceDirectory, includes, excludes)) {
+      filterResource(metadata.process(), sourceDirectory, targetDirectory, filterProperties);
     }
-    for (BuildContext.Input<File> input : buildContext.registerAndProcessInputs(sourceDirectory, includes, excludes)) {
-      File outputFile = relativize(sourceDirectory, targetDirectory, input.getResource());
-      BuildContext.Output<File> output = input.associateOutput(outputFile);
-      Closer closer = Closer.create();
-      try {
-        // FIXME decide how to handle encoding, system default most likely not it
-        Reader reader = closer.register(new FileReader(input.getResource()));
-        Writer writer = closer.register(new OutputStreamWriter(output.newOutputStream()));
-        if (filterProperties != null) {
-          filter(reader, writer, filterProperties);
-        } else {
-          CharStreams.copy(reader, writer);
-        }
-      } finally {
-        closer.close();
+  }
+
+  private void filterResource(BuildContext.Input<File> input, File sourceDirectory, File targetDirectory, Map<Object, Object> filterProperties) throws FileNotFoundException, IOException {
+    File outputFile = relativize(sourceDirectory, targetDirectory, input.getResource());
+    BuildContext.Output<File> output = input.associateOutput(outputFile);
+    Closer closer = Closer.create();
+    try {
+      // FIXME decide how to handle encoding, system default most likely not it
+      Reader reader = closer.register(new FileReader(input.getResource()));
+      Writer writer = closer.register(new OutputStreamWriter(output.newOutputStream()));
+      if (filterProperties != null) {
+        filter(reader, writer, filterProperties);
+      } else {
+        CharStreams.copy(reader, writer);
       }
+    } finally {
+      closer.close();
     }
   }
 
