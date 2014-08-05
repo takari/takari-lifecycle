@@ -117,8 +117,8 @@ public class TestPropertiesMojo extends AbstractMojo {
     for (MavenProject other : reactorDependencies.getUpstreamProjects(project, true)) {
       putProject(state, other);
     }
-    try {
-      state.store(workspaceState);
+    try (OutputStream os = context.processOutput(workspaceState).newOutputStream()) {
+      state.store(os);
     } catch (IOException e) {
       throw new MojoExecutionException("Could not create reactory state file " + workspaceState, e);
     }
