@@ -55,6 +55,11 @@
       <artifactId>org.eclipse.m2e.workspace.cli</artifactId>
       <version>${m2eWorkspaceVersion}</version>
     </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>${guava.version}</version>
+    </dependency>
 
     <!-- test dependencies -->
     <dependency>
