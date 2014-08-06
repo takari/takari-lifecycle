@@ -12,6 +12,9 @@ public class TestDependencies {
   private final TestProperties properties;
 
   public TestDependencies(TestProperties properties) {
+    if (properties == null) {
+      throw new NullPointerException();
+    }
     this.properties = properties;
   }
 
