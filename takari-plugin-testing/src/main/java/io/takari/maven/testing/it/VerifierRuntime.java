@@ -6,6 +6,7 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +51,13 @@ public class VerifierRuntime {
 
     public VerifierRuntimeBuilder withExtension(File extensionLocation) {
       extensions.add(extensionLocation.getAbsolutePath());
+      return this;
+    }
+
+    public VerifierRuntimeBuilder withExtensions(Collection<File> extensionLocations) {
+      for (File extensionLocation : extensionLocations) {
+        extensions.add(extensionLocation.getAbsolutePath());
+      }
       return this;
     }
 
