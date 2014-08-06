@@ -271,7 +271,7 @@ class Embedded3xLauncher implements MavenLauncher {
       throw new IllegalArgumentException("Invalid Maven home directory " + mavenHome);
     }
 
-    URL[] ucp = (URL[]) urls.toArray(new URL[urls.size()]);
+    URL[] ucp = urls.toArray(new URL[urls.size()]);
 
     return new URLClassLoader(ucp, ClassLoader.getSystemClassLoader().getParent());
   }
@@ -294,6 +294,7 @@ class Embedded3xLauncher implements MavenLauncher {
     }
   }
 
+  @Override
   public int run(String[] cliArgs, String workingDirectory, File logFile) throws IOException, LauncherException {
     PrintStream out = (logFile != null) ? new PrintStream(new FileOutputStream(logFile)) : System.out;
     try {
@@ -328,6 +329,7 @@ class Embedded3xLauncher implements MavenLauncher {
     }
   }
 
+  @Override
   public String getMavenVersion() throws LauncherException {
     Properties props = new Properties();
 

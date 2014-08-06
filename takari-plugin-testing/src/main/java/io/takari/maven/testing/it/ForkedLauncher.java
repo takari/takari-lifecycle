@@ -107,10 +107,12 @@ class ForkedLauncher implements MavenLauncher {
     return sb.toString();
   }
 
+  @Override
   public int run(String[] cliArgs, String workingDirectory, File logFile) throws IOException, LauncherException {
     return run(cliArgs, envVars, workingDirectory, logFile);
   }
 
+  @Override
   public String getMavenVersion() throws IOException, LauncherException {
     // TODO cleanup, there is no need to write log file, for example
 
