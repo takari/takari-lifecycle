@@ -13,7 +13,6 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 import org.eclipse.m2e.workspace.WorkspaceState;
-import org.junit.Assert;
 
 // represents maven installation
 public class VerifierRuntime {
@@ -34,8 +33,7 @@ public class VerifierRuntime {
 
     VerifierRuntimeBuilder(TestProperties properties, String mavenVersion) {
       this.properties = properties;
-      this.mavenHome = new File("target/maven-installation/apache-maven-" + mavenVersion);
-      Assert.assertTrue("Can't locate maven home, make sure to run 'mvn generate-test-resources': " + mavenHome, mavenHome.isDirectory());
+      this.mavenHome = MavenUtils.getMavenHome(mavenVersion);
 
       // workspace resolution is already fully configured if the test is invoked from m2e directly
       if (System.getProperty("mavendev.testclasspath") == null) {

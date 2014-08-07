@@ -56,8 +56,6 @@ import org.codehaus.plexus.classworlds.realm.NoSuchRealmException;
  */
 class Embedded3xLauncher implements MavenLauncher {
 
-  private static final String MAVEN_CORE_POMPROPERTIES = "/META-INF/maven/org.apache.maven/maven-core/pom.properties";
-
   private static class ClassworldsConfiguration implements ConfigurationHandler {
 
     private String mainType;
@@ -188,7 +186,7 @@ class Embedded3xLauncher implements MavenLauncher {
    * Launches an embedded Maven 3.x instance from some Maven installation directory.
    */
   public static Embedded3xLauncher createFromMavenHome(File mavenHome, String classworldConf, List<URL> bootclasspath, List<String> extensions, List<String> args) throws LauncherException {
-    if (mavenHome == null || !mavenHome.isDirectory()) {
+    if (!isValidMavenHome(mavenHome)) {
       throw new LauncherException("Invalid Maven home directory " + mavenHome);
     }
 
@@ -204,6 +202,18 @@ class Embedded3xLauncher implements MavenLauncher {
       CACHE.put(key, launcher);
     }
     return launcher;
+  }
+
+  private static boolean isValidMavenHome(File mavenHome) {
+    if (mavenHome == null) {
+      return false;
+    }
+
+    if ("WORKSPACE".equals(mavenHome.getPath()) || "EMBEDDED".equals(mavenHome.getPath())) {
+      return true;
+    }
+
+    return mavenHome.isDirectory();
   }
 
   private static Embedded3xLauncher createFromMavenHome0(File mavenHome, String classworldConf, List<URL> bootclasspath, List<String> extensions, List<String> args) throws LauncherException {
@@ -331,19 +341,13 @@ class Embedded3xLauncher implements MavenLauncher {
 
   @Override
   public String getMavenVersion() throws LauncherException {
-    Properties props = new Properties();
-
-    try (InputStream is = mavenCli.getClass().getResourceAsStream(MAVEN_CORE_POMPROPERTIES)) {
-      if (is != null) {
-        props.load(is);
+    try {
+      String version = MavenUtils.getMavenVersion(mavenCli.getClass());
+      if (version != null) {
+        return version;
       }
     } catch (IOException e) {
       throw new LauncherException("Failed to read Maven version", e);
-    }
-
-    String version = props.getProperty("version");
-    if (version != null) {
-      return version;
     }
 
     throw new LauncherException("Could not determine embedded Maven version");

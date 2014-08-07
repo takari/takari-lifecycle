@@ -2,10 +2,9 @@ package io.tesla.maven.plugins.test;
 
 import io.takari.maven.testing.TestProperties;
 import io.takari.maven.testing.TestResources;
+import io.takari.maven.testing.it.MavenVersions;
 import io.takari.maven.testing.it.VerifierRuntime;
 import io.takari.maven.testing.it.VerifierRuntime.VerifierRuntimeBuilder;
-
-import java.util.Arrays;
 
 import org.junit.Rule;
 import org.junit.runner.RunWith;
@@ -26,10 +25,7 @@ public abstract class AbstractIntegrationTest {
 
   @Parameters(name = "maven-{0}")
   public static Iterable<Object[]> mavenVersions() {
-    return Arrays.<Object[]>asList( //
-        new Object[] {"3.2.1"} //
-        , new Object[] {"3.2.2"} //
-        );
+    return MavenVersions.asJunitParameters("3.2.1", "3.2.2");
   }
 
   public AbstractIntegrationTest(String mavenVersion) throws Exception {
