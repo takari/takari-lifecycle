@@ -2,6 +2,7 @@ package io.takari.maven.plugins.resources;
 
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
+import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.maven.plugins.TakariLifecycleMojo;
 import io.takari.resources.filtering.ResourcesProcessor;
 
@@ -44,6 +45,9 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
   @Component
   private ResourcesProcessor processor;
 
+  @Component
+  private DefaultBuildContext<?> context;
+
   protected void process(List<Resource> resources, File outputDirectory) throws MojoExecutionException {
     for (Resource resource : resources) {
       boolean filter = Boolean.parseBoolean(resource.getFiltering());
@@ -74,5 +78,10 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
         throw new MojoExecutionException(e.getMessage(), e);
       }
     }
+  }
+
+  @Override
+  protected void skipMojo() throws MojoExecutionException {
+    context.markSkipExecution();
   }
 }
