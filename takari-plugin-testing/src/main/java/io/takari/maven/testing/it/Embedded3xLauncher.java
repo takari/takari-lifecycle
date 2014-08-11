@@ -15,6 +15,8 @@ package io.takari.maven.testing.it;
  * the License.
  */
 
+import static io.takari.maven.testing.it.MavenUtils.SYSPROP_MAVEN_HOME;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
@@ -170,13 +172,16 @@ class Embedded3xLauncher implements MavenLauncher {
 
   private static final Map<Key, Embedded3xLauncher> CACHE = new HashMap<>();
 
+  private final File mavenHome;
+
   private final Object mavenCli;
 
   private final Method doMain;
 
   private final List<String> args;
 
-  private Embedded3xLauncher(Object mavenCli, Method doMain, List<String> args) {
+  private Embedded3xLauncher(File mavenHome, Object mavenCli, Method doMain, List<String> args) {
+    this.mavenHome = mavenHome;
     this.mavenCli = mavenCli;
     this.doMain = doMain;
     this.args = args;
@@ -190,18 +195,20 @@ class Embedded3xLauncher implements MavenLauncher {
       throw new LauncherException("Invalid Maven home directory " + mavenHome);
     }
 
-    // don't bother with multi-threading here
-    // maven relies on system properties, multiple instances can't coexist in the same jvm
+    Properties originalProperties = copy(System.getProperties());
+    System.setProperty(SYSPROP_MAVEN_HOME, mavenHome.getAbsolutePath());
 
-    System.setProperty("maven.home", mavenHome.getAbsolutePath());
-
-    final Key key = new Key(mavenHome, classworldConf, bootclasspath, extensions, args);
-    Embedded3xLauncher launcher = CACHE.get(key);
-    if (launcher == null) {
-      launcher = createFromMavenHome0(mavenHome, classworldConf, bootclasspath, extensions, args);
-      CACHE.put(key, launcher);
+    try {
+      final Key key = new Key(mavenHome, classworldConf, bootclasspath, extensions, args);
+      Embedded3xLauncher launcher = CACHE.get(key);
+      if (launcher == null) {
+        launcher = createFromMavenHome0(mavenHome, classworldConf, bootclasspath, extensions, args);
+        CACHE.put(key, launcher);
+      }
+      return launcher;
+    } finally {
+      System.setProperties(originalProperties);
     }
-    return launcher;
   }
 
   private static boolean isValidMavenHome(File mavenHome) {
@@ -259,7 +266,7 @@ class Embedded3xLauncher implements MavenLauncher {
       Method doMain = cliClass.getMethod("doMain", //
           String[].class, String.class, PrintStream.class, PrintStream.class);
 
-      return new Embedded3xLauncher(mavenCli, doMain, args);
+      return new Embedded3xLauncher(mavenHome, mavenCli, doMain, args);
     } catch (ReflectiveOperationException | IOException | ClassWorldException | ConfigurationException e) {
       throw new LauncherException("Invalid Maven home directory " + mavenHome, e);
     } finally {
@@ -308,11 +315,10 @@ class Embedded3xLauncher implements MavenLauncher {
   public int run(String[] cliArgs, String workingDirectory, File logFile) throws IOException, LauncherException {
     PrintStream out = (logFile != null) ? new PrintStream(new FileOutputStream(logFile)) : System.out;
     try {
-      Properties originalProperties = System.getProperties();
+      Properties originalProperties = copy(System.getProperties());
       System.setProperties(null);
-      System.setProperty("maven.home", originalProperties.getProperty("maven.home", ""));
+      System.setProperty(SYSPROP_MAVEN_HOME, mavenHome.getAbsolutePath());
       System.setProperty("user.dir", new File(workingDirectory).getAbsolutePath());
-
 
       ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
       Thread.currentThread().setContextClassLoader(mavenCli.getClass().getClassLoader());
@@ -337,6 +343,14 @@ class Embedded3xLauncher implements MavenLauncher {
         out.close();
       }
     }
+  }
+
+  private static Properties copy(Properties properties) {
+    Properties copy = new Properties();
+    for (String key : properties.stringPropertyNames()) {
+      copy.put(key, properties.getProperty(key));
+    }
+    return copy;
   }
 
   @Override
