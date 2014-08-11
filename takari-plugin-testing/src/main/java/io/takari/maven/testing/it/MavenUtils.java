@@ -22,6 +22,10 @@ class MavenUtils {
 
   public static final String MAVEN_CORE_POMPROPERTIES = "META-INF/maven/org.apache.maven/maven-core/pom.properties";
 
+  public static final String SYSPROP_MAVEN_HOME = "maven.home";
+
+  public static final String SYSPROP_CLASSWORLDSCONF = "classworlds.conf";
+
   public static String getMavenVersion(Class<?> clazz) throws IOException {
     try (InputStream is = clazz.getResourceAsStream("/" + MAVEN_CORE_POMPROPERTIES)) {
       return getMavenVersion(is);
@@ -107,12 +111,12 @@ class MavenUtils {
 
   private static File getForcedClassworldsConf() {
     File configFile = null;
-    String classworldConf = System.getProperty("classworlds.conf");
+    String classworldConf = System.getProperty(SYSPROP_CLASSWORLDSCONF);
+    String mavenHome = System.getProperty(SYSPROP_MAVEN_HOME);
     if (classworldConf != null) {
       configFile = new File(classworldConf);
     }
     if (configFile == null) {
-      String mavenHome = System.getProperty("maven.home");
       if (mavenHome != null) {
         configFile = new File(mavenHome, "bin/m2.conf");
       }
@@ -126,7 +130,7 @@ class MavenUtils {
 
   public static File getMavenHome(String mavenVersion) {
     if (isForcedVersion()) {
-      return new File(System.getProperty("maven.home")); // enforce not null
+      return new File(System.getProperty(SYSPROP_MAVEN_HOME)); // enforce not null
     }
     File mavenHome = new File("target/maven-installation/apache-maven-" + mavenVersion);
     Assert.assertTrue("Can't locate maven home, make sure to run 'mvn generate-test-resources': " + mavenHome, mavenHome.isDirectory());
