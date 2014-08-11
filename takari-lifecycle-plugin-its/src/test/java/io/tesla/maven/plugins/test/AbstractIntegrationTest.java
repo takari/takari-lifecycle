@@ -33,7 +33,7 @@ public abstract class AbstractIntegrationTest {
     this.properties = new TestProperties();
 
     VerifierRuntimeBuilder verifierBuilder = VerifierRuntime.builder(mavenVersion);
-    this.verifier = verifierBuilder.build();
+    this.verifier = verifierBuilder.withCliOptions("-U", "-B").build();
   }
 
 }

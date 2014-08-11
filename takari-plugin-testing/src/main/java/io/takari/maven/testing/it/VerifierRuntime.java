@@ -59,6 +59,13 @@ public class VerifierRuntime {
       return this;
     }
 
+    public VerifierRuntimeBuilder withCliOptions(String... options) {
+      for (String option : options) {
+        args.add(option);
+      }
+      return this;
+    }
+
     public VerifierRuntime build() throws Exception {
       String classworldConf = System.getProperty("classworlds.conf");
       List<URL> bootclasspath = toClasspath(System.getProperty("maven.bootclasspath"));
