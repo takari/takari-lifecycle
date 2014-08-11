@@ -42,6 +42,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.StringTokenizer;
 
 import org.codehaus.plexus.classworlds.ClassWorldException;
 import org.codehaus.plexus.classworlds.launcher.ConfigurationException;
@@ -190,10 +191,13 @@ class Embedded3xLauncher implements MavenLauncher {
   /**
    * Launches an embedded Maven 3.x instance from some Maven installation directory.
    */
-  public static Embedded3xLauncher createFromMavenHome(File mavenHome, String classworldConf, List<URL> bootclasspath, List<String> extensions, List<String> args) throws LauncherException {
+  public static Embedded3xLauncher createFromMavenHome(File mavenHome, List<String> extensions, List<String> args) throws LauncherException {
     if (!isValidMavenHome(mavenHome)) {
       throw new LauncherException("Invalid Maven home directory " + mavenHome);
     }
+
+    String classworldConf = System.getProperty(MavenUtils.SYSPROP_CLASSWORLDSCONF);
+    List<URL> bootclasspath = toClasspath(System.getProperty("maven.bootclasspath"));
 
     Properties originalProperties = copy(System.getProperties());
     System.setProperty(SYSPROP_MAVEN_HOME, mavenHome.getAbsolutePath());
@@ -221,6 +225,22 @@ class Embedded3xLauncher implements MavenLauncher {
     }
 
     return mavenHome.isDirectory();
+  }
+
+  private static List<URL> toClasspath(String string) throws LauncherException {
+    if (string == null) {
+      return null;
+    }
+    StringTokenizer st = new StringTokenizer(string, File.pathSeparator);
+    List<URL> classpath = new ArrayList<>();
+    while (st.hasMoreTokens()) {
+      try {
+        classpath.add(new File(st.nextToken()).toURI().toURL());
+      } catch (MalformedURLException e) {
+        throw new LauncherException("Invalid launcher classpath " + string, e);
+      }
+    }
+    return classpath;
   }
 
   private static Embedded3xLauncher createFromMavenHome0(File mavenHome, String classworldConf, List<URL> bootclasspath, List<String> extensions, List<String> args) throws LauncherException {
