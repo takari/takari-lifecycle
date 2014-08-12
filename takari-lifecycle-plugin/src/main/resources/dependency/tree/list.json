@@ -1,8 +1,0 @@
-[
-  { "title": "org.apache.maven:maven-model:jar:3.1.1 (provided)" },
-  { "title": "org.slf4j:slf4j-api:jar:1.7.4 (compile)" },
-  { "title": "org.codehaus.plexus:plexus-utils:jar:3.0.15 (provided)" },
-  { "title": "org.apache.maven:maven-artifact:jar:3.1.1 (provided)" },
-  { "title": "org.codehaus.plexus:plexus-utils:jar:3.0.15 (provided)" },
-  { "title": "org.eclipse.sisu:org.eclipse.sisu.plexus:jar:0.0.0.M5 (provided)" }
-]
