@@ -3,6 +3,8 @@ package io.takari.maven.plugins.compile;
 import static io.takari.maven.plugins.compile.ClassfileMatchers.hasDebugLines;
 import static io.takari.maven.plugins.compile.ClassfileMatchers.hasDebugSource;
 import static io.takari.maven.plugins.compile.ClassfileMatchers.hasDebugVars;
+import static org.apache.maven.plugin.testing.resources.TestResources.cp;
+import static org.apache.maven.plugin.testing.resources.TestResources.touch;
 import static org.hamcrest.core.AllOf.allOf;
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertThat;
@@ -302,5 +304,26 @@ public class CompileTest extends AbstractCompileTest {
     addDependency(project, "dependency", new File(basedir, "annotated.zip"));
     mojos.executeMojo(session, project, execution);
     mojos.assertBuildOutputs(new File(basedir, "project/target/classes"), "project/Project.class");
+  }
+
+  @Test
+  public void testImplicitClassfileGeneration() throws Exception {
+    // javac automatically generates class files from sources found on classpath in some cases
+    // the point of this test is to make sure this behaviour is disabled
+
+    File dependency = compile("compile/basic");
+    cp(dependency, "src/main/java/basic/Basic.java", "target/classes/basic/Basic.java");
+    touch(dependency, "target/classes/basic/Basic.java"); // must be newer than .class file
+
+    File basedir = resources.getBasedir("compile/implicit-classfile");
+    MavenProject project = mojos.readMavenProject(basedir);
+    MavenSession session = mojos.newMavenSession(project);
+    MojoExecution execution = mojos.newMojoExecution();
+
+    addDependency(project, "dependency", new File(dependency, "target/classes"));
+
+    mojos.executeMojo(session, project, execution);
+
+    mojos.assertBuildOutputs(new File(basedir, "target/classes"), "implicit/Implicit.class");
   }
 }
