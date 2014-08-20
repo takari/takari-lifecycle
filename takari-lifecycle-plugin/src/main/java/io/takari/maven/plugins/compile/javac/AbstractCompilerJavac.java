@@ -50,6 +50,9 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
     options.add("-classpath");
     options.add(classpath);
 
+    // http://docs.oracle.com/javase/7/docs/technotes/tools/windows/javac.html#implicit
+    options.add("-implicit:none");
+
     switch (getProc()) {
       case only:
         options.add("-proc:only");
