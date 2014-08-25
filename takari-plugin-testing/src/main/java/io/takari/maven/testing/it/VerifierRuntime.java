@@ -1,5 +1,6 @@
 package io.takari.maven.testing.it;
 
+import static org.eclipse.m2e.workspace.WorkspaceState.SYSPROP_STATEFILE_LOCATION;
 import io.takari.maven.testing.TestProperties;
 
 import java.io.File;
@@ -8,8 +9,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.eclipse.m2e.workspace.WorkspaceState;
 
 // represents maven installation
 public class VerifierRuntime {
@@ -32,16 +31,23 @@ public class VerifierRuntime {
       this.properties = properties;
       this.mavenHome = MavenUtils.getMavenHome(mavenVersion);
 
-      // workspace resolution is already fully configured if the test is invoked from m2e directly
-      if (System.getProperty("mavendev.testclasspath") == null) {
-        String workspaceResolver = properties.get("workspaceResolver");
-        String workspaceState = properties.get("workspaceStateProperties");
-
-        if (workspaceState != null && new File(workspaceState).canRead()) {
-          extensions.add(workspaceResolver);
-          args.add("-D" + WorkspaceState.SYSPROP_STATEFILE_LOCATION + "=" + workspaceState);
-        }
+      String workspaceState = System.getProperty(SYSPROP_STATEFILE_LOCATION);
+      if (workspaceState == null) {
+        workspaceState = properties.get("workspaceStateProperties");
       }
+      String workspaceResolver = properties.get("workspaceResolver");
+      if (isFile(workspaceState) && isFile(workspaceResolver)) {
+        if ("3.2.1".equals(mavenVersion)) {
+          throw new IllegalArgumentException("Maven 3.2.1 is not supported, see https://jira.codehaus.org/browse/MNG-5591");
+        }
+        args.add("-D" + SYSPROP_STATEFILE_LOCATION + "=" + workspaceState);
+        extensions.add(workspaceResolver);
+      }
+      // TODO decide if workspace resolution must be enabled and enforced
+    }
+
+    private static boolean isFile(String path) {
+      return path != null && new File(path).isFile();
     }
 
     public VerifierRuntimeBuilder withExtension(File extensionLocation) {

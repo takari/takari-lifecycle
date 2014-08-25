@@ -25,7 +25,7 @@ public abstract class AbstractIntegrationTest {
 
   @Parameters(name = "maven-{0}")
   public static Iterable<Object[]> mavenVersions() {
-    return MavenVersions.asJunitParameters("3.2.1", "3.2.2");
+    return MavenVersions.asJunitParameters("3.2.2", "3.2.3");
   }
 
   public AbstractIntegrationTest(String mavenVersion) throws Exception {

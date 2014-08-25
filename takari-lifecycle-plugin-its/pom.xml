@@ -64,19 +64,33 @@
                 <artifactItem>
                   <groupId>org.apache.maven</groupId>
                   <artifactId>apache-maven</artifactId>
-                  <version>3.2.1</version>
+                  <version>3.2.2</version>
                   <classifier>bin</classifier>
                   <type>tar.gz</type>
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.apache.maven</groupId>
                   <artifactId>apache-maven</artifactId>
-                  <version>3.2.2</version>
+                  <version>3.2.3</version>
                   <classifier>bin</classifier>
                   <type>tar.gz</type>
                 </artifactItem>
               </artifactItems>
             </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>io.takari.maven.plugins</groupId>
+        <artifactId>takari-plugin-testing-plugin</artifactId>
+        <version>${project.version}</version>
+        <executions>
+          <execution>
+            <id>testProperties</id>
+            <goals>
+              <goal>testProperties</goal>
+            </goals>
+            <phase>generate-test-resources</phase>
           </execution>
         </executions>
       </plugin>

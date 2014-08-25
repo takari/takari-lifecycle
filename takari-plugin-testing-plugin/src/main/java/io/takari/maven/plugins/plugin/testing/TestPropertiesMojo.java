@@ -116,11 +116,12 @@ public class TestPropertiesMojo extends AbstractMojo {
       // project runtime classpath
       putIfAbsent(properties, TestDependencies.KEY_CLASSPATH, getClasspathString());
 
+      putIfAbsent(properties, "workspaceResolver", workspaceResolver.getFile().getAbsolutePath());
+
       if (reactorDependencies != null) {
         // either runs from m2e or from command line with --non-recursive parameter
         writeWorkspaceState();
         putIfAbsent(properties, "workspaceStateProperties", workspaceState.getAbsolutePath());
-        putIfAbsent(properties, "workspaceResolver", workspaceResolver.getFile().getAbsolutePath());
       }
 
       try (OutputStream os = context.processOutput(outputFile).newOutputStream()) {
