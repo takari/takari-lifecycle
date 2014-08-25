@@ -12,7 +12,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
-import java.nio.charset.Charset;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
@@ -127,20 +126,21 @@ public class CompilerJavac extends AbstractCompilerJavac {
     final JavaCompilerFactory factory = isJava7 ? SINGLETON : REUSECREATED;
 
     final JavaCompiler compiler = factory.acquire();
+    final StandardJavaFileManager javaFileManager = compiler.getStandardFileManager(null, null, getSourceEncoding());
     try {
-      compile(compiler);
+      compile(compiler, javaFileManager);
     } finally {
+      javaFileManager.flush();
+      javaFileManager.close();
       factory.release(compiler);
     }
   }
 
-  private void compile(JavaCompiler compiler) throws IOException {
+  private void compile(JavaCompiler compiler, StandardJavaFileManager javaFileManager) throws IOException {
     context.deleteStaleOutputs(false);
 
-    final Charset sourceEncoding = getSourceEncoding();
     final DiagnosticCollector<JavaFileObject> diagnosticCollector = new DiagnosticCollector<JavaFileObject>();
-    final StandardJavaFileManager standardFileManager = compiler.getStandardFileManager(diagnosticCollector, null, sourceEncoding);
-    final Iterable<? extends JavaFileObject> javaSources = standardFileManager.getJavaFileObjectsFromFiles(getSourceFiles());
+    final Iterable<? extends JavaFileObject> javaSources = javaFileManager.getJavaFileObjectsFromFiles(getSourceFiles());
 
     final Map<File, Output<File>> looseOutputs = new HashMap<File, Output<File>>();
     final Map<File, Input<File>> inputs = new HashMap<File, Input<File>>();
@@ -151,7 +151,7 @@ public class CompilerJavac extends AbstractCompilerJavac {
     }
 
     final Iterable<String> options = getCompilerOptions();
-    final RecordingJavaFileManager recordingFileManager = new RecordingJavaFileManager(standardFileManager) {
+    final RecordingJavaFileManager recordingFileManager = new RecordingJavaFileManager(javaFileManager) {
       @Override
       protected void record(File inputFile, File outputFile) {
         Input<File> input = inputs.get(inputFile);
