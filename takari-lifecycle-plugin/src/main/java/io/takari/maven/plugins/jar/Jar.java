@@ -142,7 +142,11 @@ public class Jar extends TakariLifecycleMojo {
       File testJar = new File(outputDirectory, String.format("%s-%s.jar", finalName, "tests"));
       AggregateOutput registeredOutput = buildContext.registerOutput(testJar);
       try {
-        registeredOutput.addInputs(testClassesDirectory, null, null);
+        if (testClassesDirectory.isDirectory()) {
+          registeredOutput.addInputs(testClassesDirectory, null, null);
+        } else {
+          logger.warn("Test classes directory {} does not exist", classesDirectory);
+        }
         registeredOutput.createIfNecessary(new AggregateCreator() {
           @Override
           public void create(Output<File> output, Iterable<AggregateInput> inputs) throws IOException {
