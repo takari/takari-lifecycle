@@ -9,7 +9,6 @@ import io.takari.maven.plugins.TakariLifecycleMojo;
 import io.tesla.proviso.archive.Archiver;
 import io.tesla.proviso.archive.Entry;
 import io.tesla.proviso.archive.Source;
-import io.tesla.proviso.archive.source.DirectorySource;
 import io.tesla.proviso.archive.source.FileEntry;
 import io.tesla.proviso.archive.source.FileSource;
 
@@ -77,8 +76,12 @@ public class Jar extends TakariLifecycleMojo {
       File jar = new File(outputDirectory, String.format("%s.jar", finalName));
       AggregateOutput registeredOutput = buildContext.registerOutput(jar);
       try {
-        registeredOutput.addInputs(classesDirectory, null, null);
-        registeredOutput.create(new AggregateCreator() {
+        if (classesDirectory.isDirectory()) {
+          registeredOutput.addInputs(classesDirectory, null, null);
+        } else {
+          logger.warn("Main classes directory {} does not exist", classesDirectory);
+        }
+        registeredOutput.createIfNecessary(new AggregateCreator() {
           @Override
           public void create(Output<File> output, Iterable<AggregateInput> inputs) throws IOException {
             logger.info("Building main JAR.");
@@ -90,20 +93,16 @@ public class Jar extends TakariLifecycleMojo {
                 .build();
 
             List<Source> sources = new ArrayList<Source>();
-            if (classesDirectory.isDirectory()) {
-              sources.add(new BuildContextDirectorySource(inputs));
-            } else {
-              logger.warn("Main classes directory {} does not exist", classesDirectory);
-            }
+            sources.add(new BuildContextDirectorySource(inputs));
             sources.add(new FileSource(String.format("META-INF/maven/%s/%s/pom.properties", project.getGroupId(), project.getArtifactId()), createPomPropertiesFile(project)));
             sources.add(new FileSource("META-INF/MANIFEST.MF", getMainManifest()));
             archiver.archive(jar, sources.toArray(new Source[sources.size()]));
-            project.getArtifact().setFile(jar);
           }
         });
       } catch (IOException e) {
         throw new MojoExecutionException(e.getMessage(), e);
       }
+      project.getArtifact().setFile(jar);
     }
 
     if (sourceJar) {
@@ -116,7 +115,7 @@ public class Jar extends TakariLifecycleMojo {
             registeredOutput.addInputs(new File(sourceRoot), null, null);
           }
         }
-        registeredOutput.create(new AggregateCreator() {
+        registeredOutput.createIfNecessary(new AggregateCreator() {
           @Override
           public void create(Output<File> output, Iterable<AggregateInput> inputs) throws IOException {
             logger.info("Building source Jar.");
@@ -128,12 +127,7 @@ public class Jar extends TakariLifecycleMojo {
                 .build();
 
             List<Source> sources = new ArrayList<Source>();
-            for (String sourceRoot : project.getCompileSourceRoots()) {
-              File dir = new File(sourceRoot);
-              if (dir.isDirectory()) {
-                sources.add(new BuildContextDirectorySource(inputs));
-              }
-            }
+            sources.add(new BuildContextDirectorySource(inputs));
             sources.add(new FileSource("META-INF/MANIFEST.MF", createManifestFile(project)));
             sourceArchiver.archive(sourceJar, sources.toArray(new Source[sources.size()]));
           }
@@ -149,7 +143,7 @@ public class Jar extends TakariLifecycleMojo {
       AggregateOutput registeredOutput = buildContext.registerOutput(testJar);
       try {
         registeredOutput.addInputs(testClassesDirectory, null, null);
-        registeredOutput.create(new AggregateCreator() {
+        registeredOutput.createIfNecessary(new AggregateCreator() {
           @Override
           public void create(Output<File> output, Iterable<AggregateInput> inputs) throws IOException {
             logger.info("Building test JAR.");
@@ -161,11 +155,10 @@ public class Jar extends TakariLifecycleMojo {
                 .build();
 
             List<Source> sources = new ArrayList<Source>();
-            sources.add(new DirectorySource(testClassesDirectory));
+            sources.add(new BuildContextDirectorySource(inputs));
             sources.add(new FileSource("META-INF/MANIFEST.MF", createManifestFile(project)));
 
             testArchiver.archive(testJar, sources.toArray(new Source[sources.size()]));
-            projectHelper.attachArtifact(project, "jar", "tests", testJar);
           }
         });
       } catch (IOException e) {
