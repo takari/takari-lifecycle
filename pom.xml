@@ -36,6 +36,16 @@
     <tag>HEAD</tag>
   </scm>
 
+  <repositories>
+    <repository>
+      <id>takari-snapshots</id>
+      <url>http://repository.takari.io:8081/nexus/content/repositories/snapshots/</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+
   <modules>
     <module>takari-lifecycle-plugin</module>
     <module>takari-lifecycle-plugin-its</module>
