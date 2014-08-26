@@ -22,7 +22,7 @@
   <properties>
     <mavenVersion>3.2.1</mavenVersion>
     <aetherVersion>0.9.0.M2</aetherVersion>
-    <incrementalbuild.version>0.8.3</incrementalbuild.version>
+    <incrementalbuild.version>0.9.0-SNAPSHOT</incrementalbuild.version>
     <guava.version>14.0.1</guava.version>
     <plugintesting.version>3.2.0</plugintesting.version>
     <mavenPluginPluginVersion>3.3</mavenPluginPluginVersion>

@@ -1,19 +1,32 @@
 package io.takari.maven.plugins.jar;
 
+import io.takari.incrementalbuild.BuildContext.Output;
+import io.takari.incrementalbuild.aggregator.AggregatorBuildContext;
+import io.takari.incrementalbuild.aggregator.AggregatorBuildContext.AggregateCreator;
+import io.takari.incrementalbuild.aggregator.AggregatorBuildContext.AggregateInput;
+import io.takari.incrementalbuild.aggregator.AggregatorBuildContext.AggregateOutput;
 import io.takari.maven.plugins.TakariLifecycleMojo;
 import io.tesla.proviso.archive.Archiver;
+import io.tesla.proviso.archive.Entry;
 import io.tesla.proviso.archive.Source;
 import io.tesla.proviso.archive.source.DirectorySource;
+import io.tesla.proviso.archive.source.FileEntry;
 import io.tesla.proviso.archive.source.FileSource;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+
+import javax.inject.Inject;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -50,6 +63,9 @@ public class Jar extends TakariLifecycleMojo {
   @Parameter
   private ArchiveConfiguration archive;
 
+  @Inject
+  private AggregatorBuildContext buildContext;
+
   @Override
   protected void executeMojo() throws MojoExecutionException {
 
@@ -58,68 +74,104 @@ public class Jar extends TakariLifecycleMojo {
     }
 
     if (mainJar) {
-      Archiver archiver = Archiver.builder() //
-          .useRoot(false) // Step into the classes/ directory
-          .build();
-
       File jar = new File(outputDirectory, String.format("%s.jar", finalName));
+      AggregateOutput registeredOutput = buildContext.registerOutput(jar);
       try {
-        List<Source> sources = new ArrayList<Source>();
-        if (classesDirectory.isDirectory()) {
-          sources.add(new DirectorySource(classesDirectory));
-        } else {
-          logger.warn("Main classes directory {} does not exist", classesDirectory);
-        }
-        sources.add(new FileSource(String.format("META-INF/maven/%s/%s/pom.properties", project.getGroupId(), project.getArtifactId()), createPomPropertiesFile(project)));
-        sources.add(new FileSource("META-INF/MANIFEST.MF", getMainManifest()));
-        archiver.archive(jar, sources.toArray(new Source[sources.size()]));
-        project.getArtifact().setFile(jar);
+        registeredOutput.addInputs(classesDirectory, null, null);
+        registeredOutput.create(new AggregateCreator() {
+          @Override
+          public void create(Output<File> output, Iterable<AggregateInput> inputs) throws IOException {
+            logger.info("Building main JAR.");
+
+            File jar = output.getResource();
+
+            Archiver archiver = Archiver.builder() //
+                .useRoot(false) // Step into the classes/ directory
+                .build();
+
+            List<Source> sources = new ArrayList<Source>();
+            if (classesDirectory.isDirectory()) {
+              sources.add(new BuildContextDirectorySource(inputs));
+            } else {
+              logger.warn("Main classes directory {} does not exist", classesDirectory);
+            }
+            sources.add(new FileSource(String.format("META-INF/maven/%s/%s/pom.properties", project.getGroupId(), project.getArtifactId()), createPomPropertiesFile(project)));
+            sources.add(new FileSource("META-INF/MANIFEST.MF", getMainManifest()));
+            archiver.archive(jar, sources.toArray(new Source[sources.size()]));
+            project.getArtifact().setFile(jar);
+          }
+        });
       } catch (IOException e) {
         throw new MojoExecutionException(e.getMessage(), e);
       }
     }
 
     if (sourceJar) {
-      logger.info("Building source Jar.");
-      Archiver sourceArchiver = Archiver.builder() //
-          .useRoot(false) // Step into the source directories
-          .build();
-
       File sourceJar = new File(outputDirectory, String.format("%s-%s.jar", finalName, "sources"));
+      AggregateOutput registeredOutput = buildContext.registerOutput(sourceJar);
       try {
-        List<Source> sources = new ArrayList<Source>();
         for (String sourceRoot : project.getCompileSourceRoots()) {
           File dir = new File(sourceRoot);
           if (dir.isDirectory()) {
-            sources.add(new DirectorySource(dir));
+            registeredOutput.addInputs(new File(sourceRoot), null, null);
           }
         }
-        sources.add(new FileSource("META-INF/MANIFEST.MF", createManifestFile(project)));
+        registeredOutput.create(new AggregateCreator() {
+          @Override
+          public void create(Output<File> output, Iterable<AggregateInput> inputs) throws IOException {
+            logger.info("Building source Jar.");
 
-        sourceArchiver.archive(sourceJar, sources.toArray(new Source[sources.size()]));
-        projectHelper.attachArtifact(project, "jar", "sources", sourceJar);
+            File sourceJar = output.getResource();
+
+            Archiver sourceArchiver = Archiver.builder() //
+                .useRoot(false) // Step into the source directories
+                .build();
+
+            List<Source> sources = new ArrayList<Source>();
+            for (String sourceRoot : project.getCompileSourceRoots()) {
+              File dir = new File(sourceRoot);
+              if (dir.isDirectory()) {
+                sources.add(new BuildContextDirectorySource(inputs));
+              }
+            }
+            sources.add(new FileSource("META-INF/MANIFEST.MF", createManifestFile(project)));
+            sourceArchiver.archive(sourceJar, sources.toArray(new Source[sources.size()]));
+          }
+        });
       } catch (IOException e) {
         throw new MojoExecutionException(e.getMessage(), e);
       }
+      projectHelper.attachArtifact(project, "jar", "sources", sourceJar);
     }
 
     if (testJar && testClassesDirectory.isDirectory()) {
-      logger.info("Building test Jar.");
-      Archiver testArchiver = Archiver.builder() //
-          .useRoot(false) //
-          .build();
-
       File testJar = new File(outputDirectory, String.format("%s-%s.jar", finalName, "tests"));
+      AggregateOutput registeredOutput = buildContext.registerOutput(testJar);
       try {
-        List<Source> sources = new ArrayList<Source>();
-        sources.add(new DirectorySource(testClassesDirectory));
-        sources.add(new FileSource("META-INF/MANIFEST.MF", createManifestFile(project)));
+        registeredOutput.addInputs(testClassesDirectory, null, null);
+        registeredOutput.create(new AggregateCreator() {
+          @Override
+          public void create(Output<File> output, Iterable<AggregateInput> inputs) throws IOException {
+            logger.info("Building test JAR.");
 
-        testArchiver.archive(testJar, sources.toArray(new Source[sources.size()]));
-        projectHelper.attachArtifact(project, "jar", "tests", testJar);
+            File testJar = output.getResource();
+
+            Archiver testArchiver = Archiver.builder() //
+                .useRoot(false) //
+                .build();
+
+            List<Source> sources = new ArrayList<Source>();
+            sources.add(new DirectorySource(testClassesDirectory));
+            sources.add(new FileSource("META-INF/MANIFEST.MF", createManifestFile(project)));
+
+            testArchiver.archive(testJar, sources.toArray(new Source[sources.size()]));
+            projectHelper.attachArtifact(project, "jar", "tests", testJar);
+          }
+        });
       } catch (IOException e) {
         throw new MojoExecutionException(e.getMessage(), e);
       }
+      projectHelper.attachArtifact(project, "jar", "tests", testJar);
     }
   }
 
@@ -178,5 +230,49 @@ public class Jar extends TakariLifecycleMojo {
       return manifest;
     }
     return createManifestFile(project);
+  }
+
+  class BuildContextDirectorySource implements Source {
+    final List<Entry> entries = new ArrayList<>();
+
+    public BuildContextDirectorySource(Iterable<AggregateInput> inputs) {
+      Set<String> paths = new HashSet<>();
+      for (AggregateInput input : inputs) {
+        File basedir = input.getBasedir();
+        for (String relativePath : getRelativePaths(basedir, input.getResource())) {
+          if (paths.add(relativePath)) {
+            entries.add(new FileEntry(relativePath, new File(basedir, relativePath)));
+          }
+        }
+      }
+    }
+
+    private Iterable<String> getRelativePaths(File basedir, File resource) {
+      List<String> paths = new ArrayList<>();
+      Iterator<Path> names = basedir.toPath().relativize(resource.toPath()).iterator();
+      StringBuilder path = new StringBuilder();
+      while (names.hasNext()) {
+        if (path.length() > 0) {
+          path.append('/'); // always use forward slash for path separator
+        }
+        path.append(names.next().toString());
+        paths.add(path.toString());
+      }
+      return paths;
+    }
+
+    @Override
+    public Iterable<Entry> entries() {
+      return entries;
+    }
+
+    @Override
+    public boolean isDirectory() {
+      return false;
+    }
+
+    @Override
+    public void close() throws IOException {}
+
   }
 }
