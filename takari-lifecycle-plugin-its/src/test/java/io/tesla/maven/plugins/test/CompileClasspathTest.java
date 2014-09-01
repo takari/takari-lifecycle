@@ -8,8 +8,8 @@ import org.junit.Test;
 
 public class CompileClasspathTest extends AbstractIntegrationTest {
 
-  public CompileClasspathTest(String mavenVersion) throws Exception {
-    super(mavenVersion);
+  public CompileClasspathTest(File mavenInstallation, File classworldsConf, String version) throws Exception {
+    super(mavenInstallation, classworldsConf, version);
   }
 
   @Test

@@ -9,8 +9,8 @@ import org.junit.Test;
 
 public class CompileAnnotationProcessingTest extends AbstractIntegrationTest {
 
-  public CompileAnnotationProcessingTest(String mavenVersion) throws Exception {
-    super(mavenVersion);
+  public CompileAnnotationProcessingTest(File mavenInstallation, File classworldsConf, String version) throws Exception {
+    super(mavenInstallation, classworldsConf, version);
   }
 
   @Test

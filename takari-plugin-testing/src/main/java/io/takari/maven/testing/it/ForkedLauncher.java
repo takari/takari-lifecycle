@@ -50,10 +50,13 @@ class ForkedLauncher implements MavenLauncher {
 
   private final List<String> args;
 
-  public ForkedLauncher(File mavenHome, List<String> extensions, Map<String, String> envVars, List<String> args) {
+  public ForkedLauncher(File mavenHome, File classworldsConf, List<String> extensions, Map<String, String> envVars, List<String> args) {
     this.args = args;
     if (mavenHome == null) {
       throw new NullPointerException();
+    }
+    if (classworldsConf != null) {
+      throw new IllegalArgumentException("Custom classworlds configuration file is not supported");
     }
 
     this.mavenHome = mavenHome;

@@ -9,8 +9,8 @@ import org.junit.Test;
 
 public class BasicTest extends AbstractIntegrationTest {
 
-  public BasicTest(String mavenVersion) throws Exception {
-    super(mavenVersion);
+  public BasicTest(File mavenInstallation, File classworldsConf, String version) throws Exception {
+    super(mavenInstallation, classworldsConf, version);
   }
 
   @Test

@@ -23,13 +23,16 @@ public class VerifierRuntime {
 
     protected final File mavenHome;
 
+    protected final File classworldsConf;
+
     protected final List<String> extensions = new ArrayList<>();
 
     protected final List<String> args = new ArrayList<>();
 
-    VerifierRuntimeBuilder(TestProperties properties, String mavenVersion) {
-      this.properties = properties;
-      this.mavenHome = MavenUtils.getMavenHome(mavenVersion);
+    VerifierRuntimeBuilder(File mavenHome, File classworldsConf) {
+      this.properties = new TestProperties();
+      this.mavenHome = mavenHome;
+      this.classworldsConf = classworldsConf;
 
       String workspaceState = System.getProperty(SYSPROP_STATEFILE_LOCATION);
       if (workspaceState == null) {
@@ -37,7 +40,7 @@ public class VerifierRuntime {
       }
       String workspaceResolver = properties.get("workspaceResolver");
       if (isFile(workspaceState) && isFile(workspaceResolver)) {
-        if ("3.2.1".equals(mavenVersion)) {
+        if ("3.2.1".equals(MavenUtils.getMavenVersion(mavenHome, classworldsConf))) {
           throw new IllegalArgumentException("Maven 3.2.1 is not supported, see https://jira.codehaus.org/browse/MNG-5591");
         }
         args.add("-D" + SYSPROP_STATEFILE_LOCATION + "=" + workspaceState);
@@ -70,7 +73,7 @@ public class VerifierRuntime {
     }
 
     public VerifierRuntime build() throws Exception {
-      Embedded3xLauncher launcher = Embedded3xLauncher.createFromMavenHome(mavenHome, extensions, args);
+      Embedded3xLauncher launcher = Embedded3xLauncher.createFromMavenHome(mavenHome, classworldsConf, extensions, args);
       return new VerifierRuntime(launcher, properties);
     }
   }
@@ -79,8 +82,8 @@ public class VerifierRuntime {
 
     private Map<String, String> environment;
 
-    ForkedVerifierRuntimeBuilder(TestProperties properties, String mavenVersion) {
-      super(properties, mavenVersion);
+    ForkedVerifierRuntimeBuilder(File mavenHome, File classworldsConf) {
+      super(mavenHome, classworldsConf);
     }
 
     public ForkedVerifierRuntimeBuilder withEnvironment(Map<String, String> environment) {
@@ -90,7 +93,7 @@ public class VerifierRuntime {
 
     @Override
     public VerifierRuntime build() {
-      ForkedLauncher launcher = new ForkedLauncher(mavenHome, extensions, environment, args);
+      ForkedLauncher launcher = new ForkedLauncher(mavenHome, classworldsConf, extensions, environment, args);
       return new VerifierRuntime(launcher, properties);
     }
   }
@@ -100,12 +103,12 @@ public class VerifierRuntime {
     this.properties = properties;
   }
 
-  public static VerifierRuntimeBuilder builder(String mavenVersion) {
-    return new VerifierRuntimeBuilder(new TestProperties(), mavenVersion);
+  public static VerifierRuntimeBuilder builder(File mavenHome, File classworldsConf) {
+    return new VerifierRuntimeBuilder(mavenHome, classworldsConf);
   }
 
-  public static ForkedVerifierRuntimeBuilder forkedBuilder(String mavenVersion) {
-    return new ForkedVerifierRuntimeBuilder(new TestProperties(), mavenVersion);
+  public static ForkedVerifierRuntimeBuilder forkedBuilder(File mavenHome) {
+    return new ForkedVerifierRuntimeBuilder(mavenHome, null);
   }
 
   public Verifier forProject(File basedir) {

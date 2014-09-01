@@ -16,7 +16,6 @@ import org.codehaus.plexus.classworlds.launcher.ConfigurationHandler;
 import org.codehaus.plexus.classworlds.launcher.ConfigurationParser;
 import org.codehaus.plexus.classworlds.realm.DuplicateRealmException;
 import org.codehaus.plexus.classworlds.realm.NoSuchRealmException;
-import org.junit.Assert;
 
 class MavenUtils {
 
@@ -40,12 +39,8 @@ class MavenUtils {
     return props.getProperty("version");
   }
 
-  public static String getForcedVersion() {
-    File configFile = getForcedClassworldsConf();
-
-    if (configFile == null) {
-      return null;
-    }
+  public static String getMavenVersion(File mavenHome, File classworldsConf) {
+    classworldsConf = getClassworldsConf(mavenHome, classworldsConf);
 
     class MavenVersionFoundException extends RuntimeException {
       public final String version;
@@ -96,20 +91,24 @@ class MavenUtils {
       public void addLoadURL(URL url) {}
     };
 
-    VersionConfigHandler configHandler = new VersionConfigHandler();
-    ConfigurationParser configParser = new ConfigurationParser(configHandler, System.getProperties());
-    try (InputStream is = new BufferedInputStream(new FileInputStream(configFile))) {
-      configParser.parse(is);
+    try {
+      VersionConfigHandler configHandler = new VersionConfigHandler();
+      Properties properties = new Properties(System.getProperties());
+      properties.setProperty(SYSPROP_MAVEN_HOME, mavenHome.getCanonicalPath());
+      ConfigurationParser configParser = new ConfigurationParser(configHandler, properties);
+      try (InputStream is = new BufferedInputStream(new FileInputStream(classworldsConf))) {
+        configParser.parse(is);
+      }
     } catch (IOException | ClassWorldException | ConfigurationException e) {
-      // assume the version is not forced
+      throw new IllegalArgumentException("Could not determine Maven version", e);
     } catch (MavenVersionFoundException e) {
       return e.version;
     }
 
-    return null;
+    throw new IllegalArgumentException("Could not determine Maven version");
   }
 
-  private static File getForcedClassworldsConf() {
+  public static File getForcedClassworldsConf() {
     File configFile = null;
     String classworldConf = System.getProperty(SYSPROP_CLASSWORLDSCONF);
     String mavenHome = System.getProperty(SYSPROP_MAVEN_HOME);
@@ -124,16 +123,18 @@ class MavenUtils {
     return configFile;
   }
 
-  public static boolean isForcedVersion() {
-    return getForcedClassworldsConf() != null;
+  public static File getForcedMavenHome() {
+    String mavenHome = System.getProperty(SYSPROP_MAVEN_HOME);
+    if (mavenHome != null) {
+      return new File(mavenHome);
+    }
+    return null;
   }
 
-  public static File getMavenHome(String mavenVersion) {
-    if (isForcedVersion()) {
-      return new File(System.getProperty(SYSPROP_MAVEN_HOME)); // enforce not null
+  public static File getClassworldsConf(File mavenHome, File classworldsConf) {
+    if (classworldsConf == null) {
+      classworldsConf = new File(mavenHome, "bin/m2.conf");
     }
-    File mavenHome = new File("target/maven-installation/apache-maven-" + mavenVersion);
-    Assert.assertTrue("Can't locate maven home, make sure to run 'mvn generate-test-resources': " + mavenHome, mavenHome.isDirectory());
-    return mavenHome;
+    return classworldsConf;
   }
 }

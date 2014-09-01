@@ -126,12 +126,12 @@ class Embedded3xLauncher implements MavenLauncher {
   private static class Key {
 
     private final File mavenHome;
-    private final String classworldConf;
+    private final File classworldConf;
     private final List<URL> bootclasspath;
     private final List<String> extensions;
     private final List<String> args;
 
-    public Key(File mavenHome, String classworldConf, List<URL> bootclasspath, List<String> extensions, List<String> args) {
+    public Key(File mavenHome, File classworldConf, List<URL> bootclasspath, List<String> extensions, List<String> args) {
       this.mavenHome = mavenHome;
       this.classworldConf = classworldConf;
       this.bootclasspath = clone(bootclasspath);
@@ -191,12 +191,11 @@ class Embedded3xLauncher implements MavenLauncher {
   /**
    * Launches an embedded Maven 3.x instance from some Maven installation directory.
    */
-  public static Embedded3xLauncher createFromMavenHome(File mavenHome, List<String> extensions, List<String> args) throws LauncherException {
+  public static Embedded3xLauncher createFromMavenHome(File mavenHome, File classworldConf, List<String> extensions, List<String> args) throws LauncherException {
     if (!isValidMavenHome(mavenHome)) {
       throw new LauncherException("Invalid Maven home directory " + mavenHome);
     }
 
-    String classworldConf = System.getProperty(MavenUtils.SYSPROP_CLASSWORLDSCONF);
     List<URL> bootclasspath = toClasspath(System.getProperty("maven.bootclasspath"));
 
     Properties originalProperties = copy(System.getProperties());
@@ -243,13 +242,8 @@ class Embedded3xLauncher implements MavenLauncher {
     return classpath;
   }
 
-  private static Embedded3xLauncher createFromMavenHome0(File mavenHome, String classworldConf, List<URL> bootclasspath, List<String> extensions, List<String> args) throws LauncherException {
-    File configFile;
-    if (classworldConf != null) {
-      configFile = new File(classworldConf);
-    } else {
-      configFile = new File(mavenHome, "bin/m2.conf");
-    }
+  private static Embedded3xLauncher createFromMavenHome0(File mavenHome, File classworldConf, List<URL> bootclasspath, List<String> extensions, List<String> args) throws LauncherException {
+    File configFile = MavenUtils.getClassworldsConf(mavenHome, classworldConf);
 
     ClassLoader bootLoader = getBootLoader(mavenHome, bootclasspath);
 

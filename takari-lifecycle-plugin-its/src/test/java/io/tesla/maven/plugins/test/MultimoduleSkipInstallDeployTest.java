@@ -9,8 +9,8 @@ import org.junit.Test;
 
 public class MultimoduleSkipInstallDeployTest extends AbstractIntegrationTest {
 
-  public MultimoduleSkipInstallDeployTest(String mavenVersion) throws Exception {
-    super(mavenVersion);
+  public MultimoduleSkipInstallDeployTest(File mavenInstallation, File classworldsConf, String version) throws Exception {
+    super(mavenInstallation, classworldsConf, version);
   }
 
   @Test

@@ -8,8 +8,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class PomPackagingTest extends AbstractIntegrationTest {
-  public PomPackagingTest(String mavenVersion) throws Exception {
-    super(mavenVersion);
+  public PomPackagingTest(File mavenInstallation, File classworldsConf, String version) throws Exception {
+    super(mavenInstallation, classworldsConf, version);
   }
 
   @Test

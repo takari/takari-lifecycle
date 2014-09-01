@@ -17,8 +17,8 @@ import org.junit.Test;
 // various mojo parameters
 public class FilteringResourcesTest extends AbstractIntegrationTest {
 
-  public FilteringResourcesTest(String mavenVersion) throws Exception {
-    super(mavenVersion);
+  public FilteringResourcesTest(File mavenInstallation, File classworldsConf, String version) throws Exception {
+    super(mavenInstallation, classworldsConf, version);
   }
 
   private Properties filter(String project) throws Exception {
