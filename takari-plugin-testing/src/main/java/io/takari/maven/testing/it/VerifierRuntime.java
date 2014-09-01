@@ -40,7 +40,7 @@ public class VerifierRuntime {
       }
       String workspaceResolver = properties.get("workspaceResolver");
       if (isFile(workspaceState) && isFile(workspaceResolver)) {
-        if ("3.2.1".equals(MavenUtils.getMavenVersion(mavenHome, classworldsConf))) {
+        if ("3.2.1".equals(MavenInstallationUtils.getMavenVersion(mavenHome, classworldsConf))) {
           throw new IllegalArgumentException("Maven 3.2.1 is not supported, see https://jira.codehaus.org/browse/MNG-5591");
         }
         args.add("-D" + SYSPROP_STATEFILE_LOCATION + "=" + workspaceState);
@@ -72,6 +72,10 @@ public class VerifierRuntime {
       return this;
     }
 
+    public ForkedVerifierRuntimeBuilder forkedBuilder() {
+      return new ForkedVerifierRuntimeBuilder(mavenHome, classworldsConf, extensions, args);
+    }
+
     public VerifierRuntime build() throws Exception {
       Embedded3xLauncher launcher = Embedded3xLauncher.createFromMavenHome(mavenHome, classworldsConf, extensions, args);
       return new VerifierRuntime(launcher, properties);
@@ -84,6 +88,12 @@ public class VerifierRuntime {
 
     ForkedVerifierRuntimeBuilder(File mavenHome, File classworldsConf) {
       super(mavenHome, classworldsConf);
+    }
+
+    ForkedVerifierRuntimeBuilder(File mavenHome, File classworldsConf, List<String> extensions, List<String> args) {
+      super(mavenHome, classworldsConf);
+      this.extensions.addAll(extensions);
+      this.args.addAll(args);
     }
 
     public ForkedVerifierRuntimeBuilder withEnvironment(Map<String, String> environment) {

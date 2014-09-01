@@ -2,6 +2,7 @@ package io.tesla.maven.plugins.test;
 
 import io.takari.maven.testing.TestResources;
 import io.takari.maven.testing.it.VerifierResult;
+import io.takari.maven.testing.it.VerifierRuntime.VerifierRuntimeBuilder;
 
 import java.io.File;
 
@@ -9,8 +10,8 @@ import org.junit.Test;
 
 public class CompileAnnotationProcessingTest extends AbstractIntegrationTest {
 
-  public CompileAnnotationProcessingTest(File mavenInstallation, File classworldsConf, String version) throws Exception {
-    super(mavenInstallation, classworldsConf, version);
+  public CompileAnnotationProcessingTest(VerifierRuntimeBuilder verifierBuilder) throws Exception {
+    super(verifierBuilder);
   }
 
   @Test

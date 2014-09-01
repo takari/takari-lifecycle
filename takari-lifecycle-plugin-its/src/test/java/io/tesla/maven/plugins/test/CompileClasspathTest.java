@@ -1,6 +1,7 @@
 package io.tesla.maven.plugins.test;
 
 import io.takari.maven.testing.it.VerifierResult;
+import io.takari.maven.testing.it.VerifierRuntime.VerifierRuntimeBuilder;
 
 import java.io.File;
 
@@ -8,8 +9,8 @@ import org.junit.Test;
 
 public class CompileClasspathTest extends AbstractIntegrationTest {
 
-  public CompileClasspathTest(File mavenInstallation, File classworldsConf, String version) throws Exception {
-    super(mavenInstallation, classworldsConf, version);
+  public CompileClasspathTest(VerifierRuntimeBuilder verifierBuilder) throws Exception {
+    super(verifierBuilder);
   }
 
   @Test

@@ -15,7 +15,7 @@ package io.takari.maven.testing.it;
  * the License.
  */
 
-import static io.takari.maven.testing.it.MavenUtils.SYSPROP_MAVEN_HOME;
+import static io.takari.maven.testing.it.MavenInstallationUtils.SYSPROP_MAVEN_HOME;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
@@ -243,7 +243,7 @@ class Embedded3xLauncher implements MavenLauncher {
   }
 
   private static Embedded3xLauncher createFromMavenHome0(File mavenHome, File classworldConf, List<URL> bootclasspath, List<String> extensions, List<String> args) throws LauncherException {
-    File configFile = MavenUtils.getClassworldsConf(mavenHome, classworldConf);
+    File configFile = MavenInstallationUtils.getClassworldsConf(mavenHome, classworldConf);
 
     ClassLoader bootLoader = getBootLoader(mavenHome, bootclasspath);
 
@@ -370,7 +370,7 @@ class Embedded3xLauncher implements MavenLauncher {
   @Override
   public String getMavenVersion() throws LauncherException {
     try {
-      String version = MavenUtils.getMavenVersion(mavenCli.getClass());
+      String version = MavenInstallationUtils.getMavenVersion(mavenCli.getClass());
       if (version != null) {
         return version;
       }

@@ -17,7 +17,7 @@ import org.codehaus.plexus.classworlds.launcher.ConfigurationParser;
 import org.codehaus.plexus.classworlds.realm.DuplicateRealmException;
 import org.codehaus.plexus.classworlds.realm.NoSuchRealmException;
 
-class MavenUtils {
+public class MavenInstallationUtils {
 
   public static final String MAVEN_CORE_POMPROPERTIES = "META-INF/maven/org.apache.maven/maven-core/pom.properties";
 
