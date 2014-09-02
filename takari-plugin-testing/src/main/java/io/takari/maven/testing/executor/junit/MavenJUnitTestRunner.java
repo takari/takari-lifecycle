@@ -1,8 +1,10 @@
-package io.takari.maven.testing.it.junit;
+package io.takari.maven.testing.executor.junit;
 
-import io.takari.maven.testing.it.MavenInstallationUtils;
-import io.takari.maven.testing.it.VerifierRuntime;
-import io.takari.maven.testing.it.VerifierRuntime.VerifierRuntimeBuilder;
+import io.takari.maven.testing.executor.MavenInstallationUtils;
+import io.takari.maven.testing.executor.MavenInstallations;
+import io.takari.maven.testing.executor.MavenRuntime;
+import io.takari.maven.testing.executor.MavenVersions;
+import io.takari.maven.testing.executor.MavenRuntime.VerifierRuntimeBuilder;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -18,7 +20,7 @@ import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
 
 /**
- * Runs JUnit4 tests with one or more Maven runtime. The test class must have public constructor with single parameter of type {@linkplain VerifierRuntimeBuilder VerifierRuntimeBuilder}.
+ * Runs JUnit4 tests with one or more Maven runtimes. The test class must have public constructor with single parameter of type {@linkplain VerifierRuntimeBuilder VerifierRuntimeBuilder}.
  * <p/>
  * Test Maven runtimes are located in the following order:
  * 
@@ -28,7 +30,7 @@ import org.junit.runners.model.Statement;
  * <li>If {@linkplain MavenInstallations @MavenInstallations} and/or {@linkplain MavenVersions @MavenVersions} is specified, the tests will run with all configured Maven installations and versions</li>
  * </ol>
  */
-public class MavenTestRunner extends Suite {
+public class MavenJUnitTestRunner extends Suite {
 
   private static class SingleMavenInstallationRunner extends BlockJUnit4ClassRunner {
 
@@ -47,7 +49,7 @@ public class MavenTestRunner extends Suite {
 
     @Override
     protected Object createTest() throws Exception {
-      VerifierRuntimeBuilder builder = VerifierRuntime.builder(mavenHome, classworldsConf);
+      VerifierRuntimeBuilder builder = MavenRuntime.builder(mavenHome, classworldsConf);
       return getTestClass().getJavaClass().getConstructor(VerifierRuntimeBuilder.class).newInstance(builder);
     }
 
@@ -76,7 +78,7 @@ public class MavenTestRunner extends Suite {
     }
   }
 
-  public MavenTestRunner(Class<?> clazz) throws Throwable {
+  public MavenJUnitTestRunner(Class<?> clazz) throws Throwable {
     super(clazz, getRunners(clazz));
   }
 

@@ -1,4 +1,4 @@
-package io.takari.maven.testing.it;
+package io.takari.maven.testing.executor;
 
 import java.io.BufferedInputStream;
 import java.io.File;

@@ -1,4 +1,4 @@
-package io.takari.maven.testing.it;
+package io.takari.maven.testing.executor;
 
 import static org.eclipse.m2e.workspace.WorkspaceState.SYSPROP_STATEFILE_LOCATION;
 import io.takari.maven.testing.TestProperties;
@@ -10,8 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// represents maven installation
-public class VerifierRuntime {
+public class MavenRuntime {
 
   private final MavenLauncher launcher;
 
@@ -76,9 +75,9 @@ public class VerifierRuntime {
       return new ForkedVerifierRuntimeBuilder(mavenHome, classworldsConf, extensions, args);
     }
 
-    public VerifierRuntime build() throws Exception {
+    public MavenRuntime build() throws Exception {
       Embedded3xLauncher launcher = Embedded3xLauncher.createFromMavenHome(mavenHome, classworldsConf, extensions, args);
-      return new VerifierRuntime(launcher, properties);
+      return new MavenRuntime(launcher, properties);
     }
   }
 
@@ -102,13 +101,13 @@ public class VerifierRuntime {
     }
 
     @Override
-    public VerifierRuntime build() {
+    public MavenRuntime build() {
       ForkedLauncher launcher = new ForkedLauncher(mavenHome, classworldsConf, extensions, environment, args);
-      return new VerifierRuntime(launcher, properties);
+      return new MavenRuntime(launcher, properties);
     }
   }
 
-  VerifierRuntime(MavenLauncher launcher, TestProperties properties) {
+  MavenRuntime(MavenLauncher launcher, TestProperties properties) {
     this.launcher = launcher;
     this.properties = properties;
   }
@@ -121,7 +120,7 @@ public class VerifierRuntime {
     return new ForkedVerifierRuntimeBuilder(mavenHome, null);
   }
 
-  public Verifier forProject(File basedir) {
-    return new Verifier(launcher, properties, basedir);
+  public MavenExecution forProject(File basedir) {
+    return new MavenExecution(launcher, properties, basedir);
   }
 }

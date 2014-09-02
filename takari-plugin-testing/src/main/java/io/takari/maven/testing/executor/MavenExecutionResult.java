@@ -1,4 +1,4 @@
-package io.takari.maven.testing.it;
+package io.takari.maven.testing.executor;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,12 +11,12 @@ import java.util.List;
 import org.junit.Assert;
 
 // wraps maven invocation results
-public class VerifierResult {
+public class MavenExecutionResult {
 
   private final File basedir;
   private final List<String> log;
 
-  VerifierResult(File basedir, File logFile) throws IOException {
+  MavenExecutionResult(File basedir, File logFile) throws IOException {
     this.basedir = basedir;
     List<String> log = new ArrayList<>();
     if (logFile.canRead()) {

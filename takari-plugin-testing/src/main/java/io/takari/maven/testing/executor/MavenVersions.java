@@ -1,4 +1,4 @@
-package io.takari.maven.testing.it.junit;
+package io.takari.maven.testing.executor;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;

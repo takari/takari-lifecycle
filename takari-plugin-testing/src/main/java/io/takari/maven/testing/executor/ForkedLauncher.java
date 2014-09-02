@@ -1,4 +1,4 @@
-package io.takari.maven.testing.it;
+package io.takari.maven.testing.executor;
 
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more contributor license

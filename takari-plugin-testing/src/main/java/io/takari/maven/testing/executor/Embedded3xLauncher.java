@@ -1,4 +1,4 @@
-package io.takari.maven.testing.it;
+package io.takari.maven.testing.executor;
 
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more contributor license
@@ -15,7 +15,7 @@ package io.takari.maven.testing.it;
  * the License.
  */
 
-import static io.takari.maven.testing.it.MavenInstallationUtils.SYSPROP_MAVEN_HOME;
+import static io.takari.maven.testing.executor.MavenInstallationUtils.SYSPROP_MAVEN_HOME;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;

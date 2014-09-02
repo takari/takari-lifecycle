@@ -1,7 +1,7 @@
 package io.tesla.maven.plugins.test;
 
-import io.takari.maven.testing.it.VerifierResult;
-import io.takari.maven.testing.it.VerifierRuntime.VerifierRuntimeBuilder;
+import io.takari.maven.testing.executor.MavenExecutionResult;
+import io.takari.maven.testing.executor.MavenRuntime.VerifierRuntimeBuilder;
 
 import java.io.File;
 
@@ -23,7 +23,7 @@ public class BasicTest extends AbstractIntegrationTest {
 
     File localrepo = properties.getLocalRepository();
 
-    VerifierResult result = verifier.forProject(basedir) //
+    MavenExecutionResult result = verifier.forProject(basedir) //
         .withCliOption("-Drepopath=" + remoterepo.getCanonicalPath()) //
         .execute("deploy");
 

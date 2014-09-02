@@ -1,7 +1,7 @@
 package io.tesla.maven.plugins.test;
 
-import io.takari.maven.testing.it.VerifierResult;
-import io.takari.maven.testing.it.VerifierRuntime.VerifierRuntimeBuilder;
+import io.takari.maven.testing.executor.MavenExecutionResult;
+import io.takari.maven.testing.executor.MavenRuntime.VerifierRuntimeBuilder;
 
 import java.io.File;
 
@@ -17,7 +17,7 @@ public class CompileClasspathTest extends AbstractIntegrationTest {
   public void testClasspath() throws Exception {
     File basedir = resources.getBasedir("compile-classpath");
 
-    VerifierResult result = verifier.forProject(basedir).execute("compile");
+    MavenExecutionResult result = verifier.forProject(basedir).execute("compile");
     result.assertErrorFreeLog();
     result.assertLogText("takari-lifecycle-plugin:" + properties.getPluginVersion() + ":compile");
     // TODO assert the class file(s) were actually created

@@ -1,4 +1,4 @@
-package io.takari.maven.testing.it;
+package io.takari.maven.testing.executor;
 
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more contributor license
@@ -15,18 +15,15 @@ package io.takari.maven.testing.it;
  * the License.
  */
 
+import java.io.File;
+import java.io.IOException;
+
 /**
  * @author Benjamin Bentmann
  */
-@SuppressWarnings("serial")
-class LauncherException extends Exception {
+interface MavenLauncher {
 
-  public LauncherException(String message) {
-    super(message);
-  }
+  int run(String[] cliArgs, String workingDirectory, File logFile) throws IOException, LauncherException;
 
-  public LauncherException(String message, Throwable cause) {
-    super(message, cause);
-  }
-
+  String getMavenVersion() throws IOException, LauncherException;
 }

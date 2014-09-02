@@ -1,4 +1,4 @@
-package io.takari.maven.testing.it;
+package io.takari.maven.testing.executor;
 
 import io.takari.maven.testing.TestProperties;
 
@@ -6,8 +6,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-// represents maven invocation parameters
-public class Verifier {
+public class MavenExecution {
 
   private final MavenLauncher launcher;
 
@@ -17,13 +16,13 @@ public class Verifier {
 
   private final List<String> cliOptions = new ArrayList<>();
 
-  Verifier(MavenLauncher launcher, TestProperties properties, File basedir) {
+  MavenExecution(MavenLauncher launcher, TestProperties properties, File basedir) {
     this.launcher = launcher;
     this.properties = properties;
     this.basedir = basedir;
   }
 
-  public VerifierResult execute(String... goals) throws Exception {
+  public MavenExecutionResult execute(String... goals) throws Exception {
     File logFile = new File(basedir, "log.txt");
 
     List<String> args = new ArrayList<>();
@@ -43,15 +42,15 @@ public class Verifier {
 
     launcher.run(args.toArray(new String[args.size()]), basedir.getAbsolutePath(), logFile);
 
-    return new VerifierResult(basedir, logFile);
+    return new MavenExecutionResult(basedir, logFile);
   }
 
-  public Verifier withCliOption(String string) {
+  public MavenExecution withCliOption(String string) {
     cliOptions.add(string);
     return this;
   }
 
-  public Verifier withCliOptions(String... strings) {
+  public MavenExecution withCliOptions(String... strings) {
     for (String string : strings) {
       cliOptions.add(string);
     }

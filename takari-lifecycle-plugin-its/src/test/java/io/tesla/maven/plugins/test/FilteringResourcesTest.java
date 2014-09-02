@@ -1,8 +1,8 @@
 package io.tesla.maven.plugins.test;
 
-import io.takari.maven.testing.it.Verifier;
-import io.takari.maven.testing.it.VerifierResult;
-import io.takari.maven.testing.it.VerifierRuntime.VerifierRuntimeBuilder;
+import io.takari.maven.testing.executor.MavenExecution;
+import io.takari.maven.testing.executor.MavenExecutionResult;
+import io.takari.maven.testing.executor.MavenRuntime.VerifierRuntimeBuilder;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,12 +24,12 @@ public class FilteringResourcesTest extends AbstractIntegrationTest {
 
   private Properties filter(String project) throws Exception {
     File basedir = resources.getBasedir(project);
-    Verifier verifierBuilder = verifier.forProject(basedir);
+    MavenExecution verifierBuilder = verifier.forProject(basedir);
     return filter(verifierBuilder);
   }
 
-  private Properties filter(Verifier verifierBuilder) throws Exception, FileNotFoundException, IOException {
-    VerifierResult result = verifierBuilder.execute("process-resources");
+  private Properties filter(MavenExecution verifierBuilder) throws Exception, FileNotFoundException, IOException {
+    MavenExecutionResult result = verifierBuilder.execute("process-resources");
 
     result.assertErrorFreeLog();
 
@@ -61,7 +61,7 @@ public class FilteringResourcesTest extends AbstractIntegrationTest {
   @Test
   public void testCommandLineParameters() throws Exception {
     File basedir = resources.getBasedir("filtering-command-line-parameters");
-    Verifier verifierBuilder = verifier.forProject(basedir).withCliOption("-DcommandLineParameter=value");
+    MavenExecution verifierBuilder = verifier.forProject(basedir).withCliOption("-DcommandLineParameter=value");
     String commandLineParameter = filter(verifierBuilder).getProperty("commandLineParameter");
     Assert.assertEquals("value", commandLineParameter);
   }
