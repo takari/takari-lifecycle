@@ -29,7 +29,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -250,12 +249,6 @@ class Embedded3xLauncher implements MavenLauncher {
     ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader();
     Thread.currentThread().setContextClassLoader(bootLoader);
     try {
-      Class<?> launcherClass = bootLoader.loadClass("org.codehaus.plexus.classworlds.launcher.Launcher");
-
-      Object launcher = launcherClass.newInstance();
-
-      Method configure = launcherClass.getMethod("configure", new Class[] {InputStream.class});
-
       ClassworldsConfiguration config = new ClassworldsConfiguration();
       ConfigurationParser configParser = new ConfigurationParser(config, System.getProperties());
       try (InputStream is = new BufferedInputStream(new FileInputStream(configFile))) {
@@ -266,16 +259,19 @@ class Embedded3xLauncher implements MavenLauncher {
       }
       ByteArrayOutputStream buf = new ByteArrayOutputStream();
       config.store(buf);
-      configure.invoke(launcher, new ByteArrayInputStream(buf.toByteArray()));
 
-      Method getWorld = launcherClass.getMethod("getWorld");
-      Object classWorld = getWorld.invoke(launcher);
+      // Launcher launcher = new org.codehaus.plexus.classworlds.launcher.Launcher()
+      // launcher.configure(buf)
+      // ClassWorld classWorld = launcher.getWorld()
+      // MavenCli mavenCli = launcher.getMainClass().newInstance(classWorld)
 
-      Method getMainClass = launcherClass.getMethod("getMainClass");
-      Class<?> cliClass = (Class<?>) getMainClass.invoke(launcher);
+      Class<?> launcherClass = bootLoader.loadClass("org.codehaus.plexus.classworlds.launcher.Launcher");
+      Object launcher = launcherClass.newInstance();
+      launcherClass.getMethod("configure", new Class[] {InputStream.class}).invoke(launcher, new ByteArrayInputStream(buf.toByteArray()));
+      Object classWorld = launcherClass.getMethod("getWorld").invoke(launcher);
 
-      Constructor<?> newMavenCli = cliClass.getConstructor(classWorld.getClass());
-      Object mavenCli = newMavenCli.newInstance(classWorld);
+      Class<?> cliClass = (Class<?>) launcherClass.getMethod("getMainClass").invoke(launcher);
+      Object mavenCli = cliClass.getConstructor(classWorld.getClass()).newInstance(classWorld);
 
       Method doMain = cliClass.getMethod("doMain", //
           String[].class, String.class, PrintStream.class, PrintStream.class);
