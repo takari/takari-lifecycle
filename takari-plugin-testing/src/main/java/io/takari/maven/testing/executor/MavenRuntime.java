@@ -16,7 +16,7 @@ public class MavenRuntime {
 
   private final TestProperties properties;
 
-  public static class VerifierRuntimeBuilder {
+  public static class MavenRuntimeBuilder {
 
     protected final TestProperties properties;
 
@@ -28,7 +28,7 @@ public class MavenRuntime {
 
     protected final List<String> args = new ArrayList<>();
 
-    VerifierRuntimeBuilder(File mavenHome, File classworldsConf) {
+    MavenRuntimeBuilder(File mavenHome, File classworldsConf) {
       this.properties = new TestProperties();
       this.mavenHome = mavenHome;
       this.classworldsConf = classworldsConf;
@@ -52,27 +52,27 @@ public class MavenRuntime {
       return path != null && new File(path).isFile();
     }
 
-    public VerifierRuntimeBuilder withExtension(File extensionLocation) {
+    public MavenRuntimeBuilder withExtension(File extensionLocation) {
       extensions.add(extensionLocation.getAbsolutePath());
       return this;
     }
 
-    public VerifierRuntimeBuilder withExtensions(Collection<File> extensionLocations) {
+    public MavenRuntimeBuilder withExtensions(Collection<File> extensionLocations) {
       for (File extensionLocation : extensionLocations) {
         extensions.add(extensionLocation.getAbsolutePath());
       }
       return this;
     }
 
-    public VerifierRuntimeBuilder withCliOptions(String... options) {
+    public MavenRuntimeBuilder withCliOptions(String... options) {
       for (String option : options) {
         args.add(option);
       }
       return this;
     }
 
-    public ForkedVerifierRuntimeBuilder forkedBuilder() {
-      return new ForkedVerifierRuntimeBuilder(mavenHome, classworldsConf, extensions, args);
+    public ForkedMavenRuntimeBuilder forkedBuilder() {
+      return new ForkedMavenRuntimeBuilder(mavenHome, classworldsConf, extensions, args);
     }
 
     public MavenRuntime build() throws Exception {
@@ -81,21 +81,21 @@ public class MavenRuntime {
     }
   }
 
-  public static class ForkedVerifierRuntimeBuilder extends VerifierRuntimeBuilder {
+  public static class ForkedMavenRuntimeBuilder extends MavenRuntimeBuilder {
 
     private Map<String, String> environment;
 
-    ForkedVerifierRuntimeBuilder(File mavenHome, File classworldsConf) {
+    ForkedMavenRuntimeBuilder(File mavenHome, File classworldsConf) {
       super(mavenHome, classworldsConf);
     }
 
-    ForkedVerifierRuntimeBuilder(File mavenHome, File classworldsConf, List<String> extensions, List<String> args) {
+    ForkedMavenRuntimeBuilder(File mavenHome, File classworldsConf, List<String> extensions, List<String> args) {
       super(mavenHome, classworldsConf);
       this.extensions.addAll(extensions);
       this.args.addAll(args);
     }
 
-    public ForkedVerifierRuntimeBuilder withEnvironment(Map<String, String> environment) {
+    public ForkedMavenRuntimeBuilder withEnvironment(Map<String, String> environment) {
       this.environment = new HashMap<>(environment);
       return this;
     }
@@ -112,12 +112,12 @@ public class MavenRuntime {
     this.properties = properties;
   }
 
-  public static VerifierRuntimeBuilder builder(File mavenHome, File classworldsConf) {
-    return new VerifierRuntimeBuilder(mavenHome, classworldsConf);
+  public static MavenRuntimeBuilder builder(File mavenHome, File classworldsConf) {
+    return new MavenRuntimeBuilder(mavenHome, classworldsConf);
   }
 
-  public static ForkedVerifierRuntimeBuilder forkedBuilder(File mavenHome) {
-    return new ForkedVerifierRuntimeBuilder(mavenHome, null);
+  public static ForkedMavenRuntimeBuilder forkedBuilder(File mavenHome) {
+    return new ForkedMavenRuntimeBuilder(mavenHome, null);
   }
 
   public MavenExecution forProject(File basedir) {

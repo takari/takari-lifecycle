@@ -1,7 +1,7 @@
 package io.tesla.maven.plugins.test;
 
 import io.takari.maven.testing.executor.MavenExecutionResult;
-import io.takari.maven.testing.executor.MavenRuntime.VerifierRuntimeBuilder;
+import io.takari.maven.testing.executor.MavenRuntime.MavenRuntimeBuilder;
 
 import java.io.File;
 
@@ -9,7 +9,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class PomPackagingTest extends AbstractIntegrationTest {
-  public PomPackagingTest(VerifierRuntimeBuilder verifierBuilder) throws Exception {
+  public PomPackagingTest(MavenRuntimeBuilder verifierBuilder) throws Exception {
     super(verifierBuilder);
   }
 

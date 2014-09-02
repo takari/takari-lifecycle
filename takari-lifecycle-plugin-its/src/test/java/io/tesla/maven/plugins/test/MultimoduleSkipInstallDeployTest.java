@@ -1,7 +1,7 @@
 package io.tesla.maven.plugins.test;
 
 import io.takari.maven.testing.executor.MavenExecutionResult;
-import io.takari.maven.testing.executor.MavenRuntime.VerifierRuntimeBuilder;
+import io.takari.maven.testing.executor.MavenRuntime.MavenRuntimeBuilder;
 
 import java.io.File;
 
@@ -10,7 +10,7 @@ import org.junit.Test;
 
 public class MultimoduleSkipInstallDeployTest extends AbstractIntegrationTest {
 
-  public MultimoduleSkipInstallDeployTest(VerifierRuntimeBuilder verifierBuilder) throws Exception {
+  public MultimoduleSkipInstallDeployTest(MavenRuntimeBuilder verifierBuilder) throws Exception {
     super(verifierBuilder);
   }
 

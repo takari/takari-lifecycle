@@ -4,7 +4,7 @@ import io.takari.maven.testing.TestProperties;
 import io.takari.maven.testing.TestResources;
 import io.takari.maven.testing.executor.MavenRuntime;
 import io.takari.maven.testing.executor.MavenVersions;
-import io.takari.maven.testing.executor.MavenRuntime.VerifierRuntimeBuilder;
+import io.takari.maven.testing.executor.MavenRuntime.MavenRuntimeBuilder;
 import io.takari.maven.testing.executor.junit.MavenJUnitTestRunner;
 
 import org.junit.Rule;
@@ -21,7 +21,7 @@ public abstract class AbstractIntegrationTest {
 
   public final MavenRuntime verifier;
 
-  public AbstractIntegrationTest(VerifierRuntimeBuilder verifierBuilder) throws Exception {
+  public AbstractIntegrationTest(MavenRuntimeBuilder verifierBuilder) throws Exception {
     this.verifier = verifierBuilder.withCliOptions("-U", "-B").build();
   }
 

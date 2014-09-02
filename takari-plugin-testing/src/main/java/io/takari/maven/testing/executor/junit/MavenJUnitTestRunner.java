@@ -4,7 +4,7 @@ import io.takari.maven.testing.executor.MavenInstallationUtils;
 import io.takari.maven.testing.executor.MavenInstallations;
 import io.takari.maven.testing.executor.MavenRuntime;
 import io.takari.maven.testing.executor.MavenVersions;
-import io.takari.maven.testing.executor.MavenRuntime.VerifierRuntimeBuilder;
+import io.takari.maven.testing.executor.MavenRuntime.MavenRuntimeBuilder;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -20,7 +20,7 @@ import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
 
 /**
- * Runs JUnit4 tests with one or more Maven runtimes. The test class must have public constructor with single parameter of type {@linkplain VerifierRuntimeBuilder VerifierRuntimeBuilder}.
+ * Runs JUnit4 tests with one or more Maven runtimes. The test class must have public constructor with single parameter of type {@linkplain MavenRuntimeBuilder VerifierRuntimeBuilder}.
  * <p/>
  * Test Maven runtimes are located in the following order:
  * 
@@ -49,14 +49,14 @@ public class MavenJUnitTestRunner extends Suite {
 
     @Override
     protected Object createTest() throws Exception {
-      VerifierRuntimeBuilder builder = MavenRuntime.builder(mavenHome, classworldsConf);
-      return getTestClass().getJavaClass().getConstructor(VerifierRuntimeBuilder.class).newInstance(builder);
+      MavenRuntimeBuilder builder = MavenRuntime.builder(mavenHome, classworldsConf);
+      return getTestClass().getJavaClass().getConstructor(MavenRuntimeBuilder.class).newInstance(builder);
     }
 
     @Override
     protected void validateZeroArgConstructor(List<Throwable> errors) {
       try {
-        getTestClass().getJavaClass().getConstructor(VerifierRuntimeBuilder.class);
+        getTestClass().getJavaClass().getConstructor(MavenRuntimeBuilder.class);
       } catch (NoSuchMethodException e) {
         errors.add(e);
       }

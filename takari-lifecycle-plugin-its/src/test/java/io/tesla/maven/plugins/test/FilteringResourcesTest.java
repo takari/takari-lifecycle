@@ -2,7 +2,7 @@ package io.tesla.maven.plugins.test;
 
 import io.takari.maven.testing.executor.MavenExecution;
 import io.takari.maven.testing.executor.MavenExecutionResult;
-import io.takari.maven.testing.executor.MavenRuntime.VerifierRuntimeBuilder;
+import io.takari.maven.testing.executor.MavenRuntime.MavenRuntimeBuilder;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,7 +18,7 @@ import org.junit.Test;
 // various mojo parameters
 public class FilteringResourcesTest extends AbstractIntegrationTest {
 
-  public FilteringResourcesTest(VerifierRuntimeBuilder verifierBuilder) throws Exception {
+  public FilteringResourcesTest(MavenRuntimeBuilder verifierBuilder) throws Exception {
     super(verifierBuilder);
   }
 
