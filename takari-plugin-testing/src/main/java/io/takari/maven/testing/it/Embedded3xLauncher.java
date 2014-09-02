@@ -36,11 +36,14 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.codehaus.plexus.classworlds.ClassWorldException;
@@ -174,14 +177,17 @@ class Embedded3xLauncher implements MavenLauncher {
 
   private final File mavenHome;
 
+  private final Object classWorld;
+
   private final Object mavenCli;
 
   private final Method doMain;
 
   private final List<String> args;
 
-  private Embedded3xLauncher(File mavenHome, Object mavenCli, Method doMain, List<String> args) {
+  private Embedded3xLauncher(File mavenHome, Object classWorld, Object mavenCli, Method doMain, List<String> args) {
     this.mavenHome = mavenHome;
+    this.classWorld = classWorld;
     this.mavenCli = mavenCli;
     this.doMain = doMain;
     this.args = args;
@@ -276,7 +282,7 @@ class Embedded3xLauncher implements MavenLauncher {
       Method doMain = cliClass.getMethod("doMain", //
           String[].class, String.class, PrintStream.class, PrintStream.class);
 
-      return new Embedded3xLauncher(mavenHome, mavenCli, doMain, args);
+      return new Embedded3xLauncher(mavenHome, classWorld, mavenCli, doMain, args);
     } catch (ReflectiveOperationException | IOException | ClassWorldException | ConfigurationException e) {
       throw new LauncherException("Invalid Maven home directory " + mavenHome, e);
     } finally {
@@ -333,10 +339,18 @@ class Embedded3xLauncher implements MavenLauncher {
       ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
       Thread.currentThread().setContextClassLoader(mavenCli.getClass().getClassLoader());
       try {
+        Set<String> origRealms = getRealmIds();
+
         List<String> args = new ArrayList<>(this.args);
         args.addAll(Arrays.asList(cliArgs));
         Object result = doMain.invoke(mavenCli, //
             args.toArray(new String[args.size()]), workingDirectory, out, out);
+
+        Set<String> realms = getRealmIds();
+        realms.removeAll(origRealms);
+        for (String realmId : realms) {
+          disposeRealm(realmId);
+        }
 
         return ((Number) result).intValue();
       } finally {
@@ -375,6 +389,30 @@ class Embedded3xLauncher implements MavenLauncher {
     }
 
     throw new LauncherException("Could not determine embedded Maven version");
+  }
+
+  private Set<String> getRealmIds() {
+    Set<String> result = new HashSet<>();
+
+    try {
+      Collection<?> realms = (Collection<?>) classWorld.getClass().getMethod("getRealms").invoke(classWorld);
+      for (Object realm : realms) {
+        String id = (String) realm.getClass().getMethod("getId").invoke(realm);
+        result.add(id);
+      }
+    } catch (RuntimeException | ReflectiveOperationException e) {
+      // best-effort, silently ignore failures
+    }
+
+    return result;
+  }
+
+  private void disposeRealm(String id) {
+    try {
+      classWorld.getClass().getMethod("disposeRealm", String.class).invoke(classWorld, id);
+    } catch (RuntimeException | ReflectiveOperationException e) {
+      // best-effort, silently ignore failures
+    }
   }
 
 }
