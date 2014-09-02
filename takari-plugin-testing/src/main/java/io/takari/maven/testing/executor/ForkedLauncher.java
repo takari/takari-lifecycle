@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.Collections;
@@ -91,6 +92,14 @@ class ForkedLauncher implements MavenLauncher {
     executor.setWorkingDirectory(new File(workingDirectory));
 
     try (OutputStream log = new FileOutputStream(logFile)) {
+      PrintStream out = new PrintStream(log);
+      out.format("Maven Executor implementation: %s\n", getClass().getName());
+      out.format("Maven home: %s\n", mavenHome);
+      out.format("Build work directory: %s\n", workingDirectory);
+      out.format("Environment: %s\n", env);
+      out.format("Command line: %s\n\n", cli.toString());
+      out.flush();
+
       PumpStreamHandler streamHandler = new PumpStreamHandler(log);
       executor.setStreamHandler(streamHandler);
       return executor.execute(cli, env); // this throws ExecuteException if process return code != 0

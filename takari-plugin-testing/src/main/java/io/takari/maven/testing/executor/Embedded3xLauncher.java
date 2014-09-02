@@ -343,6 +343,12 @@ class Embedded3xLauncher implements MavenLauncher {
 
         List<String> args = new ArrayList<>(this.args);
         args.addAll(Arrays.asList(cliArgs));
+
+        out.format("Maven Executor implementation: %s\n", getClass().getName());
+        out.format("Maven home: %s\n", mavenHome);
+        out.format("Build work directory: %s\n", workingDirectory);
+        out.format("Execution parameters: %s\n\n", args);
+
         Object result = doMain.invoke(mavenCli, //
             args.toArray(new String[args.size()]), workingDirectory, out, out);
 
