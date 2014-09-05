@@ -122,7 +122,7 @@
               </process-classes>
               <process-test-resources>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:process-test-resources,
-                io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:testProperties
+                io.takari.maven.plugins:takari-plugin-testing-plugin:${project.version}:testProperties
               </process-test-resources>
               <test-compile>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:testCompile
@@ -135,10 +135,10 @@
                 org.apache.maven.plugins:maven-plugin-plugin:3.2:addPluginArtifactMetadata
               </package>
               <install>
-                org.apache.maven.plugins:maven-install-plugin:2.4:install
+                io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:install
               </install>
               <deploy>
-                org.apache.maven.plugins:maven-deploy-plugin:2.7:deploy
+                io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:deploy
               </deploy>
             </phases>
           </lifecycle>
