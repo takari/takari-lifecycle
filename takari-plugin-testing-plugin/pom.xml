@@ -7,8 +7,7 @@
   </parent>
 
   <prerequisites>
-    <!--  can't be used with maven 3.2.1 due to https://jira.codehaus.org/browse/MNG-5591 -->
-    <maven>[3.2.2,)</maven>
+    <maven>[3.2.1,)</maven>
   </prerequisites>
 
   <artifactId>takari-plugin-testing-plugin</artifactId>
