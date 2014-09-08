@@ -93,19 +93,23 @@ public class JarTest {
     }
 
     ZipFile zip1 = new ZipFile(jar1);
-    String manifestEntryName = "META-INF/MANIFEST.MF";
-    ZipEntry manifestEntry = zip1.getEntry(manifestEntryName);
-    if (manifestEntry != null) {
-      InputStream is = zip1.getInputStream(manifestEntry);
-      Manifest p = new Manifest(is);
-      assertNotNull(p.getMainAttributes().getValue("Built-By"));
-      assertNotNull(p.getMainAttributes().getValue("Build-Jdk"));
-      assertEquals("1.0", p.getMainAttributes().getValue("Manifest-Version"));
-      assertEquals("test", p.getMainAttributes().getValue("Implementation-Title"));
-      assertEquals("1.0", p.getMainAttributes().getValue("Implementation-Version"));
-      assertEquals("io.takari.lifecycle.its", p.getMainAttributes().getValue("Implementation-Vendor-Id"));
-    } else {
-      fail("We expected the standard META-INF/MANIFEST.MF");
+    try {
+      String manifestEntryName = "META-INF/MANIFEST.MF";
+      ZipEntry manifestEntry = zip1.getEntry(manifestEntryName);
+      if (manifestEntry != null) {
+        InputStream is = zip1.getInputStream(manifestEntry);
+        Manifest p = new Manifest(is);
+        assertNotNull(p.getMainAttributes().getValue("Built-By"));
+        assertNotNull(p.getMainAttributes().getValue("Build-Jdk"));
+        assertEquals("1.0", p.getMainAttributes().getValue("Manifest-Version"));
+        assertEquals("test", p.getMainAttributes().getValue("Implementation-Title"));
+        assertEquals("1.0", p.getMainAttributes().getValue("Implementation-Version"));
+        assertEquals("io.takari.lifecycle.its", p.getMainAttributes().getValue("Implementation-Vendor-Id"));
+      } else {
+        fail("We expected the standard META-INF/MANIFEST.MF");
+      }
+    } finally {
+      zip1.close();
     }
   }
 
