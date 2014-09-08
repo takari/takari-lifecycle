@@ -16,12 +16,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -233,29 +229,14 @@ public class Jar extends TakariLifecycleMojo {
     final List<Entry> entries = new ArrayList<>();
 
     public BuildContextDirectorySource(Iterable<AggregateInput> inputs) {
-      Set<String> paths = new HashSet<>();
       for (AggregateInput input : inputs) {
-        File basedir = input.getBasedir();
-        for (String relativePath : getRelativePaths(basedir, input.getResource())) {
-          if (paths.add(relativePath)) {
-            entries.add(new FileEntry(relativePath, new File(basedir, relativePath)));
-          }
-        }
+        String entryName = getRelativePath(input.getBasedir(), input.getResource());
+        entries.add(new FileEntry(entryName, input.getResource()));
       }
     }
 
-    private Iterable<String> getRelativePaths(File basedir, File resource) {
-      List<String> paths = new ArrayList<>();
-      Iterator<Path> names = basedir.toPath().relativize(resource.toPath()).iterator();
-      StringBuilder path = new StringBuilder();
-      while (names.hasNext()) {
-        if (path.length() > 0) {
-          path.append('/'); // always use forward slash for path separator
-        }
-        path.append(names.next().toString());
-        paths.add(path.toString());
-      }
-      return paths;
+    private String getRelativePath(File basedir, File resource) {
+      return basedir.toPath().relativize(resource.toPath()).toString().replace('\\', '/'); // always use forward slash for path separator
     }
 
     @Override

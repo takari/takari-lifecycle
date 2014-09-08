@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TreeMap;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
@@ -158,6 +159,43 @@ public class JarTest {
     Assert.assertTrue(list.get(0).toString(), list.get(0).toString().endsWith("test-1.0.jar!/subdir"));
   }
 
+  @Test
+  public void testJarEntries() throws Exception {
+    File basedir = resources.getBasedir("jar/project-with-resources");
+    mojos.executeMojo(basedir, "process-resources");
+    mojos.executeMojo(basedir, "jar");
+    File jar = new File(basedir, "target/test-1.0.jar");
+    try (ZipFile zip = new ZipFile(jar)) {
+      TreeMap<String, ZipEntry> sorted = new TreeMap<>();
+
+      Enumeration<? extends ZipEntry> entries = zip.entries();
+      while (entries.hasMoreElements()) {
+        ZipEntry entry = entries.nextElement();
+        sorted.put(entry.getName(), entry);
+      }
+
+      StringBuilder actual = new StringBuilder();
+      for (ZipEntry entry : sorted.values()) {
+        actual.append(entry.isDirectory() ? "D " : "F ");
+        actual.append(entry.getName()).append(' ').append(entry.getSize());
+        actual.append('\n');
+      }
+
+      StringBuilder expected = new StringBuilder();
+      expected.append("D META-INF/ 0\n");
+      expected.append("F META-INF/MANIFEST.MF 287\n");
+      expected.append("D META-INF/maven/ 0\n");
+      expected.append("D META-INF/maven/io.takari.lifecycle.its/ 0\n");
+      expected.append("D META-INF/maven/io.takari.lifecycle.its/test/ 0\n");
+      expected.append("F META-INF/maven/io.takari.lifecycle.its/test/pom.properties 60\n");
+      expected.append("F resource.txt 12\n");
+      expected.append("D subdir/ 0\n");
+      expected.append("F subdir/resource.txt 19\n");
+
+      Assert.assertEquals(expected.toString(), actual.toString());
+    }
+  }
+
   private static <T> List<T> toList(Enumeration<T> e) {
     ArrayList<T> l = new ArrayList<T>();
     while (e.hasMoreElements()) {
@@ -189,5 +227,4 @@ public class JarTest {
     assertTrue(new File(basedir, "target/test-1.0-sources.jar").exists());
     assertFalse(new File(basedir, "target/test-1.0-tests.jar").exists());
   }
-
 }
