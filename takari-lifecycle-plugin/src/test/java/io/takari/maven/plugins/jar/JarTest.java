@@ -153,10 +153,11 @@ public class JarTest {
     mojos.executeMojo(basedir, "process-resources");
     mojos.executeMojo(basedir, "jar");
     File jar = new File(basedir, "target/test-1.0.jar");
-    URLClassLoader cl = new URLClassLoader(new URL[] {jar.toURI().toURL()}, null);
-    List<URL> list = toList(cl.getResources("subdir"));
-    Assert.assertEquals(1, list.size());
-    Assert.assertTrue(list.get(0).toString(), list.get(0).toString().endsWith("test-1.0.jar!/subdir"));
+    try (URLClassLoader cl = new URLClassLoader(new URL[] {jar.toURI().toURL()}, null)) {
+      List<URL> list = toList(cl.getResources("subdir"));
+      Assert.assertEquals(1, list.size());
+      Assert.assertTrue(list.get(0).toString(), list.get(0).toString().endsWith("test-1.0.jar!/subdir"));
+    }
   }
 
   @Test
