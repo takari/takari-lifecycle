@@ -33,6 +33,7 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.testing.resources.TestResources;
 import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -211,12 +212,28 @@ public class JarTest {
     File basedir = resources.getBasedir("jar/project-with-manifest");
     new File(basedir, "target/classes").mkdirs(); // TODO this shouldn't be necessary
     mojos.executeMojo(basedir, "jar");
-    JarFile jar = new JarFile(new File(basedir, "target/test-1.0.jar"));
-    try {
+    try (JarFile jar = new JarFile(new File(basedir, "target/test-1.0.jar"))) {
       Manifest mf = jar.getManifest();
       Assert.assertEquals("custom-value", mf.getMainAttributes().getValue("Custom-Entry"));
-    } finally {
-      jar.close();
+    }
+  }
+
+  @Test
+  @Ignore("this is currently broken, but the fix requires changes to incrementalbuild")
+  public void testCustomManifest_incremental() throws Exception {
+    File basedir = resources.getBasedir("jar/project-with-manifest");
+    new File(basedir, "target/classes").mkdirs(); // TODO this shouldn't be necessary
+    mojos.executeMojo(basedir, "jar");
+    try (JarFile jar = new JarFile(new File(basedir, "target/test-1.0.jar"))) {
+      Manifest mf = jar.getManifest();
+      Assert.assertEquals("custom-value", mf.getMainAttributes().getValue("Custom-Entry"));
+    }
+
+    cp(basedir, "src/META-INF/MANIFEST.MF-changed", "src/META-INF/MANIFEST.MF");
+    mojos.executeMojo(basedir, "jar");
+    try (JarFile jar = new JarFile(new File(basedir, "target/test-1.0.jar"))) {
+      Manifest mf = jar.getManifest();
+      Assert.assertEquals("changed-custom-value", mf.getMainAttributes().getValue("Custom-Entry"));
     }
   }
 
