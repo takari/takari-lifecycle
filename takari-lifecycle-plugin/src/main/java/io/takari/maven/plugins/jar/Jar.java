@@ -1,5 +1,7 @@
 package io.takari.maven.plugins.jar;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.singleton;
 import io.takari.incrementalbuild.BuildContext.Output;
 import io.takari.incrementalbuild.aggregator.AggregatorBuildContext;
 import io.takari.incrementalbuild.aggregator.AggregatorBuildContext.AggregateCreator;
@@ -8,14 +10,11 @@ import io.takari.incrementalbuild.aggregator.AggregatorBuildContext.AggregateOut
 import io.takari.maven.plugins.TakariLifecycleMojo;
 import io.tesla.proviso.archive.Archiver;
 import io.tesla.proviso.archive.Entry;
-import io.tesla.proviso.archive.Source;
 import io.tesla.proviso.archive.source.FileEntry;
-import io.tesla.proviso.archive.source.FileSource;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.Attributes;
@@ -28,8 +27,6 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
-
-import com.google.common.io.Closer;
 
 @Mojo(name = "jar", defaultPhase = LifecyclePhase.PACKAGE)
 public class Jar extends TakariLifecycleMojo {
@@ -61,6 +58,8 @@ public class Jar extends TakariLifecycleMojo {
   @Inject
   private AggregatorBuildContext buildContext;
 
+  private static final String MANIFEST_PATH = "META-INF/MANIFEST.MF";
+
   @Override
   protected void executeMojo() throws MojoExecutionException {
 
@@ -77,28 +76,26 @@ public class Jar extends TakariLifecycleMojo {
         } else {
           logger.warn("Main classes directory {} does not exist", classesDirectory);
         }
+        // XXX this does not detect changes in archive#manifestFile.
         registeredOutput.createIfNecessary(new AggregateCreator() {
           @Override
           public void create(Output<File> output, Iterable<AggregateInput> inputs) throws IOException {
             logger.info("Building main JAR.");
 
-            File jar = output.getResource();
-
-            Archiver archiver = Archiver.builder() //
-                .useRoot(false) // Step into the classes/ directory
-                .build();
-
-            List<Source> sources = new ArrayList<Source>();
-            sources.add(new BuildContextDirectorySource(inputs));
-            sources.add(new FileSource(String.format("META-INF/maven/%s/%s/pom.properties", project.getGroupId(), project.getArtifactId()), createPomPropertiesFile(project)));
-            sources.add(new FileSource("META-INF/MANIFEST.MF", getMainManifest()));
-            archiver.archive(jar, sources.toArray(new Source[sources.size()]));
+            List<Iterable<Entry>> sources = new ArrayList<>();
+            if (archive != null && archive.getManifestFile() != null) {
+              sources.add(jarManifestSource(archive.getManifestFile()));
+            }
+            sources.add(inputsSource(inputs));
+            sources.add(pomPropertiesSource(project));
+            sources.add(jarManifestSource(project));
+            archive(output.getResource(), sources);
           }
         });
+        project.getArtifact().setFile(jar);
       } catch (IOException e) {
         throw new MojoExecutionException(e.getMessage(), e);
       }
-      project.getArtifact().setFile(jar);
     }
 
     if (sourceJar) {
@@ -116,22 +113,13 @@ public class Jar extends TakariLifecycleMojo {
           public void create(Output<File> output, Iterable<AggregateInput> inputs) throws IOException {
             logger.info("Building source Jar.");
 
-            File sourceJar = output.getResource();
-
-            Archiver sourceArchiver = Archiver.builder() //
-                .useRoot(false) // Step into the source directories
-                .build();
-
-            List<Source> sources = new ArrayList<Source>();
-            sources.add(new BuildContextDirectorySource(inputs));
-            sources.add(new FileSource("META-INF/MANIFEST.MF", createManifestFile(project)));
-            sourceArchiver.archive(sourceJar, sources.toArray(new Source[sources.size()]));
+            archive(output.getResource(), asList(inputsSource(inputs), jarManifestSource(project)));
           }
         });
+        projectHelper.attachArtifact(project, "jar", "sources", sourceJar);
       } catch (IOException e) {
         throw new MojoExecutionException(e.getMessage(), e);
       }
-      projectHelper.attachArtifact(project, "jar", "sources", sourceJar);
     }
 
     if (testJar && testClassesDirectory.isDirectory()) {
@@ -148,17 +136,7 @@ public class Jar extends TakariLifecycleMojo {
           public void create(Output<File> output, Iterable<AggregateInput> inputs) throws IOException {
             logger.info("Building test JAR.");
 
-            File testJar = output.getResource();
-
-            Archiver testArchiver = Archiver.builder() //
-                .useRoot(false) //
-                .build();
-
-            List<Source> sources = new ArrayList<Source>();
-            sources.add(new BuildContextDirectorySource(inputs));
-            sources.add(new FileSource("META-INF/MANIFEST.MF", createManifestFile(project)));
-
-            testArchiver.archive(testJar, sources.toArray(new Source[sources.size()]));
+            archive(output.getResource(), asList(inputsSource(inputs), jarManifestSource(project)));
           }
         });
       } catch (IOException e) {
@@ -168,26 +146,31 @@ public class Jar extends TakariLifecycleMojo {
     }
   }
 
-  private File createPomPropertiesFile(MavenProject project) throws IOException {
-    JarProperties properties = new JarProperties();
-    properties.setProperty("groupId", project.getGroupId());
-    properties.setProperty("artifactId", project.getArtifactId());
-    properties.setProperty("version", project.getVersion());
-    File mavenPropertiesFile = new File(project.getBuild().getDirectory(), "pom.properties");
-    if (!mavenPropertiesFile.getParentFile().exists()) {
-      mavenPropertiesFile.getParentFile().mkdirs();
-    }
-    Closer closer = Closer.create();
-    try {
-      OutputStream os = closer.register(new FileOutputStream(mavenPropertiesFile));
-      properties.store(os);
-    } finally {
-      closer.close();
-    }
-    return mavenPropertiesFile;
+  private void archive(File jar, List<Iterable<Entry>> sources) throws IOException {
+    Archiver archiver = Archiver.builder() //
+        .useRoot(false) //
+        .build();
+    archiver.archive(jar, new AggregateSource(sources));
   }
 
-  private File createManifestFile(MavenProject project) throws IOException {
+  static String getRelativePath(File basedir, File resource) {
+    return basedir.toPath().relativize(resource.toPath()).toString().replace('\\', '/'); // always use forward slash for path separator
+  }
+
+  private Iterable<Entry> inputsSource(Iterable<AggregateInput> inputs) {
+    final List<Entry> entries = new ArrayList<>();
+    for (AggregateInput input : inputs) {
+      String entryName = getRelativePath(input.getBasedir(), input.getResource());
+      entries.add(new FileEntry(entryName, input.getResource()));
+    }
+    return entries;
+  }
+
+  public static Iterable<Entry> jarManifestSource(File file) {
+    return singleton((Entry) new FileEntry(MANIFEST_PATH, file));
+  }
+
+  private Iterable<Entry> jarManifestSource(MavenProject project) throws IOException {
     Manifest manifest = new Manifest();
     Attributes main = manifest.getMainAttributes();
     main.putValue("Manifest-Version", "1.0");
@@ -204,53 +187,28 @@ public class Jar extends TakariLifecycleMojo {
     if (!manifestFile.getParentFile().exists()) {
       manifestFile.getParentFile().mkdirs();
     }
-    Closer closer = Closer.create();
-    try {
-      OutputStream os = closer.register(new FileOutputStream(manifestFile));
-      manifest.write(os);
-    } finally {
-      closer.close();
-    }
-    return manifestFile;
+
+    ByteArrayOutputStream buf = new ByteArrayOutputStream();
+    manifest.write(buf);
+
+    return singleton((Entry) new BytesEntry(MANIFEST_PATH, buf.toByteArray()));
   }
 
-  private File getMainManifest() throws IOException {
-    if (archive != null && archive.getManifestFile() != null) {
-      File manifest = archive.getManifestFile();
-      if (!manifest.isFile() || !manifest.canRead()) {
-        throw new IOException(String.format("Manifest %s cannot be read", manifest));
-      }
-      return manifest;
+  private Iterable<Entry> pomPropertiesSource(MavenProject project) throws IOException {
+    String entryName = String.format("META-INF/maven/%s/%s/pom.properties", project.getGroupId(), project.getArtifactId());
+
+    JarProperties properties = new JarProperties();
+    properties.setProperty("groupId", project.getGroupId());
+    properties.setProperty("artifactId", project.getArtifactId());
+    properties.setProperty("version", project.getVersion());
+    File mavenPropertiesFile = new File(project.getBuild().getDirectory(), "pom.properties");
+    if (!mavenPropertiesFile.getParentFile().exists()) {
+      mavenPropertiesFile.getParentFile().mkdirs();
     }
-    return createManifestFile(project);
+    ByteArrayOutputStream buf = new ByteArrayOutputStream();
+    properties.store(buf);
+
+    return singleton((Entry) new BytesEntry(entryName, buf.toByteArray()));
   }
 
-  class BuildContextDirectorySource implements Source {
-    final List<Entry> entries = new ArrayList<>();
-
-    public BuildContextDirectorySource(Iterable<AggregateInput> inputs) {
-      for (AggregateInput input : inputs) {
-        String entryName = getRelativePath(input.getBasedir(), input.getResource());
-        entries.add(new FileEntry(entryName, input.getResource()));
-      }
-    }
-
-    private String getRelativePath(File basedir, File resource) {
-      return basedir.toPath().relativize(resource.toPath()).toString().replace('\\', '/'); // always use forward slash for path separator
-    }
-
-    @Override
-    public Iterable<Entry> entries() {
-      return entries;
-    }
-
-    @Override
-    public boolean isDirectory() {
-      return false;
-    }
-
-    @Override
-    public void close() throws IOException {}
-
-  }
 }
