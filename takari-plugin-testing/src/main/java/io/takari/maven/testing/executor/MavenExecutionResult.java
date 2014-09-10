@@ -39,7 +39,7 @@ public class MavenExecutionResult {
 
   public void assertLogText(String text) {
     for (String line : log) {
-      if (line.contains(line)) {
+      if (line.contains(text)) {
         return;
       }
     }
