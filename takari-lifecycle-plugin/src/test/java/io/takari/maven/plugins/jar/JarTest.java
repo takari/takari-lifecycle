@@ -179,21 +179,19 @@ public class JarTest {
 
       StringBuilder actual = new StringBuilder();
       for (ZipEntry entry : sorted.values()) {
-        actual.append(entry.isDirectory() ? "D " : "F ");
-        actual.append(entry.getName()).append(' ').append(entry.getSize());
-        actual.append('\n');
+        actual.append(entry.isDirectory() ? "D " : "F ").append(entry.getName()).append('\n');
       }
 
       StringBuilder expected = new StringBuilder();
-      expected.append("D META-INF/ 0\n");
-      expected.append("F META-INF/MANIFEST.MF 287\n");
-      expected.append("D META-INF/maven/ 0\n");
-      expected.append("D META-INF/maven/io.takari.lifecycle.its/ 0\n");
-      expected.append("D META-INF/maven/io.takari.lifecycle.its/test/ 0\n");
-      expected.append("F META-INF/maven/io.takari.lifecycle.its/test/pom.properties 60\n");
-      expected.append("F resource.txt 12\n");
-      expected.append("D subdir/ 0\n");
-      expected.append("F subdir/resource.txt 19\n");
+      expected.append("D META-INF/\n");
+      expected.append("F META-INF/MANIFEST.MF\n");
+      expected.append("D META-INF/maven/\n");
+      expected.append("D META-INF/maven/io.takari.lifecycle.its/\n");
+      expected.append("D META-INF/maven/io.takari.lifecycle.its/test/\n");
+      expected.append("F META-INF/maven/io.takari.lifecycle.its/test/pom.properties\n");
+      expected.append("F resource.txt\n");
+      expected.append("D subdir/\n");
+      expected.append("F subdir/resource.txt\n");
 
       Assert.assertEquals(expected.toString(), actual.toString());
     }
