@@ -7,7 +7,7 @@ import org.junit.Assert;
 public class TestResources extends org.apache.maven.plugin.testing.resources.TestResources {
 
   public TestResources() {
-    super();
+    super("src/test/projects", "target/test-projects");
   }
 
   public TestResources(String projectsDir, String workDir) {
