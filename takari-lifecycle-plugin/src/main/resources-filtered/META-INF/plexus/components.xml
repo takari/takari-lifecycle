@@ -118,7 +118,8 @@
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:compile
               </compile>
               <process-classes>
-                org.apache.maven.plugins:maven-plugin-plugin:3.2:descriptor
+                org.apache.maven.plugins:maven-plugin-plugin:3.2:descriptor,
+                org.sonatype.plugins:sisu-maven-plugin:1.1:main-index
               </process-classes>
               <process-test-resources>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:process-test-resources,
@@ -127,6 +128,9 @@
               <test-compile>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:testCompile
               </test-compile>
+              <process-test-classes>
+                org.sonatype.plugins:sisu-maven-plugin:1.1:test-index
+              </process-test-classes>
               <test>
                 org.apache.maven.plugins:maven-surefire-plugin:2.12.4:test
               </test>
