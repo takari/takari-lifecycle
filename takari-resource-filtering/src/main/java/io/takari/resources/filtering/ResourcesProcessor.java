@@ -3,9 +3,12 @@ package io.takari.resources.filtering;
 import io.takari.incrementalbuild.BuildContext;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
@@ -22,8 +25,7 @@ import com.github.mustachejava.MustacheException;
 import com.github.mustachejava.reflect.ReflectionObjectHandler;
 import com.github.mustachejava.util.GuardException;
 import com.github.mustachejava.util.Wrapper;
-import com.google.common.io.CharStreams;
-import com.google.common.io.Closer;
+import com.google.common.io.ByteStreams;
 
 @Named
 @Singleton
@@ -55,18 +57,15 @@ public class ResourcesProcessor {
   private void filterResource(BuildContext.Input<File> input, File sourceDirectory, File targetDirectory, Map<Object, Object> filterProperties) throws FileNotFoundException, IOException {
     File outputFile = relativize(sourceDirectory, targetDirectory, input.getResource());
     BuildContext.Output<File> output = input.associateOutput(outputFile);
-    Closer closer = Closer.create();
-    try {
-      // FIXME decide how to handle encoding, system default most likely not it
-      Reader reader = closer.register(new FileReader(input.getResource()));
-      Writer writer = closer.register(new OutputStreamWriter(output.newOutputStream()));
-      if (filterProperties != null) {
+    if (filterProperties != null) {
+      try (Reader reader = new FileReader(input.getResource()); Writer writer = new OutputStreamWriter(output.newOutputStream());) {
+        // FIXME decide how to handle encoding, system default most likely not it
         filter(reader, writer, filterProperties);
-      } else {
-        CharStreams.copy(reader, writer);
       }
-    } finally {
-      closer.close();
+    } else {
+      try (InputStream is = new FileInputStream(input.getResource()); OutputStream os = output.newOutputStream()) {
+        ByteStreams.copy(is, os);
+      }
     }
   }
 

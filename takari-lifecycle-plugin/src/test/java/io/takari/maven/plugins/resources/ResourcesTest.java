@@ -148,4 +148,15 @@ public class ResourcesTest {
     mojos.assertDeletedOutputs(basedir, "target/classes/filtered-resource.txt");
   }
 
+  @Test
+  public void testBinaryResource() throws Exception {
+    File basedir = resources.getBasedir("resources/project-with-binary-resources");
+
+    mojos.executeMojo(basedir, "process-resources");
+    mojos.assertBuildOutputs(basedir, "target/classes/resource.data");
+
+    byte[] expected = Files.toByteArray(new File(basedir, "src/main/resources/resource.data"));
+    byte[] actual = Files.toByteArray(new File(basedir, "target/classes/resource.data"));
+    Assert.assertArrayEquals(expected, actual);
+  }
 }
