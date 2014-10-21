@@ -78,7 +78,7 @@
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:testCompile
               </test-compile>
               <test>
-                org.apache.maven.plugins:maven-surefire-plugin:2.12.1:test
+                org.apache.maven.plugins:maven-surefire-plugin:2.17:test
               </test>
               <package>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:jar
@@ -127,8 +127,8 @@
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:compile
               </compile>
               <process-classes>
-                org.apache.maven.plugins:maven-plugin-plugin:3.2:descriptor,
-                org.sonatype.plugins:sisu-maven-plugin:1.1:main-index
+                org.apache.maven.plugins:maven-plugin-plugin:3.3:descriptor,
+                org.sonatype.plugins:sisu-maven-plugin:1.4:main-index
               </process-classes>
               <process-test-resources>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:process-test-resources,
@@ -138,14 +138,14 @@
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:testCompile
               </test-compile>
               <process-test-classes>
-                org.sonatype.plugins:sisu-maven-plugin:1.1:test-index
+                org.sonatype.plugins:sisu-maven-plugin:1.4:test-index
               </process-test-classes>
               <test>
-                org.apache.maven.plugins:maven-surefire-plugin:2.12.4:test
+                org.apache.maven.plugins:maven-surefire-plugin:2.17:test
               </test>
               <package>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:jar,
-                org.apache.maven.plugins:maven-plugin-plugin:3.2:addPluginArtifactMetadata
+                org.apache.maven.plugins:maven-plugin-plugin:3.3:addPluginArtifactMetadata
               </package>
               <install>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:install
