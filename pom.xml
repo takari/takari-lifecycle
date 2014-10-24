@@ -45,6 +45,7 @@
     <tag>HEAD</tag>
   </scm>
 
+  <!-- 
   <repositories>
     <repository>
       <id>takari-snapshots</id>
@@ -54,6 +55,7 @@
       </snapshots>
     </repository>
   </repositories>
+   -->
 
   <modules>
     <module>takari-lifecycle-plugin</module>
