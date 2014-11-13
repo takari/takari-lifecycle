@@ -50,7 +50,15 @@ public class MavenExecutionResult {
         return;
       }
     }
-    Assert.fail("Log line present: " + text);
+    Assert.fail("Log line not present: " + text);
+  }
+
+  public void assertNoLogText(String text) {
+    for (String line : log) {
+      if (line.contains(text)) {
+        Assert.fail("Log line present: " + text);
+      }
+    }
   }
 
   public File getBasedir() {
