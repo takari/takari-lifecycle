@@ -85,6 +85,7 @@ public class InstallDeployTest {
     request.setUserProperties(properties);
     request.setBaseDirectory(basedir);
     ProjectBuildingRequest configuration = request.getProjectBuildingRequest();
+    configuration.setRepositorySession(new DefaultRepositorySystemSession());
     MavenProject project = mojos.lookup(ProjectBuilder.class).build(pom, configuration).getProject();
     Assert.assertNotNull(project);
     return project;
