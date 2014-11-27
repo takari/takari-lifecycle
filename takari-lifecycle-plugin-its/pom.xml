@@ -83,6 +83,13 @@
                   <classifier>bin</classifier>
                   <type>tar.gz</type>
                 </artifactItem>
+                <artifactItem>
+                  <groupId>org.apache.maven</groupId>
+                  <artifactId>apache-maven</artifactId>
+                  <version>3.2.4-SNAPSHOT</version>
+                  <classifier>bin</classifier>
+                  <type>tar.gz</type>
+                </artifactItem>
               </artifactItems>
             </configuration>
           </execution>
