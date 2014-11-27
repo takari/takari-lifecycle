@@ -246,7 +246,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
 
-    Stopwatch stopwatch = new Stopwatch().start();
+    Stopwatch stopwatch = Stopwatch.createStarted();
 
     if (isSkip()) {
       log.info("Skipping compilation");

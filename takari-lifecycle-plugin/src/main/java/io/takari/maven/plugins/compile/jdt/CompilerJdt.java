@@ -294,7 +294,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
     this.dependencypath = new Classpath(dependencypath, null);
 
-    Stopwatch stopwatch = new Stopwatch().start();
+    Stopwatch stopwatch = Stopwatch.createStarted();
     long typecount = 0, packagecount = 0;
 
     HashMap<String, byte[]> digest = classpathDigester.digestDependencies(files);

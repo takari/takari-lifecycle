@@ -53,7 +53,7 @@ public class ProjectClasspathDigester {
    * Detects if classpath dependencies changed compared to the previous build or not.
    */
   public boolean digestDependencies(List<File> dependencies) throws IOException {
-    Stopwatch stopwatch = new Stopwatch().start();
+    Stopwatch stopwatch = Stopwatch.createStarted();
 
     boolean changed = false;
 
