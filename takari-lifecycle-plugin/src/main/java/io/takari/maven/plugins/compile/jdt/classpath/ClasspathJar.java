@@ -72,6 +72,11 @@ public class ClasspathJar implements ClasspathEntry {
 
   @Override
   public String toString() {
-    return "Classpath for jar file " + this.file.getPath(); //$NON-NLS-1$
+    return "Classpath for jar file " + file.getPath(); //$NON-NLS-1$
+  }
+
+  @Override
+  public String getEntryName() {
+    return file.getAbsolutePath();
   }
 }

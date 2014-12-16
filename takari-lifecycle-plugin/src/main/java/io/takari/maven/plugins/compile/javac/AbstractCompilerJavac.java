@@ -124,7 +124,7 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
   }
 
   @Override
-  public boolean setClasspath(List<File> dependencies) throws IOException {
+  public boolean setClasspath(List<File> dependencies, Set<File> directDependencies) throws IOException {
     StringBuilder cp = new StringBuilder();
     cp.append(getOutputDirectory().getAbsolutePath());
     for (File dependency : dependencies) {

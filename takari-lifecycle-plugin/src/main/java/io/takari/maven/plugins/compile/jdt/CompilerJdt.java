@@ -127,6 +127,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     args.put(CompilerOptions.OPTION_TargetPlatform, getTarget()); // support 5/6/7 aliases
     args.put(CompilerOptions.OPTION_Compliance, getTarget()); // support 5/6/7 aliases
     args.put(CompilerOptions.OPTION_Source, getSource()); // support 5/6/7 aliases
+    args.put(CompilerOptions.OPTION_ReportForbiddenReference, CompilerOptions.ERROR);
     Set<Debug> debug = getDebug();
     if (debug == null || debug.contains(Debug.all)) {
       args.put(CompilerOptions.OPTION_LocalVariableAttribute, CompilerOptions.GENERATE);
@@ -280,13 +281,16 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   }
 
   @Override
-  public boolean setClasspath(List<File> dependencies) throws IOException {
+  public boolean setClasspath(List<File> dependencies, Set<File> directDependencies) throws IOException {
     final List<ClasspathEntry> dependencypath = new ArrayList<ClasspathEntry>();
     final List<File> files = new ArrayList<File>();
 
     for (File dependency : dependencies) {
       ClasspathEntry entry = classpathCache.get(dependency);
       if (entry != null) {
+        if (directDependencies != null && !directDependencies.contains(dependency)) {
+          entry = new ForbiddenClasspathEntry(entry);
+        }
         dependencypath.add(entry);
         files.add(dependency);
       }

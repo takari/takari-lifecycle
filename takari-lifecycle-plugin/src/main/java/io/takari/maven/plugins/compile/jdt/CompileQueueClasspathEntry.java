@@ -71,4 +71,8 @@ class CompileQueueClasspathEntry implements ClasspathEntry, MutableClasspathEntr
     this.units = Collections.unmodifiableMap(units);
   }
 
+  @Override
+  public String getEntryName() {
+    return "#COMPILEQUEUE";
+  }
 }

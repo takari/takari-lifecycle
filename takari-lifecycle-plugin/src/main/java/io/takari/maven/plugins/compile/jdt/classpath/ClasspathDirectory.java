@@ -94,4 +94,9 @@ public class ClasspathDirectory implements ClasspathEntry {
   public String toString() {
     return "Classpath for directory " + directory;
   }
+
+  @Override
+  public String getEntryName() {
+    return directory.getAbsolutePath();
+  }
 }

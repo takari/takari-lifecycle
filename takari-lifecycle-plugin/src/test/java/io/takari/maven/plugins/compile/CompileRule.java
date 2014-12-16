@@ -37,13 +37,11 @@ public class CompileRule extends IncrementalBuildRule {
     return newMojoExecution("compile");
   }
 
-  public void assertMessageContains(File file, String... strings) throws Exception {
+  public void assertMessage(File file, String... strings) throws Exception {
     Collection<String> messages = getBuildContextLog().getMessages(file);
-    Assert.assertEquals(1, messages.size());
+    Assert.assertEquals(messages.toString(), 1, messages.size());
     String message = messages.iterator().next();
-    for (String string : strings) {
-      Assert.assertTrue("message contains " + string, message.contains(string));
-    }
+    Assert.assertTrue(ErrorMessage.isMatch(message, strings));
   }
 
   public void assertMessage(File basedir, String path, ErrorMessage expected) throws Exception {

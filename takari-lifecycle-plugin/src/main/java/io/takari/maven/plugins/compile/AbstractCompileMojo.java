@@ -55,6 +55,10 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     all, none, source, lines, vars;
   }
 
+  public static enum AccessRulesViolation {
+    error, ignore;
+  }
+
   /**
    * The -encoding argument for the Java compiler.
    */
@@ -154,6 +158,10 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Parameter(property = "maven.compiler.showWarnings", defaultValue = "false")
   private boolean showWarnings;
 
+  // TODO decide if 'forbiddenReference=error|ignore' is a better name, as in jdt project preferences
+  @Parameter(defaultValue = "ignore")
+  private AccessRulesViolation accessRulesViolation;
+
   //
 
   @Parameter(defaultValue = "${project.file}", readonly = true)
@@ -175,6 +183,10 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Parameter(defaultValue = "${project.artifact}", readonly = true)
   @Incremental(configuration = Configuration.ignore)
   private Artifact artifact;
+
+  @Parameter(defaultValue = "${project.dependencyArtifacts}", readonly = true)
+  @Incremental(configuration = Configuration.ignore)
+  private Set<Artifact> directDependencies;
 
   @Component
   private Map<String, AbstractCompiler> compilers;
@@ -227,6 +239,17 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       log.debug("Compile source roots:{}", msg);
     }
     return sources;
+  }
+
+  protected Set<File> getDirectDependencies() {
+    if (accessRulesViolation == AccessRulesViolation.ignore) {
+      return null;
+    }
+    Set<File> result = new LinkedHashSet<>();
+    for (Artifact artofact : directDependencies) {
+      result.add(artofact.getFile());
+    }
+    return result;
   }
 
   protected abstract Set<String> getSourceRoots();
@@ -301,7 +324,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
         }
         log.debug("Compile classpath: {} entries{}", classpath.size(), msg.toString());
       }
-      boolean classpathChanged = compiler.setClasspath(classpath);
+      boolean classpathChanged = compiler.setClasspath(classpath, getDirectDependencies());
       boolean sourcesChanged = compiler.setSources(sources);
 
       if (sourcesChanged || classpathChanged) {

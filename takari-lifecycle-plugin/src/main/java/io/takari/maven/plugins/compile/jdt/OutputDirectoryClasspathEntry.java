@@ -47,4 +47,9 @@ class OutputDirectoryClasspathEntry implements ClasspathEntry, MutableClasspathE
   public String toString() {
     return "Classpath for output directory " + directory;
   }
+
+  @Override
+  public String getEntryName() {
+    return directory.getAbsolutePath();
+  }
 }
