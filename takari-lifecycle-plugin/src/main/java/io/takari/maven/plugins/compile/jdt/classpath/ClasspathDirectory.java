@@ -18,6 +18,7 @@ import java.util.Set;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
+import org.osgi.framework.BundleException;
 
 public class ClasspathDirectory extends DependencyClasspathEntry implements ClasspathEntry {
 
@@ -102,12 +103,18 @@ public class ClasspathDirectory extends DependencyClasspathEntry implements Clas
   public static ClasspathDirectory create(File directory) {
     Set<String> packages = getPackageNames(directory);
 
-    Collection<String> exportedPackages;
-    File file = new File(directory, PATH_EXPORT_PACKAGE);
-    try (InputStream is = new FileInputStream(file)) {
+    Collection<String> exportedPackages = null;
+    try (InputStream is = new FileInputStream(new File(directory, PATH_EXPORT_PACKAGE))) {
       exportedPackages = parseExportPackage(is);
     } catch (IOException e) {
-      exportedPackages = null; // silently ignore missing/bad export-package files
+      // silently ignore missing/bad export-package files
+    }
+    if (exportedPackages == null) {
+      try (InputStream is = new FileInputStream(new File(directory, PATH_MANIFESTMF))) {
+        exportedPackages = parseBundleManifest(is);
+      } catch (IOException | BundleException e) {
+        // silently ignore missing/bad export-package files
+      }
     }
 
     return new ClasspathDirectory(directory, packages, exportedPackages);

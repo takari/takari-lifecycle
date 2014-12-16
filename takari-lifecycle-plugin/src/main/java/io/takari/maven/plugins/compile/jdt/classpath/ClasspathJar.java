@@ -20,6 +20,7 @@ import java.util.zip.ZipFile;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
+import org.osgi.framework.BundleException;
 
 public class ClasspathJar extends DependencyClasspathEntry implements ClasspathEntry {
 
@@ -77,17 +78,24 @@ public class ClasspathJar extends DependencyClasspathEntry implements ClasspathE
   public static ClasspathJar create(File file) throws IOException {
     ZipFile zipFile = new ZipFile(file);
     Set<String> packageNames = getPackageNames(zipFile);
-
+    Collection<String> exportedPackages = null;
+    // TODO do not look for exported packages in java standard library
     ZipEntry entry = zipFile.getEntry(PATH_EXPORT_PACKAGE);
-    Collection<String> exportedPackages;
     if (entry != null) {
       try (InputStream is = zipFile.getInputStream(entry)) {
         exportedPackages = parseExportPackage(is);
       }
-    } else {
-      exportedPackages = null;
     }
-
+    if (exportedPackages == null) {
+      entry = zipFile.getEntry(PATH_MANIFESTMF);
+      if (entry != null) {
+        try (InputStream is = zipFile.getInputStream(entry)) {
+          exportedPackages = parseBundleManifest(is);
+        } catch (BundleException e) {
+          // silently ignore bundle manifest parsing problems
+        }
+      }
+    }
     return new ClasspathJar(file, zipFile, packageNames, exportedPackages);
   }
 }

@@ -51,7 +51,7 @@ public class CompileJdtClasspathVisibilityTest extends AbstractCompileJdtTest {
 
   @Test
   public void testInternalReference() throws Exception {
-    // project references classes that are not exported by the dependency
+    // project references classes that are not exported by the dependency (takari export-package)
 
     File basedir = resources.getBasedir("compile-jdt-classpath-visibility/internal-reference");
 
@@ -60,6 +60,19 @@ public class CompileJdtClasspathVisibilityTest extends AbstractCompileJdtTest {
 
     compile(project);
     mojos.assertMessage(new File(basedir, "src/main/java/reference/Reference.java"), "The type 'DependencyInternalClass' is not API", "test-dependency-0.1.jar");
+  }
+
+  @Test
+  public void testInternalReference_dependencyBundle() throws Exception {
+    // project references classes that are not exported by the dependency (bundle manifest)
+
+    File basedir = resources.getBasedir("compile-jdt-classpath-visibility/internal-reference");
+
+    MavenProject project = mojos.readMavenProject(basedir);
+    addDependency(project, "indirect-dependency", new File("src/test/projects/compile-jdt-classpath-visibility/test-dependency-bundle/test-dependency-bundle-0.1.jar"));
+
+    compile(project);
+    mojos.assertMessage(new File(basedir, "src/main/java/reference/Reference.java"), "The type 'DependencyInternalClass' is not API", "test-dependency-bundle-0.1.jar");
   }
 
   private void addIndirectDependency(MavenProject project, String string, File file) throws Exception {
