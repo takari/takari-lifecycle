@@ -10,8 +10,6 @@ import org.eclipse.jdt.internal.compiler.env.AccessRule;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 
 class ForbiddenClasspathEntry implements ClasspathEntry {
-  private static final char[] PATTERN_ALL = "**/*".toCharArray();
-
   private final ClasspathEntry entry;
 
   public ForbiddenClasspathEntry(ClasspathEntry entry) {
@@ -29,7 +27,7 @@ class ForbiddenClasspathEntry implements ClasspathEntry {
     if (answer == null) {
       return null;
     }
-    AccessRule accessRule = new AccessRule(PATTERN_ALL, IProblem.ForbiddenReference, true /* keep looking for accessible type */);
+    AccessRule accessRule = new AccessRule(null /* pattern */, IProblem.ForbiddenReference, true /* keep looking for accessible type */);
     AccessRestriction accessRestriction = new AccessRestriction(accessRule, AccessRestriction.COMMAND_LINE, entry.getEntryName());
     // little yucky
     if (answer.getBinaryType() != null) {

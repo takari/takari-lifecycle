@@ -8,9 +8,10 @@
 package io.takari.maven.plugins.compile.jdt.classpath;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -18,13 +19,12 @@ import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 
-public class ClasspathDirectory implements ClasspathEntry {
+public class ClasspathDirectory extends DependencyClasspathEntry implements ClasspathEntry {
 
   private final File directory;
 
-  private final Set<String> packageNames;
-
-  public ClasspathDirectory(File directory) {
+  private ClasspathDirectory(File directory, Set<String> packageNames, Collection<String> exportedPackages) {
+    super(packageNames, exportedPackages);
     try {
       directory = directory.getCanonicalFile();
     } catch (IOException e) {
@@ -32,24 +32,23 @@ public class ClasspathDirectory implements ClasspathEntry {
       directory = directory.getAbsoluteFile();
     }
     this.directory = directory;
-    this.packageNames = Collections.unmodifiableSet(initializePackageNames(directory));
   }
 
-  private static Set<String> initializePackageNames(File directory) {
+  private static Set<String> getPackageNames(File directory) {
     Set<String> packages = new HashSet<String>();
-    initializePackageCache(packages, directory, "");
+    populatePackageNames(packages, directory, "");
     return packages;
   }
 
-  private static void initializePackageCache(Set<String> packages, File directory, String packageName) {
+  private static void populatePackageNames(Set<String> packageNames, File directory, String packageName) {
     if (!packageName.isEmpty()) {
-      packages.add(packageName);
+      packageNames.add(packageName);
     }
     File[] files = directory.listFiles();
     if (files != null) {
       for (File file : files) {
         if (file.isDirectory()) {
-          initializePackageCache(packages, file, childPackageName(packageName, file.getName()));
+          populatePackageNames(packageNames, file, childPackageName(packageName, file.getName()));
         }
       }
     }
@@ -75,7 +74,7 @@ public class ClasspathDirectory implements ClasspathEntry {
       if (classFile.isFile() && matchQualifiedName(classFile, qualifiedFileName)) {
         ClassFileReader reader = ClassFileReader.read(classFile, false);
         if (reader != null) {
-          return new NameEnvironmentAnswer(reader, null);
+          return new NameEnvironmentAnswer(reader, getAccessRestriction(packageName));
         }
       }
     } catch (ClassFormatException e) {
@@ -98,5 +97,19 @@ public class ClasspathDirectory implements ClasspathEntry {
   @Override
   public String getEntryName() {
     return directory.getAbsolutePath();
+  }
+
+  public static ClasspathDirectory create(File directory) {
+    Set<String> packages = getPackageNames(directory);
+
+    Collection<String> exportedPackages;
+    File file = new File(directory, PATH_EXPORT_PACKAGE);
+    try (InputStream is = new FileInputStream(file)) {
+      exportedPackages = parseExportPackage(is);
+    } catch (IOException e) {
+      exportedPackages = null; // silently ignore missing/bad export-package files
+    }
+
+    return new ClasspathDirectory(directory, packages, exportedPackages);
   }
 }

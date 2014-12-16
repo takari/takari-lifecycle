@@ -17,12 +17,12 @@ public class ClasspathTest {
     for (File file : JavaInstallation.getDefault().getClasspath()) {
       if (file.isFile()) {
         try {
-          entries.add(new ClasspathJar(file));
+          entries.add(ClasspathJar.create(file));
         } catch (IOException e) {
           // ignore
         }
       } else if (file.isDirectory()) {
-        entries.add(new ClasspathDirectory(file));
+        entries.add(ClasspathDirectory.create(file));
       }
     }
     Classpath classpath = new Classpath(entries, null);
@@ -33,7 +33,7 @@ public class ClasspathTest {
   public void testCaseInsensitiveLookup() {
     // affects windows and osx, linux users should not apply
     File sourceRoot = new File("src/test/projects/compile/basic/src/main/java");
-    ClasspathEntry cpe = new ClasspathDirectory(sourceRoot);
+    ClasspathEntry cpe = ClasspathDirectory.create(sourceRoot);
     Assert.assertNull(cpe.findType("basic", "basic.class"));
   }
 }

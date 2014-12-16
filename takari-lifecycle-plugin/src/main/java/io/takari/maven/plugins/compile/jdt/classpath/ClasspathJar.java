@@ -9,8 +9,8 @@ package io.takari.maven.plugins.compile.jdt.classpath;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
@@ -21,19 +21,18 @@ import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 
-public class ClasspathJar implements ClasspathEntry {
+public class ClasspathJar extends DependencyClasspathEntry implements ClasspathEntry {
 
   private final File file;
   private final ZipFile zipFile;
-  private final Set<String> packageNames;
 
-  public ClasspathJar(File file) throws IOException {
+  private ClasspathJar(File file, ZipFile zipFile, Collection<String> packageNames, Collection<String> exportedPackages) throws IOException {
+    super(packageNames, exportedPackages);
     this.file = file;
-    this.zipFile = new ZipFile(this.file);
-    this.packageNames = Collections.unmodifiableSet(initializePackageCache(zipFile));
+    this.zipFile = zipFile;
   }
 
-  private static Set<String> initializePackageCache(ZipFile zipFile) {
+  private static Set<String> getPackageNames(ZipFile zipFile) {
     Set<String> result = new HashSet<String>();
     for (Enumeration e = zipFile.entries(); e.hasMoreElements();) {
       ZipEntry entry = (ZipEntry) e.nextElement();
@@ -49,11 +48,6 @@ public class ClasspathJar implements ClasspathEntry {
   }
 
   @Override
-  public Collection<String> getPackageNames() {
-    return packageNames;
-  }
-
-  @Override
   public NameEnvironmentAnswer findType(String packageName, String binaryFileName) {
     if (!packageNames.contains(packageName)) {
       return null;
@@ -61,7 +55,7 @@ public class ClasspathJar implements ClasspathEntry {
     try {
       String qualifiedFileName = packageName + "/" + binaryFileName;
       ClassFileReader reader = ClassFileReader.read(this.zipFile, qualifiedFileName);
-      if (reader != null) return new NameEnvironmentAnswer(reader, null);
+      if (reader != null) return new NameEnvironmentAnswer(reader, getAccessRestriction(packageName));
     } catch (ClassFormatException e) {
       // treat as if class file is missing
     } catch (IOException e) {
@@ -78,5 +72,22 @@ public class ClasspathJar implements ClasspathEntry {
   @Override
   public String getEntryName() {
     return file.getAbsolutePath();
+  }
+
+  public static ClasspathJar create(File file) throws IOException {
+    ZipFile zipFile = new ZipFile(file);
+    Set<String> packageNames = getPackageNames(zipFile);
+
+    ZipEntry entry = zipFile.getEntry(PATH_EXPORT_PACKAGE);
+    Collection<String> exportedPackages;
+    if (entry != null) {
+      try (InputStream is = zipFile.getInputStream(entry)) {
+        exportedPackages = parseExportPackage(is);
+      }
+    } else {
+      exportedPackages = null;
+    }
+
+    return new ClasspathJar(file, zipFile, packageNames, exportedPackages);
   }
 }

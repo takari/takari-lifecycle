@@ -25,7 +25,7 @@ class OutputDirectoryClasspathEntry implements ClasspathEntry, MutableClasspathE
   public OutputDirectoryClasspathEntry(File directory) {
     this.directory = directory;
 
-    this.delegate = new ClasspathDirectory(directory);
+    this.delegate = ClasspathDirectory.create(directory);
   }
 
   @Override
@@ -40,7 +40,7 @@ class OutputDirectoryClasspathEntry implements ClasspathEntry, MutableClasspathE
 
   @Override
   public void reset() {
-    this.delegate = new ClasspathDirectory(directory);
+    this.delegate = ClasspathDirectory.create(directory);
   }
 
   @Override

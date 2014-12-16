@@ -43,10 +43,10 @@ public class ClasspathEntryCache {
       ClasspathEntry entry = null;
       if (!CACHE.containsKey(location)) {
         if (location.isDirectory()) {
-          entry = new ClasspathDirectory(location);
+          entry = ClasspathDirectory.create(location);
         } else if (location.isFile()) {
           try {
-            entry = new ClasspathJar(location);
+            entry = ClasspathJar.create(location);
           } catch (IOException e) {
             // not a zip/jar, ignore
           }
