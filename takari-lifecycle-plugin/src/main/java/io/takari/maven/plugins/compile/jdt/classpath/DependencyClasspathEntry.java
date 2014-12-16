@@ -1,5 +1,7 @@
 package io.takari.maven.plugins.compile.jdt.classpath;
 
+import io.takari.maven.plugins.exportpackage.ExportPackageMojo;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -21,7 +23,7 @@ import com.google.common.io.CharStreams;
 
 abstract class DependencyClasspathEntry implements ClasspathEntry {
 
-  protected static final String PATH_EXPORT_PACKAGE = "META-INF/takari/export-package";
+  protected static final String PATH_EXPORT_PACKAGE = ExportPackageMojo.PATH_EXPORT_PACKAGE;
 
   protected static final String PATH_MANIFESTMF = "META-INF/MANIFEST.MF";
 

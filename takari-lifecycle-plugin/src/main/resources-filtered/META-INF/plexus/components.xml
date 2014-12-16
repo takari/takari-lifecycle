@@ -71,6 +71,9 @@
               <compile>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:compile
               </compile>
+              <process-classes>
+                io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:export-package
+              </process-classes>
               <process-test-resources>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:process-test-resources
               </process-test-resources>
@@ -127,6 +130,7 @@
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:compile
               </compile>
               <process-classes>
+                io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:export-package,
                 org.apache.maven.plugins:maven-plugin-plugin:3.3:descriptor,
                 org.sonatype.plugins:sisu-maven-plugin:1.4:main-index
               </process-classes>
