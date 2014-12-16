@@ -125,7 +125,7 @@ public class CompileJdtTest {
   }
 
   @Test
-  public void testCirtular() throws Exception {
+  public void testCircular() throws Exception {
     File basedir = mojos.compile(resources.getBasedir("compile-jdt/circular"));
     mojos.assertBuildOutputs(basedir, "target/classes/circular/ClassA.class", "target/classes/circular/ClassB.class");
 
