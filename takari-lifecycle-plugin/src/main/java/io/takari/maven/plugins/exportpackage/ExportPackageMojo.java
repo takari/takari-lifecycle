@@ -39,10 +39,10 @@ public class ExportPackageMojo extends TakariLifecycleMojo {
   private File classesDirectory;
 
   @Parameter
-  private Set<String> includes = ImmutableSet.of();
+  private Set<String> exportIncludes = ImmutableSet.of();
 
   @Parameter
-  private Set<String> excludes = ImmutableSet.of("**/internal/**", "**/impl/**");
+  private Set<String> exportExcludes = ImmutableSet.of("**/internal/**", "**/impl/**");
 
   @Inject
   private DefaultBuildContext<?> buildContext;
@@ -57,7 +57,7 @@ public class ExportPackageMojo extends TakariLifecycleMojo {
   }
 
   private void generateOutput() throws IOException {
-    buildContext.registerAndProcessInputs(classesDirectory, getIncludes(), excludes);
+    buildContext.registerAndProcessInputs(classesDirectory, getIncludes(), exportExcludes);
     boolean processingRequired = false;
     Set<String> exportedPackages = new TreeSet<>();
     for (InputMetadata<File> input : buildContext.getRegisteredInputs()) {
@@ -83,11 +83,11 @@ public class ExportPackageMojo extends TakariLifecycleMojo {
   }
 
   private Collection<String> getIncludes() {
-    if (includes.isEmpty()) {
+    if (exportIncludes.isEmpty()) {
       return ImmutableSet.of("**/*.class");
     }
     Set<String> includes = new HashSet<>();
-    for (String include : this.includes) {
+    for (String include : this.exportIncludes) {
       include = include.replace('\\', '/');
       if (!include.endsWith("/")) {
         include = include + "/";
