@@ -15,6 +15,7 @@ import io.takari.incrementalbuild.spi.DefaultInput;
 import io.takari.incrementalbuild.spi.DefaultInputMetadata;
 import io.takari.incrementalbuild.spi.DefaultOutput;
 import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
+import io.takari.maven.plugins.compile.AbstractCompileMojo.AccessRulesViolation;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Debug;
 import io.takari.maven.plugins.compile.AbstractCompiler;
 import io.takari.maven.plugins.compile.jdt.classpath.Classpath;
@@ -288,7 +289,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     for (File dependency : dependencies) {
       ClasspathEntry entry = classpathCache.get(dependency);
       if (entry != null) {
-        if (directDependencies != null && !directDependencies.contains(dependency)) {
+        if (getAccessRulesViolation() == AccessRulesViolation.error && !directDependencies.contains(dependency)) {
           entry = new ForbiddenClasspathEntry(entry);
         }
         dependencypath.add(entry);

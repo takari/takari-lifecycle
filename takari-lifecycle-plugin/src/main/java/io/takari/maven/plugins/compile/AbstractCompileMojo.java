@@ -242,9 +242,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   }
 
   protected Set<File> getDirectDependencies() {
-    if (accessRulesViolation == AccessRulesViolation.ignore) {
-      return null;
-    }
     Set<File> result = new LinkedHashSet<>();
     for (Artifact artofact : directDependencies) {
       result.add(artofact.getFile());
@@ -307,6 +304,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       compiler.setSourceRoots(getSourceRoots());
       compiler.setDebug(parseDebug(debug));
       compiler.setShowWarnings(showWarnings);
+      compiler.setAccessRulesViolation(accessRulesViolation);
 
       if (compiler instanceof CompilerJavacLauncher) {
         ((CompilerJavacLauncher) compiler).setBasedir(basedir);

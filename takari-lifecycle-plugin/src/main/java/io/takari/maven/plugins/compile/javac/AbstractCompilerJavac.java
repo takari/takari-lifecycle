@@ -13,9 +13,11 @@ import io.takari.incrementalbuild.BuildContext.ResourceStatus;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.incrementalbuild.spi.DefaultInputMetadata;
 import io.takari.incrementalbuild.spi.DefaultOutputMetadata;
+import io.takari.maven.plugins.compile.AbstractCompileMojo.AccessRulesViolation;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Debug;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 import io.takari.maven.plugins.compile.AbstractCompiler;
+import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 
 import java.io.File;
 import java.io.IOException;
@@ -209,4 +211,13 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
     return files;
   }
 
+  @Override
+  public void setAccessRulesViolation(AccessRulesViolation accessRulesViolation) {
+    if (accessRulesViolation == AccessRulesViolation.error) {
+      String msg = String.format("Compiler %s does not support accessRulesViolation=error, use compilerId=%s", getCompilerId(), CompilerJdt.ID);
+      throw new IllegalArgumentException(msg);
+    }
+  }
+
+  protected abstract String getCompilerId();
 }

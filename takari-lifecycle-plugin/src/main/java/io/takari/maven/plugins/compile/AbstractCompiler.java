@@ -9,6 +9,7 @@ package io.takari.maven.plugins.compile;
 
 import io.takari.incrementalbuild.BuildContext.InputMetadata;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
+import io.takari.maven.plugins.compile.AbstractCompileMojo.AccessRulesViolation;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Debug;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 
@@ -54,6 +55,8 @@ public abstract class AbstractCompiler {
   private Set<Debug> debug;
 
   private boolean showWarnings;
+
+  private AccessRulesViolation accessRulesViolation;
 
   protected AbstractCompiler(DefaultBuildContext<?> context) {
     this.context = context;
@@ -125,6 +128,14 @@ public abstract class AbstractCompiler {
 
   public void setVerbose(boolean verbose) {
     this.verbose = verbose;
+  }
+
+  public void setAccessRulesViolation(AccessRulesViolation accessRulesViolation) {
+    this.accessRulesViolation = accessRulesViolation;
+  }
+
+  public AccessRulesViolation getAccessRulesViolation() {
+    return accessRulesViolation;
   }
 
   protected boolean isVerbose() {

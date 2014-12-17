@@ -233,4 +233,9 @@ public class CompilerJavac extends AbstractCompilerJavac {
 
     return severity;
   }
+
+  @Override
+  protected String getCompilerId() {
+    return ID;
+  }
 }

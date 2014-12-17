@@ -173,4 +173,9 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
   public void setMaxmem(String maxmem) {
     this.maxmem = maxmem;
   }
+
+  @Override
+  protected String getCompilerId() {
+    return ID;
+  }
 }
