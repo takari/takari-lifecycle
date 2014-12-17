@@ -42,7 +42,7 @@ public class ExportPackageMojo extends TakariLifecycleMojo {
   private Set<String> includes = ImmutableSet.of();
 
   @Parameter
-  private Set<String> excludes = ImmutableSet.of("**/internal/**");
+  private Set<String> excludes = ImmutableSet.of("**/internal/**", "**/impl/**");
 
   @Inject
   private DefaultBuildContext<?> buildContext;
