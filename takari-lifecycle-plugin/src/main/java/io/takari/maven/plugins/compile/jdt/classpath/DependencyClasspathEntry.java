@@ -2,6 +2,7 @@ package io.takari.maven.plugins.compile.jdt.classpath;
 
 import io.takari.maven.plugins.exportpackage.ExportPackageMojo;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -69,5 +70,24 @@ abstract class DependencyClasspathEntry implements ClasspathEntry {
     return packages;
   }
 
-
+  @Override
+  public String getEntryDescription() {
+    StringBuilder sb = new StringBuilder(getEntryName());
+    if (exportedPackages != null) {
+      sb.append("[");
+      int idx = 0;
+      for (String exportedPackage : exportedPackages) {
+        if (idx++ > 0) {
+          sb.append(File.pathSeparatorChar);
+        }
+        sb.append('+').append(exportedPackage.replace('.', '/')).append("/*");
+      }
+      if (idx > 0) {
+        sb.append(File.pathSeparatorChar);
+      }
+      sb.append("?**/*");
+      sb.append(']');
+    }
+    return sb.toString();
+  }
 }

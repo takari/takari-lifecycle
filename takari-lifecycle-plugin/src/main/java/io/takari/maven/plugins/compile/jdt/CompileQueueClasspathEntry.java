@@ -75,4 +75,9 @@ class CompileQueueClasspathEntry implements ClasspathEntry, MutableClasspathEntr
   public String getEntryName() {
     return "#COMPILEQUEUE";
   }
+
+  @Override
+  public String getEntryDescription() {
+    return getEntryName();
+  }
 }

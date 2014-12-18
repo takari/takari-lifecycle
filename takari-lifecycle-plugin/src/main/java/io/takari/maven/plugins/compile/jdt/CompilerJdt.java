@@ -297,6 +297,14 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       }
     }
 
+    if (log.isDebugEnabled()) {
+      StringBuilder msg = new StringBuilder();
+      for (ClasspathEntry element : dependencypath) {
+        msg.append("\n   ").append(element.getEntryDescription());
+      }
+      log.debug("Compile classpath: {} entries{}", dependencies.size(), msg.toString());
+    }
+
     this.dependencypath = new Classpath(dependencypath, null);
 
     Stopwatch stopwatch = new Stopwatch().start();

@@ -47,4 +47,9 @@ class ForbiddenClasspathEntry implements ClasspathEntry {
   public String getEntryName() {
     return entry.getEntryName();
   }
+
+  @Override
+  public String getEntryDescription() {
+    return getEntryName() + "[?**/*]";
+  }
 }

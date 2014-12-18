@@ -314,15 +314,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
         ((CompilerJavacLauncher) compiler).setMaxmem(maxmem);
       }
 
-      List<File> classpath = getClasspath();
-      if (log.isDebugEnabled()) {
-        StringBuilder msg = new StringBuilder();
-        for (File element : classpath) {
-          msg.append("\n   ").append(element);
-        }
-        log.debug("Compile classpath: {} entries{}", classpath.size(), msg.toString());
-      }
-      boolean classpathChanged = compiler.setClasspath(classpath, getDirectDependencies());
+      boolean classpathChanged = compiler.setClasspath(getClasspath(), getDirectDependencies());
       boolean sourcesChanged = compiler.setSources(sources);
 
       if (sourcesChanged || classpathChanged) {
