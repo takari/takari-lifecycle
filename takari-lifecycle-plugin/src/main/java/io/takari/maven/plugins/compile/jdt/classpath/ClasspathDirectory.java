@@ -17,6 +17,7 @@ import java.util.Set;
 
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
+import org.eclipse.jdt.internal.compiler.env.AccessRestriction;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 import org.osgi.framework.BundleException;
 
@@ -65,17 +66,14 @@ public class ClasspathDirectory extends DependencyClasspathEntry implements Clas
   }
 
   @Override
-  public NameEnvironmentAnswer findType(String packageName, String binaryFileName) {
-    if (!packageNames.contains(packageName)) {
-      return null;
-    }
+  public NameEnvironmentAnswer findType(String packageName, String binaryFileName, AccessRestriction accessRestriction) {
     try {
       String qualifiedFileName = packageName + "/" + binaryFileName;
       File classFile = new File(directory, qualifiedFileName).getCanonicalFile();
       if (classFile.isFile() && matchQualifiedName(classFile, qualifiedFileName)) {
         ClassFileReader reader = ClassFileReader.read(classFile, false);
         if (reader != null) {
-          return new NameEnvironmentAnswer(reader, getAccessRestriction(packageName));
+          return new NameEnvironmentAnswer(reader, accessRestriction);
         }
       }
     } catch (ClassFormatException e) {

@@ -35,7 +35,7 @@ class OutputDirectoryClasspathEntry implements ClasspathEntry, MutableClasspathE
 
   @Override
   public NameEnvironmentAnswer findType(String packageName, String binaryFileName) {
-    return delegate.findType(packageName, binaryFileName);
+    return delegate.findType(packageName, binaryFileName, null);
   }
 
   @Override

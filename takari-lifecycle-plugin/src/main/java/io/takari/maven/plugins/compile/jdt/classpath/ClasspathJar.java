@@ -19,6 +19,7 @@ import java.util.zip.ZipFile;
 
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
+import org.eclipse.jdt.internal.compiler.env.AccessRestriction;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 import org.osgi.framework.BundleException;
 
@@ -49,14 +50,13 @@ public class ClasspathJar extends DependencyClasspathEntry implements ClasspathE
   }
 
   @Override
-  public NameEnvironmentAnswer findType(String packageName, String binaryFileName) {
-    if (!packageNames.contains(packageName)) {
-      return null;
-    }
+  public NameEnvironmentAnswer findType(String packageName, String binaryFileName, AccessRestriction accessRestriction) {
     try {
       String qualifiedFileName = packageName + "/" + binaryFileName;
       ClassFileReader reader = ClassFileReader.read(this.zipFile, qualifiedFileName);
-      if (reader != null) return new NameEnvironmentAnswer(reader, getAccessRestriction(packageName));
+      if (reader != null) {
+        return new NameEnvironmentAnswer(reader, accessRestriction);
+      }
     } catch (ClassFormatException e) {
       // treat as if class file is missing
     } catch (IOException e) {

@@ -2,6 +2,7 @@ package io.takari.maven.plugins.compile.jdt;
 
 import java.io.File;
 
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -34,6 +35,40 @@ public class CompileJdtClasspathVisibilityTest extends AbstractCompileJdtTest {
 
     compile(project);
     mojos.assertMessage(new File(basedir, "src/main/java/reference/Reference.java"), "The type 'DependencyClass' is not API", "test-dependency-0.1.jar");
+  }
+
+  @Test
+  public void testReference_accessRulesViolationIgnore() throws Exception {
+    File basedir = resources.getBasedir("compile-jdt-classpath-visibility/reference");
+
+    MavenProject project = mojos.readMavenProject(basedir);
+    addDependency(project, "dependency", DEPENDENCY);
+
+    MavenSession session = mojos.newMavenSession(project);
+
+    Xpp3Dom compilerId = new Xpp3Dom("compilerId");
+    compilerId.setValue("jdt");
+    Xpp3Dom accessRulesViolation = new Xpp3Dom("accessRulesViolation");
+    accessRulesViolation.setValue("ignore");
+
+    mojos.executeMojo(session, project, "compile", compilerId);
+  }
+
+  @Test
+  public void testReference_testCompile() throws Exception {
+    File basedir = resources.getBasedir("compile-jdt-classpath-visibility/reference");
+
+    MavenProject project = mojos.readMavenProject(basedir);
+    addDependency(project, "dependency", DEPENDENCY);
+
+    MavenSession session = mojos.newMavenSession(project);
+
+    Xpp3Dom compilerId = new Xpp3Dom("compilerId");
+    compilerId.setValue("jdt");
+    // Xpp3Dom accessRulesViolation = new Xpp3Dom("accessRulesViolation");
+    // accessRulesViolation.setValue("error");
+
+    mojos.executeMojo(session, project, "testCompile", compilerId);
   }
 
   @Test

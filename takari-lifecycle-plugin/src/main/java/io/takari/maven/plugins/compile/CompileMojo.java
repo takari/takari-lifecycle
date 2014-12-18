@@ -71,6 +71,10 @@ public class CompileMojo extends AbstractCompileMojo {
   @Incremental(configuration = Configuration.ignore)
   private boolean skipMain;
 
+  // TODO decide if 'forbiddenReference=error|ignore' is a better name, as in jdt project preferences
+  @Parameter(defaultValue = "ignore")
+  private AccessRulesViolation accessRulesViolation;
+
   @Override
   public Set<String> getSourceRoots() {
     return new LinkedHashSet<String>(compileSourceRoots);
@@ -111,5 +115,10 @@ public class CompileMojo extends AbstractCompileMojo {
   @Override
   protected boolean isSkip() {
     return skipMain;
+  }
+
+  @Override
+  protected AccessRulesViolation getAccessRulesViolation() {
+    return accessRulesViolation;
   }
 }

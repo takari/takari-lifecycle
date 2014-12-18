@@ -158,10 +158,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Parameter(property = "maven.compiler.showWarnings", defaultValue = "false")
   private boolean showWarnings;
 
-  // TODO decide if 'forbiddenReference=error|ignore' is a better name, as in jdt project preferences
-  @Parameter(defaultValue = "ignore")
-  private AccessRulesViolation accessRulesViolation;
-
   //
 
   @Parameter(defaultValue = "${project.file}", readonly = true)
@@ -263,6 +259,8 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
   protected abstract boolean isSkip();
 
+  protected abstract AccessRulesViolation getAccessRulesViolation();
+
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
 
@@ -304,7 +302,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       compiler.setSourceRoots(getSourceRoots());
       compiler.setDebug(parseDebug(debug));
       compiler.setShowWarnings(showWarnings);
-      compiler.setAccessRulesViolation(accessRulesViolation);
+      compiler.setAccessRulesViolation(getAccessRulesViolation());
 
       if (compiler instanceof CompilerJavacLauncher) {
         ((CompilerJavacLauncher) compiler).setBasedir(basedir);

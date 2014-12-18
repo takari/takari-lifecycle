@@ -20,6 +20,7 @@ import io.takari.maven.plugins.compile.AbstractCompileMojo.Debug;
 import io.takari.maven.plugins.compile.AbstractCompiler;
 import io.takari.maven.plugins.compile.jdt.classpath.Classpath;
 import io.takari.maven.plugins.compile.jdt.classpath.ClasspathEntry;
+import io.takari.maven.plugins.compile.jdt.classpath.DependencyClasspathEntry;
 import io.takari.maven.plugins.compile.jdt.classpath.JavaInstallation;
 import io.takari.maven.plugins.compile.jdt.classpath.MutableClasspathEntry;
 
@@ -287,12 +288,15 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     final List<File> files = new ArrayList<File>();
 
     for (File dependency : dependencies) {
-      ClasspathEntry entry = classpathCache.get(dependency);
+      DependencyClasspathEntry entry = classpathCache.get(dependency);
       if (entry != null) {
-        if (getAccessRulesViolation() == AccessRulesViolation.error && !directDependencies.contains(dependency)) {
-          entry = new ForbiddenClasspathEntry(entry);
+        if (getAccessRulesViolation() == AccessRulesViolation.ignore) {
+          dependencypath.add(AccessRestrictionClasspathEntry.allowAll(entry));
+        } else if (getAccessRulesViolation() == AccessRulesViolation.error && !directDependencies.contains(dependency)) {
+          dependencypath.add(AccessRestrictionClasspathEntry.forbidAll(entry));
+        } else {
+          dependencypath.add(entry);
         }
-        dependencypath.add(entry);
         files.add(dependency);
       }
     }

@@ -13,6 +13,7 @@ import java.util.Set;
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.env.AccessRestriction;
 import org.eclipse.jdt.internal.compiler.env.AccessRule;
+import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 import org.eclipse.osgi.framework.util.Headers;
 import org.eclipse.osgi.util.ManifestElement;
 import org.osgi.framework.BundleException;
@@ -22,7 +23,7 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.CharStreams;
 
-abstract class DependencyClasspathEntry implements ClasspathEntry {
+public abstract class DependencyClasspathEntry implements ClasspathEntry {
 
   protected static final String PATH_EXPORT_PACKAGE = ExportPackageMojo.PATH_EXPORT_PACKAGE;
 
@@ -90,4 +91,15 @@ abstract class DependencyClasspathEntry implements ClasspathEntry {
     }
     return sb.toString();
   }
+
+  @Override
+  public NameEnvironmentAnswer findType(String packageName, String binaryFileName) {
+    if (!packageNames.contains(packageName)) {
+      return null;
+    }
+    return findType(packageName, binaryFileName, getAccessRestriction(packageName));
+  }
+
+  public abstract NameEnvironmentAnswer findType(String packageName, String binaryFileName, AccessRestriction accessRestriction);
+
 }

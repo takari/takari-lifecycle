@@ -8,8 +8,8 @@
 package io.takari.maven.plugins.compile.jdt;
 
 import io.takari.maven.plugins.compile.jdt.classpath.ClasspathDirectory;
-import io.takari.maven.plugins.compile.jdt.classpath.ClasspathEntry;
 import io.takari.maven.plugins.compile.jdt.classpath.ClasspathJar;
+import io.takari.maven.plugins.compile.jdt.classpath.DependencyClasspathEntry;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +26,7 @@ import org.apache.maven.project.MavenProject;
 @MojoExecutionScoped
 public class ClasspathEntryCache {
 
-  private static final Map<File, ClasspathEntry> CACHE = new HashMap<File, ClasspathEntry>();
+  private static final Map<File, DependencyClasspathEntry> CACHE = new HashMap<>();
 
   @Inject
   public ClasspathEntryCache(MavenProject project) {
@@ -37,10 +37,10 @@ public class ClasspathEntryCache {
     }
   }
 
-  public ClasspathEntry get(File location) {
+  public DependencyClasspathEntry get(File location) {
     location = normalize(location);
     synchronized (CACHE) {
-      ClasspathEntry entry = null;
+      DependencyClasspathEntry entry = null;
       if (!CACHE.containsKey(location)) {
         if (location.isDirectory()) {
           entry = ClasspathDirectory.create(location);
