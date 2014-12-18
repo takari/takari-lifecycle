@@ -30,13 +30,13 @@ class AccessRestrictionClasspathEntry implements ClasspathEntry {
   }
 
   @Override
-  public String getEntryName() {
-    return entry.getEntryName();
-  }
-
-  @Override
   public String getEntryDescription() {
-    return getEntryName() + "[?**/*]";
+    StringBuilder sb = new StringBuilder();
+    sb.append(entry.getEntryName());
+    if (accessRestriction != null) {
+      sb.append("[?**/*]");
+    }
+    return sb.toString();
   }
 
   public static AccessRestrictionClasspathEntry forbidAll(DependencyClasspathEntry entry) {

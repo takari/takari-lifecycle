@@ -25,12 +25,10 @@ import org.osgi.framework.BundleException;
 
 public class ClasspathJar extends DependencyClasspathEntry implements ClasspathEntry {
 
-  private final File file;
   private final ZipFile zipFile;
 
   private ClasspathJar(File file, ZipFile zipFile, Collection<String> packageNames, Collection<String> exportedPackages) throws IOException {
-    super(packageNames, exportedPackages);
-    this.file = file;
+    super(file, packageNames, exportedPackages);
     this.zipFile = zipFile;
   }
 
@@ -68,11 +66,6 @@ public class ClasspathJar extends DependencyClasspathEntry implements ClasspathE
   @Override
   public String toString() {
     return "Classpath for jar file " + file.getPath(); //$NON-NLS-1$
-  }
-
-  @Override
-  public String getEntryName() {
-    return file.getAbsolutePath();
   }
 
   public static ClasspathJar create(File file) throws IOException {

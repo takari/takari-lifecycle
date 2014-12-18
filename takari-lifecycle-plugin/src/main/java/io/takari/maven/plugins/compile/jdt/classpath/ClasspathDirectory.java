@@ -23,17 +23,14 @@ import org.osgi.framework.BundleException;
 
 public class ClasspathDirectory extends DependencyClasspathEntry implements ClasspathEntry {
 
-  private final File directory;
-
   private ClasspathDirectory(File directory, Set<String> packageNames, Collection<String> exportedPackages) {
-    super(packageNames, exportedPackages);
+    super(directory, packageNames, exportedPackages);
     try {
       directory = directory.getCanonicalFile();
     } catch (IOException e) {
       // should not happen as we know that the file exists
       directory = directory.getAbsoluteFile();
     }
-    this.directory = directory;
   }
 
   private static Set<String> getPackageNames(File directory) {
@@ -69,7 +66,7 @@ public class ClasspathDirectory extends DependencyClasspathEntry implements Clas
   public NameEnvironmentAnswer findType(String packageName, String binaryFileName, AccessRestriction accessRestriction) {
     try {
       String qualifiedFileName = packageName + "/" + binaryFileName;
-      File classFile = new File(directory, qualifiedFileName).getCanonicalFile();
+      File classFile = new File(file, qualifiedFileName).getCanonicalFile();
       if (classFile.isFile() && matchQualifiedName(classFile, qualifiedFileName)) {
         ClassFileReader reader = ClassFileReader.read(classFile, false);
         if (reader != null) {
@@ -90,12 +87,7 @@ public class ClasspathDirectory extends DependencyClasspathEntry implements Clas
 
   @Override
   public String toString() {
-    return "Classpath for directory " + directory;
-  }
-
-  @Override
-  public String getEntryName() {
-    return directory.getAbsolutePath();
+    return "Classpath for directory " + file;
   }
 
   public static ClasspathDirectory create(File directory) {

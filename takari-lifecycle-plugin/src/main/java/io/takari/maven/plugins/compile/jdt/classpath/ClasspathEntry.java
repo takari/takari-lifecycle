@@ -17,7 +17,5 @@ public interface ClasspathEntry {
 
   NameEnvironmentAnswer findType(String packageName, String binaryFileName);
 
-  String getEntryName();
-
   String getEntryDescription();
 }

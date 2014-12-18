@@ -29,11 +29,14 @@ public abstract class DependencyClasspathEntry implements ClasspathEntry {
 
   protected static final String PATH_MANIFESTMF = "META-INF/MANIFEST.MF";
 
+  protected final File file;
+
   protected final Set<String> packageNames;
 
   protected final Set<String> exportedPackages;
 
-  protected DependencyClasspathEntry(Collection<String> packageNames, Collection<String> exportedPackages) {
+  protected DependencyClasspathEntry(File file, Collection<String> packageNames, Collection<String> exportedPackages) {
+    this.file = file;
     this.packageNames = ImmutableSet.copyOf(packageNames);
     this.exportedPackages = exportedPackages != null ? ImmutableSet.<String>copyOf(exportedPackages) : null;
   }
@@ -102,4 +105,7 @@ public abstract class DependencyClasspathEntry implements ClasspathEntry {
 
   public abstract NameEnvironmentAnswer findType(String packageName, String binaryFileName, AccessRestriction accessRestriction);
 
+  public String getEntryName() {
+    return file.getAbsolutePath();
+  }
 }
