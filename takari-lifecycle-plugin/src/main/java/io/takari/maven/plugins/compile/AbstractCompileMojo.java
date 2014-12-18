@@ -13,6 +13,7 @@ import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.maven.plugins.compile.javac.CompilerJavacLauncher;
+import io.takari.maven.plugins.exportpackage.ExportPackageMojo;
 
 import java.io.File;
 import java.io.IOException;
@@ -158,6 +159,27 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Parameter(property = "maven.compiler.showWarnings", defaultValue = "false")
   private boolean showWarnings;
 
+  /**
+   * Sets classpath access rules enforcement policy
+   * <ul>
+   * <li>{@code ignore} (the default): ignore classpath access rules violations</li>
+   * <li>{@code error}: treat classpath access rules violations as compilation errors</li>
+   * </ul>
+   * <p>
+   * Classpath access rules:
+   * <ul>
+   * <li>Forbid references to types from indirect, i.e. transitive, dependencies.</li>
+   * <li>Forbid references to types from non-exported packages.</li>
+   * </ul>
+   *
+   * @see ExportPackageMojo
+   * @see <a href="http://takari.io/book/40-lifecycle.html#the-takari-lifecycle">The Takari Lifecycle</a> documentation for more details
+   * @since 1.9
+   */
+  // TODO decide if 'forbiddenReference=error|ignore' is a better name, as in jdt project preferences
+  @Parameter(defaultValue = "ignore")
+  private AccessRulesViolation accessRulesViolation;
+
   //
 
   @Parameter(defaultValue = "${project.file}", readonly = true)
@@ -259,8 +281,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
   protected abstract boolean isSkip();
 
-  protected abstract AccessRulesViolation getAccessRulesViolation();
-
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
 
@@ -302,7 +322,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       compiler.setSourceRoots(getSourceRoots());
       compiler.setDebug(parseDebug(debug));
       compiler.setShowWarnings(showWarnings);
-      compiler.setAccessRulesViolation(getAccessRulesViolation());
+      compiler.setAccessRulesViolation(accessRulesViolation);
 
       if (compiler instanceof CompilerJavacLauncher) {
         ((CompilerJavacLauncher) compiler).setBasedir(basedir);

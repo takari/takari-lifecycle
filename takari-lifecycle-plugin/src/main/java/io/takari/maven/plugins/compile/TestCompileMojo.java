@@ -120,9 +120,4 @@ public class TestCompileMojo extends AbstractCompileMojo {
   protected boolean isSkip() {
     return skip;
   }
-
-  @Override
-  protected AccessRulesViolation getAccessRulesViolation() {
-    return AccessRulesViolation.ignore;
-  }
 }

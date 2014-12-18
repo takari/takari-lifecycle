@@ -9,7 +9,6 @@ package io.takari.maven.plugins.compile;
 
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
-import io.takari.maven.plugins.exportpackage.ExportPackageMojo;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -72,27 +71,6 @@ public class CompileMojo extends AbstractCompileMojo {
   @Incremental(configuration = Configuration.ignore)
   private boolean skipMain;
 
-  /**
-   * Sets classpath access rules enforcement policy
-   * <ul>
-   * <li>{@code ignore} (the default): ignore classpath access rules violations</li>
-   * <li>{@code error}: treat classpath access rules violations as compilation errors</li>
-   * </ul>
-   * <p>
-   * Classpath access rules:
-   * <ul>
-   * <li>Forbid references to types from indirect, i.e. transitive, dependencies.</li>
-   * <li>Forbid references to types from non-exported packages.</li>
-   * </ul>
-   *
-   * @see ExportPackageMojo
-   * @see <a href="http://takari.io/book/40-lifecycle.html#the-takari-lifecycle">The Takari Lifecycle</a> documentation for more details
-   * @since 1.9
-   */
-  // TODO decide if 'forbiddenReference=error|ignore' is a better name, as in jdt project preferences
-  @Parameter(defaultValue = "ignore")
-  private AccessRulesViolation accessRulesViolation;
-
   @Override
   public Set<String> getSourceRoots() {
     return new LinkedHashSet<String>(compileSourceRoots);
@@ -133,10 +111,5 @@ public class CompileMojo extends AbstractCompileMojo {
   @Override
   protected boolean isSkip() {
     return skipMain;
-  }
-
-  @Override
-  protected AccessRulesViolation getAccessRulesViolation() {
-    return accessRulesViolation;
   }
 }
