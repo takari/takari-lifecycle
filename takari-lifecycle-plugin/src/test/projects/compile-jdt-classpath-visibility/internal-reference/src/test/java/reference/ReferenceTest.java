@@ -1,5 +1,5 @@
 package reference;
 
 public class ReferenceTest {
-  private dependency.internal.DependencyInternalClass reference;
+  private io.takari.test.dependency.internal.DependencyInternalClass reference;
 }

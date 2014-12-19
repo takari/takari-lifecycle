@@ -6,8 +6,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.eclipse.jdt.core.compiler.IProblem;
@@ -22,6 +24,7 @@ import org.osgi.framework.Constants;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.CharStreams;
+import com.google.common.io.LineProcessor;
 
 public abstract class DependencyClasspathEntry implements ClasspathEntry {
 
@@ -55,7 +58,21 @@ public abstract class DependencyClasspathEntry implements ClasspathEntry {
   }
 
   protected static Collection<String> parseExportPackage(InputStream is) throws IOException {
-    return CharStreams.readLines(new InputStreamReader(is, Charsets.UTF_8));
+    LineProcessor<List<String>> processor = new LineProcessor<List<String>>() {
+      final List<String> result = new ArrayList<String>();
+
+      @Override
+      public boolean processLine(String line) throws IOException {
+        result.add(line.replace('.', '/'));
+        return true; // keep reading
+      }
+
+      @Override
+      public List<String> getResult() {
+        return result;
+      }
+    };
+    return CharStreams.readLines(new InputStreamReader(is, Charsets.UTF_8), processor);
   }
 
   protected static Collection<String> parseBundleManifest(InputStream is) throws IOException, BundleException {
@@ -69,7 +86,7 @@ public abstract class DependencyClasspathEntry implements ClasspathEntry {
     }
     Set<String> packages = new HashSet<>();
     for (ManifestElement element : ManifestElement.parseHeader(Constants.EXPORT_PACKAGE, exportPackageHeader)) {
-      packages.add(element.getValue());
+      packages.add(element.getValue().replace('.', '/'));
     }
     return packages;
   }
@@ -84,7 +101,7 @@ public abstract class DependencyClasspathEntry implements ClasspathEntry {
         if (idx++ > 0) {
           sb.append(File.pathSeparatorChar);
         }
-        sb.append('+').append(exportedPackage.replace('.', '/')).append("/*");
+        sb.append('+').append(exportedPackage).append("/*");
       }
       if (idx > 0) {
         sb.append(File.pathSeparatorChar);

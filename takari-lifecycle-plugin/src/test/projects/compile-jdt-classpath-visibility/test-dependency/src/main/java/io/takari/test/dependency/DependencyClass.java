@@ -1,4 +1,4 @@
-package dependency;
+package io.takari.test.dependency;
 
 public class DependencyClass {
 

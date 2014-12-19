@@ -2,4 +2,4 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-SymbolicName: test.dependency.bundle
 Bundle-Version: 0.1
-Export-Package: dependency
+Export-Package: io.takari.test.dependency
