@@ -29,7 +29,7 @@ public class ExportPackageMojoTest {
 
   @Test
   public void testBasic() throws Exception {
-    File basedir = resources.getBasedir("jar/project-with-resources");
+    File basedir = resources.getBasedir("exportpackage/basic");
 
     // initial build
     mkfile(basedir, "target/classes/exported/Exported.class");
@@ -70,6 +70,14 @@ public class ExportPackageMojoTest {
 
     // remove last public class
     rm(basedir, "target/classes/exported/Exported.class");
+    mojos.executeMojo(basedir, "export-package");
+    mojos.assertBuildOutputs(basedir, "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE);
+    assertExportedPackages(basedir, new String[0]);
+  }
+
+  @Test
+  public void testNoClassesDirectory() throws Exception {
+    File basedir = resources.getBasedir("exportpackage/basic");
     mojos.executeMojo(basedir, "export-package");
     mojos.assertBuildOutputs(basedir, "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE);
     assertExportedPackages(basedir, new String[0]);

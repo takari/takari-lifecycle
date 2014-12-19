@@ -58,7 +58,7 @@ public class ExportPackageMojo extends TakariLifecycleMojo {
 
   private void generateOutput() throws IOException {
     buildContext.registerAndProcessInputs(classesDirectory, getIncludes(), exportExcludes);
-    boolean processingRequired = false;
+    boolean processingRequired = buildContext.isEscalated();
     Set<String> exportedPackages = new TreeSet<>();
     for (InputMetadata<File> input : buildContext.getRegisteredInputs()) {
       ResourceStatus status = input.getStatus();
@@ -69,6 +69,7 @@ public class ExportPackageMojo extends TakariLifecycleMojo {
         exportedPackages.add(getPackageName(classesDirectory, input.getResource()));
       }
     }
+    processingRequired = processingRequired || !outputFile.isFile();
     if (processingRequired) {
       DefaultOutput output = buildContext.processOutput(outputFile);
       try (BufferedWriter w = new BufferedWriter(new OutputStreamWriter(output.newOutputStream(), Charsets.UTF_8))) {
