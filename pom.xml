@@ -29,11 +29,11 @@
   </prerequisites>
 
   <properties>
-    <mavenVersion>3.2.4-SNAPSHOT</mavenVersion>
+    <mavenVersion>3.2.5</mavenVersion>
     <aetherVersion>1.0.0.v20140518</aetherVersion>
     <incrementalbuild.version>0.9.1</incrementalbuild.version>
     <guava.version>18.0</guava.version>
-    <plugintesting.version>3.3.0-SNAPSHOT</plugintesting.version>
+    <plugintesting.version>3.3.0</plugintesting.version>
     <mavenPluginPluginVersion>3.3</mavenPluginPluginVersion>
     <m2eWorkspaceVersion>0.2.0</m2eWorkspaceVersion>
   </properties>
