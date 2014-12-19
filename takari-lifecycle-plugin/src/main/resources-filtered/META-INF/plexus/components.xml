@@ -81,7 +81,7 @@
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:testCompile
               </test-compile>
               <test>
-                org.apache.maven.plugins:maven-surefire-plugin:2.17:test
+                org.apache.maven.plugins:maven-surefire-plugin:2.18:test
               </test>
               <package>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:jar
@@ -132,7 +132,7 @@
               <process-classes>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:export-package,
                 org.apache.maven.plugins:maven-plugin-plugin:3.3:descriptor,
-                org.sonatype.plugins:sisu-maven-plugin:1.4:main-index
+                org.eclipse.sisu:sisu-maven-plugin:0.3.0.M1:main-index
               </process-classes>
               <process-test-resources>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:process-test-resources,
@@ -142,10 +142,10 @@
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:testCompile
               </test-compile>
               <process-test-classes>
-                org.sonatype.plugins:sisu-maven-plugin:1.4:test-index
+                org.eclipse.sisu:sisu-maven-plugin:0.3.0.M1:test-index
               </process-test-classes>
               <test>
-                org.apache.maven.plugins:maven-surefire-plugin:2.17:test
+                org.apache.maven.plugins:maven-surefire-plugin:2.18:test
               </test>
               <package>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:jar,
