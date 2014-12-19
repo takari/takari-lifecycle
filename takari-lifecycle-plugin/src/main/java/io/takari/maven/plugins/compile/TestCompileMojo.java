@@ -101,7 +101,6 @@ public class TestCompileMojo extends AbstractCompileMojo {
   @Override
   public List<File> getClasspath() {
     List<File> classpath = new ArrayList<File>();
-    classpath.add(mainOutputDirectory);
     for (Artifact artifact : compileArtifacts) {
       File file = artifact.getFile();
       if (file != null) {
@@ -119,5 +118,10 @@ public class TestCompileMojo extends AbstractCompileMojo {
   @Override
   protected boolean isSkip() {
     return skip;
+  }
+
+  @Override
+  protected File getMainOutputDirectory() {
+    return mainOutputDirectory;
   }
 }

@@ -283,9 +283,16 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   }
 
   @Override
-  public boolean setClasspath(List<File> dependencies, Set<File> directDependencies) throws IOException {
+  public boolean setClasspath(List<File> dependencies, File mainClasses, Set<File> directDependencies) throws IOException {
     final List<ClasspathEntry> dependencypath = new ArrayList<ClasspathEntry>();
     final List<File> files = new ArrayList<File>();
+
+    if (mainClasses != null) {
+      DependencyClasspathEntry entry = classpathCache.get(mainClasses);
+      if (entry != null) {
+        dependencypath.add(AccessRestrictionClasspathEntry.allowAll(entry));
+      }
+    }
 
     for (File dependency : dependencies) {
       DependencyClasspathEntry entry = classpathCache.get(dependency);

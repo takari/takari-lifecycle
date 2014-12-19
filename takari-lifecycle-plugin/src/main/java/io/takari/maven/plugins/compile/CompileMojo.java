@@ -112,4 +112,9 @@ public class CompileMojo extends AbstractCompileMojo {
   protected boolean isSkip() {
     return skipMain;
   }
+
+  @Override
+  protected File getMainOutputDirectory() {
+    return null; // main compile does not have corresponding main classes directory
+  }
 }

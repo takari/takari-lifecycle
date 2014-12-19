@@ -281,6 +281,8 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
   protected abstract boolean isSkip();
 
+  protected abstract File getMainOutputDirectory();
+
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
 
@@ -332,7 +334,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
         ((CompilerJavacLauncher) compiler).setMaxmem(maxmem);
       }
 
-      boolean classpathChanged = compiler.setClasspath(getClasspath(), getDirectDependencies());
+      boolean classpathChanged = compiler.setClasspath(getClasspath(), getMainOutputDirectory(), getDirectDependencies());
       boolean sourcesChanged = compiler.setSources(sources);
 
       if (sourcesChanged || classpathChanged) {

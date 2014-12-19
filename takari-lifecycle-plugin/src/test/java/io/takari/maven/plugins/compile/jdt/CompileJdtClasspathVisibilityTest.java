@@ -1,11 +1,15 @@
 package io.takari.maven.plugins.compile.jdt;
 
+import io.takari.maven.plugins.exportpackage.ExportPackageMojo;
+
 import java.io.File;
+import java.io.FileOutputStream;
 
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class CompileJdtClasspathVisibilityTest extends AbstractCompileJdtTest {
@@ -65,11 +69,38 @@ public class CompileJdtClasspathVisibilityTest extends AbstractCompileJdtTest {
 
     Xpp3Dom compilerId = new Xpp3Dom("compilerId");
     compilerId.setValue("jdt");
-    // Xpp3Dom accessRulesViolation = new Xpp3Dom("accessRulesViolation");
-    // accessRulesViolation.setValue("error");
+    Xpp3Dom accessRulesViolation = new Xpp3Dom("accessRulesViolation");
+    accessRulesViolation.setValue("error");
 
-    mojos.executeMojo(session, project, "testCompile", compilerId);
+    mojos.executeMojo(session, project, "compile", compilerId, accessRulesViolation);
+
+    mojos.executeMojo(session, project, "testCompile", compilerId, accessRulesViolation);
   }
+
+  @Test
+  public void testReference_testCompile_internal() throws Exception {
+    File basedir = resources.getBasedir("compile-jdt-classpath-visibility/reference");
+
+    MavenProject project = mojos.readMavenProject(basedir);
+    addDependency(project, "dependency", DEPENDENCY);
+
+    MavenSession session = mojos.newMavenSession(project);
+
+    Xpp3Dom compilerId = new Xpp3Dom("compilerId");
+    compilerId.setValue("jdt");
+    Xpp3Dom accessRulesViolation = new Xpp3Dom("accessRulesViolation");
+    accessRulesViolation.setValue("error");
+
+    mojos.executeMojo(session, project, "compile", compilerId, accessRulesViolation);
+
+    // make all main classes internal
+    File exportsFile = new File(basedir, "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE);
+    exportsFile.getParentFile().mkdirs();
+    new FileOutputStream(exportsFile).close();
+
+    mojos.executeMojo(session, project, "testCompile", compilerId, accessRulesViolation);
+  }
+
 
   @Test
   public void testIndirectGrandparent() throws Exception {
@@ -95,6 +126,32 @@ public class CompileJdtClasspathVisibilityTest extends AbstractCompileJdtTest {
 
     compile(project);
     mojos.assertMessage(new File(basedir, "src/main/java/reference/Reference.java"), "The type 'DependencyInternalClass' is not API", "test-dependency-0.1.jar");
+  }
+
+  @Test
+  public void testInternalReference_testCompile() throws Exception {
+    // project references classes that are not exported by the dependency (takari export-package)
+
+    File basedir = resources.getBasedir("compile-jdt-classpath-visibility/internal-reference");
+
+    MavenProject project = mojos.readMavenProject(basedir);
+    addDependency(project, "indirect-dependency", DEPENDENCY);
+
+    MavenSession session = mojos.newMavenSession(project);
+
+    Xpp3Dom compilerId = new Xpp3Dom("compilerId");
+    compilerId.setValue("jdt");
+    Xpp3Dom accessRulesViolation = new Xpp3Dom("accessRulesViolation");
+    accessRulesViolation.setValue("error");
+
+    try {
+      mojos.executeMojo(session, project, "testCompile", compilerId, accessRulesViolation);
+      Assert.fail();
+    } catch (MojoExecutionException expected) {
+      // expected
+    }
+
+    mojos.assertMessage(new File(basedir, "src/test/java/reference/ReferenceTest.java"), "The type 'DependencyInternalClass' is not API", "test-dependency-0.1.jar");
   }
 
   @Test

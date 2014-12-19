@@ -126,18 +126,24 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
   }
 
   @Override
-  public boolean setClasspath(List<File> dependencies, Set<File> directDependencies) throws IOException {
+  public boolean setClasspath(List<File> dependencies, File mainClasses, Set<File> directDependencies) throws IOException {
+    List<File> classpath = new ArrayList<>();
+    if (mainClasses != null) {
+      classpath.add(mainClasses);
+    }
+    classpath.addAll(dependencies);
+
     if (log.isDebugEnabled()) {
       StringBuilder msg = new StringBuilder();
-      for (File element : dependencies) {
+      for (File element : classpath) {
         msg.append("\n   ").append(element);
       }
-      log.debug("Compile classpath: {} entries{}", dependencies.size(), msg.toString());
+      log.debug("Compile classpath: {} entries{}", classpath.size(), msg.toString());
     }
 
     StringBuilder cp = new StringBuilder();
     cp.append(getOutputDirectory().getAbsolutePath());
-    for (File dependency : dependencies) {
+    for (File dependency : classpath) {
       if (dependency != null) {
         if (cp.length() > 0) {
           cp.append(File.pathSeparatorChar);
@@ -147,7 +153,7 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
     }
     this.classpath = cp.toString();
 
-    return digester.digestDependencies(dependencies);
+    return digester.digestDependencies(classpath);
   }
 
   @Override

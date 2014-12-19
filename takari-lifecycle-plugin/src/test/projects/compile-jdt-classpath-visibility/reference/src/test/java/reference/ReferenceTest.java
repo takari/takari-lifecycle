@@ -1,6 +1,6 @@
 package reference;
 
 public class ReferenceTest {
-  private dependency.DependencyClass reference;
-  private dependency.internal.DependencyInternalClass referenceInternal;
+  private reference.Reference reference;
+  private dependency.DependencyClass dependency;
 }
