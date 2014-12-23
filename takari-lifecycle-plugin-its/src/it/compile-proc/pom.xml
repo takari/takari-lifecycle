@@ -27,10 +27,6 @@
     <module>project</module>
   </modules>
 
-  <properties>
-    <lifecycle-plugin.version>1.0.4-SNAPSHOT</lifecycle-plugin.version>
-  </properties>
-
   <build>
     <plugins>
       <plugin>
