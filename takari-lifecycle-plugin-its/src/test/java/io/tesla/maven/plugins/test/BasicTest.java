@@ -25,6 +25,7 @@ public class BasicTest extends AbstractIntegrationTest {
 
     MavenExecutionResult result = verifier.forProject(basedir) //
         .withCliOption("-Drepopath=" + remoterepo.getCanonicalPath()) //
+        .withCliOption("-X") //
         .execute("deploy");
 
     result.assertErrorFreeLog();

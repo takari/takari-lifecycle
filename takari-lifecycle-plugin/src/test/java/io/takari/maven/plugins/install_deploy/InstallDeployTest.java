@@ -18,10 +18,11 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
+import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.eclipse.aether.DefaultRepositorySystemSession;
-import org.eclipse.aether.internal.impl.SimpleLocalRepositoryManagerFactory;
 import org.eclipse.aether.repository.LocalRepository;
 import org.eclipse.aether.repository.NoLocalRepositoryManagerException;
+import org.eclipse.aether.spi.localrepo.LocalRepositoryManagerFactory;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -67,12 +68,12 @@ public class InstallDeployTest {
     Assert.assertTrue(new File(remoterepo, "io/takari/lifecycle/its/test/1.0/test-1.0-tests.jar").canRead());
   }
 
-  private MavenSession newSession(MavenProject project, File localrepo) throws NoLocalRepositoryManagerException {
+  private MavenSession newSession(MavenProject project, File localrepo) throws NoLocalRepositoryManagerException, ComponentLookupException {
     MavenExecutionRequest request = new DefaultMavenExecutionRequest();
     MavenExecutionResult result = new DefaultMavenExecutionResult();
     DefaultRepositorySystemSession repoSession = MavenRepositorySystemUtils.newSession();
     LocalRepository localRepo = new LocalRepository(localrepo);
-    repoSession.setLocalRepositoryManager(new SimpleLocalRepositoryManagerFactory().newInstance(repoSession, localRepo));
+    repoSession.setLocalRepositoryManager(mojos.getContainer().lookup(LocalRepositoryManagerFactory.class, "simple").newInstance(repoSession, localRepo));
     MavenSession session = new MavenSession(mojos.getContainer(), repoSession, request, result);
     session.setCurrentProject(project);
     session.setProjects(Arrays.asList(project));

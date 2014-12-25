@@ -14,7 +14,9 @@
     <artifactId>takari-lifecycle</artifactId>
     <version>1.10.0-SNAPSHOT</version>
   </parent>
+
   <artifactId>takari-plugin-testing</artifactId>
+  <packaging>takari-jar</packaging>
 
   <dependencies>
     <dependency>
