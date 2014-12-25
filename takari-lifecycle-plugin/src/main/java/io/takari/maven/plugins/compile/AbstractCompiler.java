@@ -56,7 +56,9 @@ public abstract class AbstractCompiler {
 
   private boolean showWarnings;
 
-  private AccessRulesViolation accessRulesViolation;
+  private AccessRulesViolation transitiveDependencyReference;
+
+  private AccessRulesViolation privatePackageReference;
 
   protected AbstractCompiler(DefaultBuildContext<?> context) {
     this.context = context;
@@ -130,12 +132,20 @@ public abstract class AbstractCompiler {
     this.verbose = verbose;
   }
 
-  public void setAccessRulesViolation(AccessRulesViolation accessRulesViolation) {
-    this.accessRulesViolation = accessRulesViolation;
+  public void setPrivatePackageReference(AccessRulesViolation privatePackageReference) {
+    this.privatePackageReference = privatePackageReference;
   }
 
-  public AccessRulesViolation getAccessRulesViolation() {
-    return accessRulesViolation;
+  public AccessRulesViolation getPrivatePackageReference() {
+    return privatePackageReference;
+  }
+
+  protected AccessRulesViolation getTransitiveDependencyReference() {
+    return transitiveDependencyReference;
+  }
+
+  public void setTransitiveDependencyReference(AccessRulesViolation transitiveDependencyReference) {
+    this.transitiveDependencyReference = transitiveDependencyReference;
   }
 
   protected boolean isVerbose() {

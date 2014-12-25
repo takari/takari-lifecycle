@@ -21,13 +21,24 @@ public class CompileJavacClasspathVisibilityTest {
 
     Xpp3Dom compilerId = new Xpp3Dom("compilerId");
     compilerId.setValue("javac");
-    Xpp3Dom accessRulesViolation = new Xpp3Dom("accessRulesViolation");
-    accessRulesViolation.setValue("error");
+    Xpp3Dom transitiveDependencyReference = new Xpp3Dom("transitiveDependencyReference");
+    transitiveDependencyReference.setValue("error");
+    Xpp3Dom privatePackageReference = new Xpp3Dom("privatePackageReference");
+    privatePackageReference.setValue("error");
+
     try {
-      mojos.compile(basedir, compilerId, accessRulesViolation);
+      mojos.compile(basedir, compilerId, transitiveDependencyReference);
       Assert.fail();
     } catch (IllegalArgumentException e) {
-      ErrorMessage.isMatch(e.getMessage(), "Compiler javac does not support accessRulesViolation=error, use compilerId=jdt");
+      ErrorMessage.isMatch(e.getMessage(), "Compiler javac does not support transitiveDependencyReference=error, use compilerId=jdt");
     }
+
+    try {
+      mojos.compile(basedir, compilerId, privatePackageReference);
+      Assert.fail();
+    } catch (IllegalArgumentException e) {
+      ErrorMessage.isMatch(e.getMessage(), "Compiler javac does not support privatePackageReference=error, use compilerId=jdt");
+    }
+
   }
 }

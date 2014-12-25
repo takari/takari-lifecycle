@@ -50,12 +50,10 @@ public class CompileJdtClasspathVisibilityTest extends AbstractCompileJdtTest {
 
     MavenSession session = mojos.newMavenSession(project);
 
-    Xpp3Dom compilerId = new Xpp3Dom("compilerId");
-    compilerId.setValue("jdt");
-    Xpp3Dom accessRulesViolation = new Xpp3Dom("accessRulesViolation");
-    accessRulesViolation.setValue("ignore");
-
-    mojos.executeMojo(session, project, "compile", compilerId);
+    mojos.executeMojo(session, project, "compile", //
+        param("compilerId", "jdt"), //
+        param("transitiveDependencyReference", "ignore"), //
+        param("privatePackageReference", "ignore"));
   }
 
   @Test
@@ -67,14 +65,13 @@ public class CompileJdtClasspathVisibilityTest extends AbstractCompileJdtTest {
 
     MavenSession session = mojos.newMavenSession(project);
 
-    Xpp3Dom compilerId = new Xpp3Dom("compilerId");
-    compilerId.setValue("jdt");
-    Xpp3Dom accessRulesViolation = new Xpp3Dom("accessRulesViolation");
-    accessRulesViolation.setValue("error");
+    Xpp3Dom[] params = new Xpp3Dom[] {param("compilerId", "jdt"), //
+        param("transitiveDependencyReference", "error"), //
+        param("privatePackageReference", "error")};
 
-    mojos.executeMojo(session, project, "compile", compilerId, accessRulesViolation);
+    mojos.executeMojo(session, project, "compile", params);
 
-    mojos.executeMojo(session, project, "testCompile", compilerId, accessRulesViolation);
+    mojos.executeMojo(session, project, "testCompile", params);
   }
 
   @Test
@@ -86,19 +83,18 @@ public class CompileJdtClasspathVisibilityTest extends AbstractCompileJdtTest {
 
     MavenSession session = mojos.newMavenSession(project);
 
-    Xpp3Dom compilerId = new Xpp3Dom("compilerId");
-    compilerId.setValue("jdt");
-    Xpp3Dom accessRulesViolation = new Xpp3Dom("accessRulesViolation");
-    accessRulesViolation.setValue("error");
+    Xpp3Dom[] params = new Xpp3Dom[] {param("compilerId", "jdt"), //
+        param("transitiveDependencyReference", "error"), //
+        param("privatePackageReference", "error")};
 
-    mojos.executeMojo(session, project, "compile", compilerId, accessRulesViolation);
+    mojos.executeMojo(session, project, "compile", params);
 
     // make all main classes internal
     File exportsFile = new File(basedir, "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE);
     exportsFile.getParentFile().mkdirs();
     new FileOutputStream(exportsFile).close();
 
-    mojos.executeMojo(session, project, "testCompile", compilerId, accessRulesViolation);
+    mojos.executeMojo(session, project, "testCompile", params);
   }
 
 
@@ -139,13 +135,11 @@ public class CompileJdtClasspathVisibilityTest extends AbstractCompileJdtTest {
 
     MavenSession session = mojos.newMavenSession(project);
 
-    Xpp3Dom compilerId = new Xpp3Dom("compilerId");
-    compilerId.setValue("jdt");
-    Xpp3Dom accessRulesViolation = new Xpp3Dom("accessRulesViolation");
-    accessRulesViolation.setValue("error");
-
     try {
-      mojos.executeMojo(session, project, "testCompile", compilerId, accessRulesViolation);
+      mojos.executeMojo(session, project, "testCompile", //
+          param("compilerId", "jdt"), //
+          param("transitiveDependencyReference", "error"), //
+          param("privatePackageReference", "error"));
       Assert.fail();
     } catch (MojoExecutionException expected) {
       // expected
@@ -176,15 +170,19 @@ public class CompileJdtClasspathVisibilityTest extends AbstractCompileJdtTest {
   }
 
   private void compile(MavenProject project, boolean throwMojoExecutionException) throws Exception {
-    Xpp3Dom accessRulesViolation = new Xpp3Dom("accessRulesViolation");
-    accessRulesViolation.setValue("error");
     try {
-      mojos.compile(project, accessRulesViolation);
+      mojos.compile(project, param("transitiveDependencyReference", "error"), param("privatePackageReference", "error"));
     } catch (MojoExecutionException e) {
       if (throwMojoExecutionException) {
         throw e;
       }
     }
+  }
+
+  private static Xpp3Dom param(String name, String value) {
+    Xpp3Dom node = new Xpp3Dom(name);
+    node.setValue(value);
+    return node;
   }
 
 }

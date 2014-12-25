@@ -297,10 +297,10 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     for (File dependency : dependencies) {
       DependencyClasspathEntry entry = classpathCache.get(dependency);
       if (entry != null) {
-        if (getAccessRulesViolation() == AccessRulesViolation.ignore) {
-          dependencypath.add(AccessRestrictionClasspathEntry.allowAll(entry));
-        } else if (getAccessRulesViolation() == AccessRulesViolation.error && !directDependencies.contains(dependency)) {
+        if (getTransitiveDependencyReference() == AccessRulesViolation.error && !directDependencies.contains(dependency)) {
           dependencypath.add(AccessRestrictionClasspathEntry.forbidAll(entry));
+        } else if (getPrivatePackageReference() == AccessRulesViolation.ignore) {
+          dependencypath.add(AccessRestrictionClasspathEntry.allowAll(entry));
         } else {
           dependencypath.add(entry);
         }

@@ -226,9 +226,17 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
   }
 
   @Override
-  public void setAccessRulesViolation(AccessRulesViolation accessRulesViolation) {
+  public void setPrivatePackageReference(AccessRulesViolation accessRulesViolation) {
     if (accessRulesViolation == AccessRulesViolation.error) {
-      String msg = String.format("Compiler %s does not support accessRulesViolation=error, use compilerId=%s", getCompilerId(), CompilerJdt.ID);
+      String msg = String.format("Compiler %s does not support privatePackageReference=error, use compilerId=%s", getCompilerId(), CompilerJdt.ID);
+      throw new IllegalArgumentException(msg);
+    }
+  }
+
+  @Override
+  public void setTransitiveDependencyReference(AccessRulesViolation accessRulesViolation) {
+    if (accessRulesViolation == AccessRulesViolation.error) {
+      String msg = String.format("Compiler %s does not support transitiveDependencyReference=error, use compilerId=%s", getCompilerId(), CompilerJdt.ID);
       throw new IllegalArgumentException(msg);
     }
   }

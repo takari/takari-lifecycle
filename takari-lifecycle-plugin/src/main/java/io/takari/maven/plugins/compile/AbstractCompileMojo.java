@@ -160,25 +160,29 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   private boolean showWarnings;
 
   /**
-   * Sets classpath access rules enforcement policy
-   * <ul>
-   * <li>{@code ignore} (the default): ignore classpath access rules violations</li>
-   * <li>{@code error}: treat classpath access rules violations as compilation errors</li>
-   * </ul>
+   * Sets "transitive dependency reference" policy violation action.
    * <p>
-   * Classpath access rules:
-   * <ul>
-   * <li>Forbid references to types from indirect, i.e. transitive, dependencies.</li>
-   * <li>Forbid references to types from non-exported packages.</li>
-   * </ul>
+   * If {@code error}, only references to types defined in dependencies declared in project pom.xml file (or inherited from parent pom.xml) are allowed. References to types defined in transitive
+   * dependencies will be result in compilation errors. If {@code ignore} (the default) references to types defined in all project dependencies are allowed.
+   *
+   * @see <a href="http://takari.io/book/40-lifecycle.html#the-takari-lifecycle">The Takari Lifecycle</a> documentation for more details
+   * @since 1.9
+   */
+  @Parameter(defaultValue = "ignore")
+  private AccessRulesViolation transitiveDependencyReference;
+
+  /**
+   * Sets "private package reference" policy violation action.
+   * <p>
+   * If {@code error}, only references to types defined in dependency exported packages are allowed. References to types defined in private packages will be result in compilation errors. If
+   * {@code ignore} (the default) references to types in all packages are allowed.
    *
    * @see ExportPackageMojo
    * @see <a href="http://takari.io/book/40-lifecycle.html#the-takari-lifecycle">The Takari Lifecycle</a> documentation for more details
    * @since 1.9
    */
-  // TODO decide if 'forbiddenReference=error|ignore' is a better name, as in jdt project preferences
   @Parameter(defaultValue = "ignore")
-  private AccessRulesViolation accessRulesViolation;
+  private AccessRulesViolation privatePackageReference;
 
   //
 
@@ -324,7 +328,8 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       compiler.setSourceRoots(getSourceRoots());
       compiler.setDebug(parseDebug(debug));
       compiler.setShowWarnings(showWarnings);
-      compiler.setAccessRulesViolation(accessRulesViolation);
+      compiler.setTransitiveDependencyReference(transitiveDependencyReference);
+      compiler.setPrivatePackageReference(privatePackageReference);
 
       if (compiler instanceof CompilerJavacLauncher) {
         ((CompilerJavacLauncher) compiler).setBasedir(basedir);
