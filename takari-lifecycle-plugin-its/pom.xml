@@ -74,13 +74,6 @@
                 <artifactItem>
                   <groupId>org.apache.maven</groupId>
                   <artifactId>apache-maven</artifactId>
-                  <version>3.2.2</version>
-                  <classifier>bin</classifier>
-                  <type>tar.gz</type>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.apache.maven</groupId>
-                  <artifactId>apache-maven</artifactId>
                   <version>3.2.3</version>
                   <classifier>bin</classifier>
                   <type>tar.gz</type>
@@ -89,6 +82,13 @@
                   <groupId>org.apache.maven</groupId>
                   <artifactId>apache-maven</artifactId>
                   <version>3.2.5</version>
+                  <classifier>bin</classifier>
+                  <type>tar.gz</type>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.apache.maven</groupId>
+                  <artifactId>apache-maven</artifactId>
+                  <version>3.2.6-SNAPSHOT</version>
                   <classifier>bin</classifier>
                   <type>tar.gz</type>
                 </artifactItem>
