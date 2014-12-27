@@ -4,10 +4,15 @@ import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 import io.takari.maven.testing.TestResources;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
@@ -108,7 +113,51 @@ public class TestPropertiesMojoTest {
     Assert.assertEquals(workspaceStateSha1, sha1(basedir, "target/workspacestate.properties"));
   }
 
+  @Test
+  public void testOffline() throws Exception {
+    File basedir = resources.getBasedir("testproperties");
+
+    MavenProject project = mojos.readMavenProject(basedir);
+    MavenSession session = mojos.newMavenSession(project);
+
+    session.getRequest().setOffline(true);
+    mojos.executeMojo(session, project, "testProperties");
+    Assert.assertEquals("true", readProperties(basedir).get("offline"));
+
+    session.getRequest().setOffline(false);
+    mojos.executeMojo(session, project, "testProperties");
+    Assert.assertEquals("false", readProperties(basedir).get("offline"));
+  }
+
+  @Test
+  public void testUpdateSnapshots() throws Exception {
+    File basedir = resources.getBasedir("testproperties");
+
+    MavenProject project = mojos.readMavenProject(basedir);
+    MavenSession session = mojos.newMavenSession(project);
+
+    session.getRequest().setUpdateSnapshots(true);
+    mojos.executeMojo(session, project, "testProperties");
+    Assert.assertEquals("true", readProperties(basedir).get("updateSnapshots"));
+
+    session.getRequest().setUpdateSnapshots(false);
+    mojos.executeMojo(session, project, "testProperties");
+    Assert.assertEquals("false", readProperties(basedir).get("updateSnapshots"));
+  }
+
   private HashCode sha1(File basedir, String path) throws IOException {
     return Files.hash(new File(basedir, path), Hashing.sha1());
+  }
+
+  private Map<String, String> readProperties(File basedir) throws IOException {
+    Properties properties = new Properties();
+    try (InputStream is = new FileInputStream(new File(basedir, "target/test-classes/test.properties"))) {
+      properties.load(is);
+    }
+    Map<String, String> result = new HashMap<>();
+    for (String key : properties.stringPropertyNames()) {
+      result.put(key, properties.getProperty(key));
+    }
+    return result;
   }
 }

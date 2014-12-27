@@ -86,6 +86,12 @@ public class TestPropertiesMojo extends AbstractMojo {
   @Parameter(defaultValue = "${project.artifacts}", readonly = true)
   private Set<Artifact> dependencies;
 
+  @Parameter(defaultValue = "${session.request.offline}", readonly = true)
+  private boolean offline;
+
+  @Parameter(defaultValue = "${session.request.updateSnapshots}", readonly = true)
+  private boolean updateSnapshots;
+
   @Parameter(defaultValue = "${session.projectDependencyGraph}", readonly = true)
   @Incremental(configuration = Configuration.ignore)
   private ProjectDependencyGraph reactorDependencies;
@@ -115,6 +121,8 @@ public class TestPropertiesMojo extends AbstractMojo {
       if (userSettingsFile != null) {
         putIfAbsent(properties, "userSettingsFile", userSettingsFile.getAbsolutePath());
       }
+      putIfAbsent(properties, "offline", Boolean.toString(offline));
+      putIfAbsent(properties, "updateSnapshots", Boolean.toString(updateSnapshots));
       putIfAbsent(properties, "project.groupId", groupId);
       putIfAbsent(properties, "project.artifactId", artifactId);
       putIfAbsent(properties, "project.version", version);
