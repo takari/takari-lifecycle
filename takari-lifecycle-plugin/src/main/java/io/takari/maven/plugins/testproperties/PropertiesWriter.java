@@ -5,7 +5,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package io.takari.maven.plugins.plugin.testing;
+package io.takari.maven.plugins.testproperties;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Properties;
 
 import com.google.common.base.Charsets;
-import com.google.common.io.ByteStreams;
+import com.google.common.io.ByteSource;
 import com.google.common.io.CharSource;
 import com.google.common.io.CharStreams;
 
@@ -31,12 +31,12 @@ class PropertiesWriter {
   public static void write(Properties properties, String comment, OutputStream out) throws IOException {
     StringBuilder sb = new StringBuilder();
     properties.store(CharStreams.asWriter(sb), comment);
-    write(CharStreams.asCharSource(sb.toString()), comment, out);
+    write(CharSource.wrap(sb.toString()), comment, out);
   }
 
   public static void write(byte[] properties, OutputStream out) throws IOException {
     // properties files are documented to use ISO_8859_1 encoding
-    write(ByteStreams.asByteSource(properties).asCharSource(ENCODING), null, out);
+    write(ByteSource.wrap(properties).asCharSource(ENCODING), null, out);
   }
 
   private static void write(CharSource charSource, String comment, OutputStream out) throws IOException {

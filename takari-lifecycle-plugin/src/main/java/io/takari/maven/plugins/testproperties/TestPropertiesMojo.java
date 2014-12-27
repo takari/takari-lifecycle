@@ -5,14 +5,13 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package io.takari.maven.plugins.plugin.testing;
+package io.takari.maven.plugins.testproperties;
 
 import io.takari.incrementalbuild.BuildContext.ResourceStatus;
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
 import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.incrementalbuild.spi.DefaultInputMetadata;
-import io.takari.maven.testing.TestDependencies;
 import io.takari.resources.filtering.ResourcesProcessor;
 
 import java.io.ByteArrayOutputStream;
@@ -121,7 +120,7 @@ public class TestPropertiesMojo extends AbstractMojo {
       putIfAbsent(properties, "project.version", version);
 
       // project runtime classpath
-      putIfAbsent(properties, TestDependencies.KEY_CLASSPATH, getClasspathString());
+      putIfAbsent(properties, "classpath", getClasspathString());
 
       putIfAbsent(properties, "workspaceResolver", workspaceResolver.getFile().getAbsolutePath());
 

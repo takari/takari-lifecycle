@@ -1,6 +1,6 @@
 package io.takari.maven.plugins.compile.jdt;
 
-import static org.apache.maven.plugin.testing.resources.TestResources.cp;
+import static io.takari.maven.testing.TestResources.cp;
 
 import java.io.File;
 

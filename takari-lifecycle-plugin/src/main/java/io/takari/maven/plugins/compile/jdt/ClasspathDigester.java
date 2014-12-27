@@ -59,7 +59,7 @@ public class ClasspathDigester {
   }
 
   public HashMap<String, byte[]> digestDependencies(List<File> dependencies) throws IOException {
-    Stopwatch stopwatch = new Stopwatch().start();
+    Stopwatch stopwatch = Stopwatch.createStarted();
 
     HashMap<String, byte[]> digest = new HashMap<String, byte[]>();
 

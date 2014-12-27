@@ -1,6 +1,6 @@
 package io.takari.maven.plugins.compile;
 
-import static org.apache.maven.plugin.testing.resources.TestResources.cp;
+import static io.takari.maven.testing.TestResources.cp;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 
 import java.io.File;

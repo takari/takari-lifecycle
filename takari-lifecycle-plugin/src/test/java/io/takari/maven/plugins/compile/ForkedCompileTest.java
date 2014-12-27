@@ -1,9 +1,10 @@
 package io.takari.maven.plugins.compile;
 
+import io.takari.maven.testing.TestResources;
+
 import java.io.File;
 
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.testing.resources.TestResources;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
 import org.junit.Rule;

@@ -136,7 +136,7 @@
               </process-classes>
               <process-test-resources>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:process-test-resources,
-                io.takari.maven.plugins:takari-plugin-testing-plugin:${project.version}:testProperties
+                io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:testProperties
               </process-test-resources>
               <test-compile>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:testCompile

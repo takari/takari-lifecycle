@@ -15,6 +15,7 @@
           <goal>process-resources</goal>
           <goal>process-test-resources</goal>
           <goal>export-package</goal>
+          <goal>testProperties</goal>
         </goals>
       </pluginExecutionFilter>
       <action>

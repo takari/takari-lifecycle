@@ -1,7 +1,7 @@
 package io.takari.maven.plugins.jar;
 
-import static org.apache.maven.plugin.testing.MojoParameters.newParameter;
-import static org.apache.maven.plugin.testing.resources.TestResources.cp;
+import static io.takari.maven.testing.TestMavenRuntime.newParameter;
+import static io.takari.maven.testing.TestResources.cp;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -10,6 +10,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import io.takari.hash.FingerprintSha1Streaming;
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
+import io.takari.maven.testing.TestResources;
 
 import java.io.File;
 import java.io.InputStream;
@@ -30,7 +31,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.plugin.testing.resources.TestResources;
 import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
 import org.junit.Ignore;

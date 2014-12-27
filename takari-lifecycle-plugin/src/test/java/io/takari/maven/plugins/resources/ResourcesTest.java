@@ -1,17 +1,17 @@
 package io.takari.maven.plugins.resources;
 
-import static org.apache.maven.plugin.testing.MojoParameters.newParameter;
-import static org.apache.maven.plugin.testing.resources.TestResources.assertFileContents;
-import static org.apache.maven.plugin.testing.resources.TestResources.cp;
-import static org.apache.maven.plugin.testing.resources.TestResources.rm;
+import static io.takari.maven.testing.TestMavenRuntime.newParameter;
+import static io.takari.maven.testing.TestResources.assertFileContents;
+import static io.takari.maven.testing.TestResources.cp;
+import static io.takari.maven.testing.TestResources.rm;
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
+import io.takari.maven.testing.TestResources;
 
 import java.io.File;
 import java.nio.charset.Charset;
 
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
-import org.apache.maven.plugin.testing.resources.TestResources;
 import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
 import org.junit.Rule;

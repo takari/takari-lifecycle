@@ -28,13 +28,14 @@
   </prerequisites>
 
   <properties>
-    <mavenVersion>3.2.1</mavenVersion>
-    <aetherVersion>0.9.0.M2</aetherVersion>
-    <incrementalbuild.version>0.9.3</incrementalbuild.version>
-    <guava.version>14.0.1</guava.version>
-    <plugintesting.version>3.2.0</plugintesting.version>
+    <mavenVersion>3.2.5</mavenVersion>
+    <sisuVersion>0.3.0.M1</sisuVersion>
+    <sisuGuiceVersion>3.2.3</sisuGuiceVersion>
+    <aetherVersion>1.0.0.v20140518</aetherVersion>
+    <incrementalbuild.version>0.10.0-SNAPSHOT</incrementalbuild.version>
+    <guava.version>18.0</guava.version>
     <mavenPluginPluginVersion>3.3</mavenPluginPluginVersion>
-    <m2eWorkspaceVersion>0.2.0</m2eWorkspaceVersion>
+    <m2eWorkspaceVersion>0.3.0</m2eWorkspaceVersion>
   </properties>
 
   <scm>
@@ -58,10 +59,8 @@
 
   <modules>
     <module>takari-lifecycle-plugin</module>
+    <!-- TODO consider moving integration tests to the main module -->
     <module>takari-lifecycle-plugin-its</module>
-    <module>takari-plugin-testing</module>
-    <module>takari-plugin-testing-plugin</module>
-    <module>takari-resource-filtering</module>
   </modules>
 
   <build>

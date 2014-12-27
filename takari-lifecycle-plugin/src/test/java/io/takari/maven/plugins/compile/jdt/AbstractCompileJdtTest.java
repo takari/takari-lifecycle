@@ -1,6 +1,7 @@
 package io.takari.maven.plugins.compile.jdt;
 
 import io.takari.maven.plugins.compile.CompileRule;
+import io.takari.maven.testing.TestResources;
 
 import java.io.File;
 import java.util.LinkedHashSet;
@@ -10,7 +11,6 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.plugin.MojoExecution;
-import org.apache.maven.plugin.testing.resources.TestResources;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Rule;

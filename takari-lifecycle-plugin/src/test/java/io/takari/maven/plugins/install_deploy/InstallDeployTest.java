@@ -1,8 +1,9 @@
 package io.takari.maven.plugins.install_deploy;
 
-import static org.apache.maven.plugin.testing.MojoParameters.newParameter;
-import static org.apache.maven.plugin.testing.resources.TestResources.create;
+import static io.takari.maven.testing.TestMavenRuntime.newParameter;
+import static io.takari.maven.testing.TestResources.create;
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
+import io.takari.maven.testing.TestResources;
 
 import java.io.File;
 import java.util.Arrays;
@@ -13,7 +14,6 @@ import org.apache.maven.execution.DefaultMavenExecutionResult;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionResult;
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.plugin.testing.resources.TestResources;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.project.ProjectBuildingRequest;
@@ -50,10 +50,11 @@ public class InstallDeployTest {
     properties.put("repopath", remoterepo.getCanonicalPath());
     MavenProject project = readMavenProject(basedir, properties);
 
-    mojos.executeMojo(project, "jar", newParameter("sourceJar", "true"), newParameter("testJar", "true"));
+    MavenSession session = newSession(project, localrepo);
+
+    mojos.executeMojo(session, project, "jar", newParameter("sourceJar", "true"), newParameter("testJar", "true"));
     Assert.assertEquals(2, project.getAttachedArtifacts().size());
 
-    MavenSession session = newSession(project, localrepo);
 
     mojos.executeMojo(session, project, "install");
     Assert.assertTrue(new File(localrepo, "io/takari/lifecycle/its/test/1.0/test-1.0.jar").canRead());
@@ -86,6 +87,7 @@ public class InstallDeployTest {
     request.setUserProperties(properties);
     request.setBaseDirectory(basedir);
     ProjectBuildingRequest configuration = request.getProjectBuildingRequest();
+    configuration.setRepositorySession(new DefaultRepositorySystemSession());
     MavenProject project = mojos.lookup(ProjectBuilder.class).build(pom, configuration).getProject();
     Assert.assertNotNull(project);
     return project;

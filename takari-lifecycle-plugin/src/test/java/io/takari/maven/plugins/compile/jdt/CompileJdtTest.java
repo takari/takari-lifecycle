@@ -1,8 +1,8 @@
 package io.takari.maven.plugins.compile.jdt;
 
-import static org.apache.maven.plugin.testing.resources.TestResources.cp;
-import static org.apache.maven.plugin.testing.resources.TestResources.rm;
-import static org.apache.maven.plugin.testing.resources.TestResources.touch;
+import static io.takari.maven.testing.TestResources.cp;
+import static io.takari.maven.testing.TestResources.rm;
+import static io.takari.maven.testing.TestResources.touch;
 
 import java.io.File;
 

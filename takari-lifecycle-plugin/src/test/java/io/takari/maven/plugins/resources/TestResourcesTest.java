@@ -1,12 +1,12 @@
 package io.takari.maven.plugins.resources;
 
-import static org.apache.maven.plugin.testing.resources.TestResources.assertFileContents;
+import static io.takari.maven.testing.TestResources.assertFileContents;
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
+import io.takari.maven.testing.TestResources;
 
 import java.io.File;
 import java.nio.charset.Charset;
 
-import org.apache.maven.plugin.testing.resources.TestResources;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;

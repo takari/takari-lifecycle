@@ -1,8 +1,9 @@
 package io.takari.maven.plugins.exportpackage;
 
-import static org.apache.maven.plugin.testing.resources.TestResources.rm;
-import static org.apache.maven.plugin.testing.resources.TestResources.touch;
+import static io.takari.maven.testing.TestResources.rm;
+import static io.takari.maven.testing.TestResources.touch;
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
+import io.takari.maven.testing.TestResources;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,7 +12,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.TreeSet;
 
-import org.apache.maven.plugin.testing.resources.TestResources;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
