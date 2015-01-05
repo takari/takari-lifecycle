@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -18,23 +17,16 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.artifact.handler.DefaultArtifactHandler;
-import org.apache.maven.execution.DefaultMavenExecutionRequest;
-import org.apache.maven.execution.DefaultMavenExecutionResult;
-import org.apache.maven.execution.MavenExecutionRequest;
-import org.apache.maven.execution.MavenExecutionRequestPopulator;
-import org.apache.maven.execution.MavenExecutionResult;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.execution.ProjectDependencyGraph;
 import org.apache.maven.plugin.Mojo;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.codehaus.plexus.util.ReflectionUtils;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 
-import com.google.common.base.Throwables;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
@@ -45,38 +37,6 @@ public class TestPropertiesMojoTest {
 
   @Rule
   public final IncrementalBuildRule mojos = new IncrementalBuildRule() {
-    @Override
-    public MavenSession newMavenSession(final MavenProject project) {
-      MavenExecutionRequest request = new DefaultMavenExecutionRequest();
-      try {
-        lookup(MavenExecutionRequestPopulator.class).populateDefaults(request);
-      } catch (Exception e) {
-        throw Throwables.propagate(e);
-      }
-      MavenExecutionResult result = new DefaultMavenExecutionResult();
-      MavenSession session = new MavenSession(getContainer(), MavenRepositorySystemUtils.newSession(), request, result);
-      session.setCurrentProject(project);
-      session.setProjects(Arrays.asList(project));
-      session.setProjectDependencyGraph(new ProjectDependencyGraph() {
-
-        @Override
-        public List<MavenProject> getSortedProjects() {
-          return Collections.singletonList(project);
-        }
-
-        @Override
-        public List<MavenProject> getDownstreamProjects(MavenProject project, boolean transitive) {
-          return Collections.emptyList();
-        }
-
-        @Override
-        public List<MavenProject> getUpstreamProjects(MavenProject project, boolean transitive) {
-          return Collections.emptyList();
-        }
-      });
-      return session;
-    }
-
     @Override
     public Mojo lookupConfiguredMojo(MavenSession session, MojoExecution execution) throws Exception {
       Mojo mojo = super.lookupConfiguredMojo(session, execution);
@@ -90,8 +50,27 @@ public class TestPropertiesMojoTest {
 
   @Test
   public void testIncremental() throws Exception {
-    File basedir = resources.getBasedir("testproperties");
-    mojos.executeMojo(basedir, "testProperties");
+    File basedir = resources.getBasedir("testproperties/basic");
+    final MavenProject project = mojos.readMavenProject(basedir);
+    MavenSession session = mojos.newMavenSession(project);
+    session.setProjectDependencyGraph(new ProjectDependencyGraph() {
+      @Override
+      public List<MavenProject> getUpstreamProjects(MavenProject project, boolean transitive) {
+        return Collections.emptyList();
+      }
+
+      @Override
+      public List<MavenProject> getSortedProjects() {
+        return Collections.singletonList(project);
+      }
+
+      @Override
+      public List<MavenProject> getDownstreamProjects(MavenProject project, boolean transitive) {
+        return Collections.emptyList();
+      }
+    });
+
+    mojos.executeMojo(session, project, "testProperties");
     mojos.assertBuildOutputs(basedir, "target/test-classes/test.properties", "target/workspacestate.properties");
 
     File testProperties = new File(basedir, "target/test-classes/test.properties");
@@ -103,7 +82,7 @@ public class TestPropertiesMojoTest {
     HashCode testPropertiesSha1 = Files.hash(testProperties, Hashing.sha1());
     HashCode workspaceStateSha1 = Files.hash(workspaceState, Hashing.sha1());
 
-    mojos.executeMojo(basedir, "testProperties");
+    mojos.executeMojo(session, project, "testProperties");
     // mojos.assertCarriedOverOutputs(basedir, "target/test-classes/test.properties", "target/workspacestate.properties");
 
     Assert.assertEquals(testPropertiesLastmodified, testProperties.lastModified());
@@ -115,7 +94,7 @@ public class TestPropertiesMojoTest {
 
   @Test
   public void testOffline() throws Exception {
-    File basedir = resources.getBasedir("testproperties");
+    File basedir = resources.getBasedir("testproperties/basic");
 
     MavenProject project = mojos.readMavenProject(basedir);
     MavenSession session = mojos.newMavenSession(project);
@@ -131,7 +110,7 @@ public class TestPropertiesMojoTest {
 
   @Test
   public void testUpdateSnapshots() throws Exception {
-    File basedir = resources.getBasedir("testproperties");
+    File basedir = resources.getBasedir("testproperties/basic");
 
     MavenProject project = mojos.readMavenProject(basedir);
     MavenSession session = mojos.newMavenSession(project);
@@ -143,6 +122,18 @@ public class TestPropertiesMojoTest {
     session.getRequest().setUpdateSnapshots(false);
     mojos.executeMojo(session, project, "testProperties");
     Assert.assertEquals("false", readProperties(basedir).get("updateSnapshots"));
+  }
+
+  @Test
+  public void testCustomTestPropertiesFile() throws Exception {
+    File basedir = resources.getBasedir("testproperties/custom-test-properties-file");
+
+    mojos.executeMojo(basedir, "testProperties");
+    Assert.assertEquals("value", readProperties(basedir).get("custom"));
+
+    TestResources.cp(basedir, "src/test/modified-test.properties", "src/test/test.properties");
+    mojos.executeMojo(basedir, "testProperties");
+    Assert.assertEquals("modified-value", readProperties(basedir).get("custom"));
   }
 
   private HashCode sha1(File basedir, String path) throws IOException {
