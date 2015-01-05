@@ -15,7 +15,7 @@ import org.junit.runner.RunWith;
 public abstract class AbstractIntegrationTest {
 
   @Rule
-  public final TestResources resources = new TestResources("src/it", "target/it/");
+  public final TestResources resources = new TestResources();
 
   public final TestProperties properties = new TestProperties();
 
