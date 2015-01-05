@@ -23,6 +23,7 @@ import java.io.OutputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -121,6 +122,10 @@ public class TestPropertiesMojo extends AbstractMojo {
       if (userSettingsFile != null) {
         putIfAbsent(properties, "userSettingsFile", userSettingsFile.getAbsolutePath());
       }
+      List<ArtifactRepository> repositories = project.getRemoteArtifactRepositories();
+      for (int i = 0; i < repositories.size(); i++) {
+        properties.put("repository." + i, toString(repositories.get(i)));
+      }
       putIfAbsent(properties, "offline", Boolean.toString(offline));
       putIfAbsent(properties, "updateSnapshots", Boolean.toString(updateSnapshots));
       putIfAbsent(properties, "project.groupId", groupId);
@@ -144,6 +149,15 @@ public class TestPropertiesMojo extends AbstractMojo {
     } catch (IOException e) {
       throw new MojoExecutionException("Could not create test.properties file", e);
     }
+  }
+
+  private String toString(ArtifactRepository repository) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("<id>").append(repository.getId()).append("</id>");
+    sb.append("<url>").append(repository.getUrl()).append("</url>");
+    sb.append("<releases><enabled>").append(repository.getReleases().isEnabled()).append("</enabled></releases>");
+    sb.append("<snapshots><enabled>").append(repository.getSnapshots().isEnabled()).append("</enabled></snapshots>");
+    return sb.toString();
   }
 
   private String getClasspathString() {
