@@ -37,7 +37,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
-@Mojo(name = "jar", defaultPhase = LifecyclePhase.PACKAGE)
+@Mojo(name = "jar", defaultPhase = LifecyclePhase.PACKAGE, configurator = "takari")
 public class Jar extends TakariLifecycleMojo {
 
   @Parameter(defaultValue = "${project.build.outputDirectory}")

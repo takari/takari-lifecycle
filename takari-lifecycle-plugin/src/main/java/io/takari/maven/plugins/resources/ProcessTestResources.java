@@ -12,9 +12,11 @@ import java.util.List;
 
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.annotations.*;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 
-@Mojo(name = "process-test-resources", defaultPhase = LifecyclePhase.PROCESS_TEST_RESOURCES)
+@Mojo(name = "process-test-resources", defaultPhase = LifecyclePhase.PROCESS_TEST_RESOURCES, configurator = "takari")
 public class ProcessTestResources extends AbstractProcessResourcesMojo {
 
   @Parameter(defaultValue = "${project.build.testOutputDirectory}", property = "resources.testOutputDirectory")

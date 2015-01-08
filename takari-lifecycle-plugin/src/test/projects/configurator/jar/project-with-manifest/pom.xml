@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project>
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>io.takari.lifecycle.its</groupId>
+  <artifactId>test</artifactId>
+  <version>1.0</version>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>io.takari.maven.plugins</groupId>
+        <artifactId>takari-lifecycle-plugin</artifactId>
+        <configuration>
+          <jar>
+            <!-- see http://maven.apache.org/shared/maven-archiver/index.html -->
+            <archive>
+              <manifestFile>${project.basedir}/src/META-INF/MANIFEST.MF</manifestFile>
+            </archive>
+          </jar>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

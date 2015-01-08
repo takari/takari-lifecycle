@@ -22,7 +22,7 @@ import org.eclipse.aether.util.artifact.SubArtifact;
 /**
  * @author Jason van Zyl
  */
-@Mojo(name = "deploy", defaultPhase = LifecyclePhase.DEPLOY)
+@Mojo(name = "deploy", defaultPhase = LifecyclePhase.DEPLOY, configurator = "takari")
 public class Deploy extends TakariLifecycleMojo {
 
   // TODO deploy at the end to prevent corruption

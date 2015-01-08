@@ -10,6 +10,19 @@
 -->
 <component-set>
   <components>
+
+    <component>
+      <role>org.codehaus.plexus.component.configurator.ComponentConfigurator</role>
+      <role-hint>takari</role-hint>
+      <implementation>io.takari.maven.plugins.configurator.MojoConfigurator</implementation>
+    </component>    
+  
+    <component>
+      <role>org.apache.maven.lifecycle.MojoExecutionConfigurator</role>
+      <role-hint>takari</role-hint>
+      <implementation>io.takari.maven.plugins.configurator.TakariMojoExecutionConfigurator</implementation>
+    </component>
+  
     <!-- *Shadow* packaging pom lifecycle mapping defined in the core  -->
     <component>
       <role>org.apache.maven.lifecycle.mapping.LifecycleMapping</role>
@@ -31,17 +44,7 @@
         </lifecycles>
       </configuration>
     </component>
-
-    <!--
-    
-    We will need to patch Maven first before we can use our own configurator properly.
-    
-    <component>
-      <role>org.codehaus.plexus.component.configurator.ComponentConfigurator</role>
-      <role-hint>takari-mojo</role-hint>
-      <implementation>io.takari.maven.plugins.configurator.MojoConfigurator</implementation>
-    </component>
-    -->
+        
     <!--
      | TAKARI JAR
      |-->

@@ -21,7 +21,7 @@ import org.eclipse.aether.util.artifact.SubArtifact;
 /**
  * @author Jason van Zyl
  */
-@Mojo(name = "install", defaultPhase = LifecyclePhase.INSTALL)
+@Mojo(name = "install", defaultPhase = LifecyclePhase.INSTALL, configurator = "takari")
 public class Install extends TakariLifecycleMojo {
 
   @Override
