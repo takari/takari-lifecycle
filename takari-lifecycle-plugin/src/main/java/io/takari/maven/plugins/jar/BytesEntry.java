@@ -53,4 +53,9 @@ class BytesEntry implements Entry {
     return false;
   }
 
+  @Override
+  public boolean isExecutable() {
+    return false;
+  }
+
 }
