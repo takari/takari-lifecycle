@@ -38,13 +38,13 @@
     <dependency>
       <groupId>io.takari.maven.plugins</groupId>
       <artifactId>takari-plugin-testing</artifactId>
-      <version>2.0.0-SNAPSHOT</version>
+      <version>${pluginTestingVersion}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>io.takari.maven.plugins</groupId>
       <artifactId>takari-plugin-integration-testing</artifactId>
-      <version>2.0.0-SNAPSHOT</version>
+      <version>${pluginTestingVersion}</version>
       <type>pom</type>
       <scope>test</scope>
     </dependency>
