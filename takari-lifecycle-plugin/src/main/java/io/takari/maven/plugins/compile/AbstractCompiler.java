@@ -188,7 +188,7 @@ public abstract class AbstractCompiler {
 
   public abstract boolean setSources(List<InputMetadata<File>> sources) throws IOException;
 
-  public abstract void compile() throws MojoExecutionException, IOException;
+  public abstract int compile() throws MojoExecutionException, IOException;
 
   public abstract void skipCompilation();
 }

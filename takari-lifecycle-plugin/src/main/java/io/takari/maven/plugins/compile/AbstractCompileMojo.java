@@ -344,9 +344,8 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
       if (sourcesChanged || classpathChanged) {
         log.info("Compiling {} sources to {}", sources.size(), getOutputDirectory());
-        compiler.compile();
-        // TODO report actual number of sources compiled
-        log.info("Compiled {} sources ({} ms)", sources.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
+        int compiled = compiler.compile();
+        log.info("Compiled {} out of {} sources ({} ms)", compiled, sources.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
       } else {
         // TODO this should be something like "cleanup after skipped compilation"
         compiler.skipCompilation();

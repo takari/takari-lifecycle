@@ -121,7 +121,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   }
 
   @Override
-  public void compile() throws MojoExecutionException, IOException {
+  public int compile() throws MojoExecutionException, IOException {
     IErrorHandlingPolicy errorHandlingPolicy = DefaultErrorHandlingPolicies.exitAfterAllProblems();
     Map<String, String> args = new HashMap<String, String>();
     // XXX figure out how to reuse source/target check from jdt
@@ -196,6 +196,8 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       namingEnvironment.reset();
       enqueueAffectedSources();
     }
+
+    return processedSources.size();
   }
 
   @Override

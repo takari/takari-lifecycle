@@ -113,7 +113,7 @@ public class CompilerJavac extends AbstractCompilerJavac {
   }
 
   @Override
-  public void compile() throws MojoExecutionException, IOException {
+  public int compile() throws MojoExecutionException, IOException {
     // java 6 limitations
     // - there is severe performance penalty using new JavaCompiler instance
     // - the same JavaCompiler cannot be used concurrently
@@ -141,6 +141,8 @@ public class CompilerJavac extends AbstractCompilerJavac {
       javaFileManager.close();
       factory.release(compiler);
     }
+
+    return sources.size();
   }
 
   private void compile(JavaCompiler compiler, StandardJavaFileManager javaFileManager) throws IOException {

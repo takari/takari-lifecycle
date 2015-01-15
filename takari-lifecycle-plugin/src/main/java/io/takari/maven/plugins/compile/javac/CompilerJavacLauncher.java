@@ -52,7 +52,7 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
   }
 
   @Override
-  public void compile() throws IOException {
+  public int compile() throws IOException {
     File options = File.createTempFile("javac-forked", ".options", buildDirectory);
     File output = File.createTempFile("javac-forked", ".output", buildDirectory);
     compile(options, output);
@@ -60,6 +60,8 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
     // they maybe useful to debug the problem
     options.delete();
     output.delete();
+
+    return sources.size();
   }
 
   private void compile(File options, File output) throws IOException {
