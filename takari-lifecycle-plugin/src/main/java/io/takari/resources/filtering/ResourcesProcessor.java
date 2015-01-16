@@ -122,6 +122,16 @@ public class ResourcesProcessor {
       }
       return super.find(name, scopes);
     }
+
+    @Override
+    public String stringify(Object object) {
+      if (object instanceof File) {
+        return object.toString().replace('\\', '/'); // I <3 Windows
+      }
+      return object.toString();
+    }
+
   }
+
 
 }
