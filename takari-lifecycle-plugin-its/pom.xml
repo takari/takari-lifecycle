@@ -47,6 +47,12 @@
       <type>pom</type>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <!-- remember to remove when moving to plugin testing 2.1.x -->
+      <groupId>io.takari</groupId>
+      <artifactId>takari-archiver</artifactId>
+      <version>0.1.8-SNAPSHOT</version>
+    </dependency>
   </dependencies>
 
   <build>
