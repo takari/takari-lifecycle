@@ -51,7 +51,7 @@
       <!-- remember to remove when moving to plugin testing 2.1.x -->
       <groupId>io.takari</groupId>
       <artifactId>takari-archiver</artifactId>
-      <version>0.1.8-SNAPSHOT</version>
+      <version>0.1.8</version>
     </dependency>
   </dependencies>
 
