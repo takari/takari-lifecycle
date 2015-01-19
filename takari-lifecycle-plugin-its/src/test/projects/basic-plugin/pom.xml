@@ -65,6 +65,7 @@
         <configuration>
           <sourceJar>true</sourceJar>
           <testJar>true</testJar>
+          <proc>none</proc>
         </configuration>
       </plugin>
     </plugins>

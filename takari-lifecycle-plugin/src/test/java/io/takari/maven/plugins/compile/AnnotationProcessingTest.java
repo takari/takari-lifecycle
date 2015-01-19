@@ -86,12 +86,6 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
   }
 
   @Test
-  public void testProc_default() throws Exception {
-    File basedir = procCompile("compile-proc/proc", null);
-    mojos.assertBuildOutputs(new File(basedir, "target"), "classes/proc/Source.class");
-  }
-
-  @Test
   public void testProc_none() throws Exception {
     File basedir = procCompile("compile-proc/proc", Proc.none);
     mojos.assertBuildOutputs(new File(basedir, "target"), "classes/proc/Source.class");
@@ -276,5 +270,19 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     basedir = procCompile("compile-proc/missing-type", Proc.only, processors, newParameter("showWarnings", "true"));
     mojos.assertBuildOutputs(generatedSources, "proc/GeneratedSource.java");
     mojos.assertMessages(basedir, "src/main/java/warn/Source.java", "WARNING Source.java [9:17] package missing does not exist");
+  }
+
+  @Test
+  public void testRequireProc() throws Exception {
+    File processor = compileAnnotationProcessor();
+    File basedir = resources.getBasedir("compile-proc/require-proc");
+    try {
+      processAnnotations(basedir, null, processor);
+      Assert.fail();
+    } catch (IllegalArgumentException expected) {
+      // TODO assert message
+    }
+
+    processAnnotations(basedir, null, null);
   }
 }

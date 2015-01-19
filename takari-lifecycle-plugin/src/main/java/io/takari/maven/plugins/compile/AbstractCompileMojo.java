@@ -17,6 +17,8 @@ import io.takari.maven.plugins.exportpackage.ExportPackageMojo;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,6 +29,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import javax.tools.JavaFileObject.Kind;
 
@@ -39,7 +43,12 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.TreeMultimap;
+import com.google.common.io.CharStreams;
+import com.google.common.io.Files;
 
 public abstract class AbstractCompileMojo extends AbstractMojo {
 
@@ -100,7 +109,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
   /**
    * <p>
-   * Sets whether annotation processing is performed or not. Only applies to JDK 1.6+ If not set, no annotation processing is performed.
+   * Sets whether annotation processing is performed or not. This parameter is required if annotation processors are present on compile classpath.
    * </p>
    * <p>
    * Allowed values are:
@@ -111,12 +120,12 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
    * <li><code>only</code> - only annotation processing is done, no compilation.</li>
    * </ul>
    */
-  @Parameter(defaultValue = "none")
-  private Proc proc = Proc.none;
+  @Parameter
+  private Proc proc;
 
   /**
    * <p>
-   * Names of annotation processors to run. Only applies to JDK 1.6+ If not set, the default annotation processors discovery process applies.
+   * Names of annotation processors to run. If not set, the default annotation processors discovery process applies.
    * </p>
    */
   @Parameter
@@ -311,6 +320,10 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       }
 
       mkdirs(getOutputDirectory());
+
+      final List<File> classpath = getClasspath();
+      Proc proc = getEffectiveProc(classpath);
+
       if (proc != Proc.none) {
         mkdirs(getGeneratedSourcesDirectory());
       }
@@ -339,7 +352,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
         ((CompilerJavacLauncher) compiler).setMaxmem(maxmem);
       }
 
-      boolean classpathChanged = compiler.setClasspath(getClasspath(), getMainOutputDirectory(), getDirectDependencies());
+      boolean classpathChanged = compiler.setClasspath(classpath, getMainOutputDirectory(), getDirectDependencies());
       boolean sourcesChanged = compiler.setSources(sources);
 
       if (sourcesChanged || classpathChanged) {
@@ -357,6 +370,42 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     } catch (IOException e) {
       throw new MojoExecutionException("Could not compile project", e);
     }
+  }
+
+  private Proc getEffectiveProc(List<File> classpath) {
+    Proc proc = this.proc;
+    if (proc == null) {
+      Multimap<File, String> processors = TreeMultimap.create();
+      for (File jar : classpath) {
+        if (jar.isFile()) {
+          try (ZipFile zip = new ZipFile(jar)) {
+            ZipEntry entry = zip.getEntry("META-INF/services/javax.annotation.processing.Processor");
+            if (entry != null) {
+              try (Reader r = new InputStreamReader(zip.getInputStream(entry), Charsets.UTF_8)) {
+                processors.putAll(jar, CharStreams.readLines(r));
+              }
+            }
+          } catch (IOException e) {
+            // ignore, compiler won't be able to use this jar either
+          }
+        } else if (jar.isDirectory()) {
+          try {
+            processors.putAll(jar, Files.readLines(new File(jar, "META-INF/services/javax.annotation.processing.Processor"), Charsets.UTF_8));
+          } catch (IOException e) {
+            // ignore, compiler won't be able to use this jar either
+          }
+        }
+      }
+      if (!processors.isEmpty()) {
+        StringBuilder msg = new StringBuilder("<proc> must be one of 'none', 'only' or 'proc'. Processors found: ");
+        for (File jar : processors.keySet()) {
+          msg.append("\n   ").append(jar).append(" ").append(processors.get(jar));
+        }
+        throw new IllegalArgumentException(msg.toString());
+      }
+      proc = Proc.none;
+    }
+    return proc;
   }
 
   private static String getTarget(String target, String source) {
