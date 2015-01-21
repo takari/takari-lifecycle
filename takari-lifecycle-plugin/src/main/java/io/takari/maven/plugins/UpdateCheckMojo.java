@@ -30,7 +30,7 @@ public class UpdateCheckMojo extends AbstractMojo {
 
   private final Logger log = LoggerFactory.getLogger(getClass());
 
-  public static final String REMOTE_URL = "https://download.takari.io/latest/takari-lifecycle";
+  public static final String REMOTE_URL = "https://update.takari.io/latest/takari-lifecycle";
 
   public static final String GROUP_ID = "io.takari.maven.plugins";
   public static final String ARTIFACT_ID = "takari-lifecycle-plugin";
