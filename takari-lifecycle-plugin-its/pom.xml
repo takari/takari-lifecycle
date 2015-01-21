@@ -64,14 +64,8 @@
     </testResources>
     <plugins>
       <plugin>
-        <!-- 
-          | this must match takari-lifecycle version used to define packaging 
-          | of this project, which implies it cannot be reactor version, 
-          | because maven can't load build extensions from the reactor
-          -->
         <groupId>io.takari.maven.plugins</groupId>
-        <artifactId>takari-plugin-testing-plugin</artifactId>
-        <version>1.9.2</version>
+        <artifactId>takari-lifecycle-plugin</artifactId>
         <executions>
           <execution>
             <id>testProperties</id>
