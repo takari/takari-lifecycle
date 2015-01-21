@@ -46,7 +46,7 @@ public class UpdateCheckMojo extends AbstractMojo {
     try {
       ArtifactVersion version = getLocalVersion(getClass().getClassLoader(), GROUP_ID, ARTIFACT_ID);
       if (version == null) {
-        log.debug("Could not determine {} version, skipping update check");
+        log.debug("Could not determine {}:{} version, skipping update check", GROUP_ID, ARTIFACT_ID);
         return; // TODO generate maven pom.properties inside m2e
       }
 
