@@ -202,10 +202,10 @@ public class Jar extends TakariLifecycleMojo {
   }
 
   private Iterable<Entry> pomPropertiesSource(MavenProject project) throws IOException {
-    String entryName = PomProperties.entryPath(project);
+    String entryName = PomPropertiesMojo.entryPath(project);
 
     ByteArrayOutputStream buf = new ByteArrayOutputStream();
-    PomProperties.writeTo(project, buf);
+    PomPropertiesMojo.writeTo(project, buf);
 
     return singleton((Entry) new BytesEntry(entryName, buf.toByteArray()));
   }
