@@ -39,6 +39,8 @@ public class UpdateCheckMojo extends AbstractMojo {
 
   public static final String UPDATE_CHECK_TIMESTAMP_PREF = "updateCheckTimestamp";
 
+  public static final int UPDATE_TIMEOUT_MS = 30000; // 30 seconds
+
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
 
@@ -66,6 +68,8 @@ public class UpdateCheckMojo extends AbstractMojo {
       String query = String.format("m=%s&j=%s", mavenVersion, javaVersion);
       URLConnection conn = new URL(REMOTE_URL + "?" + query).openConnection();
       conn.addRequestProperty("User-Agent", "takari-lifecycle/" + version.toString());
+      conn.setConnectTimeout(UPDATE_TIMEOUT_MS);
+      conn.setReadTimeout(UPDATE_TIMEOUT_MS);
 
       try (InputStream is = conn.getInputStream()) {
         String latestVersion = getVersion(is);
