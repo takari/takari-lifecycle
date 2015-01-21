@@ -17,7 +17,6 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 import org.apache.maven.Maven;
-import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -44,13 +43,11 @@ public class UpdateCheckMojo extends AbstractMojo {
   public void execute() throws MojoExecutionException, MojoFailureException {
 
     try {
-      ArtifactVersion version = getLocalVersion(getClass().getClassLoader(), GROUP_ID, ARTIFACT_ID);
+      String version = getLocalVersion(getClass().getClassLoader(), GROUP_ID, ARTIFACT_ID);
       if (version == null) {
         log.debug("Could not determine {}:{} version, skipping update check", GROUP_ID, ARTIFACT_ID);
         return; // TODO generate maven pom.properties inside m2e
       }
-
-      ArtifactVersion mavenVersion = getLocalVersion(Maven.class.getClassLoader(), "org.apache.maven", "maven-core");
 
       Preferences preferences = Preferences.userRoot().node(GROUP_ID.replace('.', '/')).node(ARTIFACT_ID).node(version.toString());
       final long timestamp = System.currentTimeMillis();
@@ -62,12 +59,17 @@ public class UpdateCheckMojo extends AbstractMojo {
       preferences.putLong(UPDATE_CHECK_TIMESTAMP_PREF, timestamp);
       preferences.flush();
 
-      URLConnection conn = new URL(REMOTE_URL).openConnection();
-      conn.addRequestProperty("User-Agent", "takari-lifecycle/" + version.toString() + "/" + mavenVersion);
+      String mavenVersion = getLocalVersion(Maven.class.getClassLoader(), "org.apache.maven", "maven-core");
+      String javaVersion = System.getProperty("java.version");
+
+      // doing url encoding correctly is apparently hard in java https://github.com/google/guava/issues/1756
+      String query = String.format("m=%s&j=%s", mavenVersion, javaVersion);
+      URLConnection conn = new URL(REMOTE_URL + "?" + query).openConnection();
+      conn.addRequestProperty("User-Agent", "takari-lifecycle/" + version.toString());
 
       try (InputStream is = conn.getInputStream()) {
-        ArtifactVersion latestVersion = getVersion(is);
-        if (version.compareTo(latestVersion) < 0) {
+        String latestVersion = getVersion(is);
+        if (latestVersion != null && new DefaultArtifactVersion(version).compareTo(new DefaultArtifactVersion(latestVersion)) < 0) {
           log.warn("Takari Lifecycle version {} is outdated, consider upgrade to {}", version, latestVersion);
         }
       }
@@ -76,17 +78,17 @@ public class UpdateCheckMojo extends AbstractMojo {
     }
   }
 
-  private ArtifactVersion getLocalVersion(ClassLoader loader, String groupId, String artifactId) throws IOException {
+  private String getLocalVersion(ClassLoader loader, String groupId, String artifactId) throws IOException {
     String path = "META-INF/maven/" + groupId + "/" + artifactId + "/pom.properties";
     try (InputStream is = loader.getResourceAsStream(path)) {
       return is != null ? getVersion(is) : null;
     }
   }
 
-  private ArtifactVersion getVersion(InputStream is) throws IOException {
+  private String getVersion(InputStream is) throws IOException {
     Properties p = new Properties();
     p.load(is);
-    return new DefaultArtifactVersion(p.getProperty("version"));
+    return p.getProperty("version");
   }
 
 }
