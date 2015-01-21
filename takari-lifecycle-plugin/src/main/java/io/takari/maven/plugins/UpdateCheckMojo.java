@@ -44,15 +44,15 @@ public class UpdateCheckMojo extends AbstractMojo {
   public void execute() throws MojoExecutionException, MojoFailureException {
 
     try {
-      ArtifactVersion local = getLocalVersion(getClass().getClassLoader(), GROUP_ID, ARTIFACT_ID);
-      if (local == null) {
+      ArtifactVersion version = getLocalVersion(getClass().getClassLoader(), GROUP_ID, ARTIFACT_ID);
+      if (version == null) {
         log.debug("Could not determine {} version, skipping update check");
         return; // TODO generate maven pom.properties inside m2e
       }
 
-      ArtifactVersion maven = getLocalVersion(Maven.class.getClassLoader(), "org.apache.maven", "maven-core");
+      ArtifactVersion mavenVersion = getLocalVersion(Maven.class.getClassLoader(), "org.apache.maven", "maven-core");
 
-      Preferences preferences = Preferences.userRoot().node(GROUP_ID.replace('.', '/')).node(ARTIFACT_ID).node(local.toString());
+      Preferences preferences = Preferences.userRoot().node(GROUP_ID.replace('.', '/')).node(ARTIFACT_ID).node(version.toString());
       final long timestamp = System.currentTimeMillis();
       if (timestamp - preferences.getLong(UPDATE_CHECK_TIMESTAMP_PREF, 0) < ONE_WEEK_MS) {
         // only check for update once a week
@@ -63,12 +63,12 @@ public class UpdateCheckMojo extends AbstractMojo {
       preferences.flush();
 
       URLConnection conn = new URL(REMOTE_URL).openConnection();
-      conn.addRequestProperty("User-Agent", "takari-lifecycle/" + local.toString() + "/" + maven);
+      conn.addRequestProperty("User-Agent", "takari-lifecycle/" + version.toString() + "/" + mavenVersion);
 
       try (InputStream is = conn.getInputStream()) {
-        ArtifactVersion remote = getVersion(is);
-        if (local.compareTo(remote) < 0) {
-          log.warn("Takari Lifecycle version {} is outdated, consider upgrade to {}", local, remote);
+        ArtifactVersion latestVersion = getVersion(is);
+        if (version.compareTo(latestVersion) < 0) {
+          log.warn("Takari Lifecycle version {} is outdated, consider upgrade to {}", version, latestVersion);
         }
       }
     } catch (IOException | BackingStoreException ignored) {
