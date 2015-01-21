@@ -15,6 +15,7 @@ import io.takari.incrementalbuild.aggregator.AggregatorBuildContext.AggregateCre
 import io.takari.incrementalbuild.aggregator.AggregatorBuildContext.AggregateInput;
 import io.takari.incrementalbuild.aggregator.AggregatorBuildContext.AggregateOutput;
 import io.takari.maven.plugins.TakariLifecycleMojo;
+import io.takari.maven.plugins.util.PropertiesWriter;
 import io.tesla.proviso.archive.Archiver;
 import io.tesla.proviso.archive.Entry;
 import io.tesla.proviso.archive.source.FileEntry;
@@ -24,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -39,7 +41,7 @@ import org.apache.maven.project.MavenProject;
 public class Jar extends TakariLifecycleMojo {
 
   @Parameter(defaultValue = "${project.build.outputDirectory}")
-  private File classesDirectory;
+  protected File classesDirectory;
 
   @Parameter(defaultValue = "${project.build.finalName}")
   private String finalName;
@@ -94,7 +96,7 @@ public class Jar extends TakariLifecycleMojo {
               sources.add(jarManifestSource(archive.getManifestFile()));
             }
             sources.add(inputsSource(inputs));
-            sources.add(pomPropertiesSource(project));
+            sources.add(singleton(pomPropertiesSource(project)));
             sources.add(jarManifestSource(project));
             archive(output.getResource(), sources);
           }
@@ -201,13 +203,17 @@ public class Jar extends TakariLifecycleMojo {
     return singleton((Entry) new BytesEntry(MANIFEST_PATH, buf.toByteArray()));
   }
 
-  private Iterable<Entry> pomPropertiesSource(MavenProject project) throws IOException {
-    String entryName = PomPropertiesMojo.entryPath(project);
+  protected Entry pomPropertiesSource(MavenProject project) throws IOException {
+    String entryName = String.format("META-INF/maven/%s/%s/pom.properties", project.getGroupId(), project.getArtifactId());
 
     ByteArrayOutputStream buf = new ByteArrayOutputStream();
-    PomPropertiesMojo.writeTo(project, buf);
+    Properties properties = new Properties();
+    properties.setProperty("groupId", project.getGroupId());
+    properties.setProperty("artifactId", project.getArtifactId());
+    properties.setProperty("version", project.getVersion());
+    PropertiesWriter.write(properties, null, buf);
 
-    return singleton((Entry) new BytesEntry(entryName, buf.toByteArray()));
+    return new BytesEntry(entryName, buf.toByteArray());
   }
 
 }
