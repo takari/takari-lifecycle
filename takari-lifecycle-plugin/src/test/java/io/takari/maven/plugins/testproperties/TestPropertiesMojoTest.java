@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -19,10 +20,9 @@ import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.artifact.handler.DefaultArtifactHandler;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.execution.ProjectDependencyGraph;
-import org.apache.maven.plugin.Mojo;
 import org.apache.maven.plugin.MojoExecution;
+import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.ReflectionUtils;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -36,17 +36,22 @@ public class TestPropertiesMojoTest {
   public final TestResources resources = new TestResources();
 
   @Rule
-  public final IncrementalBuildRule mojos = new IncrementalBuildRule() {
-    @Override
-    public Mojo lookupConfiguredMojo(MavenSession session, MojoExecution execution) throws Exception {
-      Mojo mojo = super.lookupConfiguredMojo(session, execution);
-      ArtifactHandler handler = new DefaultArtifactHandler("jar");
-      Artifact workspaceResolver = new DefaultArtifact("g", "a", "v", "s", "t", "c", handler);
-      workspaceResolver.setFile(new File("target/workspaceResolver.jar").getCanonicalFile());
-      ReflectionUtils.setVariableValueInObject(mojo, "workspaceResolver", workspaceResolver);
-      return mojo;
-    }
-  };
+  public final IncrementalBuildRule mojos = new IncrementalBuildRule();
+
+  private MojoExecution newMojoExecution() throws IOException {
+    MojoExecution execution = mojos.newMojoExecution("testProperties");
+    PluginDescriptor pluginDescriptor = execution.getMojoDescriptor().getPluginDescriptor();
+
+    ArtifactHandler handler = new DefaultArtifactHandler("jar");
+    DefaultArtifact workspaceResolver = new DefaultArtifact("io.takari.m2e.workspace", "org.eclipse.m2e.workspace.cli", "1", Artifact.SCOPE_COMPILE, ".jar", null, handler);
+    workspaceResolver.setFile(new File("target/workspaceResolver.jar").getCanonicalFile());
+
+    List<Artifact> pluginArtifacts = new ArrayList<>(pluginDescriptor.getArtifacts());
+    pluginArtifacts.add(workspaceResolver);
+    pluginDescriptor.setArtifacts(pluginArtifacts);
+
+    return execution;
+  }
 
   @Test
   public void testIncremental() throws Exception {
@@ -70,7 +75,7 @@ public class TestPropertiesMojoTest {
       }
     });
 
-    mojos.executeMojo(session, project, "testProperties");
+    mojos.executeMojo(session, project, newMojoExecution());
     mojos.assertBuildOutputs(basedir, "target/test-classes/test.properties", "target/workspacestate.properties");
 
     File testProperties = new File(basedir, "target/test-classes/test.properties");
@@ -82,7 +87,7 @@ public class TestPropertiesMojoTest {
     HashCode testPropertiesSha1 = Files.hash(testProperties, Hashing.sha1());
     HashCode workspaceStateSha1 = Files.hash(workspaceState, Hashing.sha1());
 
-    mojos.executeMojo(session, project, "testProperties");
+    mojos.executeMojo(session, project, newMojoExecution());
     // mojos.assertCarriedOverOutputs(basedir, "target/test-classes/test.properties", "target/workspacestate.properties");
 
     Assert.assertEquals(testPropertiesLastmodified, testProperties.lastModified());
@@ -100,11 +105,11 @@ public class TestPropertiesMojoTest {
     MavenSession session = mojos.newMavenSession(project);
 
     session.getRequest().setOffline(true);
-    mojos.executeMojo(session, project, "testProperties");
+    mojos.executeMojo(session, project, newMojoExecution());
     Assert.assertEquals("true", readProperties(basedir).get("offline"));
 
     session.getRequest().setOffline(false);
-    mojos.executeMojo(session, project, "testProperties");
+    mojos.executeMojo(session, project, newMojoExecution());
     Assert.assertEquals("false", readProperties(basedir).get("offline"));
   }
 
@@ -116,23 +121,25 @@ public class TestPropertiesMojoTest {
     MavenSession session = mojos.newMavenSession(project);
 
     session.getRequest().setUpdateSnapshots(true);
-    mojos.executeMojo(session, project, "testProperties");
+    mojos.executeMojo(session, project, newMojoExecution());
     Assert.assertEquals("true", readProperties(basedir).get("updateSnapshots"));
 
     session.getRequest().setUpdateSnapshots(false);
-    mojos.executeMojo(session, project, "testProperties");
+    mojos.executeMojo(session, project, newMojoExecution());
     Assert.assertEquals("false", readProperties(basedir).get("updateSnapshots"));
   }
 
   @Test
   public void testCustomTestPropertiesFile() throws Exception {
     File basedir = resources.getBasedir("testproperties/custom-test-properties-file");
+    MavenProject project = mojos.readMavenProject(basedir);
+    MavenSession session = mojos.newMavenSession(project);
 
-    mojos.executeMojo(basedir, "testProperties");
+    mojos.executeMojo(session, project, newMojoExecution());
     Assert.assertEquals("value", readProperties(basedir).get("custom"));
 
     TestResources.cp(basedir, "src/test/modified-test.properties", "src/test/test.properties");
-    mojos.executeMojo(basedir, "testProperties");
+    mojos.executeMojo(session, project, newMojoExecution());
     Assert.assertEquals("modified-value", readProperties(basedir).get("custom"));
   }
 
