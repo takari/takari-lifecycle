@@ -34,7 +34,7 @@ public class UpdateCheckMojo extends AbstractMojo {
   public static final String REMOTE_URL = "https://download.takari.io/latest/takari-lifecycle";
 
   public static final String GROUP_ID = "io.takari.maven.plugins";
-  public static final String ARTIFACT_ID = "takari-lifecycle";
+  public static final String ARTIFACT_ID = "takari-lifecycle-plugin";
 
   public static final long ONE_WEEK_MS = TimeUnit.DAYS.toMillis(7);
 
@@ -46,6 +46,7 @@ public class UpdateCheckMojo extends AbstractMojo {
     try {
       ArtifactVersion local = getLocalVersion(getClass().getClassLoader(), GROUP_ID, ARTIFACT_ID);
       if (local == null) {
+        log.debug("Could not determine {} version, skipping update check");
         return; // TODO generate maven pom.properties inside m2e
       }
 
