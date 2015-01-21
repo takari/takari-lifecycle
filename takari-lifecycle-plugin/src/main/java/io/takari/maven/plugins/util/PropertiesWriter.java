@@ -5,7 +5,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package io.takari.maven.plugins.testproperties;
+package io.takari.maven.plugins.util;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -24,7 +24,7 @@ import com.google.common.io.CharStreams;
 /**
  * Helper to strip idiotic timestamp comment from properties files
  */
-class PropertiesWriter {
+public class PropertiesWriter {
   // properties files are documented to use ISO_8859_1 encoding
   private static final Charset ENCODING = Charsets.ISO_8859_1;
 
