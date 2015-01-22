@@ -37,7 +37,7 @@
     <guava.version>18.0</guava.version>
     <mavenPluginPluginVersion>3.3</mavenPluginPluginVersion>
     <m2eWorkspaceVersion>0.3.0</m2eWorkspaceVersion>
-    <pluginTestingVersion>2.1.0</pluginTestingVersion>
+    <pluginTestingVersion>2.2.0-SNAPSHOT</pluginTestingVersion>
   </properties>
 
   <scm>
