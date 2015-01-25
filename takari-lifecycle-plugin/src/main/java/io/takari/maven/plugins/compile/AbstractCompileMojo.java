@@ -211,10 +211,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Incremental(configuration = Configuration.ignore)
   private Artifact pluginArtifact;
 
-  @Parameter(defaultValue = "${project.artifact}", readonly = true)
-  @Incremental(configuration = Configuration.ignore)
-  private Artifact artifact;
-
   @Parameter(defaultValue = "${project.dependencyArtifacts}", readonly = true)
   @Incremental(configuration = Configuration.ignore)
   private Set<Artifact> directDependencies;
@@ -364,8 +360,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
         compiler.skipCompilation();
         log.info("Skipped compilation, all {} sources are up to date", sources.size());
       }
-
-      artifact.setFile(getOutputDirectory());
 
     } catch (IOException e) {
       throw new MojoExecutionException("Could not compile project", e);

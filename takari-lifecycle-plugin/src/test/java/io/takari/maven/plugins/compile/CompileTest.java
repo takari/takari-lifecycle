@@ -65,19 +65,6 @@ public class CompileTest extends AbstractCompileTest {
   }
 
   @Test
-  public void testBasic_projectArtifactFile() throws Exception {
-    File basedir = resources.getBasedir("compile/basic");
-    MavenProject project = mojos.readMavenProject(basedir);
-    mojos.compile(project);
-    Assert.assertEquals(new File(basedir, "target/classes"), project.getArtifact().getFile());
-
-    // no-change rebuild
-    project = mojos.readMavenProject(basedir);
-    mojos.compile(project);
-    Assert.assertEquals(new File(basedir, "target/classes"), project.getArtifact().getFile());
-  }
-
-  @Test
   public void testBasic_debugInfo() throws Exception {
     File basedir;
 
