@@ -229,4 +229,27 @@ public class CompileJdtTest extends AbstractCompileJdtTest {
         , "removed/A.class" //
         , "removed/B.class");
   }
+
+  @Test
+  public void testRemoveSecondaryType() throws Exception {
+    File basedir = mojos.compile(resources.getBasedir("compile-jdt/remove-secondary-type"));
+    File classes = new File(basedir, "target/classes");
+    mojos.assertBuildOutputs(classes //
+        , "secondary/A.class" //
+        , "secondary/B.class" //
+        , "secondary/ASecondary.class");
+
+    cp(basedir, "src/main/java/secondary/A.java-changed", "src/main/java/secondary/A.java");
+    try {
+      mojos.compile(basedir);
+      Assert.fail();
+    } catch (MojoExecutionException expected) {
+      // TODO assert error message
+    }
+    mojos.assertBuildOutputs(classes //
+        , "secondary/A.class");
+    mojos.assertDeletedOutputs(classes //
+        , "secondary/B.class" //
+        , "secondary/ASecondary.class");
+  }
 }

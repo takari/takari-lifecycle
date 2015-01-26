@@ -209,8 +209,12 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     }
 
     // remove stale outputs and rebuild all sources that reference them
-    for (DefaultOutputMetadata output : context.deleteStaleOutputs(false)) {
-      addDependentsOf(getJavaType(output));
+    for (DefaultInputMetadata<File> intput : context.getRegisteredInputs()) {
+      if (intput.getStatus() == ResourceStatus.REMOVED) {
+        for (DefaultOutputMetadata output : context.deleteStaleOutputs(intput)) {
+          addDependentsOf(getJavaType(output));
+        }
+      }
     }
 
     enqueueAffectedSources();
@@ -398,9 +402,9 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       }
     }
 
-    if (!result.hasErrors()) {
-      for (ClassFile classFile : result.getClassFiles()) {
-        try {
+    try {
+      if (!result.hasErrors()) {
+        for (ClassFile classFile : result.getClassFiles()) {
           char[] filename = classFile.fileName();
           int length = filename.length;
           char[] relativeName = new char[length + 6];
@@ -409,11 +413,14 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
           CharOperation.replace(relativeName, '/', File.separatorChar);
           String relativeStringName = new String(relativeName);
           writeClassFile(input, relativeStringName, classFile);
-        } catch (IOException e) {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
         }
       }
+      for (DefaultOutputMetadata output : context.deleteStaleOutputs(input)) {
+        addDependentsOf(getJavaType(output));
+      }
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
     }
     // XXX double check affected sources are recompiled when this source has errors
   }
