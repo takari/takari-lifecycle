@@ -1,6 +1,7 @@
 package io.takari.maven.plugins.compile;
 
 import static io.takari.maven.testing.TestResources.cp;
+import static io.takari.maven.testing.TestResources.touch;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 
 import java.io.File;
@@ -284,5 +285,42 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     }
 
     processAnnotations(basedir, null, null);
+  }
+
+  @Test
+  public void testRecompile() throws Exception {
+
+    /**
+     * <pre>
+     *    Source.java -> Source.class
+     *      \-> GeneratedSource.java -> GeneratedSource.class
+     *                                      ^
+     *                                Client.java -> Client.class 
+     * </pre>
+     */
+
+    File processor = compileAnnotationProcessor();
+    File basedir = resources.getBasedir("compile-proc/proc-recompile");
+
+    Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
+    processors.addChild(newParameter("processor", "processor.ProcessorSiblingBody"));
+    Xpp3Dom options = new Xpp3Dom("annotationProcessorOptions");
+    options.addChild(newParameter("basedir", new File(basedir, "src/main/java").getCanonicalPath()));
+
+    processAnnotations(basedir, Proc.proc, processor, processors, options);
+    mojos.assertBuildOutputs(new File(basedir, "target"), //
+        "classes/proc/Source.class", //
+        "classes/proc/Client.class", //
+        "generated-sources/annotations/proc/GeneratedSource.java", //
+        "classes/proc/GeneratedSource.class");
+
+    cp(basedir, "src/main/java/proc/GeneratedSource.body-changed", "src/main/java/proc/GeneratedSource.body");
+    touch(basedir, "src/main/java/proc/Source.java");
+    processAnnotations(basedir, Proc.proc, processor, processors, options);
+    mojos.assertBuildOutputs(new File(basedir, "target"), //
+        "classes/proc/Source.class", //
+        "classes/proc/Client.class", //
+        "generated-sources/annotations/proc/GeneratedSource.java", //
+        "classes/proc/GeneratedSource.class");
   }
 }

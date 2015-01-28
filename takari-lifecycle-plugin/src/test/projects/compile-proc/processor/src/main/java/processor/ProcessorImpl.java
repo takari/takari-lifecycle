@@ -26,15 +26,16 @@ abstract class ProcessorImpl extends AbstractProcessor {
         TypeElement cls = (TypeElement) element;
         PackageElement pkg = (PackageElement) cls.getEnclosingElement();
         String clsSimpleName = prefix + cls.getSimpleName();
-        String clsQualifiedName = pkg.getQualifiedName() + "." + clsSimpleName;
+        String pkgName = pkg.getQualifiedName().toString();
+        String clsQualifiedName = pkgName + "." + clsSimpleName;
         JavaFileObject sourceFile =
             processingEnv.getFiler().createSourceFile(clsQualifiedName, element);
         BufferedWriter w = new BufferedWriter(sourceFile.openWriter());
         try {
-          w.append("package ").append(pkg.getQualifiedName()).append(";");
+          w.append("package ").append(pkgName).append(";");
           w.newLine();
           w.append("public class ").append(clsSimpleName);
-          appendBody(w);
+          appendBody(pkgName, clsSimpleName, w);
         } finally {
           w.close();
         }
@@ -45,7 +46,7 @@ abstract class ProcessorImpl extends AbstractProcessor {
     return false; // not "claimed" so multiple processors can be tested
   }
 
-  protected void appendBody(BufferedWriter w) throws IOException {
+  protected void appendBody(String pkgName, String clsName, BufferedWriter w) throws IOException {
     w.append(" { }");
   }
 }
