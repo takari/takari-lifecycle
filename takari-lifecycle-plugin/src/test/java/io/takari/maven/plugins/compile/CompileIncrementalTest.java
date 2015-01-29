@@ -189,4 +189,22 @@ public class CompileIncrementalTest extends AbstractCompileTest {
     mojos.compile(projectA);
     mojos.assertDeletedOutputs(moduleA, "target/classes/moving/Moving.class");
   }
+
+  @Test
+  public void testReferenceNested() throws Exception {
+    File basedir = compile("compile-incremental/reference-nested");
+    File classes = new File(basedir, "target/classes");
+    mojos.assertBuildOutputs(classes, "nested/A.class", "nested/Asecondary.class", "nested/B.class");
+
+    cp(basedir, "src/main/java/nested/A.java-changed", "src/main/java/nested/A.java");
+    touch(basedir, "src/main/java/nested/B.java");
+    try {
+      compile(basedir);
+      Assert.fail();
+    } catch (MojoExecutionException e) {
+      // TODO check error message
+    }
+    mojos.assertCarriedOverOutputs(classes, "nested/A.class", "nested/Asecondary.class", "nested/B.class");
+    mojos.assertDeletedOutputs(basedir, "nested/Asecondary.class", "nested/B.class");
+  }
 }
