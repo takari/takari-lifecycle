@@ -4,15 +4,11 @@ import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 import io.takari.maven.testing.TestResources;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
@@ -143,19 +139,24 @@ public class TestPropertiesMojoTest {
     Assert.assertEquals("modified-value", readProperties(basedir).get("custom"));
   }
 
+  @Test
+  public void testWorkspaceStateIncludesThisProjectJarArtifact() throws Exception {
+    File basedir = resources.getBasedir();
+    MavenProject project = mojos.readMavenProject(basedir);
+    MavenSession session = mojos.newMavenSession(project);
+
+    mojos.executeMojo(session, project, newMojoExecution());
+    Map<String, String> state = TestResources.readProperties(basedir, "target/workspacestate.properties");
+
+    Assert.assertEquals(new File(basedir, "pom.xml").getCanonicalPath(), state.get("test:test:pom::1"));
+    Assert.assertEquals(new File(basedir, "target/classes").getCanonicalPath(), state.get("test:test:jar::1"));
+  }
+
   private HashCode sha1(File basedir, String path) throws IOException {
     return Files.hash(new File(basedir, path), Hashing.sha1());
   }
 
   private Map<String, String> readProperties(File basedir) throws IOException {
-    Properties properties = new Properties();
-    try (InputStream is = new FileInputStream(new File(basedir, "target/test-classes/test.properties"))) {
-      properties.load(is);
-    }
-    Map<String, String> result = new HashMap<>();
-    for (String key : properties.stringPropertyNames()) {
-      result.put(key, properties.getProperty(key));
-    }
-    return result;
+    return TestResources.readProperties(basedir, "target/test-classes/test.properties");
   }
 }
