@@ -29,15 +29,15 @@
   </prerequisites>
 
   <properties>
-    <mavenVersion>3.2.6-SNAPSHOT</mavenVersion>
-    <sisuVersion>0.3.0.M1</sisuVersion>
-    <sisuGuiceVersion>3.2.3</sisuGuiceVersion>
-    <aetherVersion>1.0.0.v20140518</aetherVersion>
+    <mavenVersion>3.3.1</mavenVersion>
+    <sisuVersion>0.3.0</sisuVersion>
+    <sisuGuiceVersion>3.2.5</sisuGuiceVersion>
+    <aetherVersion>1.0.2.v20150114</aetherVersion>
     <incrementalbuild.version>0.11.0-SNAPSHOT</incrementalbuild.version>
     <guava.version>18.0</guava.version>
     <mavenPluginPluginVersion>3.3</mavenPluginPluginVersion>
     <m2eWorkspaceVersion>0.3.0</m2eWorkspaceVersion>
-    <pluginTestingVersion>2.2.0-SNAPSHOT</pluginTestingVersion>
+    <pluginTestingVersion>2.2.0</pluginTestingVersion>
   </properties>
 
   <scm>
