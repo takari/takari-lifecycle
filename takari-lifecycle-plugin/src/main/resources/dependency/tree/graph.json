@@ -1,0 +1,318 @@
+[
+  {
+    "title": "io.tesla.maven.plugins:tesla-lifecycle-plugin:tesla-plugin:1.0.1-SNAPSHOT",
+    "expanded": true,
+    "children": [
+      {
+        "title": "org.apache.maven:maven-plugin-api:jar:3.1.1 (provided)",
+        "expanded": true,
+        "children": [
+          {
+            "title": "org.apache.maven:maven-model:jar:3.1.1 (provided)",
+            "expanded": true,
+            "children": [
+              {
+                "title": "org.codehaus.plexus:plexus-utils:jar:3.0.15 (provided)",
+                "expanded": true
+              }
+            ]
+          },
+          {
+            "title": "org.apache.maven:maven-artifact:jar:3.1.1 (provided)",
+            "expanded": true,
+            "children": [
+              {
+                "title": "org.codehaus.plexus:plexus-utils:jar:3.0.15 (provided)",
+                "expanded": true
+              }
+            ]
+          },
+          {
+            "title": "org.eclipse.sisu:org.eclipse.sisu.plexus:jar:0.0.0.M5 (provided)",
+            "expanded": true,
+            "children": [
+              {
+                "title": "javax.enterprise:cdi-api:jar:1.0 (provided)",
+                "expanded": true,
+                "children": [
+                  {
+                    "title": "javax.annotation:jsr250-api:jar:1.0 (provided)",
+                    "expanded": true
+                  },
+                  {
+                    "title": "javax.inject:javax.inject:jar:1 (provided)",
+                    "expanded": true
+                  }
+                ]
+              },
+              {
+                "title": "com.google.guava:guava:jar:10.0.1 (provided)",
+                "expanded": true
+              },
+              {
+                "title": "org.sonatype.sisu:sisu-guice:jar:no_aop:3.1.0 (provided)",
+                "expanded": true,
+                "children": [
+                  {
+                    "title": "javax.inject:javax.inject:jar:1 (provided)",
+                    "expanded": true
+                  },
+                  {
+                    "title": "aopalliance:aopalliance:jar:1.0 (provided)",
+                    "expanded": true
+                  }
+                ]
+              },
+              {
+                "title": "org.eclipse.sisu:org.eclipse.sisu.inject:jar:0.0.0.M5 (provided)",
+                "expanded": true
+              },
+              {
+                "title": "org.codehaus.plexus:plexus-component-annotations:jar:1.5.5 (provided)",
+                "expanded": true
+              },
+              {
+                "title": "org.codehaus.plexus:plexus-classworlds:jar:2.4 (provided)",
+                "expanded": true
+              },
+              {
+                "title": "org.codehaus.plexus:plexus-utils:jar:2.1 (provided)",
+                "expanded": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "org.apache.maven:maven-core:jar:3.1.1 (provided)",
+        "expanded": true,
+        "children": [
+          {
+            "title": "org.apache.maven:maven-model:jar:3.1.1 (provided)",
+            "expanded": true
+          },
+          {
+            "title": "org.apache.maven:maven-settings:jar:3.1.1 (provided)",
+            "expanded": true,
+            "children": [
+              {
+                "title": "org.codehaus.plexus:plexus-utils:jar:3.0.15 (provided)",
+                "expanded": true
+              }
+            ]
+          },
+          {
+            "title": "org.apache.maven:maven-settings-builder:jar:3.1.1 (provided)",
+            "expanded": true,
+            "children": [
+              {
+                "title": "org.codehaus.plexus:plexus-utils:jar:3.0.15 (provided)",
+                "expanded": true
+              },
+              {
+                "title": "org.codehaus.plexus:plexus-interpolation:jar:1.19 (provided)",
+                "expanded": true
+              },
+              {
+                "title": "org.codehaus.plexus:plexus-component-annotations:jar:1.5.5 (provided)",
+                "expanded": true
+              },
+              {
+                "title": "org.apache.maven:maven-settings:jar:3.1.1 (provided)",
+                "expanded": true
+              },
+              {
+                "title": "org.sonatype.plexus:plexus-sec-dispatcher:jar:1.3 (provided)",
+                "expanded": true
+              }
+            ]
+          },
+          {
+            "title": "org.apache.maven:maven-repository-metadata:jar:3.1.1 (provided)",
+            "expanded": true,
+            "children": [
+              {
+                "title": "org.codehaus.plexus:plexus-utils:jar:3.0.15 (provided)",
+                "expanded": true
+              }
+            ]
+          },
+          {
+            "title": "org.apache.maven:maven-artifact:jar:3.1.1 (provided)",
+            "expanded": true
+          },
+          {
+            "title": "org.apache.maven:maven-plugin-api:jar:3.1.1 (provided)",
+            "expanded": true
+          },
+          {
+            "title": "org.apache.maven:maven-model-builder:jar:3.1.1 (provided)",
+            "expanded": true,
+            "children": [
+              {
+                "title": "org.codehaus.plexus:plexus-utils:jar:3.0.15 (provided)",
+                "expanded": true
+              },
+              {
+                "title": "org.codehaus.plexus:plexus-interpolation:jar:1.19 (provided)",
+                "expanded": true
+              },
+              {
+                "title": "org.codehaus.plexus:plexus-component-annotations:jar:1.5.5 (provided)",
+                "expanded": true
+              },
+              {
+                "title": "org.apache.maven:maven-model:jar:3.1.1 (provided)",
+                "expanded": true
+              }
+            ]
+          },
+          {
+            "title": "org.apache.maven:maven-aether-provider:jar:3.1.1 (provided)",
+            "expanded": true,
+            "children": [
+              {
+                "title": "org.apache.maven:maven-model:jar:3.1.1 (provided)",
+                "expanded": true
+              },
+              {
+                "title": "org.apache.maven:maven-model-builder:jar:3.1.1 (provided)",
+                "expanded": true
+              },
+              {
+                "title": "org.apache.maven:maven-repository-metadata:jar:3.1.1 (provided)",
+                "expanded": true
+              },
+              {
+                "title": "org.eclipse.aether:aether-api:jar:0.9.0.M2 (provided)",
+                "expanded": true
+              },
+              {
+                "title": "org.eclipse.aether:aether-spi:jar:0.9.0.M2 (provided)",
+                "expanded": true,
+                "children": [
+                  {
+                    "title": "org.eclipse.aether:aether-api:jar:0.9.0.M2 (provided)",
+                    "expanded": true
+                  }
+                ]
+              },
+              {
+                "title": "org.eclipse.aether:aether-util:jar:0.9.0.M2 (provided)",
+                "expanded": true
+              },
+              {
+                "title": "org.eclipse.aether:aether-impl:jar:0.9.0.M2 (provided)",
+                "expanded": true
+              },
+              {
+                "title": "org.codehaus.plexus:plexus-component-annotations:jar:1.5.5 (provided)",
+                "expanded": true
+              },
+              {
+                "title": "org.codehaus.plexus:plexus-utils:jar:3.0.15 (provided)",
+                "expanded": true
+              }
+            ]
+          },
+          {
+            "title": "org.eclipse.aether:aether-impl:jar:0.9.0.M2 (provided)",
+            "expanded": true,
+            "children": [
+              {
+                "title": "org.eclipse.aether:aether-api:jar:0.9.0.M2 (provided)",
+                "expanded": true
+              },
+              {
+                "title": "org.eclipse.aether:aether-spi:jar:0.9.0.M2 (provided)",
+                "expanded": true
+              },
+              {
+                "title": "org.eclipse.aether:aether-util:jar:0.9.0.M2 (provided)",
+                "expanded": true
+              }
+            ]
+          },
+          {
+            "title": "org.eclipse.aether:aether-api:jar:0.9.0.M2 (provided)",
+            "expanded": true
+          },
+          {
+            "title": "org.eclipse.aether:aether-util:jar:0.9.0.M2 (provided)",
+            "expanded": true
+          },
+          {
+            "title": "org.eclipse.sisu:org.eclipse.sisu.plexus:jar:0.0.0.M5 (provided)",
+            "expanded": true
+          },
+          {
+            "title": "org.codehaus.plexus:plexus-interpolation:jar:1.19 (provided)",
+            "expanded": true
+          },
+          {
+            "title": "org.codehaus.plexus:plexus-utils:jar:3.0.15 (provided)",
+            "expanded": true
+          },
+          {
+            "title": "org.codehaus.plexus:plexus-classworlds:jar:2.5.1 (provided)",
+            "expanded": true
+          },
+          {
+            "title": "org.codehaus.plexus:plexus-component-annotations:jar:1.5.5 (provided)",
+            "expanded": true
+          },
+          {
+            "title": "org.sonatype.plexus:plexus-sec-dispatcher:jar:1.3 (provided)",
+            "expanded": true,
+            "children": [
+              {
+                "title": "org.codehaus.plexus:plexus-utils:jar:1.5.5 (provided)",
+                "expanded": true
+              },
+              {
+                "title": "org.sonatype.plexus:plexus-cipher:jar:1.4 (provided)",
+                "expanded": true
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "title": "org.eclipse.aether:aether-api:jar:0.9.0.M2 (provided)",
+        "expanded": true
+      },
+      {
+        "title": "org.eclipse.aether:aether-util:jar:0.9.0.M2 (provided)",
+        "expanded": true,
+        "children": [
+          {
+            "title": "org.eclipse.aether:aether-api:jar:0.9.0.M2 (provided)",
+            "expanded": true
+          }
+        ]
+      },
+      {
+        "title": "io.tesla.maven.plugins:tesla-plugin-api:jar:0.0.5 (compile)",
+        "expanded": true
+      },
+      {
+        "title": "com.github.spullara.mustache.java:compiler:jar:0.8.13 (compile)",
+        "expanded": true,
+        "children": [
+          {
+            "title": "com.google.guava:guava:jar:13.0.1 (compile)",
+            "expanded": true
+          }
+        ]
+      },
+      {
+        "title": "com.google.code.gson:gson:jar:2.2.4 (compile)",
+        "expanded": true
+      },
+      {
+        "title": "org.slf4j:slf4j-api:jar:1.7.4 (compile)",
+        "expanded": true
+      }
+    ]
+  }
+]
