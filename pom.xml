@@ -29,7 +29,7 @@
   </prerequisites>
 
   <properties>
-    <mavenVersion>3.2.6-SNAPSHOT</mavenVersion>
+    <mavenVersion>3.3.0-SNAPSHOT</mavenVersion>
     <sisuVersion>0.3.0.M1</sisuVersion>
     <sisuGuiceVersion>3.2.3</sisuGuiceVersion>
     <aetherVersion>1.0.0.v20140518</aetherVersion>
