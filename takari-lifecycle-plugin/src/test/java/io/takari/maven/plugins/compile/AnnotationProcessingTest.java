@@ -3,6 +3,7 @@ package io.takari.maven.plugins.compile;
 import static io.takari.maven.testing.TestResources.cp;
 import static io.takari.maven.testing.TestResources.touch;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
+import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,10 +16,10 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
 import org.junit.Assume;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
 
@@ -33,7 +34,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     List<Object[]> compilers = new ArrayList<Object[]>();
     compilers.add(new Object[] {"javac"});
     compilers.add(new Object[] {"forked-javac"});
-    // compilers.add(new Object[] {"jdt"});
+    compilers.add(new Object[] {"jdt"});
     return compilers;
   }
 
@@ -138,16 +139,31 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
       // expected
     }
     mojos.assertBuildOutputs(new File(basedir, "target"), new String[0]);
-    mojos.assertMessages(basedir, "src/main/java/proc/Source.java", "ERROR Source.java [6:8] test error message");
+
+    ErrorMessage expected = new ErrorMessage(compilerId);
+    expected.setSnippets("jdt", "ERROR Source.java [6:14] test error message"); // TODO why 14?
+    expected.setSnippets("javac", "ERROR Source.java [6:8] test error message");
+
+    mojos.assertMessage(basedir, "src/main/java/proc/Source.java", expected);
   }
 
   @Test
   public void testProc_messages() throws Exception {
     ErrorMessage expected = new ErrorMessage(compilerId);
     expected.setSnippets("javac", "ERROR BrokenSource.java [2:29]", "cannot find symbol");
+    expected.setSnippets("jdt", "ERROR BrokenSource.java [2:29]", "cannot be resolved to a type");
 
     File processor = compileAnnotationProcessor();
     File basedir = resources.getBasedir("compile-proc/proc");
+
+    String[] outputs;
+    if (CompilerJdt.ID.equals(compilerId)) {
+      outputs = new String[] {"classes/proc/Source.class" //
+          , "generated-sources/annotations/proc/BrokenSource.java"};
+    } else {
+      // TODO investigate why javac does not generate classes/proc/Source.class
+      outputs = new String[] {"generated-sources/annotations/proc/BrokenSource.java"};
+    }
 
     Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
     processors.addChild(newParameter("processor", "processor.BrokenProcessor"));
@@ -157,8 +173,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     } catch (MojoExecutionException e) {
       // expected
     }
-    mojos.assertBuildOutputs(new File(basedir, "target"), //
-        "generated-sources/annotations/proc/BrokenSource.java");
+    mojos.assertBuildOutputs(new File(basedir, "target"), outputs);
     assertProcMessage(basedir, "target/generated-sources/annotations/proc/BrokenSource.java", expected);
 
     // no change rebuild should produce the same messages
@@ -168,8 +183,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     } catch (MojoExecutionException e) {
       // expected
     }
-    mojos.assertCarriedOverOutputs(new File(basedir, "target"), //
-        "generated-sources/annotations/proc/BrokenSource.java");
+    mojos.assertCarriedOverOutputs(new File(basedir, "target"), outputs);
     assertProcMessage(basedir, "target/generated-sources/annotations/proc/BrokenSource.java", expected);
   }
 
@@ -216,14 +230,11 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
   }
 
   @Test
-  @Ignore("not supported with javac, see test comment")
   public void testConvertGeneratedSourceToHandwritten() throws Exception {
-    // this test demonstrates the following scenario not currently supported by javac compiler
-    // 1. annotation processor generates java source and the generated source is compiled by javac
+    // this test demonstrates the following scenario
+    // 1. annotation processor generates java source and the generated source is compiled by the compiler
     // 2. annotation is removed from original source and the generated source is moved to a dependency
-    // because javac does not provide originalSource->generatedSource association, it is not possible
-    // to eagerly cleanup generatedSource.java and generatedSource.class, which means old version
-    // of the generatedSource.class will be used during compilation
+    // assert original generatedSource.java and generatedSource.class are deleted
 
     File processor = compileAnnotationProcessor();
     File basedir = resources.getBasedir("compile-proc/proc-incremental-move");
@@ -250,7 +261,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     mojos.assertBuildOutputs(moduleB, "target/classes/proc/GeneratedSource.class");
     processAnnotations(projectA, processor, Proc.proc, processors);
     mojos.assertBuildOutputs(new File(moduleA, "target"), //
-        "classes/proc/Source.class");
+        "classes/proc/Source.class", "classes/modulea/ModuleA.class");
     mojos.assertDeletedOutputs(new File(moduleA, "target"), //
         "generated-sources/annotations/proc/GeneratedSource.java", //
         "classes/proc/GeneratedSource.class");
@@ -270,7 +281,12 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
     basedir = procCompile("compile-proc/missing-type", Proc.only, processors, newParameter("showWarnings", "true"));
     mojos.assertBuildOutputs(generatedSources, "proc/GeneratedSource.java");
-    mojos.assertMessages(basedir, "src/main/java/warn/Source.java", "WARNING Source.java [9:17] package missing does not exist");
+    if (CompilerJdt.ID.equals(compilerId)) {
+      // when explicitly told NOT to compile anything, jdt CORRECTLY does not generate compile message
+      mojos.assertMessages(basedir, "src/main/java/warn/Source.java", new String[0]);
+    } else {
+      mojos.assertMessages(basedir, "src/main/java/warn/Source.java", "WARNING Source.java [9:17] package missing does not exist");
+    }
   }
 
   @Test
@@ -322,5 +338,17 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         "classes/proc/Client.class", //
         "generated-sources/annotations/proc/GeneratedSource.java", //
         "classes/proc/GeneratedSource.class");
+  }
+
+  @Test
+  public void testProp_processorLastRound() throws Exception {
+    Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
+    processors.addChild(newParameter("processor", "processor.ProcessorLastRound"));
+    File basedir = procCompile("compile-proc/proc", Proc.only, processors);
+    mojos.assertBuildOutputs(new File(basedir, "target"), //
+        "classes/types.lst");
+
+    String actual = FileUtils.fileRead(new File(basedir, "target/classes/types.lst"));
+    Assert.assertEquals("proc.Source\n", actual);
   }
 }

@@ -14,13 +14,24 @@ public class CompileAnnotationProcessingTest extends AbstractIntegrationTest {
     super(verifierBuilder);
   }
 
-  @Test
-  public void testBasic() throws Exception {
+  private void test(String compilerId) throws Exception {
     File basedir = resources.getBasedir("compile-proc");
 
-    MavenExecutionResult result = verifier.forProject(basedir).execute("package");
+    MavenExecutionResult result = verifier.forProject(basedir).withCliOption("-DcompilerId=" + compilerId).execute("package");
     result.assertErrorFreeLog();
 
     TestResources.assertFilesPresent(basedir, "project/target/classes/project/MyMyAnnotationClient.class");
   }
+
+  @Test
+  public void testBasicJdt() throws Exception {
+    test("jdt");
+  }
+
+  @Test
+  public void testBasicJavac() throws Exception {
+    test("javac");
+  }
+
+
 }

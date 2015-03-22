@@ -27,6 +27,10 @@
       <version>${project.version}</version>
     </dependency>
   </dependencies>
+  
+  <properties>
+    <compilerId>jdt</compilerId>
+  </properties>
 
   <build>
     <pluginManagement>
@@ -39,10 +43,7 @@
               | annotation processing must be explicitly enabled 
              -->
             <proc>proc</proc>
-            <!--
-              | in-process annotation processing is not supported on java 6  
-             -->
-            <compilerId>forked-javac</compilerId>
+            <compilerId>${compilerId}</compilerId>
           </configuration>
         </plugin>
       </plugins>

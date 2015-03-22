@@ -30,6 +30,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -42,6 +43,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.tools.StandardLocation;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
@@ -94,6 +96,8 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
    * Java source {@link ReferenceCollection}
    */
   private static final String ATTR_REFERENCES = "jdt.references";
+
+  private List<File> dependencies;
 
   private Classpath dependencypath;
 
@@ -200,6 +204,19 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
     EclipseFileManager fileManager = null;
     try {
+      if (getProc() != Proc.none) {
+        fileManager = new EclipseFileManager(null, getSourceEncoding());
+        fileManager.setLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH, dependencies);
+        fileManager.setLocation(StandardLocation.CLASS_OUTPUT, Collections.singleton(getOutputDirectory()));
+        fileManager.setLocation(StandardLocation.SOURCE_OUTPUT, Collections.singleton(getGeneratedSourcesDirectory()));
+
+        ProcessingEnvImpl processingEnv = new ProcessingEnvImpl(context, fileManager, getAnnotationProcessorOptions(), compiler, this);
+
+        compiler.annotationProcessorManager = new AnnotationProcessorManager(processingEnv, fileManager, getAnnotationProcessors());
+        compiler.options.storeAnnotations = true;
+        compiler.options.generateClassFiles = getProc() != Proc.only;
+      }
+
       // TODO optimize full build.
       // there is no need to track processed inputs during full build,
       // which saves memory and GC cycles
@@ -346,6 +363,8 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
   @Override
   public boolean setClasspath(List<File> dependencies, File mainClasses, Set<File> directDependencies) throws IOException {
+    this.dependencies = dependencies;
+
     final List<ClasspathEntry> dependencypath = new ArrayList<ClasspathEntry>();
     final List<File> files = new ArrayList<File>();
 
@@ -521,10 +540,9 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     }
   }
 
-  @Override
-  public void skipCompilation() {
-    // unlike javac, jdt compiler tracks input-output association
-    // this allows BuildContext to automatically carry-over output metadata
+  public void addGeneratedSource(Output<File> generatedSource) {
+    sources.put(generatedSource.getResource(), generatedSource);
+    processedQueue.add(generatedSource.getResource());
   }
 
 }
