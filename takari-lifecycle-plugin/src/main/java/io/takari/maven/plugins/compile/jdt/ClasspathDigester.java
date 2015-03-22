@@ -7,10 +7,6 @@
  */
 package io.takari.maven.plugins.compile.jdt;
 
-import io.takari.incrementalbuild.BuildContext.InputMetadata;
-import io.takari.incrementalbuild.spi.DefaultBuildContext;
-import io.takari.incrementalbuild.spi.DefaultInputMetadata;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Enumeration;
@@ -44,13 +40,10 @@ public class ClasspathDigester {
 
   private static final Map<File, Map<String, byte[]>> CACHE = new ConcurrentHashMap<File, Map<String, byte[]>>();
 
-  private final DefaultBuildContext<?> context;
-
   private final ClassfileDigester digester;
 
   @Inject
-  public ClasspathDigester(DefaultBuildContext<?> context, MavenProject project, MavenSession session, ClassfileDigester digester) {
-    this.context = context;
+  public ClasspathDigester(MavenProject project, MavenSession session, ClassfileDigester digester) {
     this.digester = digester;
 
     // this is only needed for unit tests, but won't hurt in general
@@ -66,13 +59,10 @@ public class ClasspathDigester {
     // scan dependencies backwards to properly deal with duplicate type definitions
     for (int i = dependencies.size() - 1; i >= 0; i--) {
       File file = dependencies.get(i);
-
-      DefaultInputMetadata<ArtifactFile> metadata = context.registerInput(new ArtifactFileHolder(file));
-
       if (file.isFile()) {
-        digest.putAll(digestJar(metadata));
+        digest.putAll(digestJar(file));
       } else if (file.isDirectory()) {
-        digest.putAll(digestDirectory(metadata));
+        digest.putAll(digestDirectory(file));
       } else {
         // happens with reactor dependencies with empty source folders
         continue;
@@ -84,8 +74,7 @@ public class ClasspathDigester {
     return digest;
   }
 
-  private Map<String, byte[]> digestJar(InputMetadata<ArtifactFile> metadata) throws IOException {
-    final File file = metadata.getResource().file;
+  private Map<String, byte[]> digestJar(final File file) throws IOException {
     Map<String, byte[]> digest = CACHE.get(file);
     if (digest == null) {
       digest = new HashMap<String, byte[]>();
@@ -112,8 +101,7 @@ public class ClasspathDigester {
     return digest;
   }
 
-  private Map<String, byte[]> digestDirectory(InputMetadata<ArtifactFile> metadata) throws IOException {
-    final File directory = metadata.getResource().file;
+  private Map<String, byte[]> digestDirectory(final File directory) throws IOException {
     Map<String, byte[]> digest = CACHE.get(directory);
     if (digest == null) {
       digest = new HashMap<String, byte[]>();

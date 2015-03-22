@@ -7,7 +7,7 @@
  */
 package io.takari.maven.plugins.compile.javac;
 
-import io.takari.incrementalbuild.BuildContext;
+import io.takari.incrementalbuild.MessageSeverity;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -210,7 +210,7 @@ public class CompilerJavacForked {
               String path = URLDecoder.decode(st.nextToken(), ENCODING);
               int line = Integer.parseInt(st.nextToken());
               int column = Integer.parseInt(st.nextToken());
-              BuildContext.Severity severity = toSeverity(st.nextToken());
+              MessageSeverity severity = toSeverity(st.nextToken());
               String message = URLDecoder.decode(st.nextToken(), ENCODING);
               callback.addMessage(path, line, column, message, severity);
               break;
@@ -228,14 +228,14 @@ public class CompilerJavacForked {
       }
     }
 
-    private static BuildContext.Severity toSeverity(String token) {
+    private static MessageSeverity toSeverity(String token) {
       switch (token) {
         case "E":
-          return BuildContext.Severity.ERROR;
+          return MessageSeverity.ERROR;
         case "I":
-          return BuildContext.Severity.INFO;
+          return MessageSeverity.INFO;
         default:
-          return BuildContext.Severity.WARNING;
+          return MessageSeverity.WARNING;
       }
     }
   }
@@ -243,7 +243,7 @@ public class CompilerJavacForked {
   public static interface CompilerOutputProcessor {
     public void processOutput(File inputFile, File outputFile);
 
-    public void addMessage(String path, int line, int column, String message, BuildContext.Severity kind);
+    public void addMessage(String path, int line, int column, String message, MessageSeverity kind);
 
     public void addLogMessage(String message);
   }

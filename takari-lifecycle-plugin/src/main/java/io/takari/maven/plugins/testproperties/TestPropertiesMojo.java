@@ -7,11 +7,11 @@
  */
 package io.takari.maven.plugins.testproperties;
 
-import io.takari.incrementalbuild.BuildContext.ResourceStatus;
+import io.takari.incrementalbuild.BasicBuildContext;
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
-import io.takari.incrementalbuild.spi.DefaultBuildContext;
-import io.takari.incrementalbuild.spi.DefaultInputMetadata;
+import io.takari.incrementalbuild.ResourceMetadata;
+import io.takari.incrementalbuild.ResourceStatus;
 import io.takari.maven.plugins.util.PropertiesWriter;
 import io.takari.resources.filtering.ResourcesProcessor;
 
@@ -99,7 +99,7 @@ public class TestPropertiesMojo extends AbstractMojo {
   private ProjectDependencyGraph reactorDependencies;
 
   @Component
-  private DefaultBuildContext<?> context;
+  private BasicBuildContext context;
 
   @Component
   private ResourcesProcessor resourceProcessor;
@@ -114,7 +114,6 @@ public class TestPropertiesMojo extends AbstractMojo {
       }
 
       if (!context.isProcessingRequired()) {
-        context.markOutputsAsUptodate();
         return;
       }
 
@@ -205,7 +204,7 @@ public class TestPropertiesMojo extends AbstractMojo {
   }
 
   private void mergeCustomTestProperties(Properties properties) throws MojoExecutionException {
-    DefaultInputMetadata<File> metadata = context.registerInput(testProperties);
+    ResourceMetadata<File> metadata = context.registerInput(testProperties);
     if (metadata.getStatus() != ResourceStatus.UNMODIFIED) {
       Properties custom = new Properties();
       try (InputStream is = new FileInputStream(metadata.process().getResource())) {

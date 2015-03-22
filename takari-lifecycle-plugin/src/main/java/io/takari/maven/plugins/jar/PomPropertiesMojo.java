@@ -7,7 +7,7 @@
  */
 package io.takari.maven.plugins.jar;
 
-import io.takari.incrementalbuild.BuildContext;
+import io.takari.incrementalbuild.BasicBuildContext;
 import io.tesla.proviso.archive.Entry;
 
 import java.io.File;
@@ -27,7 +27,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 public class PomPropertiesMojo extends Jar {
 
   @Component
-  private BuildContext context;
+  private BasicBuildContext context;
 
   @Override
   public void executeMojo() throws MojoExecutionException {

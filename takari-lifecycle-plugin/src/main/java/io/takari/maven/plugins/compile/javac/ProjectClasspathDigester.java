@@ -7,12 +7,15 @@
  */
 package io.takari.maven.plugins.compile.javac;
 
-import io.takari.incrementalbuild.BuildContext.InputMetadata;
-import io.takari.incrementalbuild.spi.DefaultBuildContext;
+import io.takari.maven.plugins.compile.CompilerBuildContext;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,15 +36,16 @@ import com.google.common.base.Stopwatch;
 @Named
 @MojoExecutionScoped
 public class ProjectClasspathDigester {
+  private static final String ATTR_CLASSPATH_DIGEST = "javac.classpath.digest";
 
   private final Logger log = LoggerFactory.getLogger(getClass());
 
   private static final Map<File, ArtifactFile> CACHE = new ConcurrentHashMap<File, ArtifactFile>();
 
-  private final DefaultBuildContext<?> context;
+  private final CompilerBuildContext context;
 
   @Inject
-  public ProjectClasspathDigester(DefaultBuildContext<?> context, MavenProject project, MavenSession session) {
+  public ProjectClasspathDigester(CompilerBuildContext context, MavenProject project, MavenSession session) {
     this.context = context;
 
     // this is only needed for unit tests, but won't hurt in general
@@ -55,9 +59,8 @@ public class ProjectClasspathDigester {
   public boolean digestDependencies(List<File> dependencies) throws IOException {
     Stopwatch stopwatch = Stopwatch.createStarted();
 
-    boolean changed = false;
-
     Map<File, ArtifactFile> previousArtifacts = getPreviousDependencies();
+    LinkedHashMap<File, ArtifactFile> digest = new LinkedHashMap<>();
 
     for (File dependency : dependencies) {
       ArtifactFile previousArtifact = previousArtifacts.get(dependency);
@@ -74,29 +77,50 @@ public class ProjectClasspathDigester {
         CACHE.put(dependency, artifact);
       }
 
-      context.registerInput(new ArtifactFileHolder(artifact));
+      digest.put(dependency, artifact);
 
-      if (hasChanged(artifact, previousArtifact)) {
-        changed = true;
+      if (equals(artifact, previousArtifact)) {
         log.debug("New or changed classpath entry {}", dependency);
       }
     }
 
-    for (InputMetadata<ArtifactFile> removedArtifact : context.getRemovedInputs(ArtifactFile.class)) {
-      changed = true;
-      log.debug("Removed classpath entry {}", removedArtifact.getResource().file);
+    for (File reviousDependency : previousArtifacts.keySet()) {
+      if (!digest.containsKey(reviousDependency)) {
+        log.debug("Removed classpath entry {}", reviousDependency);
+      }
     }
+
+    boolean changed = !equals(digest.values(), previousArtifacts.values());
+
+    context.setAttribute(ATTR_CLASSPATH_DIGEST, new ArrayList<>(digest.values()));
 
     log.debug("Analyzed {} classpath dependencies ({} ms)", dependencies.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
 
     return changed;
   }
 
-  private boolean hasChanged(ArtifactFile artifact, ArtifactFile previousArtifact) {
-    if (previousArtifact == null) {
-      return true;
+  private boolean equals(Collection<ArtifactFile> a, Collection<ArtifactFile> b) {
+    if (a.size() != b.size()) {
+      return false;
     }
-    return artifact.lastModified != previousArtifact.lastModified || artifact.length != previousArtifact.length;
+    Iterator<ArtifactFile> ia = a.iterator();
+    Iterator<ArtifactFile> ib = b.iterator();
+    while (ia.hasNext()) {
+      if (!equals(ia.next(), ib.next())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private boolean equals(ArtifactFile a, ArtifactFile b) {
+    if (a == null) {
+      return b == null;
+    }
+    if (b == null) {
+      return false;
+    }
+    return a.file.equals(b.file) && a.isFile == b.isFile && a.lastModified == b.lastModified && a.length == b.length;
   }
 
   private ArtifactFile newDirectoryArtifact(File directory, ArtifactFile previousArtifact) {
@@ -131,14 +155,16 @@ public class ProjectClasspathDigester {
     return new ArtifactFile(file, true, file.length(), file.lastModified());
   }
 
+  @SuppressWarnings("unchecked")
   private Map<File, ArtifactFile> getPreviousDependencies() {
-    Map<File, ArtifactFile> result = new HashMap<File, ArtifactFile>();
-
-    for (InputMetadata<ArtifactFile> metadata : context.getRegisteredInputs(ArtifactFile.class)) {
-      ArtifactFile artifact = metadata.getResource();
-      result.put(artifact.file, artifact);
+    LinkedHashMap<File, ArtifactFile> digest = new LinkedHashMap<>();
+    ArrayList<ArtifactFile> artifacts = context.getAttribute(ATTR_CLASSPATH_DIGEST, true, ArrayList.class);
+    if (artifacts == null) {
+      return Collections.emptyMap();
     }
-
-    return result;
+    for (ArtifactFile artifact : artifacts) {
+      digest.put(artifact.file, artifact);
+    }
+    return digest;
   }
 }

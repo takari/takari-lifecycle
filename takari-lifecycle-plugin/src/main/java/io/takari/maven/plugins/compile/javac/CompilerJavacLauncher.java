@@ -7,13 +7,10 @@
  */
 package io.takari.maven.plugins.compile.javac;
 
-import io.takari.incrementalbuild.BuildContext;
-import io.takari.incrementalbuild.BuildContext.Input;
-import io.takari.incrementalbuild.BuildContext.InputMetadata;
-import io.takari.incrementalbuild.BuildContext.Output;
-import io.takari.incrementalbuild.BuildContext.Resource;
-import io.takari.incrementalbuild.BuildContext.Severity;
-import io.takari.incrementalbuild.spi.DefaultBuildContext;
+import io.takari.incrementalbuild.MessageSeverity;
+import io.takari.incrementalbuild.Output;
+import io.takari.incrementalbuild.Resource;
+import io.takari.maven.plugins.compile.CompilerBuildContext;
 import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerConfiguration;
 import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerOutput;
 import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerOutputProcessor;
@@ -47,15 +44,15 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
   private String maxmem;
 
   @Inject
-  public CompilerJavacLauncher(DefaultBuildContext<?> context, ProjectClasspathDigester digester) {
+  public CompilerJavacLauncher(CompilerBuildContext context, ProjectClasspathDigester digester) {
     super(context, digester);
   }
 
   @Override
-  public int compile() throws IOException {
+  public int compile(Map<File, Resource<File>> sources) throws IOException {
     File options = File.createTempFile("javac-forked", ".options", buildDirectory);
     File output = File.createTempFile("javac-forked", ".output", buildDirectory);
-    compile(options, output);
+    compile(options, output, sources);
     // don't delete temp files in case of an exception
     // they maybe useful to debug the problem
     options.delete();
@@ -64,10 +61,8 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
     return sources.size();
   }
 
-  private void compile(File options, File output) throws IOException {
-    context.deleteStaleOutputs(false);
-
-    new CompilerConfiguration(getSourceEncoding(), getCompilerOptions(), getSourceFiles()).write(options);
+  private void compile(File options, File output, final Map<File, Resource<File>> sources) throws IOException {
+    new CompilerConfiguration(getSourceEncoding(), getCompilerOptions(), sources.keySet()).write(options);
 
     // use the same JVM as the one used to run Maven (the "java.home" one)
     String executable = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
@@ -111,36 +106,26 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
       throw e;
     }
 
-    final Map<File, Output<File>> looseOutputs = new HashMap<File, Output<File>>();
-    final Map<File, Input<File>> inputs = new HashMap<File, Input<File>>();
-
-    for (InputMetadata<File> source : sources) {
-      inputs.put(source.getResource(), source.process());
-    }
+    final Map<File, Output<File>> outputs = new HashMap<File, Output<File>>();
 
     CompilerOutput.process(output, new CompilerOutputProcessor() {
       @Override
       public void processOutput(File inputFile, File outputFile) {
-        Input<File> input = inputs.get(inputFile);
-        if (input != null) {
-          input.associateOutput(outputFile);
-        } else {
-          looseOutputs.put(outputFile, context.processOutput(outputFile));
-        }
+        outputs.put(outputFile, context.processOutput(outputFile));
       }
 
       @Override
-      public void addMessage(String path, int line, int column, String message, BuildContext.Severity kind) {
+      public void addMessage(String path, int line, int column, String message, MessageSeverity kind) {
         if (".".equals(path)) {
           // TODO
         } else {
           File file = new File(path);
-          Resource<File> resource = inputs.get(file);
+          Resource<File> resource = sources.get(file);
           if (resource == null) {
-            resource = looseOutputs.get(file);
+            resource = outputs.get(file);
           }
           if (resource != null) {
-            if (isShowWarnings() || kind != Severity.WARNING) {
+            if (isShowWarnings() || kind != MessageSeverity.WARNING) {
               resource.addMessage(line, column, message, kind, null);
             }
           } else {

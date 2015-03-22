@@ -7,11 +7,9 @@
  */
 package io.takari.maven.plugins.compile;
 
-import io.takari.incrementalbuild.BuildContext;
-import io.takari.incrementalbuild.BuildContext.InputMetadata;
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
-import io.takari.incrementalbuild.spi.DefaultBuildContext;
+import io.takari.incrementalbuild.ResourceMetadata;
 import io.takari.maven.plugins.compile.javac.CompilerJavacLauncher;
 import io.takari.maven.plugins.exportpackage.ExportPackageMojo;
 
@@ -219,14 +217,14 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   private Map<String, AbstractCompiler> compilers;
 
   @Component
-  private DefaultBuildContext context;
+  private CompilerBuildContext context;
 
   public Charset getSourceEncoding() {
     return encoding == null ? null : Charset.forName(encoding);
   }
 
-  private List<InputMetadata<File>> getSources() throws IOException, MojoExecutionException {
-    List<InputMetadata<File>> sources = new ArrayList<InputMetadata<File>>();
+  private List<ResourceMetadata<File>> getSources() throws IOException, MojoExecutionException {
+    List<ResourceMetadata<File>> sources = new ArrayList<ResourceMetadata<File>>();
     StringBuilder msg = new StringBuilder();
     for (String sourcePath : getSourceRoots()) {
       File sourceRoot = new File(sourcePath);
@@ -252,7 +250,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       }
       Set<String> excludes = getExcludes();
       int sourceCount = 0;
-      for (InputMetadata<File> source : ((BuildContext) context).registerInputs(sourceRoot, includes, excludes)) {
+      for (ResourceMetadata<File> source : context.registerSources(sourceRoot, includes, excludes)) {
         sources.add(source);
         sourceCount++;
       }
@@ -309,7 +307,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     }
 
     try {
-      final List<InputMetadata<File>> sources = getSources();
+      final List<ResourceMetadata<File>> sources = getSources();
       if (sources.isEmpty()) {
         log.info("No sources, skipping compilation");
         return;
@@ -348,17 +346,16 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
         ((CompilerJavacLauncher) compiler).setMaxmem(maxmem);
       }
 
-      boolean classpathChanged = compiler.setClasspath(classpath, getMainOutputDirectory(), getDirectDependencies());
       boolean sourcesChanged = compiler.setSources(sources);
+      boolean classpathChanged = compiler.setClasspath(classpath, getMainOutputDirectory(), getDirectDependencies());
 
       if (sourcesChanged || classpathChanged) {
         log.info("Compiling {} sources to {}", sources.size(), getOutputDirectory());
         int compiled = compiler.compile();
         log.info("Compiled {} out of {} sources ({} ms)", compiled, sources.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
       } else {
-        // TODO this should be something like "cleanup after skipped compilation"
-        compiler.skipCompilation();
         log.info("Skipped compilation, all {} sources are up to date", sources.size());
+        context.markUptodateExecution();
       }
 
     } catch (IOException e) {

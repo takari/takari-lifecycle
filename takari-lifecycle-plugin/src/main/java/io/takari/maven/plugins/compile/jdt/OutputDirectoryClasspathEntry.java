@@ -12,6 +12,7 @@ import io.takari.maven.plugins.compile.jdt.classpath.ClasspathEntry;
 import io.takari.maven.plugins.compile.jdt.classpath.MutableClasspathEntry;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
@@ -20,10 +21,14 @@ class OutputDirectoryClasspathEntry implements ClasspathEntry, MutableClasspathE
 
   private final File directory;
 
+  private final Collection<File> staleOutputs;
+
   private ClasspathDirectory delegate;
 
-  public OutputDirectoryClasspathEntry(File directory) {
+
+  public OutputDirectoryClasspathEntry(File directory, Collection<File> staleOutputs) {
     this.directory = directory;
+    this.staleOutputs = staleOutputs;
 
     this.delegate = ClasspathDirectory.create(directory);
   }
@@ -35,7 +40,14 @@ class OutputDirectoryClasspathEntry implements ClasspathEntry, MutableClasspathE
 
   @Override
   public NameEnvironmentAnswer findType(String packageName, String binaryFileName) {
-    return delegate.findType(packageName, binaryFileName, null);
+    try {
+      if (!staleOutputs.contains(delegate.getFile(packageName, binaryFileName))) {
+        return delegate.findType(packageName, binaryFileName, null);
+      }
+    } catch (IOException e) {
+      // treat as if class file is missing
+    }
+    return null;
   }
 
   @Override

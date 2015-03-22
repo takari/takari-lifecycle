@@ -109,4 +109,9 @@ public class ClasspathDirectory extends DependencyClasspathEntry implements Clas
 
     return new ClasspathDirectory(directory, packages, exportedPackages);
   }
+
+  public File getFile(String packageName, String binaryFileName) throws IOException {
+    String qualifiedFileName = packageName + "/" + binaryFileName;
+    return new File(file, qualifiedFileName).getCanonicalFile();
+  }
 }

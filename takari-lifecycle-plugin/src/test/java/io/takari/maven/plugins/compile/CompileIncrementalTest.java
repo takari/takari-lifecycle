@@ -9,10 +9,8 @@ import java.io.File;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
-
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
 
 public class CompileIncrementalTest extends AbstractCompileTest {
 
@@ -40,24 +38,9 @@ public class CompileIncrementalTest extends AbstractCompileTest {
   }
 
   @Test
-  public void testBasic_deletedOrModifiedClass() throws Exception {
-    File basedir = compile("compile-incremental/basic");
-    File classes = new File(basedir, "target/classes");
-    mojos.assertBuildOutputs(classes, "basic/Basic.class");
-
-    final File file = new File(classes, "basic/Basic.class");
-
-    Assert.assertTrue(file.delete());
-    compile(basedir);
-    mojos.assertBuildOutputs(classes, "basic/Basic.class");
-
-    Files.write("test", file, Charsets.UTF_8);
-    compile(basedir);
-    mojos.assertBuildOutputs(classes, "basic/Basic.class");
-  }
-
-  @Test
   public void testBasic_identicalClassfile() throws Exception {
+    Assume.assumeTrue("jdt".equals(compilerId)); // javac eagerly deletes and recreates all outputs
+
     File basedir = compile("compile-incremental/basic");
     File classes = new File(basedir, "target/classes");
     mojos.assertBuildOutputs(classes, "basic/Basic.class");
@@ -204,7 +187,6 @@ public class CompileIncrementalTest extends AbstractCompileTest {
     } catch (MojoExecutionException e) {
       // TODO check error message
     }
-    mojos.assertCarriedOverOutputs(classes, "nested/A.class", "nested/Asecondary.class", "nested/B.class");
-    mojos.assertDeletedOutputs(basedir, "nested/Asecondary.class", "nested/B.class");
+    Assert.assertFalse(new File(classes, "nested/B.class").exists());
   }
 }

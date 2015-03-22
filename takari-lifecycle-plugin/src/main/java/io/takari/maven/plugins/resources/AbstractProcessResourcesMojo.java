@@ -7,9 +7,9 @@
  */
 package io.takari.maven.plugins.resources;
 
+import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
-import io.takari.incrementalbuild.spi.DefaultBuildContext;
 import io.takari.maven.plugins.TakariLifecycleMojo;
 import io.takari.resources.filtering.ResourcesProcessor;
 
@@ -53,7 +53,7 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
   private ResourcesProcessor processor;
 
   @Component
-  private DefaultBuildContext<?> context;
+  private BuildContext context;
 
   protected void process(List<Resource> resources, File outputDirectory) throws MojoExecutionException {
     for (Resource resource : resources) {

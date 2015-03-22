@@ -1,9 +1,9 @@
 package io.takari.maven.plugins.exportpackage;
 
-import io.takari.incrementalbuild.BuildContext.InputMetadata;
-import io.takari.incrementalbuild.BuildContext.ResourceStatus;
-import io.takari.incrementalbuild.spi.DefaultBuildContext;
-import io.takari.incrementalbuild.spi.DefaultOutput;
+import io.takari.incrementalbuild.Output;
+import io.takari.incrementalbuild.aggregator.AggregateOutput;
+import io.takari.incrementalbuild.aggregator.AggregatorBuildContext;
+import io.takari.incrementalbuild.aggregator.MetadataAggregator;
 import io.takari.maven.plugins.TakariLifecycleMojo;
 
 import java.io.BufferedWriter;
@@ -11,9 +11,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 import javax.inject.Inject;
 
@@ -45,7 +46,7 @@ public class ExportPackageMojo extends TakariLifecycleMojo {
   private Set<String> exportExcludes = ImmutableSet.of("**/internal/**", "**/impl/**");
 
   @Inject
-  private DefaultBuildContext<?> buildContext;
+  private AggregatorBuildContext buildContext;
 
   @Override
   protected void executeMojo() throws MojoExecutionException {
@@ -57,30 +58,25 @@ public class ExportPackageMojo extends TakariLifecycleMojo {
   }
 
   private void generateOutput() throws IOException {
-    buildContext.registerAndProcessInputs(classesDirectory, getIncludes(), exportExcludes);
-    boolean processingRequired = buildContext.isEscalated();
-    Set<String> exportedPackages = new TreeSet<>();
-    for (InputMetadata<File> input : buildContext.getRegisteredInputs()) {
-      ResourceStatus status = input.getStatus();
-      if (status == ResourceStatus.NEW || status == ResourceStatus.REMOVED) {
-        processingRequired = true;
+    AggregateOutput output = buildContext.registerOutput(outputFile, new MetadataAggregator<String>() {
+      @Override
+      public Map<String, String> glean(File input) throws IOException {
+        return Collections.singletonMap(getPackageName(classesDirectory, input), null);
       }
-      if (status != ResourceStatus.REMOVED) {
-        exportedPackages.add(getPackageName(classesDirectory, input.getResource()));
-      }
-    }
-    processingRequired = processingRequired || !outputFile.isFile();
-    if (processingRequired) {
-      DefaultOutput output = buildContext.processOutput(outputFile);
-      try (BufferedWriter w = new BufferedWriter(new OutputStreamWriter(output.newOutputStream(), Charsets.UTF_8))) {
-        for (String exportedPackage : exportedPackages) {
-          w.write(exportedPackage);
-          w.write(EOL);
+
+      @Override
+      public void aggregate(Output<File> output, Map<String, String> metadata) throws IOException {
+        Set<String> exportedPackages = metadata.keySet();
+        try (BufferedWriter w = new BufferedWriter(new OutputStreamWriter(output.newOutputStream(), Charsets.UTF_8))) {
+          for (String exportedPackage : exportedPackages) {
+            w.write(exportedPackage);
+            w.write(EOL);
+          }
         }
       }
-    } else {
-      buildContext.markOutputAsUptodate(outputFile);
-    }
+    });
+    output.registerInputs(classesDirectory, getIncludes(), exportExcludes);
+    output.aggregateIfNecessary();
   }
 
   private Collection<String> getIncludes() {

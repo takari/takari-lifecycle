@@ -7,13 +7,11 @@
  */
 package io.takari.maven.plugins.compile.javac;
 
-import io.takari.incrementalbuild.BuildContext;
-import io.takari.incrementalbuild.BuildContext.Input;
-import io.takari.incrementalbuild.BuildContext.Output;
-import io.takari.incrementalbuild.BuildContext.Resource;
-import io.takari.incrementalbuild.BuildContext.Severity;
-import io.takari.incrementalbuild.spi.DefaultBuildContext;
+import io.takari.incrementalbuild.MessageSeverity;
+import io.takari.incrementalbuild.Output;
+import io.takari.incrementalbuild.Resource;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
+import io.takari.maven.plugins.compile.CompilerBuildContext;
 
 import java.io.File;
 import java.io.IOException;
@@ -108,12 +106,12 @@ public class CompilerJavac extends AbstractCompilerJavac {
   };
 
   @Inject
-  public CompilerJavac(DefaultBuildContext<?> context, ProjectClasspathDigester digester) {
+  public CompilerJavac(CompilerBuildContext context, ProjectClasspathDigester digester) {
     super(context, digester);
   }
 
   @Override
-  public int compile() throws MojoExecutionException, IOException {
+  public int compile(Map<File, Resource<File>> sources) throws MojoExecutionException, IOException {
     // java 6 limitations
     // - there is severe performance penalty using new JavaCompiler instance
     // - the same JavaCompiler cannot be used concurrently
@@ -135,7 +133,7 @@ public class CompilerJavac extends AbstractCompilerJavac {
     final JavaCompiler compiler = factory.acquire();
     final StandardJavaFileManager javaFileManager = compiler.getStandardFileManager(null, null, getSourceEncoding());
     try {
-      compile(compiler, javaFileManager);
+      compile(compiler, javaFileManager, sources);
     } finally {
       javaFileManager.flush();
       javaFileManager.close();
@@ -145,30 +143,17 @@ public class CompilerJavac extends AbstractCompilerJavac {
     return sources.size();
   }
 
-  private void compile(JavaCompiler compiler, StandardJavaFileManager javaFileManager) throws IOException {
-    context.deleteStaleOutputs(false);
-
+  private void compile(JavaCompiler compiler, StandardJavaFileManager javaFileManager, Map<File, Resource<File>> sources) throws IOException {
     final DiagnosticCollector<JavaFileObject> diagnosticCollector = new DiagnosticCollector<JavaFileObject>();
-    final Iterable<? extends JavaFileObject> javaSources = javaFileManager.getJavaFileObjectsFromFiles(getSourceFiles());
+    final Iterable<? extends JavaFileObject> javaSources = javaFileManager.getJavaFileObjectsFromFiles(sources.keySet());
 
-    final Map<File, Output<File>> looseOutputs = new HashMap<File, Output<File>>();
-    final Map<File, Input<File>> inputs = new HashMap<File, Input<File>>();
-
-    for (JavaFileObject source : javaSources) {
-      File sourceFile = FileObjects.toFile(source);
-      inputs.put(sourceFile, context.registerInput(sourceFile).process());
-    }
+    final Map<File, Output<File>> outputs = new HashMap<File, Output<File>>();
 
     final Iterable<String> options = getCompilerOptions();
     final RecordingJavaFileManager recordingFileManager = new RecordingJavaFileManager(javaFileManager) {
       @Override
       protected void record(File inputFile, File outputFile) {
-        Input<File> input = inputs.get(inputFile);
-        if (input != null) {
-          input.associateOutput(outputFile);
-        } else {
-          looseOutputs.put(outputFile, context.processOutput(outputFile));
-        }
+        outputs.put(outputFile, context.processOutput(outputFile));
       }
     };
 
@@ -184,16 +169,16 @@ public class CompilerJavac extends AbstractCompilerJavac {
 
     for (Diagnostic<? extends JavaFileObject> diagnostic : diagnosticCollector.getDiagnostics()) {
       final JavaFileObject source = diagnostic.getSource();
-      final Severity severity = toSeverity(diagnostic.getKind(), success);
+      final MessageSeverity severity = toSeverity(diagnostic.getKind(), success);
       final String message = diagnostic.getMessage(null);
 
-      if (isShowWarnings() || severity != Severity.WARNING) {
+      if (isShowWarnings() || severity != MessageSeverity.WARNING) {
         if (source != null) {
           File file = FileObjects.toFile(source);
           if (file != null) {
-            Resource<File> resource = inputs.get(file);
+            Resource<File> resource = sources.get(file);
             if (resource == null) {
-              resource = looseOutputs.get(file);
+              resource = outputs.get(file);
             }
             if (resource != null) {
               resource.addMessage((int) diagnostic.getLineNumber(), (int) diagnostic.getColumnNumber(), message, severity, null);
@@ -204,15 +189,13 @@ public class CompilerJavac extends AbstractCompilerJavac {
             log.warn("Unsupported compiler message on {} resource {}: {}", source.getKind(), source.toUri(), message);
           }
         } else {
-          Input<File> input = context.registerInput(getPom()).process();
-          // TODO execution line/column
-          input.addMessage(0, 0, message, severity, null);
+          context.addPomMessage(message, severity, null);
         }
       }
     }
   }
 
-  private BuildContext.Severity toSeverity(Diagnostic.Kind kind, boolean success) {
+  private MessageSeverity toSeverity(Diagnostic.Kind kind, boolean success) {
     // javac appears to report errors even when compilation was success.
     // I was only able to reproduce this with annotation processing on java 6
     // for consistency with forked mode, downgrade errors to warning here too
@@ -220,16 +203,16 @@ public class CompilerJavac extends AbstractCompilerJavac {
       kind = Kind.WARNING;
     }
 
-    BuildContext.Severity severity;
+    MessageSeverity severity;
     switch (kind) {
       case ERROR:
-        severity = BuildContext.Severity.ERROR;
+        severity = MessageSeverity.ERROR;
         break;
       case NOTE:
-        severity = BuildContext.Severity.INFO;
+        severity = MessageSeverity.INFO;
         break;
       default:
-        severity = BuildContext.Severity.WARNING;
+        severity = MessageSeverity.WARNING;
         break;
     }
 

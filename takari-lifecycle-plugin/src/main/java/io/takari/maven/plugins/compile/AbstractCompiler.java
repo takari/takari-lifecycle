@@ -7,8 +7,7 @@
  */
 package io.takari.maven.plugins.compile;
 
-import io.takari.incrementalbuild.BuildContext.InputMetadata;
-import io.takari.incrementalbuild.spi.DefaultBuildContext;
+import io.takari.incrementalbuild.ResourceMetadata;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.AccessRulesViolation;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Debug;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
@@ -28,7 +27,7 @@ public abstract class AbstractCompiler {
 
   protected final Logger log = LoggerFactory.getLogger(getClass());
 
-  protected final DefaultBuildContext<?> context;
+  protected final CompilerBuildContext context;
 
   private File outputDirectory;
 
@@ -60,7 +59,7 @@ public abstract class AbstractCompiler {
 
   private AccessRulesViolation privatePackageReference;
 
-  protected AbstractCompiler(DefaultBuildContext<?> context) {
+  protected AbstractCompiler(CompilerBuildContext context) {
     this.context = context;
   }
 
@@ -186,9 +185,8 @@ public abstract class AbstractCompiler {
 
   public abstract boolean setClasspath(List<File> dependencies, File mainClasses, Set<File> directDependencies) throws IOException;
 
-  public abstract boolean setSources(List<InputMetadata<File>> sources) throws IOException;
+  public abstract boolean setSources(List<ResourceMetadata<File>> sources) throws IOException;
 
   public abstract int compile() throws MojoExecutionException, IOException;
 
-  public abstract void skipCompilation();
 }
