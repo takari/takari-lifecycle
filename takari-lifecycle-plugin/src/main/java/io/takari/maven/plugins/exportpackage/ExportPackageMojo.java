@@ -1,8 +1,8 @@
 package io.takari.maven.plugins.exportpackage;
 
 import io.takari.incrementalbuild.Output;
-import io.takari.incrementalbuild.aggregator.AggregateOutput;
 import io.takari.incrementalbuild.aggregator.AggregatorBuildContext;
+import io.takari.incrementalbuild.aggregator.InputSet;
 import io.takari.incrementalbuild.aggregator.MetadataAggregator;
 import io.takari.maven.plugins.TakariLifecycleMojo;
 
@@ -58,7 +58,9 @@ public class ExportPackageMojo extends TakariLifecycleMojo {
   }
 
   private void generateOutput() throws IOException {
-    AggregateOutput output = buildContext.registerOutput(outputFile, new MetadataAggregator<String>() {
+    InputSet output = buildContext.newInputSet();
+    output.addInputs(classesDirectory, getIncludes(), exportExcludes);
+    output.aggregateIfNecessary(outputFile, new MetadataAggregator<String>() {
       @Override
       public Map<String, String> glean(File input) throws IOException {
         return Collections.singletonMap(getPackageName(classesDirectory, input), null);
@@ -75,8 +77,6 @@ public class ExportPackageMojo extends TakariLifecycleMojo {
         }
       }
     });
-    output.registerInputs(classesDirectory, getIncludes(), exportExcludes);
-    output.aggregateIfNecessary();
   }
 
   private Collection<String> getIncludes() {

@@ -10,9 +10,9 @@ package io.takari.maven.plugins.jar;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import io.takari.incrementalbuild.Output;
-import io.takari.incrementalbuild.aggregator.AggregateOutput;
 import io.takari.incrementalbuild.aggregator.AggregatorBuildContext;
 import io.takari.incrementalbuild.aggregator.InputAggregator;
+import io.takari.incrementalbuild.aggregator.InputSet;
 import io.takari.maven.plugins.TakariLifecycleMojo;
 import io.takari.maven.plugins.util.PropertiesWriter;
 import io.tesla.proviso.archive.Archiver;
@@ -80,29 +80,29 @@ public class Jar extends TakariLifecycleMojo {
 
     if (mainJar) {
       File jar = new File(outputDirectory, String.format("%s.jar", finalName));
-      AggregateOutput registeredOutput = buildContext.registerOutput(jar, new InputAggregator() {
-        @Override
-        public void aggregate(Output<File> output, Iterable<File> inputs) throws IOException {
-          logger.info("Building main JAR.");
-
-          List<Iterable<Entry>> sources = new ArrayList<>();
-          if (archive != null && archive.getManifestFile() != null) {
-            sources.add(jarManifestSource(archive.getManifestFile()));
-          }
-          sources.add(inputsSource(classesDirectory, inputs));
-          sources.add(singleton(pomPropertiesSource(project)));
-          sources.add(jarManifestSource(project));
-          archive(output.getResource(), sources);
-        }
-      });
+      InputSet registeredOutput = buildContext.newInputSet();
       try {
         if (classesDirectory.isDirectory()) {
-          registeredOutput.registerInputs(classesDirectory, null, null);
+          registeredOutput.addInputs(classesDirectory, null, null);
         } else {
           logger.warn("Main classes directory {} does not exist", classesDirectory);
         }
         // XXX this does not detect changes in archive#manifestFile.
-        registeredOutput.aggregateIfNecessary();
+        registeredOutput.aggregateIfNecessary(jar, new InputAggregator() {
+          @Override
+          public void aggregate(Output<File> output, Iterable<File> inputs) throws IOException {
+            logger.info("Building main JAR.");
+
+            List<Iterable<Entry>> sources = new ArrayList<>();
+            if (archive != null && archive.getManifestFile() != null) {
+              sources.add(jarManifestSource(archive.getManifestFile()));
+            }
+            sources.add(inputsSource(classesDirectory, inputs));
+            sources.add(singleton(pomPropertiesSource(project)));
+            sources.add(jarManifestSource(project));
+            archive(output.getResource(), sources);
+          }
+        });
         project.getArtifact().setFile(jar);
       } catch (IOException e) {
         throw new MojoExecutionException(e.getMessage(), e);
@@ -112,22 +112,22 @@ public class Jar extends TakariLifecycleMojo {
     if (sourceJar) {
       final Multimap<File, File> sources = HashMultimap.create();
       File sourceJar = new File(outputDirectory, String.format("%s-%s.jar", finalName, "sources"));
-      AggregateOutput registeredOutput = buildContext.registerOutput(sourceJar, new InputAggregator() {
-        @Override
-        public void aggregate(Output<File> output, Iterable<File> inputs) throws IOException {
-          logger.info("Building source Jar.");
-
-          archive(output.getResource(), asList(inputsSource(sources), jarManifestSource(project)));
-        }
-      });
+      InputSet registeredOutput = buildContext.newInputSet();
       try {
         for (String sourceRoot : project.getCompileSourceRoots()) {
           File dir = new File(sourceRoot);
           if (dir.isDirectory()) {
-            sources.putAll(dir, registeredOutput.registerInputs(new File(sourceRoot), null, null));
+            sources.putAll(dir, registeredOutput.addInputs(new File(sourceRoot), null, null));
           }
         }
-        registeredOutput.aggregateIfNecessary();
+        registeredOutput.aggregateIfNecessary(sourceJar, new InputAggregator() {
+          @Override
+          public void aggregate(Output<File> output, Iterable<File> inputs) throws IOException {
+            logger.info("Building source Jar.");
+
+            archive(output.getResource(), asList(inputsSource(sources), jarManifestSource(project)));
+          }
+        });
         projectHelper.attachArtifact(project, "jar", "sources", sourceJar);
       } catch (IOException e) {
         throw new MojoExecutionException(e.getMessage(), e);
@@ -136,21 +136,21 @@ public class Jar extends TakariLifecycleMojo {
 
     if (testJar && testClassesDirectory.isDirectory()) {
       File testJar = new File(outputDirectory, String.format("%s-%s.jar", finalName, "tests"));
-      AggregateOutput registeredOutput = buildContext.registerOutput(testJar, new InputAggregator() {
-        @Override
-        public void aggregate(Output<File> output, Iterable<File> inputs) throws IOException {
-          logger.info("Building test JAR.");
-
-          archive(output.getResource(), asList(inputsSource(testClassesDirectory, inputs), jarManifestSource(project)));
-        }
-      });
+      InputSet registeredOutput = buildContext.newInputSet();
       try {
         if (testClassesDirectory.isDirectory()) {
-          registeredOutput.registerInputs(testClassesDirectory, null, null);
+          registeredOutput.addInputs(testClassesDirectory, null, null);
         } else {
           logger.warn("Test classes directory {} does not exist", classesDirectory);
         }
-        registeredOutput.aggregateIfNecessary();
+        registeredOutput.aggregateIfNecessary(testJar, new InputAggregator() {
+          @Override
+          public void aggregate(Output<File> output, Iterable<File> inputs) throws IOException {
+            logger.info("Building test JAR.");
+
+            archive(output.getResource(), asList(inputsSource(testClassesDirectory, inputs), jarManifestSource(project)));
+          }
+        });
       } catch (IOException e) {
         throw new MojoExecutionException(e.getMessage(), e);
       }
