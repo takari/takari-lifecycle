@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mojos>
+  <mojo>
+    <superclasses>
+      <superclasse>io.takari.lifecycle.uts.plugindescriptor.AbstractExternalMojo</superclasse>
+      <superclasse>org.apache.maven.plugin.AbstractMojo</superclasse>
+    </superclasses>
+    <implementation>io.takari.lifecycle.uts.plugindescriptor.AbstractLocalMojo</implementation>
+    <parameters>
+      <parameter>
+        <name>inheritedParameter</name>
+        <type>java.lang.String</type>
+        <editable>true</editable>
+        <description>inherited parameter</description>
+      </parameter>
+    </parameters>
+    <requirements>
+      <requirement>
+        <fieldName>inheritedComponent</fieldName>
+        <role>io.takari.lifecycle.uts.plugindescriptor.ComponentClass</role>
+        <roleHint></roleHint>
+      </requirement>
+    </requirements>
+  </mojo>
+  <mojo>
+    <superclasses>
+      <superclasse>io.takari.lifecycle.uts.plugindescriptor.AbstractLocalMojo</superclasse>
+      <superclasse>io.takari.lifecycle.uts.plugindescriptor.AbstractExternalMojo</superclasse>
+      <superclasse>org.apache.maven.plugin.AbstractMojo</superclasse>
+    </superclasses>
+    <goal>concrete</goal>
+    <requiresProject>true</requiresProject>
+    <inheritedByDefault>true</inheritedByDefault>
+    <phase></phase>
+    <implementation>io.takari.lifecycle.uts.plugindescriptor.ConcreteMojo</implementation>
+    <language>java</language>
+    <instantiationStrategy>per-lookup</instantiationStrategy>
+    <executionStrategy>once-per-session</executionStrategy>
+    <parameters>
+      <parameter>
+        <name>parameter</name>
+        <type>java.lang.String</type>
+        <editable>true</editable>
+      </parameter>
+    </parameters>
+    <requirements>
+      <requirement>
+        <fieldName>component</fieldName>
+        <role>io.takari.lifecycle.uts.plugindescriptor.ComponentClass</role>
+        <roleHint></roleHint>
+      </requirement>
+    </requirements>
+  </mojo>
+</mojos>

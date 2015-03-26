@@ -16,6 +16,8 @@
           <goal>process-test-resources</goal>
           <goal>export-package</goal>
           <goal>testProperties</goal>
+          <goal>mojo-annotation-processor</goal>
+          <goal>plugin-descriptor</goal>
         </goals>
       </pluginExecutionFilter>
       <action>

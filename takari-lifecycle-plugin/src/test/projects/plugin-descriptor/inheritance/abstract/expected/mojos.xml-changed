@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mojos>
+  <mojo>
+    <superclasses>
+      <superclasse>org.apache.maven.plugin.AbstractMojo</superclasse>
+    </superclasses>
+    <implementation>io.takari.lifecycle.uts.plugindescriptor.AbstractExternalMojo</implementation>
+    <parameters>
+      <parameter>
+        <name>inheritedExternalParameter</name>
+        <type>java.lang.String</type>
+        <editable>true</editable>
+        <description>inherited external parameter</description>
+      </parameter>
+    </parameters>
+  </mojo>
+</mojos>

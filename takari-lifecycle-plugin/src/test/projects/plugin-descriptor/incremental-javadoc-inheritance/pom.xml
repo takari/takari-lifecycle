@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project>
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>io.takari.lifecycle.uts</groupId>
+  <artifactId>plugin-descriptor-incremental-javadoc-inheritance</artifactId>
+  <version>0.1</version>
+
+  <!--
+  Generated plugin.xml file includes javadoc from inherited mojo parameter
+  during incremental build.
+
+  This is notable because jdt compiler does not consider changes to javadoc
+  "structural" and does not automatically reprocess subclasses. 
+
+  It is up to our code to understand how we use inherited javadoc, jdt can't
+  and shouldn't do this for us. 
+   -->
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <mavenVersion>3.2.1</mavenVersion>
+    <mavenPluginPluginVersion>3.3</mavenPluginPluginVersion>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-plugin-api</artifactId>
+      <version>${mavenVersion}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.plugin-tools</groupId>
+      <artifactId>maven-plugin-annotations</artifactId>
+      <version>${mavenPluginPluginVersion}</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+</project>

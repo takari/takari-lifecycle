@@ -91,7 +91,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
    * The compiler id of the compiler to use, one of {@code javac}, {@code forked-javac} or {@code jdt}.
    */
   @Parameter(property = "maven.compiler.compilerId", defaultValue = "javac")
-  private String compilerId;
+  protected String compilerId;
 
   /**
    * Initial size, in megabytes, of the memory allocation pool, ex. "64", "64m" if {@link #fork} is set to <code>true</code>.
@@ -119,7 +119,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
    * </ul>
    */
   @Parameter
-  private Proc proc;
+  protected Proc proc;
 
   /**
    * <p>
@@ -127,7 +127,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
    * </p>
    */
   @Parameter
-  private String[] annotationProcessors;
+  protected String[] annotationProcessors;
 
   /**
    * Annotation processors options

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project>
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>io.takari.lifecycle.uts</groupId>
+  <artifactId>plugin-descriptor-incremental-indirect-reference</artifactId>
+  <version>0.1</version>
+
+  <!--
+  The point of this test is to ensure that indirectly referenced constants
+  are correctly reflected in generated plugin descriptor during incremental
+  build. This is significant because .java immediately referenced from
+  by @Mojo annotation are not modified and the effect of the change becomes
+  apparent after .class generation only.
+   -->
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <mavenVersion>3.2.1</mavenVersion>
+    <mavenPluginPluginVersion>3.3</mavenPluginPluginVersion>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-plugin-api</artifactId>
+      <version>${mavenVersion}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.plugin-tools</groupId>
+      <artifactId>maven-plugin-annotations</artifactId>
+      <version>${mavenPluginPluginVersion}</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+</project>

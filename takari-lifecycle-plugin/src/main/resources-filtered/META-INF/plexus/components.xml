@@ -134,12 +134,13 @@
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:process-resources
               </process-resources>
               <compile>
-                io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:compile
+                io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:compile,
+                io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:mojo-annotation-processor
               </compile>
               <process-classes>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:export-package,
-                org.apache.maven.plugins:maven-plugin-plugin:3.3:descriptor,
-                org.eclipse.sisu:sisu-maven-plugin:0.3.0.M1:main-index
+                io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:plugin-descriptor,
+                org.eclipse.sisu:sisu-maven-plugin:0.3.0:main-index
               </process-classes>
               <process-test-resources>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:process-test-resources,
@@ -149,14 +150,14 @@
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:testCompile
               </test-compile>
               <process-test-classes>
-                org.eclipse.sisu:sisu-maven-plugin:0.3.0.M1:test-index
+                org.eclipse.sisu:sisu-maven-plugin:0.3.0:test-index
               </process-test-classes>
               <test>
                 org.apache.maven.plugins:maven-surefire-plugin:2.18:test
               </test>
               <package>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:jar,
-                org.apache.maven.plugins:maven-plugin-plugin:3.3:addPluginArtifactMetadata
+                io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:addPluginArtifactMetadata
               </package>
               <install>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:install

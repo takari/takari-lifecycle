@@ -1,0 +1,7 @@
+package io.takari.lifecycle.uts.plugindescriptor;
+
+import org.apache.maven.plugin.AbstractMojo;
+
+public abstract class AbstractExternalMojo extends AbstractMojo {
+
+}
