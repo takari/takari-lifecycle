@@ -32,9 +32,8 @@ public class MojoConfigurationProcessor {
   private static PluginDescriptorBuilder pluginDescriptorBuilder = new PluginDescriptorBuilder();
 
   public PlexusConfiguration mojoConfigurationFor(Object mojoInstance, PlexusConfiguration pluginConfigurationFromMaven) throws ComponentConfigurationException {
-    InputStream is = mojoInstance.getClass().getResourceAsStream("/META-INF/maven/plugin.xml");
-    try {
-      PluginDescriptor pd = pluginDescriptorBuilder.build(new InputStreamReader(is, "UTF-8"));
+    try (InputStream is = mojoInstance.getClass().getResourceAsStream("/META-INF/maven/plugin.xml")) {
+      PluginDescriptor pd = pluginDescriptorBuilder.build(new InputStreamReader(is, "UTF-8")); // closes input stream too
       String goal = determineGoal(mojoInstance.getClass().getName(), pd);
       PlexusConfiguration defaultMojoConfiguration = pd.getMojo(goal).getMojoConfiguration();
       PlexusConfiguration mojoConfiguration = extractAndMerge(goal, pluginConfigurationFromMaven, defaultMojoConfiguration);
