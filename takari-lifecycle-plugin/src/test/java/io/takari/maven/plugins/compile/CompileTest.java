@@ -197,8 +197,8 @@ public class CompileTest extends AbstractCompileTest {
     mojos.assertMessages(basedir, "src/main/java/warn/Warn.java", new String[0]);
 
     ErrorMessage expected = new ErrorMessage(compilerId);
-    expected.setSnippets("jdt", "WARNING Warn.java [5:23] Unnecessary cast from String to String");
-    expected.setSnippets("javac", "WARNING Warn.java [5:23] redundant cast to java.lang.String");
+    expected.setSnippets("jdt", "WARNING Warn.java [5:16] Unnecessary cast from String to String");
+    expected.setSnippets("javac", "WARNING Warn.java [5:16] redundant cast to java.lang.String");
 
     compile(basedir, newParameter("showWarnings", "true"));
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), "warn/Warn.class");

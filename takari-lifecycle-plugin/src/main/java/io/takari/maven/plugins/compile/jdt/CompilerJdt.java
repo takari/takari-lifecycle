@@ -194,6 +194,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     compilerOptions.verbose = isVerbose();
     compilerOptions.suppressWarnings = true;
     compilerOptions.setShowWarnings(isShowWarnings());
+    compilerOptions.docCommentSupport = true;
     IProblemFactory problemFactory = ProblemFactory.getProblemFactory(Locale.getDefault());
 
     Multimap<File, File> sourceOutputs = HashMultimap.create();
