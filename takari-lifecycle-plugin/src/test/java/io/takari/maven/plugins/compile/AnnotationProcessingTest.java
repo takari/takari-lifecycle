@@ -316,7 +316,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
      */
 
     File processor = compileAnnotationProcessor();
-    File basedir = resources.getBasedir("compile-proc/proc-recompile");
+    File basedir = resources.getBasedir("compile-proc/proc-incremental-recompile");
 
     Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
     processors.addChild(newParameter("processor", "processor.ProcessorSiblingBody"));

@@ -6,6 +6,8 @@ import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
+import javax.annotation.processing.SupportedSourceVersion;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
@@ -48,5 +50,10 @@ abstract class ProcessorImpl extends AbstractProcessor {
 
   protected void appendBody(String pkgName, String clsName, BufferedWriter w) throws IOException {
     w.append(" { }");
+  }
+
+  @Override
+  public SourceVersion getSupportedSourceVersion() {
+    return SourceVersion.RELEASE_7;
   }
 }
