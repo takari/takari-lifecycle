@@ -18,6 +18,8 @@
           <goal>testProperties</goal>
           <goal>mojo-annotation-processor</goal>
           <goal>plugin-descriptor</goal>
+          <goal>sisu-index</goal>
+          <goal>sisu-test-index</goal>
         </goals>
       </pluginExecutionFilter>
       <action>
