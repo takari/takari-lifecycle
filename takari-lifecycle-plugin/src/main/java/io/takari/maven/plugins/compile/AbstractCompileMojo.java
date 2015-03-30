@@ -7,12 +7,6 @@
  */
 package io.takari.maven.plugins.compile;
 
-import io.takari.incrementalbuild.Incremental;
-import io.takari.incrementalbuild.Incremental.Configuration;
-import io.takari.incrementalbuild.ResourceMetadata;
-import io.takari.maven.plugins.compile.javac.CompilerJavacLauncher;
-import io.takari.maven.plugins.exportpackage.ExportPackageMojo;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -47,6 +41,12 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Files;
+
+import io.takari.incrementalbuild.Incremental;
+import io.takari.incrementalbuild.Incremental.Configuration;
+import io.takari.incrementalbuild.ResourceMetadata;
+import io.takari.maven.plugins.compile.javac.CompilerJavacLauncher;
+import io.takari.maven.plugins.exportpackage.ExportPackageMojo;
 
 public abstract class AbstractCompileMojo extends AbstractMojo {
 

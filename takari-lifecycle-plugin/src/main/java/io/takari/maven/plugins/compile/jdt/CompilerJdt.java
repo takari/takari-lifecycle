@@ -7,22 +7,6 @@
  */
 package io.takari.maven.plugins.compile.jdt;
 
-import io.takari.incrementalbuild.MessageSeverity;
-import io.takari.incrementalbuild.Output;
-import io.takari.incrementalbuild.Resource;
-import io.takari.incrementalbuild.ResourceMetadata;
-import io.takari.incrementalbuild.ResourceStatus;
-import io.takari.maven.plugins.compile.AbstractCompileMojo.AccessRulesViolation;
-import io.takari.maven.plugins.compile.AbstractCompileMojo.Debug;
-import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
-import io.takari.maven.plugins.compile.AbstractCompiler;
-import io.takari.maven.plugins.compile.CompilerBuildContext;
-import io.takari.maven.plugins.compile.jdt.classpath.Classpath;
-import io.takari.maven.plugins.compile.jdt.classpath.ClasspathEntry;
-import io.takari.maven.plugins.compile.jdt.classpath.DependencyClasspathEntry;
-import io.takari.maven.plugins.compile.jdt.classpath.JavaInstallation;
-import io.takari.maven.plugins.compile.jdt.classpath.MutableClasspathEntry;
-
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -71,6 +55,22 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
+
+import io.takari.incrementalbuild.MessageSeverity;
+import io.takari.incrementalbuild.Output;
+import io.takari.incrementalbuild.Resource;
+import io.takari.incrementalbuild.ResourceMetadata;
+import io.takari.incrementalbuild.ResourceStatus;
+import io.takari.maven.plugins.compile.AbstractCompileMojo.AccessRulesViolation;
+import io.takari.maven.plugins.compile.AbstractCompileMojo.Debug;
+import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
+import io.takari.maven.plugins.compile.AbstractCompiler;
+import io.takari.maven.plugins.compile.CompilerBuildContext;
+import io.takari.maven.plugins.compile.jdt.classpath.Classpath;
+import io.takari.maven.plugins.compile.jdt.classpath.ClasspathEntry;
+import io.takari.maven.plugins.compile.jdt.classpath.DependencyClasspathEntry;
+import io.takari.maven.plugins.compile.jdt.classpath.JavaInstallation;
+import io.takari.maven.plugins.compile.jdt.classpath.MutableClasspathEntry;
 
 /**
  * @TODO test classpath order changes triggers rebuild of affected sources (same type name, different classes)
@@ -214,7 +214,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
         compiler.annotationProcessorManager = new AnnotationProcessorManager(processingEnv, fileManager, getAnnotationProcessors());
         compiler.options.storeAnnotations = true;
-        compiler.options.generateClassFiles = getProc() != Proc.only;
       }
 
       // TODO optimize full build.
@@ -222,6 +221,17 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       // which saves memory and GC cycles
       // also, if number of sources in the previous build is known, it may be more efficient to
       // rebuild everything after certain % of sources is modified
+
+      // if (getProc() == Proc.only) {
+      // // proc==only cannot be implemented incrementally
+      // // changed sources may require types defined in sources that did not change,
+      // // which are not available during incremental build without generated .class files
+      // for (ResourceMetadata<File> source : sources.values()) {
+      // if (!compileQueue.containsKey(source.getResource())) {
+      // enqueue(source);
+      // }
+      // }
+      // }
 
       // incremental compilation loop
       // keep calling the compiler while there are sources in the queue
@@ -272,11 +282,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         enqueue(source);
       }
     }
-
-    // XXX need to add generated sources produced during the previous build
-    // for (InputMetadata<File> source : context.registerSources(getGeneratedSourcesDirectory(), Collections.singleton("**/*.java"), null)) {
-    // this.sources.put(source.getResource(), source);
-    // }
 
     boolean compilationRequired = false;
 
@@ -352,9 +357,11 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       }
     }
 
-    OutputDirectoryClasspathEntry output = new OutputDirectoryClasspathEntry(getOutputDirectory(), staleOutputs);
-    entries.add(output);
-    mutableentries.add(output);
+    if (getProc() != Proc.only) {
+      OutputDirectoryClasspathEntry output = new OutputDirectoryClasspathEntry(getOutputDirectory(), staleOutputs);
+      entries.add(output);
+      mutableentries.add(output);
+    }
 
     entries.addAll(dependencypath.getEntries());
 
@@ -368,10 +375,19 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     final List<ClasspathEntry> dependencypath = new ArrayList<ClasspathEntry>();
     final List<File> files = new ArrayList<File>();
 
+    if (getProc() == Proc.only) {
+      DependencyClasspathEntry entry = classpathCache.get(getOutputDirectory());
+      if (entry != null) {
+        dependencypath.add(AccessRestrictionClasspathEntry.allowAll(entry));
+        files.add(getOutputDirectory());
+      }
+    }
+
     if (mainClasses != null) {
       DependencyClasspathEntry entry = classpathCache.get(mainClasses);
       if (entry != null) {
         dependencypath.add(AccessRestrictionClasspathEntry.allowAll(entry));
+        files.add(mainClasses);
       }
     }
 

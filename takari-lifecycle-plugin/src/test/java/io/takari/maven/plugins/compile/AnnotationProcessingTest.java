@@ -2,8 +2,6 @@ package io.takari.maven.plugins.compile;
 
 import static io.takari.maven.testing.TestResources.cp;
 import static io.takari.maven.testing.TestResources.touch;
-import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
-import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,6 +20,9 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
+
+import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
+import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 
 public class AnnotationProcessingTest extends AbstractCompileTest {
 
@@ -269,7 +270,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
   @Test
   public void testMissingType() throws Exception {
-    Assume.assumeFalse("java 8 does not tolerate missing types during annotation processing", isJava8orBetter);
+    Assume.assumeTrue("only javac 7 tolerates missing types during annotation processing", !isJava8orBetter && !CompilerJdt.ID.equals(compilerId));
 
     Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
     processors.addChild(newParameter("processor", "processor.Processor"));
@@ -351,4 +352,43 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     String actual = FileUtils.fileRead(new File(basedir, "target/classes/types.lst"));
     Assert.assertEquals("proc.Source\n", actual);
   }
+
+  @Test
+  public void testIncremental_proc_only() throws Exception {
+    // the point of this test is to assert that changes to annotations trigger affected sources reprocessing when proc=only
+    // note that proc=only is not incremental, sources are processed in all-or-nothing manner
+
+    File processor = compileAnnotationProcessor();
+    File basedir = resources.getBasedir("compile-proc/proc-incremental-proconly");
+    File generatedSources = new File(basedir, "target/generated-sources/annotations");
+
+    Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
+    processors.addChild(newParameter("processor", "processor.Processor"));
+
+    compile(basedir, processor, "compile-only");
+    processAnnotations(basedir, Proc.only, processor, processors);
+    mojos.assertBuildOutputs(generatedSources, "proc/GeneratedConcrete.java", "proc/GeneratedAbstract.java", "proc/GeneratedAnother.java");
+
+    cp(basedir, "src/main/java/proc/Abstract.java-remove-annotation", "src/main/java/proc/Abstract.java");
+    compile(basedir, processor, "compile-only");
+    processAnnotations(basedir, Proc.only, processor, processors);
+    mojos.assertDeletedOutputs(generatedSources, "proc/GeneratedConcrete.java", "proc/GeneratedAbstract.java");
+    if (CompilerJdt.ID.equals(compilerId)) {
+      mojos.assertCarriedOverOutputs(generatedSources, "proc/GeneratedAnother.java");
+    } else {
+      mojos.assertBuildOutputs(generatedSources, "proc/GeneratedAnother.java");
+    }
+  }
+
+  private void compile(File basedir, File processor, String executionId) throws Exception {
+    MavenProject project = mojos.readMavenProject(basedir);
+    MavenSession session = mojos.newMavenSession(project);
+    MojoExecution execution = mojos.newMojoExecution();
+    MojoExecution cloned = new MojoExecution(execution.getMojoDescriptor(), executionId, null);
+    cloned.setConfiguration(execution.getConfiguration());
+    execution.getConfiguration().addChild(newParameter("proc", Proc.none.name()));
+    addDependency(project, "processor", new File(processor, "target/classes"));
+    mojos.executeMojo(session, project, cloned);
+  }
+
 }
