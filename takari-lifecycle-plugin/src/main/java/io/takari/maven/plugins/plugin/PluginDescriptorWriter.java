@@ -23,8 +23,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -68,12 +66,7 @@ class PluginDescriptorWriter {
   private void writeMojos(XMLWriter w, PluginDescriptor pluginDescriptor) {
     w.startElement("mojos");
     List<MojoDescriptor> descriptors = new ArrayList<>(pluginDescriptor.getMojos());
-    Collections.sort(descriptors, new Comparator<MojoDescriptor>() {
-      @Override
-      public int compare(MojoDescriptor mojo0, MojoDescriptor mojo1) {
-        return mojo0.getGoal().compareToIgnoreCase(mojo1.getGoal());
-      }
-    });
+    Sorting.sortDescriptors(descriptors);
     for (MojoDescriptor descriptor : descriptors) {
       writeMojoDescriptor(descriptor, w);
     }
@@ -161,12 +154,7 @@ class PluginDescriptorWriter {
 
     w.startElement("parameters");
     List<MojoParameter> parameters = new ArrayList<>(mojoDescriptor.getParameters());
-    Collections.sort(parameters, new Comparator<MojoParameter>() {
-      @Override
-      public int compare(MojoParameter parameter1, MojoParameter parameter2) {
-        return parameter1.getName().compareToIgnoreCase(parameter2.getName());
-      }
-    });
+    Sorting.sortParameters(parameters);
     for (MojoParameter parameter : parameters) {
       w.startElement("parameter");
       element(w, "name", parameter.getName());
@@ -216,9 +204,11 @@ class PluginDescriptorWriter {
       w.endElement();
     }
 
-    if (!mojoDescriptor.getRequirements().isEmpty()) {
+    List<MojoRequirement> requirements = new ArrayList<>(mojoDescriptor.getRequirements());
+    if (!requirements.isEmpty()) {
+      Sorting.sortRequirements(requirements);
       w.startElement("requirements");
-      for (MojoRequirement requirement : mojoDescriptor.getRequirements()) {
+      for (MojoRequirement requirement : requirements) {
         w.startElement("requirement");
         element(w, "role", requirement.getRole());
         element(w, "role-hint", requirement.getRoleHint());

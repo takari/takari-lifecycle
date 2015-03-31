@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -114,7 +115,9 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
 
   protected void createMojosXml(Output<File> output, Iterable<File> files) throws IOException {
     PluginDescriptor mojos = new PluginDescriptor();
-    for (MojoDescriptor descriptor : loadMojos(files).values()) {
+    List<MojoDescriptor> descriptors = new ArrayList<>(loadMojos(files).values());
+    Sorting.sortDescriptors(descriptors);
+    for (MojoDescriptor descriptor : descriptors) {
       mojos.addMojo(descriptor);
     }
     try (OutputStream out = output.newOutputStream()) {

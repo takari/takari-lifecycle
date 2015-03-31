@@ -96,6 +96,9 @@ public class MojoDescriptorGleaner extends AbstractProcessor {
 
     processTypeFields(type, descriptor);
 
+    Sorting.sortParameters(descriptor.getParameters());
+    Sorting.sortRequirements(descriptor.getRequirements());
+
     return descriptor;
   }
 
