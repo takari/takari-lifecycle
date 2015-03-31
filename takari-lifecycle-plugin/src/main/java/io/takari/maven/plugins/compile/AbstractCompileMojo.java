@@ -332,7 +332,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       compiler.setVerbose(verbose);
       compiler.setPom(pom);
       compiler.setSourceEncoding(getSourceEncoding());
-      compiler.setSourceRoots(getSourceRoots());
       compiler.setDebug(parseDebug(debug));
       compiler.setShowWarnings(showWarnings);
       compiler.setTransitiveDependencyReference(transitiveDependencyReference);

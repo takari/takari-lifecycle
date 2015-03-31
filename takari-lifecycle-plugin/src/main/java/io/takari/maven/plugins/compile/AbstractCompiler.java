@@ -7,11 +7,6 @@
  */
 package io.takari.maven.plugins.compile;
 
-import io.takari.incrementalbuild.ResourceMetadata;
-import io.takari.maven.plugins.compile.AbstractCompileMojo.AccessRulesViolation;
-import io.takari.maven.plugins.compile.AbstractCompileMojo.Debug;
-import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -22,6 +17,11 @@ import java.util.Set;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.takari.incrementalbuild.ResourceMetadata;
+import io.takari.maven.plugins.compile.AbstractCompileMojo.AccessRulesViolation;
+import io.takari.maven.plugins.compile.AbstractCompileMojo.Debug;
+import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 
 public abstract class AbstractCompiler {
 
@@ -46,8 +46,6 @@ public abstract class AbstractCompiler {
   private File pom;
 
   private Charset sourceEncoding;
-
-  private Set<String> sourceRoots;
 
   private Map<String, String> annotationProcessorOptions;
 
@@ -165,14 +163,6 @@ public abstract class AbstractCompiler {
 
   protected Charset getSourceEncoding() {
     return sourceEncoding;
-  }
-
-  public void setSourceRoots(Set<String> sourceRoots) {
-    this.sourceRoots = sourceRoots;
-  }
-
-  protected Set<String> getSourceRoots() {
-    return sourceRoots;
   }
 
   public void setShowWarnings(boolean showWarnings) {
