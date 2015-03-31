@@ -65,41 +65,23 @@ public class PluginDescriptorMojoTest {
   }
 
   @Test
-  public void testInheritance() throws Exception {
-    File basedir = resources.getBasedir("plugin-descriptor/inheritance");
+  public void testInheritance_incremental() throws Exception {
+    File basedir = resources.getBasedir("plugin-descriptor/incremental-inheritance");
     File abstractBasedir = new File(basedir, "abstract");
     File concreteBasedir = new File(basedir, "concrete");
 
-    MavenProject abstractProject = mojos.readMavenProject(abstractBasedir);
+    final MavenProject abstractProject = mojos.readMavenProject(abstractBasedir);
     addDependencies(abstractProject, "apache-plugin-annotations-jar", "maven-plugin-api-jar");
+    final MavenProject concreteProject = mojos.readMavenProject(concreteBasedir);
+    addDependencies(concreteProject, "apache-plugin-annotations-jar", "maven-plugin-api-jar");
+    addDependencies(concreteProject, new File(abstractBasedir, "target/classes"));
+
+    // initial build
     generatePluginDescriptor(abstractProject);
     mojos.assertBuildOutputs(abstractBasedir, "target/classes/META-INF/maven/plugin.xml", "target/classes/META-INF/takari/mojos.xml");
     assertFileContents(abstractBasedir, "expected/mojos.xml", "target/classes/META-INF/takari/mojos.xml");
-
-    MavenProject concreteProject = mojos.readMavenProject(concreteBasedir);
-    addDependencies(concreteProject, "apache-plugin-annotations-jar", "maven-plugin-api-jar");
-    addDependencies(concreteProject, new File(abstractBasedir, "target/classes"));
     generatePluginDescriptor(concreteProject);
     mojos.assertBuildOutputs(concreteBasedir, "target/classes/META-INF/maven/plugin.xml", "target/classes/META-INF/takari/mojos.xml");
-    assertFileContents(concreteBasedir, "expected/mojos.xml", "target/classes/META-INF/takari/mojos.xml");
-    assertFileContents(concreteBasedir, "expected/plugin.xml", "target/classes/META-INF/maven/plugin.xml");
-  }
-
-  @Test
-  public void testInheritance_incremental() throws Exception {
-    File basedir = resources.getBasedir("plugin-descriptor/inheritance");
-    File abstractBasedir = new File(basedir, "abstract");
-    File concreteBasedir = new File(basedir, "concrete");
-
-    // initial build
-    MavenProject abstractProject = mojos.readMavenProject(abstractBasedir);
-    addDependencies(abstractProject, "apache-plugin-annotations-jar", "maven-plugin-api-jar");
-    generatePluginDescriptor(abstractProject);
-    MavenProject concreteProject = mojos.readMavenProject(concreteBasedir);
-    addDependencies(concreteProject, "apache-plugin-annotations-jar", "maven-plugin-api-jar");
-    addDependencies(concreteProject, new File(abstractBasedir, "target/classes"));
-    generatePluginDescriptor(concreteProject);
-    assertFileContents(abstractBasedir, "expected/mojos.xml", "target/classes/META-INF/takari/mojos.xml");
     assertFileContents(concreteBasedir, "expected/mojos.xml", "target/classes/META-INF/takari/mojos.xml");
     assertFileContents(concreteBasedir, "expected/plugin.xml", "target/classes/META-INF/maven/plugin.xml");
 
