@@ -15,6 +15,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.MirroredTypeException;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic.Kind;
@@ -138,7 +139,17 @@ public class MojoDescriptorGleaner extends AbstractProcessor {
     if (!Object.class.getName().equals(role)) {
       return role;
     }
-    return field.asType().toString();
+    return getTypeString(field.asType());
+  }
+
+  private String getTypeString(TypeMirror type) {
+    TypeElement typeElement = (TypeElement) getTypeUtils().asElement(type);
+    if (typeElement != null) {
+      // this returns raw parameterized types
+      return typeElement.getQualifiedName().toString();
+    }
+    // this deals with primitive and array types
+    return type.toString();
   }
 
   private MojoParameter toParameterDescriptor(VariableElement field, Parameter parameter) {
@@ -155,7 +166,7 @@ public class MojoDescriptorGleaner extends AbstractProcessor {
     }
     result.setEditable(!parameter.readonly());
     result.setRequired(parameter.required());
-    result.setType(field.asType().toString());
+    result.setType(getTypeString(field.asType()));
     result.setDescription(getDescription(field));
 
     return result;
