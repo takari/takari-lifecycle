@@ -23,6 +23,12 @@
 
   <dependencies>
     <dependency>
+      <groupId>io.takari.maven.plugins</groupId>
+      <artifactId>takari-lifecycle-plugin</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.11</version>
