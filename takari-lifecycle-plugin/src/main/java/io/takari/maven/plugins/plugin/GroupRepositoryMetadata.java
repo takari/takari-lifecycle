@@ -1,8 +1,5 @@
 package io.takari.maven.plugins.plugin;
 
-import java.util.Iterator;
-import java.util.List;
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -22,6 +19,9 @@ import java.util.List;
  * under the License.
  */
 
+import java.util.Iterator;
+import java.util.List;
+
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.metadata.AbstractRepositoryMetadata;
 import org.apache.maven.artifact.repository.metadata.Metadata;
@@ -33,7 +33,7 @@ import org.apache.maven.artifact.repository.metadata.Plugin;
  * @author <a href="mailto:brett@apache.org">Brett Porter</a>
  */
 // originally copied from org.apache.maven.artifact.repository.metadata.GroupRepositoryMetadata
-public class GroupRepositoryMetadata extends AbstractRepositoryMetadata {
+class GroupRepositoryMetadata extends AbstractRepositoryMetadata {
   private final String groupId;
 
   public GroupRepositoryMetadata(String groupId) {

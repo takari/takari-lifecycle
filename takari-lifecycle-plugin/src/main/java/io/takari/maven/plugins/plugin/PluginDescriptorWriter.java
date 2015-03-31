@@ -19,12 +19,6 @@ package io.takari.maven.plugins.plugin;
  * under the License.
  */
 
-import io.takari.maven.plugins.plugin.model.MojoDescriptor;
-import io.takari.maven.plugins.plugin.model.MojoParameter;
-import io.takari.maven.plugins.plugin.model.MojoRequirement;
-import io.takari.maven.plugins.plugin.model.PluginDependency;
-import io.takari.maven.plugins.plugin.model.PluginDescriptor;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -39,8 +33,14 @@ import org.codehaus.plexus.util.StringUtils;
 import org.codehaus.plexus.util.xml.PrettyPrintXMLWriter;
 import org.codehaus.plexus.util.xml.XMLWriter;
 
+import io.takari.maven.plugins.plugin.model.MojoDescriptor;
+import io.takari.maven.plugins.plugin.model.MojoParameter;
+import io.takari.maven.plugins.plugin.model.MojoRequirement;
+import io.takari.maven.plugins.plugin.model.PluginDependency;
+import io.takari.maven.plugins.plugin.model.PluginDescriptor;
+
 // originally copied from org.apache.maven.tools.plugin.generator.PluginDescriptorGenerator
-public class PluginDescriptorWriter {
+class PluginDescriptorWriter {
   private static final String encoding = "UTF-8";
 
   public void writeDescriptor(OutputStream outputStream, PluginDescriptor pluginDescriptor) throws IOException {
