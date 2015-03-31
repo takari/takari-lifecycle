@@ -131,7 +131,9 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
 
     PluginDescriptor plugin = newPluginDescriptor();
 
-    for (MojoDescriptor descriptor : mojos.values()) {
+    for (MojoDescriptor gleaned : mojos.values()) {
+      MojoDescriptor descriptor = gleaned.clone();
+
       if (descriptor.getGoal() == null) {
         continue; // abstract mojo, skip
       }
@@ -143,12 +145,14 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
         }
         if (inherited != null) {
           for (MojoParameter parameter : inherited.getParameters()) {
-            // TODO detect duplicates
-            descriptor.addParameter(parameter); // TODO clone
+            if (!containsField(descriptor, parameter.getName())) {
+              descriptor.addParameter(parameter.clone());
+            }
           }
           for (MojoRequirement requirement : inherited.getRequirements()) {
-            // TODO detect duplicates
-            descriptor.addRequirement(requirement); // TODO clone
+            if (!containsField(descriptor, requirement.getFieldName())) {
+              descriptor.addRequirement(requirement.clone());
+            }
           }
         }
       }
@@ -158,6 +162,20 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
     try (OutputStream out = output.newOutputStream()) {
       new PluginDescriptorWriter().writeDescriptor(out, plugin);
     }
+  }
+
+  private boolean containsField(MojoDescriptor descriptor, String fieldName) {
+    for (MojoParameter parameter : descriptor.getParameters()) {
+      if (fieldName.equals(parameter.getName())) {
+        return true;
+      }
+    }
+    for (MojoRequirement requirement : descriptor.getRequirements()) {
+      if (fieldName.equals(requirement.getFieldName())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private Map<String, MojoDescriptor> loadMojos(Iterable<File> inputs) throws IOException {

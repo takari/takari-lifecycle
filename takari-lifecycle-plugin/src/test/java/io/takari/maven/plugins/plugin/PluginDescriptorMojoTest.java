@@ -142,4 +142,17 @@ public class PluginDescriptorMojoTest {
     assertFileContents(basedir, "expected/plugin.xml-changed", "target/classes/META-INF/maven/plugin.xml");
   }
 
+  @Test
+  public void testInheritance() throws Exception {
+    // the point of the test is to assert parameters/requirements inheritance
+
+    // test classes are named such that parent mojo is merged before child mojo
+    // which causes duplicate parameters unless implementation handles this case
+
+    File basedir = resources.getBasedir("plugin-descriptor/inheritance");
+    MavenProject project = mojos.readMavenProject(basedir);
+    addDependencies(project, "apache-plugin-annotations-jar", "maven-plugin-api-jar");
+    generatePluginDescriptor(project);
+    assertFileContents(basedir, "expected/plugin.xml", "target/classes/META-INF/maven/plugin.xml");
+  }
 }

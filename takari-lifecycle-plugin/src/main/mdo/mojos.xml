@@ -94,7 +94,7 @@
     </class>
 
 
-    <class>
+    <class java.clone="deep">
       <name>MojoDescriptor</name>
       <fields>
         <field>
@@ -197,7 +197,7 @@
       </fields>
     </class>
 
-    <class>
+    <class java.clone="deep">
       <name>MojoParameter</name>
       <fields>
         <field>
@@ -247,7 +247,7 @@
       </fields>
     </class>
 
-    <class>
+    <class java.clone="deep">
       <name>MojoRequirement</name>
       <fields>
         <field>
