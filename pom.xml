@@ -15,7 +15,7 @@
   <parent>
     <groupId>io.takari</groupId>
     <artifactId>takari</artifactId>
-    <version>15</version>
+    <version>16</version>
   </parent>
 
   <groupId>io.takari.maven.plugins</groupId>
@@ -74,15 +74,6 @@
     </resources>
     <pluginManagement>
       <plugins>
-        <plugin>
-          <groupId>io.takari.maven.plugins</groupId>
-          <artifactId>takari-lifecycle-plugin</artifactId>
-          <version>1.10.3</version>
-          <configuration>
-            <!-- sisu includes annotation processor so we have to explicitly disable it  -->
-            <proc>none</proc>
-          </configuration>
-        </plugin>
         <plugin>
           <groupId>com.mycila</groupId>
           <artifactId>license-maven-plugin</artifactId>
