@@ -190,26 +190,26 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
     return mojos;
   }
 
-  private Map<String, MojoDescriptor> loadClasspathMojos(Set<File> files, Set<File> jars) throws IOException {
+  private Map<String, MojoDescriptor> loadClasspathMojos(Set<File> files, Set<File> jars) {
     Map<String, MojoDescriptor> mojos = new HashMap<>();
-    try {
-      for (File jarFile : jars) {
-        try (ZipFile zip = new ZipFile(jarFile)) {
-          ZipEntry entry = zip.getEntry(PATH_MOJOS_XML);
-          if (entry != null) {
-            try (InputStream is = zip.getInputStream(entry)) {
-              readMojosXml(mojos, is);
-            }
+    for (File jarFile : jars) {
+      try (ZipFile zip = new ZipFile(jarFile)) {
+        ZipEntry entry = zip.getEntry(PATH_MOJOS_XML);
+        if (entry != null) {
+          try (InputStream is = zip.getInputStream(entry)) {
+            readMojosXml(mojos, is);
           }
         }
+      } catch (XmlPullParserException | IOException e) {
+        logger.warn("Could not read dependency mojos.xml " + jarFile, e);
       }
-      for (File mojosXmlFile : files) {
-        try (InputStream is = new FileInputStream(mojosXmlFile)) {
-          readMojosXml(mojos, is);
-        }
+    }
+    for (File mojosXmlFile : files) {
+      try (InputStream is = new FileInputStream(mojosXmlFile)) {
+        readMojosXml(mojos, is);
+      } catch (XmlPullParserException | IOException e) {
+        logger.warn("Could not read dependency mojos.xml " + mojosXmlFile, e);
       }
-    } catch (XmlPullParserException e) {
-      throw new IOException(e);
     }
 
     return mojos;

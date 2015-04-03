@@ -4,6 +4,7 @@ import static io.takari.maven.testing.TestResources.assertFileContents;
 import static io.takari.maven.testing.TestResources.cp;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.Set;
 
 import org.apache.maven.artifact.Artifact;
@@ -154,5 +155,21 @@ public class PluginDescriptorMojoTest {
     addDependencies(project, "apache-plugin-annotations-jar", "maven-plugin-api-jar");
     generatePluginDescriptor(project);
     assertFileContents(basedir, "expected/plugin.xml", "target/classes/META-INF/maven/plugin.xml");
+  }
+
+  @Test
+  public void testUnreadableDependencyMojosXml() throws Exception {
+    // the point of this test is to assert the mojo does not throw exception when one of the dependencies cannot be read
+    // such dependencies are ignored by the compiler, so plugin.xml generation should ignore them too
+
+    File basedir = resources.getBasedir("plugin-descriptor/basic");
+    File bogusJar = new File(basedir, "bogus.jar");
+    new FileOutputStream(bogusJar).close();
+
+    MavenProject project = mojos.readMavenProject(basedir);
+    addDependencies(project, "apache-plugin-annotations-jar", "maven-plugin-api-jar");
+    addDependencies(project, bogusJar);
+
+    generatePluginDescriptor(project);
   }
 }
