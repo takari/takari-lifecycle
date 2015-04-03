@@ -7,14 +7,6 @@
  */
 package io.takari.maven.plugins.testproperties;
 
-import io.takari.incrementalbuild.BasicBuildContext;
-import io.takari.incrementalbuild.Incremental;
-import io.takari.incrementalbuild.Incremental.Configuration;
-import io.takari.incrementalbuild.ResourceMetadata;
-import io.takari.incrementalbuild.ResourceStatus;
-import io.takari.maven.plugins.util.PropertiesWriter;
-import io.takari.resources.filtering.ResourcesProcessor;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -41,6 +33,13 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.m2e.workspace.MutableWorkspaceState;
+
+import io.takari.incrementalbuild.BasicBuildContext;
+import io.takari.incrementalbuild.Incremental;
+import io.takari.incrementalbuild.Incremental.Configuration;
+import io.takari.incrementalbuild.ResourceMetadata;
+import io.takari.maven.plugins.util.PropertiesWriter;
+import io.takari.resources.filtering.ResourcesProcessor;
 
 @Mojo(name = "testProperties", requiresDependencyResolution = ResolutionScope.RUNTIME)
 public class TestPropertiesMojo extends AbstractMojo {
@@ -205,16 +204,15 @@ public class TestPropertiesMojo extends AbstractMojo {
 
   private void mergeCustomTestProperties(Properties properties) throws MojoExecutionException {
     ResourceMetadata<File> metadata = context.registerInput(testProperties);
-    if (metadata.getStatus() != ResourceStatus.UNMODIFIED) {
+    try (InputStream is = new FileInputStream(metadata.process().getResource())) {
       Properties custom = new Properties();
-      try (InputStream is = new FileInputStream(metadata.process().getResource())) {
-        custom.load(is);
-      } catch (IOException e) {
-        throw new MojoExecutionException("Could not read test.properties file " + testProperties, e);
-      }
+      custom.load(is);
       for (String key : custom.stringPropertyNames()) {
         properties.put(key, expand(custom.getProperty(key)));
       }
+    } catch (IOException e) {
+      // TODO create error marker instead
+      throw new MojoExecutionException("Could not read test.properties file " + testProperties, e);
     }
   }
 
