@@ -204,7 +204,7 @@ public class TestPropertiesMojo extends AbstractMojo {
 
   private void mergeCustomTestProperties(Properties properties) throws MojoExecutionException {
     ResourceMetadata<File> metadata = context.registerInput(testProperties);
-    try (InputStream is = new FileInputStream(metadata.process().getResource())) {
+    try (InputStream is = new FileInputStream(metadata.getResource())) {
       Properties custom = new Properties();
       custom.load(is);
       for (String key : custom.stringPropertyNames()) {
