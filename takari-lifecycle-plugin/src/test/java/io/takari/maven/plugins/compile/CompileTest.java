@@ -197,8 +197,8 @@ public class CompileTest extends AbstractCompileTest {
     mojos.assertMessages(basedir, "src/main/java/warn/Warn.java", new String[0]);
 
     ErrorMessage expected = new ErrorMessage(compilerId);
-    expected.setSnippets("jdt", "WARNING Warn.java [5:16] Unnecessary cast from String to String");
-    expected.setSnippets("javac", "WARNING Warn.java [5:16] redundant cast to java.lang.String");
+    expected.setSnippets("jdt", "WARNING Warn.java [5:3] List is a raw type. References to generic type List<E> should be parameterized");
+    expected.setSnippets("javac", "WARNING Warn.java [5:12] found raw type: java.util.List\n  missing type arguments for generic class java.util.List<E>");
 
     compile(basedir, newParameter("showWarnings", "true"));
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), "warn/Warn.class");
