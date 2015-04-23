@@ -180,7 +180,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     class _CompilerOptions extends CompilerOptions {
       public void setShowWarnings(boolean showWarnings) {
         if (showWarnings) {
-          warningThreshold = IrritantSet.ALL;
+          warningThreshold = IrritantSet.COMPILER_DEFAULT_WARNINGS;
         } else {
           warningThreshold = new IrritantSet(0);
         }
