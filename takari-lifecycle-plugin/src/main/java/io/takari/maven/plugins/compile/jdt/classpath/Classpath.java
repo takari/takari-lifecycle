@@ -7,16 +7,17 @@
  */
 package io.takari.maven.plugins.compile.jdt.classpath;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.env.INameEnvironment;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 import org.eclipse.jdt.internal.compiler.util.SuffixConstants;
+
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.LinkedHashMultimap;
+import com.google.common.collect.Multimap;
 
 public class Classpath implements INameEnvironment, SuffixConstants {
 
@@ -24,7 +25,7 @@ public class Classpath implements INameEnvironment, SuffixConstants {
 
   private final List<MutableClasspathEntry> mutableentries;
 
-  private Map<String, Collection<ClasspathEntry>> packages;
+  private Multimap<String, ClasspathEntry> packages;
 
   public Classpath(List<ClasspathEntry> entries, List<MutableClasspathEntry> localentries) {
     this.entries = entries;
@@ -32,19 +33,14 @@ public class Classpath implements INameEnvironment, SuffixConstants {
     this.packages = newPackageIndex(entries);
   }
 
-  private static Map<String, Collection<ClasspathEntry>> newPackageIndex(List<ClasspathEntry> entries) {
-    Map<String, Collection<ClasspathEntry>> classpath = new HashMap<String, Collection<ClasspathEntry>>();
+  private static Multimap<String, ClasspathEntry> newPackageIndex(List<ClasspathEntry> entries) {
+    Multimap<String, ClasspathEntry> classpath = LinkedHashMultimap.create();
     for (ClasspathEntry entry : entries) {
       for (String packageName : entry.getPackageNames()) {
-        Collection<ClasspathEntry> packageEntries = classpath.get(packageName);
-        if (packageEntries == null) {
-          packageEntries = new ArrayList<ClasspathEntry>();
-          classpath.put(packageName, packageEntries);
-        }
-        packageEntries.add(entry);
+        classpath.put(packageName, entry);
       }
     }
-    return classpath;
+    return ImmutableMultimap.copyOf(classpath); // preserves order
   }
 
   @Override

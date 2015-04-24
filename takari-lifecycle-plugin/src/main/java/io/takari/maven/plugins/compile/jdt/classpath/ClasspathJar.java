@@ -55,9 +55,7 @@ public class ClasspathJar extends DependencyClasspathEntry implements ClasspathE
       if (reader != null) {
         return new NameEnvironmentAnswer(reader, accessRestriction);
       }
-    } catch (ClassFormatException e) {
-      // treat as if class file is missing
-    } catch (IOException e) {
+    } catch (ClassFormatException | IOException e) {
       // treat as if class file is missing
     }
     return null;

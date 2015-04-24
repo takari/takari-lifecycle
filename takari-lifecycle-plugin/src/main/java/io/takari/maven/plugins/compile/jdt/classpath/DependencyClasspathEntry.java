@@ -1,7 +1,5 @@
 package io.takari.maven.plugins.compile.jdt.classpath;
 
-import io.takari.maven.plugins.exportpackage.ExportPackageMojo;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,6 +23,8 @@ import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.CharStreams;
 import com.google.common.io.LineProcessor;
+
+import io.takari.maven.plugins.exportpackage.ExportPackageMojo;
 
 public abstract class DependencyClasspathEntry implements ClasspathEntry {
 
@@ -114,9 +114,6 @@ public abstract class DependencyClasspathEntry implements ClasspathEntry {
 
   @Override
   public NameEnvironmentAnswer findType(String packageName, String binaryFileName) {
-    if (!packageNames.contains(packageName)) {
-      return null;
-    }
     return findType(packageName, binaryFileName, getAccessRestriction(packageName));
   }
 
