@@ -79,7 +79,7 @@ public class ProjectClasspathDigester {
 
       digest.put(dependency, artifact);
 
-      if (equals(artifact, previousArtifact)) {
+      if (!equals(artifact, previousArtifact)) {
         log.debug("New or changed classpath entry {}", dependency);
       }
     }
