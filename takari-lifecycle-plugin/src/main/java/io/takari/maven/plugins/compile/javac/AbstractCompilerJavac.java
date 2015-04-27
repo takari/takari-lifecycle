@@ -15,6 +15,7 @@ import io.takari.maven.plugins.compile.AbstractCompileMojo.Debug;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 import io.takari.maven.plugins.compile.AbstractCompiler;
 import io.takari.maven.plugins.compile.CompilerBuildContext;
+import io.takari.maven.plugins.compile.ProjectClasspathDigester;
 import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 
 import java.io.File;

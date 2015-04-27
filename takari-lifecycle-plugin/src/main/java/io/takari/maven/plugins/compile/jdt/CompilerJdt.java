@@ -65,6 +65,7 @@ import io.takari.maven.plugins.compile.AbstractCompileMojo.Debug;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 import io.takari.maven.plugins.compile.AbstractCompiler;
 import io.takari.maven.plugins.compile.CompilerBuildContext;
+import io.takari.maven.plugins.compile.ProjectClasspathDigester;
 import io.takari.maven.plugins.compile.jdt.classpath.Classpath;
 import io.takari.maven.plugins.compile.jdt.classpath.ClasspathEntry;
 import io.takari.maven.plugins.compile.jdt.classpath.DependencyClasspathEntry;
@@ -129,11 +130,14 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
   private final ClasspathDigester classpathDigester;
 
+  private final ProjectClasspathDigester processorpathDigester;
+
   @Inject
-  public CompilerJdt(CompilerBuildContext context, ClasspathEntryCache classpathCache, ClasspathDigester classpathDigester) {
+  public CompilerJdt(CompilerBuildContext context, ClasspathEntryCache classpathCache, ClasspathDigester classpathDigester, ProjectClasspathDigester processorpathDigester) {
     super(context);
     this.classpathCache = classpathCache;
     this.classpathDigester = classpathDigester;
+    this.processorpathDigester = processorpathDigester;
   }
 
   @Override
@@ -330,6 +334,19 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     rootNames.clear();
   }
 
+  private void enqueueAllSources() throws IOException {
+    for (ResourceMetadata<File> input : sources.values()) {
+      final File resource = input.getResource();
+      if (!processedQueue.contains(resource) && resource.canRead()) {
+        enqueue(input);
+      }
+    }
+
+    qualifiedNames.clear();
+    simpleNames.clear();
+    rootNames.clear();
+  }
+
   private void enqueue(ResourceMetadata<File> input) {
     File sourceFile = input.getResource();
     if (processedSources.count(sourceFile) > 10) {
@@ -423,7 +440,10 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     @SuppressWarnings("unchecked")
     Map<String, byte[]> oldDigest = (Map<String, byte[]>) context.setAttribute(ATTR_CLASSPATH_DIGEST, digest);
 
-    if (oldDigest != null) {
+    if (getProc() != Proc.none && processorPathChanged()) {
+      log.debug("Annotation processor path changed, recompiling all sources");
+      enqueueAllSources();
+    } else if (oldDigest != null) {
       Set<String> changedPackages = new HashSet<String>();
 
       for (Map.Entry<String, byte[]> entry : digest.entrySet()) {
@@ -445,13 +465,17 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       for (String changedPackage : changedPackages) {
         addDependentsOf(changedPackage);
       }
+
+      enqueueAffectedSources();
+
+      log.debug("Verified {} types and {} packages in {} ms", typecount, packagecount, stopwatch.elapsed(TimeUnit.MILLISECONDS));
     }
 
-    log.debug("Verified {} types and {} packages in {} ms", typecount, packagecount, stopwatch.elapsed(TimeUnit.MILLISECONDS));
-
-    enqueueAffectedSources();
-
     return !compileQueue.isEmpty();
+  }
+
+  protected boolean processorPathChanged() throws IOException {
+    return processorpathDigester.digestDependencies(dependencies);
   }
 
   private String getPackage(String type) {

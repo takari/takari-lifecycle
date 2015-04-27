@@ -11,6 +11,7 @@ import io.takari.incrementalbuild.MessageSeverity;
 import io.takari.incrementalbuild.Output;
 import io.takari.incrementalbuild.Resource;
 import io.takari.maven.plugins.compile.CompilerBuildContext;
+import io.takari.maven.plugins.compile.ProjectClasspathDigester;
 import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerConfiguration;
 import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerOutput;
 import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerOutputProcessor;

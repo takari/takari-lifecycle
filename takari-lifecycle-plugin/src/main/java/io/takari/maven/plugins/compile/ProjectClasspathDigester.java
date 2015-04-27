@@ -5,9 +5,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package io.takari.maven.plugins.compile.javac;
-
-import io.takari.maven.plugins.compile.CompilerBuildContext;
+package io.takari.maven.plugins.compile;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,7 +34,7 @@ import com.google.common.base.Stopwatch;
 @Named
 @MojoExecutionScoped
 public class ProjectClasspathDigester {
-  private static final String ATTR_CLASSPATH_DIGEST = "javac.classpath.digest";
+  private static final String ATTR_CLASSPATH_DIGEST = "compile.classpath.digest";
 
   private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -49,8 +47,8 @@ public class ProjectClasspathDigester {
     this.context = context;
 
     // this is only needed for unit tests, but won't hurt in general
-    CACHE.remove(new File(project.getBuild().getOutputDirectory()));
-    CACHE.remove(new File(project.getBuild().getTestOutputDirectory()));
+    flushCache(new File(project.getBuild().getOutputDirectory()));
+    flushCache(new File(project.getBuild().getTestOutputDirectory()));
   }
 
   /**
@@ -127,7 +125,7 @@ public class ProjectClasspathDigester {
     StringBuilder msg = new StringBuilder();
     DirectoryScanner scanner = new DirectoryScanner();
     scanner.setBasedir(directory);
-    scanner.setIncludes(new String[] {"**/*.class"});
+    scanner.setIncludes(new String[] {"**/*"});
     scanner.scan();
     long maxLastModified = 0, fileCount = 0;
     for (String path : scanner.getIncludedFiles()) {
@@ -166,5 +164,12 @@ public class ProjectClasspathDigester {
       digest.put(artifact.file, artifact);
     }
     return digest;
+  }
+
+  /**
+   * @noreference this method is public for test purposes only
+   */
+  public static void flushCache(File file) {
+    CACHE.remove(file);
   }
 }

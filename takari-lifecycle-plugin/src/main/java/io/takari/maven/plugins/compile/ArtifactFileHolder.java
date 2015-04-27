@@ -5,7 +5,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package io.takari.maven.plugins.compile.javac;
+package io.takari.maven.plugins.compile;
 
 import io.takari.incrementalbuild.ResourceStatus;
 import io.takari.incrementalbuild.spi.ResourceHolder;

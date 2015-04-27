@@ -12,6 +12,7 @@ import io.takari.incrementalbuild.Output;
 import io.takari.incrementalbuild.Resource;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 import io.takari.maven.plugins.compile.CompilerBuildContext;
+import io.takari.maven.plugins.compile.ProjectClasspathDigester;
 
 import java.io.File;
 import java.io.IOException;

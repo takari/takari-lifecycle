@@ -1,6 +1,7 @@
 package io.takari.maven.plugins.compile;
 
 import static io.takari.maven.testing.TestResources.cp;
+import static io.takari.maven.testing.TestResources.rm;
 import static io.takari.maven.testing.TestResources.touch;
 
 import java.io.File;
@@ -99,6 +100,29 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     File basedir = procCompile("compile-proc/proc", Proc.proc);
     mojos.assertBuildOutputs(new File(basedir, "target"), //
         "classes/proc/Source.class", //
+        "generated-sources/annotations/proc/GeneratedSource.java", //
+        "classes/proc/GeneratedSource.class", //
+        "generated-sources/annotations/proc/AnotherGeneratedSource.java", //
+        "classes/proc/AnotherGeneratedSource.class");
+  }
+
+  @Test
+  public void testProc_incrementalProcessorChange() throws Exception {
+    File processor = compileAnnotationProcessor();
+    File basedir = resources.getBasedir("compile-proc/proc");
+    processAnnotations(basedir, Proc.proc, processor);
+    mojos.assertBuildOutputs(new File(basedir, "target"), //
+        "classes/proc/Source.class", //
+        "generated-sources/annotations/proc/GeneratedSource.java", //
+        "classes/proc/GeneratedSource.class", //
+        "generated-sources/annotations/proc/AnotherGeneratedSource.java", //
+        "classes/proc/AnotherGeneratedSource.class");
+
+    rm(processor, "target/classes/META-INF/services/javax.annotation.processing.Processor");
+    ProjectClasspathDigester.flushCache(new File(processor, "target/classes").getCanonicalFile());
+    processAnnotations(basedir, Proc.proc, processor);
+    mojos.assertBuildOutputs(new File(basedir, "target"), "classes/proc/Source.class");
+    mojos.assertDeletedOutputs(new File(basedir, "target"), //
         "generated-sources/annotations/proc/GeneratedSource.java", //
         "classes/proc/GeneratedSource.class", //
         "generated-sources/annotations/proc/AnotherGeneratedSource.java", //
@@ -390,5 +414,4 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     addDependency(project, "processor", new File(processor, "target/classes"));
     mojos.executeMojo(session, project, cloned);
   }
-
 }
