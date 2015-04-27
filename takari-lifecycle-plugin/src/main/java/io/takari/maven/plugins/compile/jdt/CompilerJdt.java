@@ -10,7 +10,6 @@ package io.takari.maven.plugins.compile.jdt;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -422,7 +421,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     HashMap<String, byte[]> digest = classpathDigester.digestDependencies(files);
 
     @SuppressWarnings("unchecked")
-    Map<String, byte[]> oldDigest = (Map<String, byte[]>) context.getAttribute(ATTR_CLASSPATH_DIGEST, true /* previous */, Serializable.class);
+    Map<String, byte[]> oldDigest = (Map<String, byte[]>) context.setAttribute(ATTR_CLASSPATH_DIGEST, digest);
 
     if (oldDigest != null) {
       Set<String> changedPackages = new HashSet<String>();
@@ -447,8 +446,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         addDependentsOf(changedPackage);
       }
     }
-
-    context.setAttribute(ATTR_CLASSPATH_DIGEST, digest);
 
     log.debug("Verified {} types and {} packages in {} ms", typecount, packagecount, stopwatch.elapsed(TimeUnit.MILLISECONDS));
 
