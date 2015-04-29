@@ -35,6 +35,7 @@ import com.google.common.base.Stopwatch;
 @MojoExecutionScoped
 public class ProjectClasspathDigester {
   private static final String ATTR_CLASSPATH_DIGEST = "compile.classpath.digest";
+  private static final String ATTR_PROCESSORPATH_DIGEST = "compile.processorpath.digest";
 
   private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -54,31 +55,41 @@ public class ProjectClasspathDigester {
   /**
    * Detects if classpath dependencies changed compared to the previous build or not.
    */
-  public boolean digestDependencies(List<File> dependencies) throws IOException {
+  public boolean digestClasspath(List<File> dependencies) throws IOException {
+    return digest(ATTR_CLASSPATH_DIGEST, dependencies);
+  }
+
+  public boolean digestProcessorpath(List<File> dependencies) throws IOException {
+    return digest(ATTR_PROCESSORPATH_DIGEST, dependencies);
+  }
+
+  private boolean digest(String key, List<File> dependencies) {
     Stopwatch stopwatch = Stopwatch.createStarted();
 
-    Map<File, ArtifactFile> previousArtifacts = getPreviousDependencies();
+    Map<File, ArtifactFile> previousArtifacts = getPreviousDependencies(key);
     LinkedHashMap<File, ArtifactFile> digest = new LinkedHashMap<>();
 
-    for (File dependency : dependencies) {
-      ArtifactFile previousArtifact = previousArtifacts.get(dependency);
-      ArtifactFile artifact = CACHE.get(dependency);
-      if (artifact == null) {
-        if (dependency.isFile()) {
-          artifact = newFileArtifact(dependency, previousArtifact);
-        } else if (dependency.isDirectory()) {
-          artifact = newDirectoryArtifact(dependency, previousArtifact);
-        } else {
-          // happens with reactor dependencies with empty source folders
-          continue;
+    if (dependencies != null) {
+      for (File dependency : dependencies) {
+        ArtifactFile previousArtifact = previousArtifacts.get(dependency);
+        ArtifactFile artifact = CACHE.get(dependency);
+        if (artifact == null) {
+          if (dependency.isFile()) {
+            artifact = newFileArtifact(dependency, previousArtifact);
+          } else if (dependency.isDirectory()) {
+            artifact = newDirectoryArtifact(dependency, previousArtifact);
+          } else {
+            // happens with reactor dependencies with empty source folders
+            continue;
+          }
+          CACHE.put(dependency, artifact);
         }
-        CACHE.put(dependency, artifact);
-      }
 
-      digest.put(dependency, artifact);
+        digest.put(dependency, artifact);
 
-      if (!equals(artifact, previousArtifact)) {
-        log.debug("New or changed classpath entry {}", dependency);
+        if (!equals(artifact, previousArtifact)) {
+          log.debug("New or changed classpath entry {}", dependency);
+        }
       }
     }
 
@@ -90,7 +101,7 @@ public class ProjectClasspathDigester {
 
     boolean changed = !equals(digest.values(), previousArtifacts.values());
 
-    context.setAttribute(ATTR_CLASSPATH_DIGEST, new ArrayList<>(digest.values()));
+    context.setAttribute(key, new ArrayList<>(digest.values()));
 
     log.debug("Analyzed {} classpath dependencies ({} ms)", dependencies.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
 
@@ -154,9 +165,9 @@ public class ProjectClasspathDigester {
   }
 
   @SuppressWarnings("unchecked")
-  private Map<File, ArtifactFile> getPreviousDependencies() {
+  private Map<File, ArtifactFile> getPreviousDependencies(String key) {
     LinkedHashMap<File, ArtifactFile> digest = new LinkedHashMap<>();
-    ArrayList<ArtifactFile> artifacts = context.getAttribute(ATTR_CLASSPATH_DIGEST, true, ArrayList.class);
+    ArrayList<ArtifactFile> artifacts = context.getAttribute(key, true, ArrayList.class);
     if (artifacts == null) {
       return Collections.emptyMap();
     }

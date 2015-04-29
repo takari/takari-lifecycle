@@ -1,0 +1,5 @@
+package io.takari.lifecycle.uts.plugindescriptor;
+
+public class ComponentClass {
+    private static final int member = 1; 
+}

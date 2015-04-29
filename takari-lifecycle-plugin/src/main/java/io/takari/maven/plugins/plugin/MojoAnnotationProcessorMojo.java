@@ -1,5 +1,9 @@
 package io.takari.maven.plugins.plugin;
 
+import java.io.File;
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -18,5 +22,10 @@ public class MojoAnnotationProcessorMojo extends CompileMojo {
     this.annotationProcessors = new String[] {MojoDescriptorGleaner.class.getName()};
 
     super.execute();
+  }
+
+  @Override
+  protected List<File> getProcessorpath() {
+    return Collections.emptyList();
   }
 }

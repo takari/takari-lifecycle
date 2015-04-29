@@ -173,6 +173,8 @@ public abstract class AbstractCompiler {
     return showWarnings;
   }
 
+  public abstract boolean setProcessorpath(List<File> processorpath) throws IOException;
+
   public abstract boolean setClasspath(List<File> dependencies, File mainClasses, Set<File> directDependencies) throws IOException;
 
   public abstract boolean setSources(List<ResourceMetadata<File>> sources) throws IOException;

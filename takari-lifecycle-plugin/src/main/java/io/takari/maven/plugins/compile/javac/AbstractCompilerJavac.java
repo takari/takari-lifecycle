@@ -7,17 +7,6 @@
  */
 package io.takari.maven.plugins.compile.javac;
 
-import io.takari.incrementalbuild.Resource;
-import io.takari.incrementalbuild.ResourceMetadata;
-import io.takari.incrementalbuild.ResourceStatus;
-import io.takari.maven.plugins.compile.AbstractCompileMojo.AccessRulesViolation;
-import io.takari.maven.plugins.compile.AbstractCompileMojo.Debug;
-import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
-import io.takari.maven.plugins.compile.AbstractCompiler;
-import io.takari.maven.plugins.compile.CompilerBuildContext;
-import io.takari.maven.plugins.compile.ProjectClasspathDigester;
-import io.takari.maven.plugins.compile.jdt.CompilerJdt;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,6 +17,17 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.maven.plugin.MojoExecutionException;
+
+import io.takari.incrementalbuild.Resource;
+import io.takari.incrementalbuild.ResourceMetadata;
+import io.takari.incrementalbuild.ResourceStatus;
+import io.takari.maven.plugins.compile.AbstractCompileMojo.AccessRulesViolation;
+import io.takari.maven.plugins.compile.AbstractCompileMojo.Debug;
+import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
+import io.takari.maven.plugins.compile.AbstractCompiler;
+import io.takari.maven.plugins.compile.CompilerBuildContext;
+import io.takari.maven.plugins.compile.ProjectClasspathDigester;
+import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 
 public abstract class AbstractCompilerJavac extends AbstractCompiler {
 
@@ -146,15 +146,12 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
     cp.append(getOutputDirectory().getAbsolutePath());
     for (File dependency : classpath) {
       if (dependency != null) {
-        if (cp.length() > 0) {
-          cp.append(File.pathSeparatorChar);
-        }
-        cp.append(dependency.getAbsolutePath());
+        cp.append(File.pathSeparatorChar).append(dependency.getAbsolutePath());
       }
     }
     this.classpath = cp.toString();
 
-    return digester.digestDependencies(classpath);
+    return digester.digestClasspath(classpath);
   }
 
   @Override
@@ -199,6 +196,14 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
       String msg = String.format("Compiler %s does not support transitiveDependencyReference=error, use compilerId=%s", getCompilerId(), CompilerJdt.ID);
       throw new IllegalArgumentException(msg);
     }
+  }
+
+  @Override
+  public boolean setProcessorpath(List<File> processorpath) throws IOException {
+    if (processorpath != null) {
+      throw new IllegalArgumentException();
+    }
+    return false;
   }
 
   @Override

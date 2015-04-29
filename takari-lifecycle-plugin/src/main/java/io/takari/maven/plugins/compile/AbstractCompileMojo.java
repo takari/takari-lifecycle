@@ -347,13 +347,14 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
       boolean sourcesChanged = compiler.setSources(sources);
       boolean classpathChanged = compiler.setClasspath(classpath, getMainOutputDirectory(), getDirectDependencies());
+      boolean processorpathChanged = proc != Proc.none ? compiler.setProcessorpath(getProcessorpath()) : false;
 
-      if (sourcesChanged || classpathChanged) {
+      if (sourcesChanged || classpathChanged || processorpathChanged) {
         log.info("Compiling {} sources to {}", sources.size(), getOutputDirectory());
         int compiled = compiler.compile();
         log.info("Compiled {} out of {} sources ({} ms)", compiled, sources.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
       } else {
-        log.info("Skipped compilation, all {} sources are up to date", sources.size());
+        log.info("Skipped compilation, all {} classes are up to date", sources.size());
         context.markUptodateExecution();
       }
 
@@ -437,5 +438,9 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       throw new MojoExecutionException("Could not create directory " + dir);
     }
     return dir;
+  }
+
+  protected List<File> getProcessorpath() {
+    return null;
   }
 }

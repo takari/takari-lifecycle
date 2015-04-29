@@ -1,5 +1,6 @@
 package io.takari.maven.plugins.plugin;
 
+import static io.takari.maven.testing.TestMavenRuntime.newParameter;
 import static io.takari.maven.testing.TestResources.assertFileContents;
 import static io.takari.maven.testing.TestResources.cp;
 
@@ -41,7 +42,7 @@ public class PluginDescriptorMojoTest {
   }
 
   private void generatePluginDescriptor(MavenProject project) throws Exception {
-    mojos.executeMojo(project, "compile");
+    mojos.executeMojo(project, "compile", newParameter("compilerId", "jdt"));
     mojos.executeMojo(project, "mojo-annotation-processor");
     mojos.executeMojo(project, "plugin-descriptor");
   }
@@ -171,5 +172,35 @@ public class PluginDescriptorMojoTest {
     addDependencies(project, bogusJar);
 
     generatePluginDescriptor(project);
+  }
+
+  @Test
+  public void testIncrementalDependencyChange() throws Exception {
+    // the point of this test is to assert that non-structural dependency change does not force plugin.xml regeneration
+
+    File basedir = resources.getBasedir("plugin-descriptor/incremental-dependency");
+    File dependency = new File(basedir, "dependency");
+    File plugin = new File(basedir, "plugin");
+
+    mojos.executeMojo(dependency, "compile");
+
+    MavenProject project = mojos.readMavenProject(plugin);
+    addDependencies(project, "apache-plugin-annotations-jar", "maven-plugin-api-jar");
+    addDependencies(project, new File(dependency, "target/classes"));
+    generatePluginDescriptor(project);
+    mojos.assertBuildOutputs(plugin, "target/classes/META-INF/maven/plugin.xml", "target/classes/META-INF/takari/mojos.xml");
+
+    cp(dependency, "src/main/java/io/takari/lifecycle/uts/plugindescriptor/ComponentClass.java-private-change", "src/main/java/io/takari/lifecycle/uts/plugindescriptor/ComponentClass.java");
+    mojos.executeMojo(dependency, "compile");
+    mojos.assertBuildOutputs(dependency, "target/classes/io/takari/lifecycle/uts/plugindescriptor/ComponentClass.class");
+
+    mojos.executeMojo(project, "compile", newParameter("compilerId", "jdt"));
+    mojos.assertCarriedOverOutputs(plugin, "target/classes/io/takari/lifecycle/uts/plugindescriptor/BasicMojo.class");
+
+    mojos.executeMojo(project, "mojo-annotation-processor");
+    mojos.assertCarriedOverOutputs(plugin, "target/generated-sources/annotations/io.takari.lifecycle.uts.plugindescriptor.BasicMojo.mojo.xml");
+
+    mojos.executeMojo(project, "plugin-descriptor");
+    mojos.assertCarriedOverOutputs(plugin, "target/classes/META-INF/maven/plugin.xml", "target/classes/META-INF/takari/mojos.xml");
   }
 }

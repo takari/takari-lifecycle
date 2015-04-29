@@ -99,6 +99,8 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
   private List<File> dependencies;
 
+  private List<File> processorpath;
+
   private Classpath dependencypath;
 
   private final Map<File, ResourceMetadata<File>> sources = new LinkedHashMap<>();
@@ -440,10 +442,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     @SuppressWarnings("unchecked")
     Map<String, byte[]> oldDigest = (Map<String, byte[]>) context.setAttribute(ATTR_CLASSPATH_DIGEST, digest);
 
-    if (getProc() != Proc.none && processorPathChanged()) {
-      log.debug("Annotation processor path changed, recompiling all sources");
-      enqueueAllSources();
-    } else if (oldDigest != null) {
+    if (oldDigest != null) {
       Set<String> changedPackages = new HashSet<String>();
 
       for (Map.Entry<String, byte[]> entry : digest.entrySet()) {
@@ -474,8 +473,20 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     return !compileQueue.isEmpty();
   }
 
-  protected boolean processorPathChanged() throws IOException {
-    return processorpathDigester.digestDependencies(dependencies);
+  @Override
+  public boolean setProcessorpath(List<File> processorpath) throws IOException {
+    if (processorpath == null) {
+      this.processorpath = dependencies;
+    } else if (processorpath.isEmpty()) {
+      this.processorpath = Collections.emptyList();
+    } else {
+      throw new IllegalArgumentException();
+    }
+    if (getProc() != Proc.none && processorpathDigester.digestProcessorpath(this.processorpath)) {
+      log.debug("Annotation processor path changed, recompiling all sources");
+      enqueueAllSources();
+    }
+    return !compileQueue.isEmpty();
   }
 
   private String getPackage(String type) {
