@@ -1,9 +1,5 @@
 package io.takari.maven.plugins.compile.jdt;
 
-import io.takari.incrementalbuild.Output;
-import io.takari.incrementalbuild.Resource;
-import io.takari.maven.plugins.compile.CompilerBuildContext;
-
 import java.io.File;
 import java.io.FilterOutputStream;
 import java.io.IOException;
@@ -29,6 +25,10 @@ import org.eclipse.jdt.internal.compiler.apt.model.ElementImpl;
 import org.eclipse.jdt.internal.compiler.batch.CompilationUnit;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
+
+import io.takari.incrementalbuild.Output;
+import io.takari.incrementalbuild.Resource;
+import io.takari.maven.plugins.compile.CompilerBuildContext;
 
 class FilerImpl implements Filer {
 
@@ -165,7 +165,7 @@ class FilerImpl implements Filer {
 
   @Override
   public FileObject getResource(Location location, CharSequence pkg, CharSequence relativeName) throws IOException {
-    FileObject file = fileManager.getFileForOutput(location, pkg.toString(), relativeName.toString(), null);
+    FileObject file = fileManager.getFileForInput(location, pkg.toString(), relativeName.toString());
     return file;
   }
 
