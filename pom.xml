@@ -32,7 +32,7 @@
     <sisuVersion>0.3.0</sisuVersion>
     <sisuGuiceVersion>3.2.5</sisuGuiceVersion>
     <aetherVersion>1.0.2.v20150114</aetherVersion>
-    <incrementalbuild.version>0.20.3-SNAPSHOT</incrementalbuild.version>
+    <incrementalbuild.version>0.20.3</incrementalbuild.version>
     <guava.version>18.0</guava.version>
     <mavenPluginPluginVersion>3.3</mavenPluginPluginVersion>
     <m2eWorkspaceVersion>0.3.0</m2eWorkspaceVersion>
