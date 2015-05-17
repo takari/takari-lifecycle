@@ -9,7 +9,8 @@
 
 -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
@@ -35,8 +36,8 @@
     <incrementalbuild.version>0.20.3</incrementalbuild.version>
     <guava.version>18.0</guava.version>
     <mavenPluginPluginVersion>3.3</mavenPluginPluginVersion>
-    <m2eWorkspaceVersion>0.3.0</m2eWorkspaceVersion>
-    <pluginTestingVersion>2.2.0</pluginTestingVersion>
+    <m2eWorkspaceVersion>0.4.0</m2eWorkspaceVersion>
+    <pluginTestingVersion>2.3.0</pluginTestingVersion>
   </properties>
 
   <scm>
@@ -76,6 +77,17 @@
     </resources>
     <pluginManagement>
       <plugins>
+        <plugin>
+          <groupId>io.takari.maven.plugins</groupId>
+          <artifactId>takari-lifecycle-plugin</artifactId>
+          <dependencies>
+            <dependency>
+              <groupId>io.takari.m2e.workspace</groupId>
+              <artifactId>org.eclipse.m2e.workspace.cli</artifactId>
+              <version>${m2eWorkspaceVersion}</version>
+            </dependency>
+          </dependencies>
+        </plugin>
         <plugin>
           <groupId>com.mycila</groupId>
           <artifactId>license-maven-plugin</artifactId>
