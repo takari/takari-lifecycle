@@ -1,8 +1,5 @@
 package io.takari.maven.plugins.testproperties;
 
-import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
-import io.takari.maven.testing.TestResources;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,6 +23,9 @@ import org.junit.Test;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
+
+import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
+import io.takari.maven.testing.TestResources;
 
 public class TestPropertiesMojoTest {
   @Rule
@@ -158,5 +158,16 @@ public class TestPropertiesMojoTest {
 
   private Map<String, String> readProperties(File basedir) throws IOException {
     return TestResources.readProperties(basedir, "target/test-classes/test.properties");
+  }
+
+  @Test
+  public void testWorkspaceResolver() throws Exception {
+    File basedir = resources.getBasedir();
+    MavenProject project = mojos.readMavenProject(basedir);
+    MavenSession session = mojos.newMavenSession(project);
+    mojos.newDependency(basedir).setGroupId("io.takari.m2e.workspace").setArtifactId("org.eclipse.m2e.workspace.cli").addTo(project);
+    mojos.executeMojo(session, project, newMojoExecution());
+    Map<String, String> properties = readProperties(basedir);
+    Assert.assertEquals(basedir.getCanonicalPath(), properties.get("workspaceResolver"));
   }
 }

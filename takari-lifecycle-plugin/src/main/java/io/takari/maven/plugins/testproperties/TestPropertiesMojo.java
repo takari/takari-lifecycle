@@ -41,7 +41,7 @@ import io.takari.incrementalbuild.ResourceMetadata;
 import io.takari.maven.plugins.util.PropertiesWriter;
 import io.takari.resources.filtering.ResourcesProcessor;
 
-@Mojo(name = "testProperties", requiresDependencyResolution = ResolutionScope.RUNTIME)
+@Mojo(name = "testProperties", requiresDependencyResolution = ResolutionScope.TEST)
 public class TestPropertiesMojo extends AbstractMojo {
 
   @Parameter(defaultValue = "${project.properties}")
@@ -75,7 +75,8 @@ public class TestPropertiesMojo extends AbstractMojo {
   @Parameter(defaultValue = "${project.build.testOutputDirectory}/test.properties")
   private File outputFile;
 
-  @Parameter(defaultValue = "${plugin.artifactMap(io.takari.m2e.workspace:org.eclipse.m2e.workspace.cli)}", readonly = true)
+  // @Parameter(defaultValue = "${plugin.artifactMap(io.takari.m2e.workspace:org.eclipse.m2e.workspace.cli)}")
+  @Parameter(defaultValue = "${project.artifactMap(io.takari.m2e.workspace:org.eclipse.m2e.workspace.cli)}")
   private Artifact workspaceResolver;
 
   @Parameter(defaultValue = "${project.build.directory}/workspacestate.properties")
@@ -134,7 +135,9 @@ public class TestPropertiesMojo extends AbstractMojo {
       // project runtime classpath
       putIfAbsent(properties, "classpath", getClasspathString());
 
-      putIfAbsent(properties, "workspaceResolver", workspaceResolver.getFile().getAbsolutePath());
+      if (workspaceResolver != null && workspaceResolver.getFile() != null) {
+        putIfAbsent(properties, "workspaceResolver", workspaceResolver.getFile().getAbsolutePath());
+      }
 
       writeWorkspaceState();
       putIfAbsent(properties, "workspaceStateProperties", workspaceState.getAbsolutePath());
