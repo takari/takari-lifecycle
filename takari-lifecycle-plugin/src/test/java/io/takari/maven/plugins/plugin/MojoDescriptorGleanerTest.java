@@ -6,11 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Set;
 
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.DefaultArtifact;
-import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.junit.Assert;
@@ -79,13 +75,7 @@ public class MojoDescriptorGleanerTest {
   }
 
   private void addDependency(MavenProject project, String property) throws Exception {
-    File file = new File(properties.get(property));
-    ArtifactHandler handler = mojos.getContainer().lookup(ArtifactHandler.class, "jar");
-    Set<Artifact> artifacts = project.getArtifacts();
-    DefaultArtifact artifact = new DefaultArtifact(file.getName(), file.getName(), "1.0", Artifact.SCOPE_COMPILE, "jar", null, handler);
-    artifact.setFile(file);
-    artifacts.add(artifact);
-    project.setArtifacts(artifacts);
+    mojos.newDependency(new File(properties.get(property))).addTo(project);
   }
 
 }

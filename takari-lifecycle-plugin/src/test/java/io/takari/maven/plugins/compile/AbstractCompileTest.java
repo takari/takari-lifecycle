@@ -1,15 +1,9 @@
 package io.takari.maven.plugins.compile;
 
-import io.takari.maven.testing.TestResources;
-
 import java.io.File;
 import java.util.Arrays;
-import java.util.Set;
 import java.util.StringTokenizer;
 
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.DefaultArtifact;
-import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -17,6 +11,8 @@ import org.junit.Rule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
+
+import io.takari.maven.testing.TestResources;
 
 @RunWith(Parameterized.class)
 public abstract class AbstractCompileTest {
@@ -67,7 +63,7 @@ public abstract class AbstractCompileTest {
         new Object[] {"javac"} //
         , new Object[] {"forked-javac"} //
         , new Object[] {"jdt"} //
-        );
+    );
   }
 
   protected File compile(String name, Xpp3Dom... parameters) throws Exception {
@@ -80,12 +76,7 @@ public abstract class AbstractCompileTest {
   }
 
   protected void addDependency(MavenProject project, String artifactId, File file) throws Exception {
-    ArtifactHandler handler = mojos.getContainer().lookup(ArtifactHandler.class, "jar");
-    DefaultArtifact artifact = new DefaultArtifact("test", artifactId, "1.0", Artifact.SCOPE_COMPILE, "jar", null, handler);
-    artifact.setFile(file);
-    Set<Artifact> artifacts = project.getArtifacts();
-    artifacts.add(artifact);
-    project.setArtifacts(artifacts);
+    mojos.newDependency(file).setArtifactId(artifactId).addTo(project);
   }
 
   protected Xpp3Dom newParameter(String name, String value) {

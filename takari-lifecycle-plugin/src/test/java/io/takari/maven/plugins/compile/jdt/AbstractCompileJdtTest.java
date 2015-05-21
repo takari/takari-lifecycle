@@ -1,19 +1,14 @@
 package io.takari.maven.plugins.compile.jdt;
 
-import io.takari.maven.plugins.compile.CompileRule;
-import io.takari.maven.testing.TestResources;
-
 import java.io.File;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.DefaultArtifact;
-import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Rule;
+
+import io.takari.maven.plugins.compile.CompileRule;
+import io.takari.maven.testing.TestResources;
 
 public abstract class AbstractCompileJdtTest {
 
@@ -37,18 +32,7 @@ public abstract class AbstractCompileJdtTest {
   }
 
   protected void addDependency(MavenProject project, String artifactId, File file, boolean direct) throws Exception {
-    ArtifactHandler handler = mojos.getContainer().lookup(ArtifactHandler.class, "jar");
-    DefaultArtifact artifact = new DefaultArtifact("test", artifactId, "1.0", Artifact.SCOPE_COMPILE, "jar", null, handler);
-    artifact.setFile(file);
-    Set<Artifact> artifacts = project.getArtifacts();
-    artifacts.add(artifact);
-    project.setArtifacts(artifacts);
-    if (direct) {
-      Set<Artifact> directDependencies = project.getDependencyArtifacts();
-      directDependencies = directDependencies == null ? new LinkedHashSet<Artifact>() : new LinkedHashSet<>(directDependencies);
-      directDependencies.add(artifact);
-      project.setDependencyArtifacts(directDependencies);
-    }
+    mojos.newDependency(file).setArtifactId(artifactId).addTo(project, direct);
   }
 
 }

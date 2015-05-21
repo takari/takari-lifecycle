@@ -4,11 +4,7 @@ import static io.takari.maven.testing.TestResources.cp;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Set;
 
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.DefaultArtifact;
-import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
 import org.junit.Assert;
@@ -70,20 +66,10 @@ public class SisuIndexTest {
     mojos.executeMojo(project, "sisu-test-index");
     mojos.assertBuildOutputs(basedir, "target/test-classes/META-INF/sisu/javax.inject.Named");
     assertSisuIndex(basedir, "test-classes", "sisu.BasicTest");
-
   }
 
   private void addJavaxInjectDependency(MavenProject project) throws Exception {
-    File file = new File(properties.get("java-injext-jar"));
-
-    ArtifactHandler handler = mojos.getContainer().lookup(ArtifactHandler.class, "jar");
-    Set<Artifact> artifacts = project.getArtifacts();
-
-    DefaultArtifact artifact = new DefaultArtifact("java-injext", "java-injext", "1.0", Artifact.SCOPE_COMPILE, "jar", null, handler);
-    artifact.setFile(file);
-    artifacts.add(artifact);
-
-    project.setArtifacts(artifacts);
+    mojos.newDependency(new File(properties.get("java-injext-jar"))).addTo(project);
   }
 
   private void assertSisuIndex(File basedir, String output, String... types) throws IOException {

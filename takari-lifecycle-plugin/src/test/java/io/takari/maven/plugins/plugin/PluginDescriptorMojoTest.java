@@ -6,11 +6,7 @@ import static io.takari.maven.testing.TestResources.cp;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.Set;
 
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.DefaultArtifact;
-import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.project.MavenProject;
 import org.junit.Rule;
 import org.junit.Test;
@@ -56,14 +52,9 @@ public class PluginDescriptorMojoTest {
   }
 
   private void addDependencies(MavenProject project, File... files) throws Exception {
-    ArtifactHandler handler = mojos.getContainer().lookup(ArtifactHandler.class, "jar");
-    Set<Artifact> artifacts = project.getArtifacts();
     for (File file : files) {
-      DefaultArtifact artifact = new DefaultArtifact("test", file.getName(), "1.0", Artifact.SCOPE_COMPILE, "jar", null, handler);
-      artifact.setFile(file);
-      artifacts.add(artifact);
+      mojos.newDependency(file).addTo(project);
     }
-    project.setArtifacts(artifacts);
   }
 
   @Test
