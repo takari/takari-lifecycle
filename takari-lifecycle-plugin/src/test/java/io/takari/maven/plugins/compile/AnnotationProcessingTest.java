@@ -414,4 +414,13 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     addDependency(project, "processor", new File(processor, "target/classes"));
     mojos.executeMojo(session, project, cloned);
   }
+
+  @Test
+  public void testMutliround_procOnly() throws Exception {
+    File basedir = procCompile("compile-proc/multiround", Proc.only);
+    File generatedSources = new File(basedir, "target/generated-sources/annotations");
+
+    mojos.assertMessages(basedir, "src/main/java/multiround/Source.java", new String[] {});
+    mojos.assertBuildOutputs(generatedSources, "multiround/GeneratedSource.java", "multiround/AnotherGeneratedSource.java");
+  }
 }
