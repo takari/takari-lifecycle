@@ -7,9 +7,6 @@
  */
 package io.takari.maven.plugins;
 
-import io.takari.incrementalbuild.Incremental;
-import io.takari.incrementalbuild.Incremental.Configuration;
-
 import java.util.List;
 
 import javax.inject.Inject;
@@ -27,6 +24,9 @@ import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import io.takari.incrementalbuild.Incremental;
+import io.takari.incrementalbuild.Incremental.Configuration;
 
 // integrate buildinfo: really this can't be packaged up in the JAR as it will prevent being
 // idempotent
@@ -47,31 +47,31 @@ public abstract class TakariLifecycleMojo extends AbstractMojo {
   @Inject
   protected MavenProjectHelper projectHelper;
 
-  @Parameter(defaultValue = "${project}")
+  @Parameter(defaultValue = "${project}", readonly = true)
   @Incremental(configuration = Configuration.ignore)
   protected MavenProject project;
 
-  @Parameter(defaultValue = "${reactorProjects}")
+  @Parameter(defaultValue = "${reactorProjects}", readonly = true)
   @Incremental(configuration = Configuration.ignore)
   protected List<MavenProject> reactorProjects;
 
-  @Parameter(defaultValue = "${repositorySystemSession}")
+  @Parameter(defaultValue = "${repositorySystemSession}", readonly = true)
   @Incremental(configuration = Configuration.ignore)
   protected RepositorySystemSession repositorySystemSession;
 
-  @Parameter(defaultValue = "${project.remoteRepositories}")
+  @Parameter(defaultValue = "${project.remoteRepositories}", readonly = true)
   @Incremental(configuration = Configuration.ignore)
   protected List<RemoteRepository> remoteRepositories;
 
-  @Parameter(defaultValue = "${mojoExecution}")
+  @Parameter(defaultValue = "${mojoExecution}", readonly = true)
   @Incremental(configuration = Configuration.ignore)
   protected MojoExecution mojoExecution;
 
-  @Parameter(defaultValue = "${mojoExecution.mojoDescriptor}")
+  @Parameter(defaultValue = "${mojoExecution.mojoDescriptor}", readonly = true)
   @Incremental(configuration = Configuration.ignore)
   protected MojoDescriptor mojoDescriptor;
 
-  @Parameter(defaultValue = "${settings}")
+  @Parameter(defaultValue = "${settings}", readonly = true)
   @Incremental(configuration = Configuration.ignore)
   protected Settings settings;
 
