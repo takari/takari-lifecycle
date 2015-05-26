@@ -147,7 +147,7 @@
     <dependency>
       <groupId>io.takari</groupId>
       <artifactId>takari-archiver</artifactId>
-      <version>0.1.8</version>
+      <version>0.1.10-SNAPSHOT</version>
     </dependency>
     <!-- Dependency -->
     <dependency>

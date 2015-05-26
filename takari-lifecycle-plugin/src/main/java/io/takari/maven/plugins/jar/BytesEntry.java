@@ -7,12 +7,12 @@
  */
 package io.takari.maven.plugins.jar;
 
-import io.tesla.proviso.archive.Entry;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+
+import io.tesla.proviso.archive.Entry;
 
 class BytesEntry implements Entry {
   private final String entryName;
@@ -58,4 +58,8 @@ class BytesEntry implements Entry {
     return false;
   }
 
+  @Override
+  public long getTime() {
+    return -1;
+  }
 }
