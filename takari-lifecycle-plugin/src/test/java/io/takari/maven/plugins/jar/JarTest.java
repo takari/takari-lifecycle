@@ -8,9 +8,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import io.takari.hash.FingerprintSha1Streaming;
-import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
-import io.takari.maven.testing.TestResources;
 
 import java.io.File;
 import java.io.InputStream;
@@ -38,6 +35,10 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import com.google.common.io.Files;
+
+import io.takari.hash.FingerprintSha1Streaming;
+import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
+import io.takari.maven.testing.TestResources;
 
 public class JarTest {
 
@@ -77,8 +78,7 @@ public class JarTest {
     assertEquals("We expect the JAR to have the same fingerprint after repeated builds.", fingerprint0, fingerprint1);
 
     // Make sure our maven properties file is written correctly
-    ZipFile zip0 = new ZipFile(jar1);
-    try {
+    try (ZipFile zip0 = new ZipFile(jar1)) {
       String pomProperties = "META-INF/maven/io.takari.lifecycle.its/test/pom.properties";
       ZipEntry entry = zip0.getEntry(pomProperties);
       if (entry != null) {
@@ -91,12 +91,9 @@ public class JarTest {
       } else {
         fail("We expected the standard pom.properties: " + pomProperties);
       }
-    } finally {
-      zip0.close();
     }
 
-    ZipFile zip1 = new ZipFile(jar1);
-    try {
+    try (ZipFile zip1 = new ZipFile(jar1)) {
       String manifestEntryName = "META-INF/MANIFEST.MF";
       ZipEntry manifestEntry = zip1.getEntry(manifestEntryName);
       if (manifestEntry != null) {
@@ -111,8 +108,6 @@ public class JarTest {
       } else {
         fail("We expected the standard META-INF/MANIFEST.MF");
       }
-    } finally {
-      zip1.close();
     }
   }
 
@@ -239,8 +234,7 @@ public class JarTest {
   public void testDuplicateCustomManifest() throws Exception {
     File basedir = resources.getBasedir("jar/project-with-manifest-under-target-classes");
     mojos.executeMojo(basedir, "jar");
-    JarFile jar = new JarFile(new File(basedir, "target/test-1.0.jar"));
-    try {
+    try (JarFile jar = new JarFile(new File(basedir, "target/test-1.0.jar"))) {
       // make sure there is only one manifest entry
       int count = 0;
       for (Enumeration<JarEntry> entries = jar.entries(); entries.hasMoreElements();) {
@@ -253,8 +247,6 @@ public class JarTest {
       // now check the manifest contents
       Manifest mf = jar.getManifest();
       Assert.assertEquals("custom-value", mf.getMainAttributes().getValue("Custom-Entry"));
-    } finally {
-      jar.close();
     }
   }
 
