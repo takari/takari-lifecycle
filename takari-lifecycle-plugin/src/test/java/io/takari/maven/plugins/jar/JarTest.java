@@ -17,10 +17,10 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.TreeMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -164,7 +164,7 @@ public class JarTest {
     mojos.executeMojo(basedir, "jar");
     File jar = new File(basedir, "target/test-1.0.jar");
     try (ZipFile zip = new ZipFile(jar)) {
-      TreeMap<String, ZipEntry> sorted = new TreeMap<>();
+      Map<String, ZipEntry> sorted = new LinkedHashMap<>();
 
       Enumeration<? extends ZipEntry> entries = zip.entries();
       while (entries.hasMoreElements()) {
@@ -174,19 +174,19 @@ public class JarTest {
 
       StringBuilder actual = new StringBuilder();
       for (ZipEntry entry : sorted.values()) {
-        actual.append(entry.isDirectory() ? "D " : "F ").append(entry.getName()).append('\n');
+        actual.append(entry.isDirectory() ? "D " : "F ").append(entry.getName()).append(' ').append(entry.getTime()).append('\n');
       }
 
       StringBuilder expected = new StringBuilder();
-      expected.append("D META-INF/\n");
-      expected.append("F META-INF/MANIFEST.MF\n");
-      expected.append("D META-INF/maven/\n");
-      expected.append("D META-INF/maven/io.takari.lifecycle.its/\n");
-      expected.append("D META-INF/maven/io.takari.lifecycle.its/test/\n");
-      expected.append("F META-INF/maven/io.takari.lifecycle.its/test/pom.properties\n");
-      expected.append("F resource.txt\n");
-      expected.append("D subdir/\n");
-      expected.append("F subdir/resource.txt\n");
+      expected.append("D META-INF/ 315561600000\n");
+      expected.append("F META-INF/MANIFEST.MF 315561600000\n");
+      expected.append("D META-INF/maven/ 315561600000\n");
+      expected.append("D META-INF/maven/io.takari.lifecycle.its/ 315561600000\n");
+      expected.append("D META-INF/maven/io.takari.lifecycle.its/test/ 315561600000\n");
+      expected.append("F META-INF/maven/io.takari.lifecycle.its/test/pom.properties 315561600000\n");
+      expected.append("F resource.txt 315561600000\n");
+      expected.append("D subdir/ 315561600000\n");
+      expected.append("F subdir/resource.txt 315561600000\n");
 
       Assert.assertEquals(expected.toString(), actual.toString());
     }

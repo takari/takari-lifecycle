@@ -9,15 +9,6 @@ package io.takari.maven.plugins.jar;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
-import io.takari.incrementalbuild.Output;
-import io.takari.incrementalbuild.aggregator.AggregatorBuildContext;
-import io.takari.incrementalbuild.aggregator.InputAggregator;
-import io.takari.incrementalbuild.aggregator.InputSet;
-import io.takari.maven.plugins.TakariLifecycleMojo;
-import io.takari.maven.plugins.util.PropertiesWriter;
-import io.tesla.proviso.archive.Archiver;
-import io.tesla.proviso.archive.Entry;
-import io.tesla.proviso.archive.source.FileEntry;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -38,6 +29,16 @@ import org.apache.maven.project.MavenProject;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+
+import io.takari.incrementalbuild.Output;
+import io.takari.incrementalbuild.aggregator.AggregatorBuildContext;
+import io.takari.incrementalbuild.aggregator.InputAggregator;
+import io.takari.incrementalbuild.aggregator.InputSet;
+import io.takari.maven.plugins.TakariLifecycleMojo;
+import io.takari.maven.plugins.util.PropertiesWriter;
+import io.tesla.proviso.archive.Archiver;
+import io.tesla.proviso.archive.Entry;
+import io.tesla.proviso.archive.source.FileEntry;
 
 @Mojo(name = "jar", defaultPhase = LifecyclePhase.PACKAGE, configurator = "takari")
 public class Jar extends TakariLifecycleMojo {
@@ -161,6 +162,7 @@ public class Jar extends TakariLifecycleMojo {
   private void archive(File jar, List<Iterable<Entry>> sources) throws IOException {
     Archiver archiver = Archiver.builder() //
         .useRoot(false) //
+        .normalize(true) //
         .build();
     archiver.archive(jar, new AggregateSource(sources));
   }
