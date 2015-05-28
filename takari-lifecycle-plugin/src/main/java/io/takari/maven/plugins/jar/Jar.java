@@ -40,7 +40,7 @@ import io.tesla.proviso.archive.Archiver;
 import io.tesla.proviso.archive.Entry;
 import io.tesla.proviso.archive.source.FileEntry;
 
-@Mojo(name = "jar", defaultPhase = LifecyclePhase.PACKAGE, configurator = "takari")
+@Mojo(name = "jar", defaultPhase = LifecyclePhase.PACKAGE, configurator = "takari", threadSafe = true)
 public class Jar extends TakariLifecycleMojo {
 
   @Parameter(defaultValue = "${project.build.outputDirectory}")

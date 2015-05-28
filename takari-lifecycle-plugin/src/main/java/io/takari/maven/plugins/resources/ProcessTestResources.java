@@ -16,7 +16,7 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
-@Mojo(name = "process-test-resources", defaultPhase = LifecyclePhase.PROCESS_TEST_RESOURCES, configurator = "takari")
+@Mojo(name = "process-test-resources", defaultPhase = LifecyclePhase.PROCESS_TEST_RESOURCES, configurator = "takari", threadSafe = true)
 public class ProcessTestResources extends AbstractProcessResourcesMojo {
 
   @Parameter(defaultValue = "${project.build.testOutputDirectory}", property = "resources.testOutputDirectory")

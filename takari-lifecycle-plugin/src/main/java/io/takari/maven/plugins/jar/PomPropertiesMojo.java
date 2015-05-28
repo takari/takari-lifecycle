@@ -7,9 +7,6 @@
  */
 package io.takari.maven.plugins.jar;
 
-import io.takari.incrementalbuild.BasicBuildContext;
-import io.tesla.proviso.archive.Entry;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -18,12 +15,15 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Mojo;
 
+import io.takari.incrementalbuild.BasicBuildContext;
+import io.tesla.proviso.archive.Entry;
+
 /**
  * Creates standard maven pom.properties file on filesystem.
  * <p>
  * Meant to run in place of jar mojo during m2e workspace build.
  */
-@Mojo(name = "pom-properties")
+@Mojo(name = "pom-properties", threadSafe = true)
 public class PomPropertiesMojo extends Jar {
 
   @Component

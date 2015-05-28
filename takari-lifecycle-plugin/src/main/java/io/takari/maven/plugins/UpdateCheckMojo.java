@@ -25,7 +25,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Mojo(name = "update-check")
+@Mojo(name = "update-check", threadSafe = true)
 public class UpdateCheckMojo extends AbstractMojo {
 
   private final Logger log = LoggerFactory.getLogger(getClass());
