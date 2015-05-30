@@ -143,8 +143,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
   @Test
   public void testProc_annotationProcessors() throws Exception {
-    Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
-    processors.addChild(newParameter("processor", "processor.Processor"));
+    Xpp3Dom processors = newProcessors("processor.Processor");
     File basedir = procCompile("compile-proc/proc", Proc.proc, processors);
     mojos.assertBuildOutputs(new File(basedir, "target"), //
         "classes/proc/Source.class", //
@@ -154,8 +153,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
   @Test
   public void testProc_processorErrorMessage() throws Exception {
-    Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
-    processors.addChild(newParameter("processor", "processor.ErrorMessageProcessor"));
+    Xpp3Dom processors = newProcessors("processor.ErrorMessageProcessor");
     File basedir = resources.getBasedir("compile-proc/proc");
     try {
       procCompile(basedir, Proc.only, processors);
@@ -190,8 +188,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
       outputs = new String[] {"generated-sources/annotations/proc/BrokenSource.java"};
     }
 
-    Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
-    processors.addChild(newParameter("processor", "processor.BrokenProcessor"));
+    Xpp3Dom processors = newProcessors("processor.BrokenProcessor");
     try {
       processAnnotations(basedir, Proc.proc, processor, processors);
       Assert.fail();
@@ -222,8 +219,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
   @Test
   public void testProcessorOptions() throws Exception {
-    Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
-    processors.addChild(newParameter("processor", "processor.ProcessorWithOptions"));
+    Xpp3Dom processors = newProcessors("processor.ProcessorWithOptions");
 
     Xpp3Dom options = new Xpp3Dom("annotationProcessorOptions");
     options.addChild(newParameter("optionA", "valueA"));
@@ -266,8 +262,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     File moduleA = new File(basedir, "module-a");
     File moduleB = new File(basedir, "module-b");
 
-    Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
-    processors.addChild(newParameter("processor", "processor.Processor"));
+    Xpp3Dom processors = newProcessors("processor.Processor");
 
     mojos.compile(moduleB);
     MavenProject projectA = mojos.readMavenProject(moduleA);
@@ -292,12 +287,19 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         "classes/proc/GeneratedSource.class");
   }
 
+  private Xpp3Dom newProcessors(String... processors) {
+    Xpp3Dom annotationProcessors = new Xpp3Dom("annotationProcessors");
+    for (String processor : processors) {
+      annotationProcessors.addChild(newParameter("processor", processor));
+    }
+    return annotationProcessors;
+  }
+
   @Test
   public void testMissingType() throws Exception {
     Assume.assumeTrue("only javac 7 tolerates missing types during annotation processing", !isJava8orBetter && !CompilerJdt.ID.equals(compilerId));
 
-    Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
-    processors.addChild(newParameter("processor", "processor.Processor"));
+    Xpp3Dom processors = newProcessors("processor.Processor");
 
     File basedir = procCompile("compile-proc/missing-type", Proc.only, processors, newParameter("verbose", "true"));
     File generatedSources = new File(basedir, "target/generated-sources/annotations");
@@ -343,8 +345,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     File processor = compileAnnotationProcessor();
     File basedir = resources.getBasedir("compile-proc/proc-incremental-recompile");
 
-    Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
-    processors.addChild(newParameter("processor", "processor.ProcessorSiblingBody"));
+    Xpp3Dom processors = newProcessors("processor.ProcessorSiblingBody");
     Xpp3Dom options = new Xpp3Dom("annotationProcessorOptions");
     options.addChild(newParameter("basedir", new File(basedir, "src/main/java").getCanonicalPath()));
 
@@ -367,8 +368,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
   @Test
   public void testProp_processorLastRound() throws Exception {
-    Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
-    processors.addChild(newParameter("processor", "processor.ProcessorLastRound"));
+    Xpp3Dom processors = newProcessors("processor.ProcessorLastRound");
     File basedir = procCompile("compile-proc/proc", Proc.only, processors);
     mojos.assertBuildOutputs(new File(basedir, "target"), //
         "classes/types.lst");
@@ -386,8 +386,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     File basedir = resources.getBasedir("compile-proc/proc-incremental-proconly");
     File generatedSources = new File(basedir, "target/generated-sources/annotations");
 
-    Xpp3Dom processors = new Xpp3Dom("annotationProcessors");
-    processors.addChild(newParameter("processor", "processor.Processor"));
+    Xpp3Dom processors = newProcessors("processor.Processor");
 
     compile(basedir, processor, "compile-only");
     processAnnotations(basedir, Proc.only, processor, processors);
