@@ -110,22 +110,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
    */
   private final Map<File, ICompilationUnit> compileQueue = new LinkedHashMap<>();
 
-  /**
-   * Set of File that have already been added to the compile queue during this incremental compile loop iteration.
-   */
-  private final Set<File> processedQueue = new HashSet<>();
-
-  /**
-   * Set of File that have already been added to the compile queue.
-   */
-  private final Multiset<File> processedSources = HashMultiset.create();
-
-  private final Set<String> rootNames = new LinkedHashSet<>();
-
-  private final Set<String> qualifiedNames = new LinkedHashSet<>();
-
-  private final Set<String> simpleNames = new LinkedHashSet<>();
-
   private final ClassfileDigester digester = new ClassfileDigester();
 
   private final ClasspathEntryCache classpathCache;
@@ -134,17 +118,328 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
   private final ProjectClasspathDigester processorpathDigester;
 
+  private abstract class CompilationStrategy {
+    protected final Multimap<File, File> sourceOutputs = HashMultimap.create();
+
+    public abstract boolean setSources(List<ResourceMetadata<File>> sources) throws IOException;
+
+    public abstract void enqueueAffectedSources(HashMap<String, byte[]> digest, Map<String, byte[]> oldDigest) throws IOException;
+
+    public abstract void enqueueAllSources() throws IOException;
+
+    public abstract void addDependentsOf(String typeOrPackage);
+
+    protected abstract void addDependentsOf(File resource);
+
+    public abstract int compile(Classpath namingEnvironment, Compiler compiler) throws IOException;
+
+    public Classpath createClasspath() throws IOException {
+      return CompilerJdt.this.createClasspath(sourceOutputs.values());
+    }
+
+    public abstract void addGeneratedSource(Output<File> generatedSource);
+
+    protected boolean deleteOrphanedOutputs() throws IOException {
+      boolean changed = false;
+      for (ResourceMetadata<File> source : context.getRemovedSources()) {
+        for (ResourceMetadata<File> output : context.getAssociatedOutputs(source)) {
+          File outputFile = output.getResource();
+          context.deleteOutput(outputFile);
+          addDependentsOf(outputFile);
+          changed = true;
+        }
+      }
+
+      return changed;
+    }
+
+    protected boolean deleteStaleOutputs() throws IOException {
+      boolean changed = false;
+      for (File sourceFile : sourceOutputs.keySet()) {
+        for (File associatedOutput : sourceOutputs.get(sourceFile)) {
+          if (!context.isProcessedOutput(associatedOutput)) {
+            context.deleteOutput(associatedOutput);
+            addDependentsOf(associatedOutput);
+            changed = true;
+          }
+        }
+      }
+      return changed;
+    }
+
+    /**
+     * Marks sources as "processed" in the build context. Masks old associated outputs from naming environments by adding them to {@link #sourceOutputs} map.
+     */
+    protected void processSources() {
+      sourceOutputs.clear();
+      for (File sourceFile : compileQueue.keySet()) {
+        ResourceMetadata<File> source = sources.get(sourceFile);
+        for (ResourceMetadata<File> output : context.getAssociatedOutputs(source)) {
+          sourceOutputs.put(sourceFile, output.getResource());
+        }
+        sources.put(source.getResource(), source.process());
+      }
+    }
+  }
+
+  private class IncrementalCompilationStrategy extends CompilationStrategy {
+
+    /**
+     * Set of File that have already been added to the compile queue during this incremental compile loop iteration.
+     */
+    private final Set<File> processedQueue = new HashSet<>();
+
+    /**
+     * Set of File that have already been added to the compile queue.
+     */
+    private final Multiset<File> processedSources = HashMultiset.create();
+
+
+    private final Set<String> rootNames = new LinkedHashSet<>();
+
+    private final Set<String> qualifiedNames = new LinkedHashSet<>();
+
+    private final Set<String> simpleNames = new LinkedHashSet<>();
+
+    @Override
+    public int compile(Classpath namingEnvironment, Compiler compiler) throws IOException {
+      // if (getProc() == Proc.only) {
+      // // proc==only cannot be implemented incrementally
+      // // changed sources may require types defined in sources that did not change,
+      // // which are not available during incremental build without generated .class files
+      // for (ResourceMetadata<File> source : sources.values()) {
+      // if (!compileQueue.containsKey(source.getResource())) {
+      // enqueue(source);
+      // }
+      // }
+      // }
+
+      // incremental compilation loop
+      // keep calling the compiler while there are sources in the queue
+      while (!compileQueue.isEmpty()) {
+        processedQueue.clear();
+        processedQueue.addAll(compileQueue.keySet());
+
+        processSources();
+
+        // invoke the compiler
+        ICompilationUnit[] compilationUnits = compileQueue.values().toArray(new ICompilationUnit[compileQueue.size()]);
+        compileQueue.clear();
+        compiler.compile(compilationUnits);
+        namingEnvironment.reset();
+
+        deleteStaleOutputs(); // delete stale outputs and enqueue affected sources
+
+        enqueueAffectedSources();
+      }
+
+      return processedSources.size();
+    }
+
+    @Override
+    protected void addDependentsOf(File resource) {
+      addDependentsOf(getJavaType(resource));
+    }
+
+    @Override
+    public boolean setSources(List<ResourceMetadata<File>> sources) throws IOException {
+      for (ResourceMetadata<File> source : sources) {
+        CompilerJdt.this.sources.put(source.getResource(), source);
+        if (source.getStatus() != ResourceStatus.UNMODIFIED) {
+          enqueue(source);
+        }
+      }
+
+      boolean compilationRequired = false;
+
+      // delete orphaned outputs and rebuild all sources that reference them
+      compilationRequired = deleteOrphanedOutputs() || compilationRequired;
+
+      enqueueAffectedSources();
+
+      return compilationRequired || !compileQueue.isEmpty();
+    }
+
+    private void enqueueAffectedSources() throws IOException {
+      for (ResourceMetadata<File> input : sources.values()) {
+        final File resource = input.getResource();
+        if (!processedQueue.contains(resource) && resource.canRead()) {
+          ReferenceCollection references = context.getAttribute(resource, ATTR_REFERENCES, ReferenceCollection.class);
+          if (references != null && references.includes(qualifiedNames, simpleNames, rootNames)) {
+            enqueue(input);
+          }
+        }
+      }
+
+      qualifiedNames.clear();
+      simpleNames.clear();
+      rootNames.clear();
+    }
+
+    private String getJavaType(File outputFile) {
+      String outputDirectory = getOutputDirectory().getAbsolutePath();
+      String path = outputFile.getAbsolutePath();
+      if (!path.startsWith(outputDirectory) || !path.endsWith(".class")) {
+        return null;
+      }
+      path = path.substring(outputDirectory.length(), path.length() - ".class".length());
+      if (path.startsWith(File.separator)) {
+        path = path.substring(1);
+      }
+      return path.replace(File.separatorChar, '.');
+    }
+
+    @Override
+    public void enqueueAllSources() throws IOException {
+      for (ResourceMetadata<File> input : sources.values()) {
+        final File resource = input.getResource();
+        if (!processedQueue.contains(resource) && resource.canRead()) {
+          enqueue(input);
+        }
+      }
+
+      qualifiedNames.clear();
+      simpleNames.clear();
+      rootNames.clear();
+    }
+
+    @Override
+    public void addDependentsOf(String typeOrPackage) {
+      if (typeOrPackage != null) {
+        // adopted from org.eclipse.jdt.internal.core.builder.IncrementalImageBuilder.addDependentsOf
+        // TODO deal with package-info
+        int idx = typeOrPackage.indexOf('.');
+        if (idx > 0) {
+          rootNames.add(typeOrPackage.substring(0, idx));
+          idx = typeOrPackage.lastIndexOf('.');
+          qualifiedNames.add(typeOrPackage.substring(0, idx));
+          simpleNames.add(typeOrPackage.substring(idx + 1));
+        } else {
+          rootNames.add(typeOrPackage);
+          simpleNames.add(typeOrPackage);
+        }
+      }
+    }
+
+    private void enqueue(ResourceMetadata<File> input) {
+      File sourceFile = input.getResource();
+      if (processedSources.count(sourceFile) > 10) {
+        throw new IllegalStateException("Too many recompiles " + sourceFile);
+      }
+      processedSources.add(sourceFile);
+      compileQueue.put(sourceFile, newSourceFile(sourceFile));
+    }
+
+    @Override
+    public void enqueueAffectedSources(HashMap<String, byte[]> digest, Map<String, byte[]> oldDigest) throws IOException {
+      if (oldDigest != null) {
+        Set<String> changedPackages = new HashSet<String>();
+
+        for (Map.Entry<String, byte[]> entry : digest.entrySet()) {
+          String type = entry.getKey();
+          byte[] hash = entry.getValue();
+          if (!Arrays.equals(hash, oldDigest.get(type))) {
+            addDependentsOf(type);
+          }
+          changedPackages.add(getPackage(type));
+        }
+
+        for (String oldType : oldDigest.keySet()) {
+          if (!digest.containsKey(oldType)) {
+            addDependentsOf(oldType);
+          }
+          changedPackages.remove(getPackage(oldType));
+        }
+
+        for (String changedPackage : changedPackages) {
+          addDependentsOf(changedPackage);
+        }
+
+        enqueueAffectedSources();
+      }
+    }
+
+    private String getPackage(String type) {
+      int idx = type.lastIndexOf('.');
+      return idx > 0 ? type.substring(0, idx) : null;
+    }
+
+    @Override
+    public void addGeneratedSource(Output<File> generatedSource) {
+      sources.put(generatedSource.getResource(), generatedSource);
+      processedQueue.add(generatedSource.getResource());
+    }
+  }
+
+  private class FullCompilationStrategy extends CompilationStrategy {
+
+    @Override
+    public boolean setSources(List<ResourceMetadata<File>> sources) throws IOException {
+      for (ResourceMetadata<File> source : sources) {
+        File sourceFile = source.getResource();
+        CompilerJdt.this.sources.put(sourceFile, source);
+        compileQueue.put(sourceFile, newSourceFile(sourceFile));
+      }
+
+      deleteOrphanedOutputs();
+
+      return true;
+    }
+
+    @Override
+    public void enqueueAffectedSources(HashMap<String, byte[]> digest, Map<String, byte[]> oldDigest) throws IOException {
+      // full strategy compiles all sources in one pass
+    }
+
+    @Override
+    public void enqueueAllSources() throws IOException {
+      // full strategy compiles all sources in one pass
+    }
+
+    @Override
+    public void addDependentsOf(String string) {
+      // full strategy compiles all sources in one pass
+    }
+
+    @Override
+    protected void addDependentsOf(File resource) {
+      // full strategy compiles all sources in one pass
+    }
+
+    @Override
+    public int compile(Classpath namingEnvironment, Compiler compiler) throws IOException {
+      if (!compileQueue.isEmpty()) {
+        processSources();
+
+        ICompilationUnit[] compilationUnits = compileQueue.values().toArray(new ICompilationUnit[compileQueue.size()]);
+        compiler.compile(compilationUnits);
+
+        deleteStaleOutputs();
+      }
+
+      return compileQueue.size();
+    }
+
+    @Override
+    public void addGeneratedSource(Output<File> generatedSource) {
+      // full strategy compiles all sources in one pass
+    }
+  }
+
+  private CompilationStrategy strategy;
+
   @Inject
   public CompilerJdt(CompilerBuildContext context, ClasspathEntryCache classpathCache, ClasspathDigester classpathDigester, ProjectClasspathDigester processorpathDigester) {
     super(context);
     this.classpathCache = classpathCache;
     this.classpathDigester = classpathDigester;
     this.processorpathDigester = processorpathDigester;
+
+    this.strategy = context.isEscalated() ? new FullCompilationStrategy() : new IncrementalCompilationStrategy();
   }
 
   @Override
   public int compile() throws MojoExecutionException, IOException {
-    IErrorHandlingPolicy errorHandlingPolicy = DefaultErrorHandlingPolicies.exitAfterAllProblems();
     Map<String, String> args = new HashMap<String, String>();
     // XXX figure out how to reuse source/target check from jdt
     // org.eclipse.jdt.internal.compiler.batch.Main.validateOptions(boolean)
@@ -200,11 +495,10 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     compilerOptions.suppressWarnings = true;
     compilerOptions.setShowWarnings(isShowWarnings());
     compilerOptions.docCommentSupport = true;
+
+    Classpath namingEnvironment = strategy.createClasspath();
+    IErrorHandlingPolicy errorHandlingPolicy = DefaultErrorHandlingPolicies.exitAfterAllProblems();
     IProblemFactory problemFactory = ProblemFactory.getProblemFactory(Locale.getDefault());
-
-    Multimap<File, File> sourceOutputs = HashMultimap.create();
-
-    Classpath namingEnvironment = createClasspath(sourceOutputs.values());
     Compiler compiler = new Compiler(namingEnvironment, errorHandlingPolicy, compilerOptions, this, problemFactory);
     compiler.options.produceReferenceInfo = true;
 
@@ -222,56 +516,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         compiler.options.storeAnnotations = true;
       }
 
-      // TODO optimize full build.
-      // there is no need to track processed inputs during full build,
-      // which saves memory and GC cycles
-      // also, if number of sources in the previous build is known, it may be more efficient to
-      // rebuild everything after certain % of sources is modified
-
-      // if (getProc() == Proc.only) {
-      // // proc==only cannot be implemented incrementally
-      // // changed sources may require types defined in sources that did not change,
-      // // which are not available during incremental build without generated .class files
-      // for (ResourceMetadata<File> source : sources.values()) {
-      // if (!compileQueue.containsKey(source.getResource())) {
-      // enqueue(source);
-      // }
-      // }
-      // }
-
-      // incremental compilation loop
-      // keep calling the compiler while there are sources in the queue
-      while (!compileQueue.isEmpty()) {
-        processedQueue.clear();
-        processedQueue.addAll(compileQueue.keySet());
-        sourceOutputs.clear();
-        for (File sourceFile : compileQueue.keySet()) {
-          ResourceMetadata<File> source = sources.get(sourceFile);
-          for (ResourceMetadata<File> output : context.getAssociatedOutputs(source)) {
-            sourceOutputs.put(sourceFile, output.getResource());
-          }
-          sources.put(source.getResource(), source.process());
-        }
-
-        // invoke the compiler
-        ICompilationUnit[] compilationUnits = compileQueue.values().toArray(new ICompilationUnit[compileQueue.size()]);
-        compileQueue.clear();
-        compiler.compile(compilationUnits);
-        namingEnvironment.reset();
-
-        // delete stale outputs and enqueue affected sources
-        for (File sourceFile : sourceOutputs.keySet()) {
-          for (File associatedOutput : sourceOutputs.get(sourceFile)) {
-            if (!context.isProcessedOutput(associatedOutput)) {
-              context.deleteOutput(associatedOutput);
-              addDependentsOf(getJavaType(associatedOutput));
-            }
-          }
-        }
-        enqueueAffectedSources();
-      }
-
-      return processedSources.size();
+      return strategy.compile(namingEnvironment, compiler);
     } finally {
       if (fileManager != null) {
         fileManager.flush();
@@ -282,80 +527,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
   @Override
   public boolean setSources(List<ResourceMetadata<File>> sources) throws IOException {
-    for (ResourceMetadata<File> source : sources) {
-      this.sources.put(source.getResource(), source);
-      if (source.getStatus() != ResourceStatus.UNMODIFIED) {
-        enqueue(source);
-      }
-    }
-
-    boolean compilationRequired = false;
-
-    // remove orphaned outputs and rebuild all sources that reference them
-    for (ResourceMetadata<File> source : context.getRemovedSources()) {
-      for (ResourceMetadata<File> output : context.getAssociatedOutputs(source)) {
-        File outputFile = output.getResource();
-        context.deleteOutput(outputFile);
-        addDependentsOf(getJavaType(outputFile));
-
-        compilationRequired = true;
-      }
-    }
-
-    enqueueAffectedSources();
-
-    return compilationRequired || !compileQueue.isEmpty();
-  }
-
-  private String getJavaType(File outputFile) {
-    String outputDirectory = getOutputDirectory().getAbsolutePath();
-    String path = outputFile.getAbsolutePath();
-    if (!path.startsWith(outputDirectory) || !path.endsWith(".class")) {
-      return null;
-    }
-    path = path.substring(outputDirectory.length(), path.length() - ".class".length());
-    if (path.startsWith(File.separator)) {
-      path = path.substring(1);
-    }
-    return path.replace(File.separatorChar, '.');
-  }
-
-  private void enqueueAffectedSources() throws IOException {
-    for (ResourceMetadata<File> input : sources.values()) {
-      final File resource = input.getResource();
-      if (!processedQueue.contains(resource) && resource.canRead()) {
-        ReferenceCollection references = context.getAttribute(resource, ATTR_REFERENCES, ReferenceCollection.class);
-        if (references != null && references.includes(qualifiedNames, simpleNames, rootNames)) {
-          enqueue(input);
-        }
-      }
-    }
-
-    qualifiedNames.clear();
-    simpleNames.clear();
-    rootNames.clear();
-  }
-
-  private void enqueueAllSources() throws IOException {
-    for (ResourceMetadata<File> input : sources.values()) {
-      final File resource = input.getResource();
-      if (!processedQueue.contains(resource) && resource.canRead()) {
-        enqueue(input);
-      }
-    }
-
-    qualifiedNames.clear();
-    simpleNames.clear();
-    rootNames.clear();
-  }
-
-  private void enqueue(ResourceMetadata<File> input) {
-    File sourceFile = input.getResource();
-    if (processedSources.count(sourceFile) > 10) {
-      throw new IllegalStateException("Too many recompiles " + sourceFile);
-    }
-    processedSources.add(sourceFile);
-    compileQueue.put(sourceFile, newSourceFile(sourceFile));
+    return strategy.setSources(sources);
   }
 
   private CompilationUnit newSourceFile(File source) {
@@ -442,33 +614,9 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     @SuppressWarnings("unchecked")
     Map<String, byte[]> oldDigest = (Map<String, byte[]>) context.setAttribute(ATTR_CLASSPATH_DIGEST, digest);
 
-    if (oldDigest != null) {
-      Set<String> changedPackages = new HashSet<String>();
+    log.debug("Digested {} types and {} packages in {} ms", typecount, packagecount, stopwatch.elapsed(TimeUnit.MILLISECONDS));
 
-      for (Map.Entry<String, byte[]> entry : digest.entrySet()) {
-        String type = entry.getKey();
-        byte[] hash = entry.getValue();
-        if (!Arrays.equals(hash, oldDigest.get(type))) {
-          addDependentsOf(type);
-        }
-        changedPackages.add(getPackage(type));
-      }
-
-      for (String oldType : oldDigest.keySet()) {
-        if (!digest.containsKey(oldType)) {
-          addDependentsOf(oldType);
-        }
-        changedPackages.remove(getPackage(oldType));
-      }
-
-      for (String changedPackage : changedPackages) {
-        addDependentsOf(changedPackage);
-      }
-
-      enqueueAffectedSources();
-
-      log.debug("Verified {} types and {} packages in {} ms", typecount, packagecount, stopwatch.elapsed(TimeUnit.MILLISECONDS));
-    }
+    strategy.enqueueAffectedSources(digest, oldDigest);
 
     return !compileQueue.isEmpty();
   }
@@ -484,14 +632,9 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     }
     if (getProc() != Proc.none && processorpathDigester.digestProcessorpath(this.processorpath)) {
       log.debug("Annotation processor path changed, recompiling all sources");
-      enqueueAllSources();
+      strategy.enqueueAllSources();
     }
     return !compileQueue.isEmpty();
-  }
-
-  private String getPackage(String type) {
-    int idx = type.lastIndexOf('.');
-    return idx > 0 ? type.substring(0, idx) : null;
   }
 
   @Override
@@ -545,7 +688,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
     if (significantChange) {
       // find all sources that reference this type and put them into work queue
-      addDependentsOf(CharOperation.toString(classFile.getCompoundName()));
+      strategy.addDependentsOf(CharOperation.toString(classFile.getCompoundName()));
     }
 
     final BufferedOutputStream os = new BufferedOutputStream(output.newOutputStream());
@@ -572,26 +715,8 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     return significantChange;
   }
 
-  private void addDependentsOf(String typeOrPackage) {
-    if (typeOrPackage != null) {
-      // adopted from org.eclipse.jdt.internal.core.builder.IncrementalImageBuilder.addDependentsOf
-      // TODO deal with package-info
-      int idx = typeOrPackage.indexOf('.');
-      if (idx > 0) {
-        rootNames.add(typeOrPackage.substring(0, idx));
-        idx = typeOrPackage.lastIndexOf('.');
-        qualifiedNames.add(typeOrPackage.substring(0, idx));
-        simpleNames.add(typeOrPackage.substring(idx + 1));
-      } else {
-        rootNames.add(typeOrPackage);
-        simpleNames.add(typeOrPackage);
-      }
-    }
-  }
-
   public void addGeneratedSource(Output<File> generatedSource) {
-    sources.put(generatedSource.getResource(), generatedSource);
-    processedQueue.add(generatedSource.getResource());
+    strategy.addGeneratedSource(generatedSource);
   }
 
 }
