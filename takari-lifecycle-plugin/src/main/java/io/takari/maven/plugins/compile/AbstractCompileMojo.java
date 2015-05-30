@@ -56,7 +56,25 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   private final Logger log = LoggerFactory.getLogger(getClass());
 
   public static enum Proc {
-    proc, only, none
+    proc, only, none,
+
+    /**
+     * Like {@link #proc}, but processes and compiles all sources if any source needs to be processed and/or compiled.
+     * <p>
+     * This is an experimental workaround for jdt compiler bug 447546, has no effect on javac-based compilers
+     * 
+     * @see https://bugs.eclipse.org/bugs/show_bug.cgi?id=447546
+     */
+    procEX,
+
+    /**
+     * Like {@link #only}, but processes all sources if any source needs to be processed.
+     * <p>
+     * This is an experimental workaround for jdt compiler bug 447546, has no effect on javac-based compilers
+     * 
+     * @see https://bugs.eclipse.org/bugs/show_bug.cgi?id=447546
+     */
+    onlyEX
   }
 
   public static enum Debug {

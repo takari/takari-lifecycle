@@ -65,9 +65,11 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
 
     switch (getProc()) {
       case only:
+      case onlyEX:
         options.add("-proc:only");
         break;
       case proc:
+      case procEX:
         // this is the javac default
         break;
       case none:

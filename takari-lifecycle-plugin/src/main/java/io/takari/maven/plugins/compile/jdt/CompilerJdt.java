@@ -496,6 +496,11 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     compilerOptions.setShowWarnings(isShowWarnings());
     compilerOptions.docCommentSupport = true;
 
+    if (isProcEscalate() && strategy instanceof IncrementalCompilationStrategy) {
+      strategy.enqueueAllSources();
+      strategy = new FullCompilationStrategy();
+    }
+
     Classpath namingEnvironment = strategy.createClasspath();
     IErrorHandlingPolicy errorHandlingPolicy = DefaultErrorHandlingPolicies.exitAfterAllProblems();
     IProblemFactory problemFactory = ProblemFactory.getProblemFactory(Locale.getDefault());
@@ -504,7 +509,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
     EclipseFileManager fileManager = null;
     try {
-      if (getProc() != Proc.none) {
+      if (!isProcNone()) {
         fileManager = new EclipseFileManager(null, getSourceEncoding());
         fileManager.setLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH, dependencies);
         fileManager.setLocation(StandardLocation.CLASS_OUTPUT, Collections.singleton(getOutputDirectory()));
@@ -548,7 +553,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       }
     }
 
-    if (getProc() != Proc.only) {
+    if (!isProcOnly()) {
       OutputDirectoryClasspathEntry output = new OutputDirectoryClasspathEntry(getOutputDirectory(), staleOutputs);
       entries.add(output);
       mutableentries.add(output);
@@ -566,7 +571,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     final List<ClasspathEntry> dependencypath = new ArrayList<ClasspathEntry>();
     final List<File> files = new ArrayList<File>();
 
-    if (getProc() == Proc.only) {
+    if (isProcOnly()) {
       DependencyClasspathEntry entry = classpathCache.get(getOutputDirectory());
       if (entry != null) {
         dependencypath.add(AccessRestrictionClasspathEntry.allowAll(entry));
@@ -630,7 +635,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     } else {
       throw new IllegalArgumentException();
     }
-    if (getProc() != Proc.none && processorpathDigester.digestProcessorpath(this.processorpath)) {
+    if (!isProcNone() && processorpathDigester.digestProcessorpath(this.processorpath)) {
       log.debug("Annotation processor path changed, recompiling all sources");
       strategy.enqueueAllSources();
     }
@@ -660,7 +665,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     }
 
     try {
-      if (!result.hasErrors() && getProc() != Proc.only) {
+      if (!result.hasErrors() && !isProcOnly()) {
         for (ClassFile classFile : result.getClassFiles()) {
           char[] filename = classFile.fileName();
           int length = filename.length;
@@ -677,6 +682,18 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       e.printStackTrace();
     }
     // XXX double check affected sources are recompiled when this source has errors
+  }
+
+  private boolean isProcOnly() {
+    return getProc() == Proc.only || getProc() == Proc.onlyEX;
+  }
+
+  private boolean isProcNone() {
+    return getProc() == Proc.none;
+  }
+
+  private boolean isProcEscalate() {
+    return getProc() == Proc.procEX || getProc() == Proc.onlyEX;
   }
 
   private void writeClassFile(Resource<File> input, String relativeStringName, ClassFile classFile) throws IOException {

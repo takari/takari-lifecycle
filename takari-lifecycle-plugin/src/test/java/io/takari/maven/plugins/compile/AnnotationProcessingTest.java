@@ -430,4 +430,27 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     mojos.assertMessages(basedir, "src/main/java/multiround/Source.java", new String[] {});
     mojos.assertBuildOutputs(generatedSources, "multiround/GeneratedSource.java", "multiround/AnotherGeneratedSource.java");
   }
+
+  @Test
+  public void testMultiround_processorLastRound() throws Exception {
+    // processor.ProcessorLastRound creates well-known resource during last round
+    // the point of this test is to assert this works during incremental build
+    // when compiler may be invoked several times to compile indirectly affected sources
+
+    File processor = compileAnnotationProcessor();
+    File basedir = resources.getBasedir("compile-proc/multiround-type-reference");
+
+    processAnnotations(basedir, Proc.procEX, processor, newProcessors("processor.ProcessorLastRound"));
+    mojos.assertBuildOutputs(new File(basedir, "target"), //
+        "classes/proc/Source.class", //
+        "classes/proc/AnotherSource.class", //
+        "classes/types.lst");
+
+    cp(basedir, "src/main/java/proc/Source.java-changed", "src/main/java/proc/Source.java");
+    processAnnotations(basedir, Proc.procEX, processor, newProcessors("processor.ProcessorLastRound"));
+    mojos.assertBuildOutputs(new File(basedir, "target"), //
+        "classes/proc/Source.class", //
+        "classes/proc/AnotherSource.class", //
+        "classes/types.lst");
+  }
 }
