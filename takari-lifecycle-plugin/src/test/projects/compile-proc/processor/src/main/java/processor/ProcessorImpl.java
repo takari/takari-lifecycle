@@ -6,12 +6,12 @@ import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
-import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
-import javax.tools.JavaFileObject;
+import javax.tools.Diagnostic;
+import javax.tools.FileObject;
 
 abstract class ProcessorImpl extends AbstractProcessor {
 
@@ -27,15 +27,14 @@ abstract class ProcessorImpl extends AbstractProcessor {
       try {
         TypeElement cls = (TypeElement) element;
         PackageElement pkg = (PackageElement) cls.getEnclosingElement();
-        String clsSimpleName = prefix + cls.getSimpleName();
+        String clsSimpleName = getGeneratedClassName(cls, prefix);
         String pkgName = pkg.getQualifiedName().toString();
-        String clsQualifiedName = pkgName + "." + clsSimpleName;
-        JavaFileObject sourceFile =
-            processingEnv.getFiler().createSourceFile(clsQualifiedName, element);
+        FileObject sourceFile = createFile(pkgName, clsSimpleName, element);
         BufferedWriter w = new BufferedWriter(sourceFile.openWriter());
         try {
           w.append("package ").append(pkgName).append(";");
           w.newLine();
+          appendClassAnnotations(w);
           w.append("public class ").append(clsSimpleName);
           appendBody(pkgName, clsSimpleName, w);
         } finally {
@@ -43,9 +42,22 @@ abstract class ProcessorImpl extends AbstractProcessor {
         }
       } catch (IOException e) {
         e.printStackTrace();
+        processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, e.getMessage(), element);
       }
     }
     return false; // not "claimed" so multiple processors can be tested
+  }
+
+  protected void appendClassAnnotations(BufferedWriter w) throws IOException {}
+
+  protected String getGeneratedClassName(TypeElement cls, String prefix) {
+    return prefix + cls.getSimpleName();
+  }
+
+  protected FileObject createFile(String pkgName, String clsSimpleName, Element element)
+      throws IOException {
+    String clsQualifiedName = pkgName + "." + clsSimpleName;
+    return processingEnv.getFiler().createSourceFile(clsQualifiedName, element);
   }
 
   protected void appendBody(String pkgName, String clsName, BufferedWriter w) throws IOException {

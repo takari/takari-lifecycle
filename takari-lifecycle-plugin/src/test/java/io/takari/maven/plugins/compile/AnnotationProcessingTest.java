@@ -142,6 +142,14 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
   }
 
   @Test
+  public void testProc_createResource() throws Exception {
+    File basedir = procCompile("compile-proc/proc", Proc.proc, newProcessors("processor.ProcessorCreateResource"));
+    mojos.assertBuildOutputs(new File(basedir, "target"), //
+        "classes/proc/Source.class", //
+        "generated-sources/annotations/proc/GeneratedSource.java");
+  }
+
+  @Test
   public void testProc_annotationProcessors() throws Exception {
     Xpp3Dom processors = newProcessors("processor.Processor");
     File basedir = procCompile("compile-proc/proc", Proc.proc, processors);
