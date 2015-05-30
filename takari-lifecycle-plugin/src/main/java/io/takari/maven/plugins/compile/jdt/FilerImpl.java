@@ -9,9 +9,12 @@ import java.io.Writer;
 import java.net.URI;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.processing.Filer;
+import javax.annotation.processing.FilerException;
 import javax.lang.model.element.Element;
 import javax.tools.FileObject;
 import javax.tools.ForwardingFileObject;
@@ -36,6 +39,8 @@ class FilerImpl implements Filer {
   private final StandardJavaFileManager fileManager;
   private final ProcessingEnvImpl processingEnv;
   private final CompilerJdt incrementalCompiler;
+
+  private final Set<URI> createdResources = new HashSet<>();
 
   private class FileObjectDelegate {
     private final Collection<Resource<File>> inputs;
@@ -117,6 +122,9 @@ class FilerImpl implements Filer {
   @Override
   public JavaFileObject createSourceFile(CharSequence name, Element... originatingElements) throws IOException {
     JavaFileObject sourceFile = fileManager.getJavaFileForOutput(StandardLocation.SOURCE_OUTPUT, name.toString(), JavaFileObject.Kind.SOURCE, null);
+    if (!createdResources.add(sourceFile.toUri())) {
+      throw new FilerException("Attempt to recreate file for type " + name);
+    }
     return new JavaFileObjectImpl(sourceFile, new FileObjectDelegate(getInputs(originatingElements)) {
       @Override
       protected void onClose(Output<File> generatedSource) {
@@ -148,6 +156,9 @@ class FilerImpl implements Filer {
   @Override
   public JavaFileObject createClassFile(CharSequence name, Element... originatingElements) throws IOException {
     JavaFileObject classFile = fileManager.getJavaFileForOutput(StandardLocation.CLASS_OUTPUT, name.toString(), JavaFileObject.Kind.CLASS, null);
+    if (!createdResources.add(classFile.toUri())) {
+      throw new FilerException("Attempt to recreate file for class " + name);
+    }
     return new JavaFileObjectImpl(classFile, new FileObjectDelegate(getInputs(originatingElements)) {
       @Override
       protected void onClose(Output<File> generatedClass) {
@@ -160,6 +171,9 @@ class FilerImpl implements Filer {
   @Override
   public FileObject createResource(Location location, CharSequence pkg, CharSequence relativeName, Element... originatingElements) throws IOException {
     FileObject file = fileManager.getFileForOutput(location, pkg.toString(), relativeName.toString(), null);
+    if (!createdResources.add(file.toUri())) {
+      throw new FilerException("Attempt to recreate file for resource " + pkg + "." + relativeName);
+    }
     return new FileObjectImpl(file, new FileObjectDelegate(getInputs(originatingElements)));
   }
 
