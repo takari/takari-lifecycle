@@ -183,4 +183,7 @@ class FilerImpl implements Filer {
     return file;
   }
 
+  public void hardReset() {
+    this.createdResources.clear();
+  }
 }

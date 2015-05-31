@@ -20,11 +20,17 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
 
   private Logger logger = LoggerFactory.getLogger(getClass());
 
-  private final Iterator<Processor> processors;
+  private static interface ResettableProcessorIterator extends Iterator<Processor> {
+
+    void reset();
+
+  }
+
+  private final ResettableProcessorIterator processors;
 
   private boolean finished;
 
-  private static class SpecifiedProcessors implements Iterator<Processor> {
+  private static class SpecifiedProcessors implements ResettableProcessorIterator {
 
     private final ClassLoader loader;
     private final String[] processors;
@@ -54,6 +60,43 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
     public void remove() {
       throw new UnsupportedOperationException();
     }
+
+    @Override
+    public void reset() {
+      idx = 0;
+    }
+  }
+
+  private static class DiscoveredProcessors implements ResettableProcessorIterator {
+
+    private final ServiceLoader<Processor> loader;
+    private Iterator<Processor> iterator;
+
+    public DiscoveredProcessors(ClassLoader procLoader) {
+      this.loader = ServiceLoader.load(Processor.class, procLoader);
+      this.iterator = loader.iterator();
+    }
+
+    @Override
+    public boolean hasNext() {
+      return iterator.hasNext();
+    }
+
+    @Override
+    public Processor next() {
+      return iterator.next();
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void reset() {
+      this.iterator = loader.iterator();
+    }
+
   }
 
   public AnnotationProcessorManager(ProcessingEnvImpl processingEnv, StandardJavaFileManager fileManager, String[] processors) {
@@ -61,7 +104,7 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
     ClassLoader procLoader = fileManager.getClassLoader(StandardLocation.ANNOTATION_PROCESSOR_PATH);
     this.processors = processors != null //
         ? new SpecifiedProcessors(procLoader, processors) //
-        : ServiceLoader.load(Processor.class, procLoader).iterator();
+        : new DiscoveredProcessors(procLoader);
   }
 
   @Override
@@ -91,5 +134,19 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
     }
     finished = isLastRound;
     super.processAnnotations(units, referenceBindings, isLastRound);
+  }
+
+  /**
+   * Resets this annotation processor manager between incremental compiler loop iterations.
+   */
+  public void hardReset() {
+    // clear/reset parent state
+    ((ProcessingEnvImpl) _processingEnv).hardReset();
+    _processors.clear();
+    _isFirstRound = true;
+    _round = 0;
+    // clear/reset this class state
+    processors.reset();
+    finished = false;
   }
 }

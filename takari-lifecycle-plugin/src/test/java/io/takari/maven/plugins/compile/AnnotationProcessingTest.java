@@ -471,4 +471,32 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         "classes/typeindex/Annotated.class");
   }
 
+  @Test
+  public void testReprocess() throws Exception {
+    File processor = compileAnnotationProcessor();
+    File basedir = resources.getBasedir("compile-proc/reprocess");
+    File target = new File(basedir, "target");
+
+    processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.ProessorValue"));
+    mojos.assertBuildOutputs(target, //
+        "classes/reprocess/Annotated.class", //
+        "classes/reprocess/Annotated.value", //
+        "classes/reprocess/SimpleA.class", //
+        "classes/reprocess/SimpleB.class");
+
+    Assert.assertEquals("1", FileUtils.fileRead(new File(target, "classes/reprocess/Annotated.value")));
+
+    cp(basedir, "src/main/java/reprocess/SimpleA.java-changed", "src/main/java/reprocess/SimpleA.java");
+    touch(new File(basedir, "src/main/java/reprocess/Annotated.java"));
+
+    processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.ProessorValue"));
+    mojos.assertBuildOutputs(target, //
+        "classes/reprocess/Annotated.class", //
+        "classes/reprocess/Annotated.value", //
+        "classes/reprocess/SimpleA.class", //
+        "classes/reprocess/SimpleB.class");
+
+    Assert.assertEquals("10", FileUtils.fileRead(new File(target, "classes/reprocess/Annotated.value")));
+
+  }
 }

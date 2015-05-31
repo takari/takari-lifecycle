@@ -228,6 +228,10 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         compiler.compile(compilationUnits);
         namingEnvironment.reset();
 
+        if (compiler.annotationProcessorManager != null) {
+          ((AnnotationProcessorManager) compiler.annotationProcessorManager).hardReset();
+        }
+
         deleteStaleOutputs(); // delete stale outputs and enqueue affected sources
 
         enqueueAffectedSources();

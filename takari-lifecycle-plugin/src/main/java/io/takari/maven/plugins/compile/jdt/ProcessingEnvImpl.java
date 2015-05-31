@@ -1,7 +1,5 @@
 package io.takari.maven.plugins.compile.jdt;
 
-import io.takari.maven.plugins.compile.CompilerBuildContext;
-
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
@@ -10,6 +8,8 @@ import javax.tools.StandardJavaFileManager;
 
 import org.eclipse.jdt.internal.compiler.Compiler;
 import org.eclipse.jdt.internal.compiler.apt.dispatch.BaseProcessingEnvImpl;
+
+import io.takari.maven.plugins.compile.CompilerBuildContext;
 
 // TODO reconcile with BatchProcessingEnvImpl
 class ProcessingEnvImpl extends BaseProcessingEnvImpl {
@@ -26,4 +26,10 @@ class ProcessingEnvImpl extends BaseProcessingEnvImpl {
     return Locale.getDefault(); // TODO
   }
 
+  public void hardReset() {
+    reset();
+    setErrorRaised(false);
+
+    ((FilerImpl) _filer).hardReset();
+  }
 }
