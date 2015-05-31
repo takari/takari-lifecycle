@@ -9,12 +9,20 @@ import javax.tools.StandardLocation;
 
 import org.eclipse.jdt.internal.compiler.apt.dispatch.BaseAnnotationProcessorManager;
 import org.eclipse.jdt.internal.compiler.apt.dispatch.ProcessorInfo;
+import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
+import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.problem.AbortCompilation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // TODO reconcile with BatchAnnotationProcessorManager
 class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
 
+  private Logger logger = LoggerFactory.getLogger(getClass());
+
   private final Iterator<Processor> processors;
+
+  private boolean finished;
 
   private static class SpecifiedProcessors implements Iterator<Processor> {
 
@@ -74,4 +82,14 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
     throw new AbortCompilation(null, e);
   }
 
+  @Override
+  public void processAnnotations(CompilationUnitDeclaration[] units, ReferenceBinding[] referenceBindings, boolean isLastRound) {
+    if (finished) {
+      // workaround eclipse jdt compiler bug 468893
+      logger.warn("Suppressed duplicate processingOver==true annotation processor invocation, see Eclipse bug 468893");
+      return;
+    }
+    finished = isLastRound;
+    super.processAnnotations(units, referenceBindings, isLastRound);
+  }
 }

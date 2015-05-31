@@ -457,4 +457,18 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         "classes/proc/AnotherSource.class", //
         "classes/types.lst");
   }
+
+  @Test
+  public void testLastRound_typeIndex() throws Exception {
+    Xpp3Dom processors = newProcessors("processor.ProcessorLastRound_typeIndex");
+    File basedir = procCompile("compile-proc/multiround-type-index", Proc.procEX, processors);
+    File target = new File(basedir, "target");
+    mojos.assertBuildOutputs(target, //
+        "generated-sources/annotations/generated/TypeIndex.java", //
+        "generated-sources/annotations/generated/TypeIndex2.java", //
+        "classes/generated/TypeIndex.class", //
+        "classes/generated/TypeIndex2.class", //
+        "classes/typeindex/Annotated.class");
+  }
+
 }
