@@ -1,9 +1,5 @@
 package io.takari.maven.plugins.compile.jdt;
 
-import io.takari.incrementalbuild.MessageSeverity;
-import io.takari.incrementalbuild.Resource;
-import io.takari.maven.plugins.compile.CompilerBuildContext;
-
 import java.io.File;
 
 import javax.annotation.processing.Messager;
@@ -15,6 +11,10 @@ import javax.tools.Diagnostic.Kind;
 import org.eclipse.jdt.internal.compiler.apt.dispatch.AptProblem;
 import org.eclipse.jdt.internal.compiler.apt.dispatch.BaseMessagerImpl;
 import org.eclipse.jdt.internal.compiler.apt.dispatch.BaseProcessingEnvImpl;
+
+import io.takari.incrementalbuild.MessageSeverity;
+import io.takari.incrementalbuild.Resource;
+import io.takari.maven.plugins.compile.CompilerBuildContext;
 
 class MessagerImpl extends BaseMessagerImpl implements Messager {
 
@@ -28,12 +28,12 @@ class MessagerImpl extends BaseMessagerImpl implements Messager {
 
   @Override
   public void printMessage(Kind kind, CharSequence msg) {
-    context.addPomMessage(msg.toString(), getSeverity(kind), null);
+    printMessage(kind, msg, null, null, null);
   }
 
   @Override
   public void printMessage(Kind kind, CharSequence msg, Element e) {
-    printMessage(kind, msg, e, null);
+    printMessage(kind, msg, e, null, null);
   }
 
   @Override
@@ -47,9 +47,11 @@ class MessagerImpl extends BaseMessagerImpl implements Messager {
       _processingEnv.setErrorRaised(true);
     }
     AptProblem problem = createProblem(kind, msg, e, a, v);
-    if (problem != null) {
+    if (problem != null && problem.getOriginatingFileName() != null) {
       Resource<File> input = context.getProcessedSource(new File(new String(problem.getOriginatingFileName())));
       input.addMessage(problem.getSourceLineNumber(), problem.getSourceColumnNumber(), problem.getMessage(), getSeverity(kind), null);
+    } else {
+      context.addPomMessage(msg.toString(), getSeverity(kind), null);
     }
   }
 

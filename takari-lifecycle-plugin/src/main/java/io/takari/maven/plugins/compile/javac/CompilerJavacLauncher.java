@@ -7,15 +7,6 @@
  */
 package io.takari.maven.plugins.compile.javac;
 
-import io.takari.incrementalbuild.MessageSeverity;
-import io.takari.incrementalbuild.Output;
-import io.takari.incrementalbuild.Resource;
-import io.takari.maven.plugins.compile.CompilerBuildContext;
-import io.takari.maven.plugins.compile.ProjectClasspathDigester;
-import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerConfiguration;
-import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerOutput;
-import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerOutputProcessor;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -28,6 +19,15 @@ import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.exec.ShutdownHookProcessDestroyer;
+
+import io.takari.incrementalbuild.MessageSeverity;
+import io.takari.incrementalbuild.Output;
+import io.takari.incrementalbuild.Resource;
+import io.takari.maven.plugins.compile.CompilerBuildContext;
+import io.takari.maven.plugins.compile.ProjectClasspathDigester;
+import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerConfiguration;
+import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerOutput;
+import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerOutputProcessor;
 
 @Named(CompilerJavacLauncher.ID)
 public class CompilerJavacLauncher extends AbstractCompilerJavac {
@@ -118,7 +118,7 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
       @Override
       public void addMessage(String path, int line, int column, String message, MessageSeverity kind) {
         if (".".equals(path)) {
-          // TODO
+          context.addPomMessage(message, kind, null);
         } else {
           File file = new File(path);
           Resource<File> resource = sources.get(file);

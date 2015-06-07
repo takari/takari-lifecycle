@@ -7,6 +7,7 @@ import static io.takari.maven.testing.TestResources.touch;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -174,8 +175,11 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     ErrorMessage expected = new ErrorMessage(compilerId);
     expected.setSnippets("jdt", "ERROR Source.java [6:14] test error message"); // TODO why 14?
     expected.setSnippets("javac", "ERROR Source.java [6:8] test error message");
-
     mojos.assertMessage(basedir, "src/main/java/proc/Source.java", expected);
+
+    Collection<String> pomMessages = mojos.getBuildContextLog().getMessages(new File(basedir, "pom.xml"));
+    Assert.assertEquals(3, pomMessages.size());
+    // TODO assert actual messages are as expected
   }
 
   @Test
