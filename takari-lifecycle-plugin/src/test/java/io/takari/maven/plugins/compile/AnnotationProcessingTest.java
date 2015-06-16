@@ -308,24 +308,42 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
   }
 
   @Test
-  public void testMissingType() throws Exception {
-    Assume.assumeTrue("only javac 7 tolerates missing types during annotation processing", !isJava8orBetter && !CompilerJdt.ID.equals(compilerId));
+  public void testLenientProcOnly_lenient() throws Exception {
+    Assume.assumeTrue("only javac 7 and jdt support lenientProcOnly=true", !isJava8orBetter || CompilerJdt.ID.equals(compilerId));
 
     Xpp3Dom processors = newProcessors("processor.Processor");
 
-    File basedir = procCompile("compile-proc/missing-type", Proc.only, processors, newParameter("verbose", "true"));
+    File basedir = resources.getBasedir("compile-proc/missing-type");
     File generatedSources = new File(basedir, "target/generated-sources/annotations");
+
+    procCompile("compile-proc/missing-type", Proc.only, processors, newParameter("lenientProcOnly", "true"));
     mojos.assertBuildOutputs(generatedSources, "proc/GeneratedSource.java");
     mojos.assertMessages(basedir, "src/main/java/warn/Source.java", new String[0]);
 
-    basedir = procCompile("compile-proc/missing-type", Proc.only, processors, newParameter("showWarnings", "true"));
+    procCompile("compile-proc/missing-type", Proc.only, processors, newParameter("lenientProcOnly", "true"), newParameter("showWarnings", "true"));
     mojos.assertBuildOutputs(generatedSources, "proc/GeneratedSource.java");
-    if (CompilerJdt.ID.equals(compilerId)) {
-      // when explicitly told NOT to compile anything, jdt CORRECTLY does not generate compile message
-      mojos.assertMessages(basedir, "src/main/java/warn/Source.java", new String[0]);
-    } else {
-      mojos.assertMessages(basedir, "src/main/java/warn/Source.java", "WARNING Source.java [9:17] package missing does not exist");
+    ErrorMessage warning = new ErrorMessage(compilerId);
+    warning.setSnippets("jdt", "WARNING", "missing cannot be resolved to a type");
+    warning.setSnippets("javac", "WARNING", "package missing does not exist");
+    mojos.assertMessage(basedir, "src/main/java/warn/Source.java", warning);
+  }
+
+  @Test
+  public void testLenientProcOnly_strict() throws Exception {
+    Assume.assumeTrue("only javac 8+ and jdt support lenientProcOnly=false", isJava8orBetter || CompilerJdt.ID.equals(compilerId));
+
+    Xpp3Dom processors = newProcessors("processor.Processor");
+    File basedir = resources.getBasedir("compile-proc/missing-type");
+    try {
+      procCompile("compile-proc/missing-type", Proc.only, processors, newParameter("lenientProcOnly", "false"));
+      Assert.fail();
+    } catch (MojoExecutionException e) {
+      // expected
     }
+    ErrorMessage error = new ErrorMessage(compilerId);
+    error.setSnippets("jdt", "ERROR", "missing cannot be resolved to a type");
+    error.setSnippets("javac", "ERROR", "package missing does not exist");
+    mojos.assertMessage(basedir, "src/main/java/warn/Source.java", error);
   }
 
   @Test

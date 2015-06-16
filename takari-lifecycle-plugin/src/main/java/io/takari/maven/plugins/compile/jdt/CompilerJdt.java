@@ -101,6 +101,8 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
   private List<File> processorpath;
 
+  private boolean lenientProcOnly;
+
   private Classpath dependencypath;
 
   private final Map<File, ResourceMetadata<File>> sources = new LinkedHashMap<>();
@@ -647,6 +649,11 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   }
 
   @Override
+  public void setLenientProcOnly(boolean lenient) {
+    this.lenientProcOnly = lenient;
+  }
+
+  @Override
   public void acceptResult(CompilationResult result) {
     if (result == null) {
       return; // ah?
@@ -661,9 +668,9 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       context.setAttribute(input.getResource(), ATTR_REFERENCES, new ReferenceCollection(result.rootReferences, result.qualifiedReferences, result.simpleNameReferences));
     }
 
-    if (result.hasProblems()) {
+    if (result.hasProblems() && (!isLenientProcOnly() || isShowWarnings())) {
       for (CategorizedProblem problem : result.getProblems()) {
-        MessageSeverity severity = problem.isError() ? MessageSeverity.ERROR : MessageSeverity.WARNING;
+        MessageSeverity severity = isLenientProcOnly() ? MessageSeverity.WARNING : problem.isError() ? MessageSeverity.ERROR : MessageSeverity.WARNING;
         input.addMessage(problem.getSourceLineNumber(), ((DefaultProblem) problem).column, problem.getMessage(), severity, null /* cause */);
       }
     }
@@ -698,6 +705,10 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
   private boolean isProcEscalate() {
     return getProc() == Proc.procEX || getProc() == Proc.onlyEX;
+  }
+
+  private boolean isLenientProcOnly() {
+    return lenientProcOnly && isProcOnly();
   }
 
   private void writeClassFile(Resource<File> input, String relativeStringName, ClassFile classFile) throws IOException {

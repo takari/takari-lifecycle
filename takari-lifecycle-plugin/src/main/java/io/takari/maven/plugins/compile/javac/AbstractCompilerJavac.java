@@ -31,6 +31,18 @@ import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 
 public abstract class AbstractCompilerJavac extends AbstractCompiler {
 
+  protected static final boolean isJava8orBetter;
+
+  static {
+    boolean _isJava8orBetter = true;
+    try {
+      Class.forName("java.util.Base64");
+    } catch (Exception e) {
+      _isJava8orBetter = false;
+    }
+    isJava8orBetter = _isJava8orBetter;
+  }
+
   private final ProjectClasspathDigester digester;
 
   private final List<ResourceMetadata<File>> sources = new ArrayList<ResourceMetadata<File>>();
@@ -226,4 +238,11 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
   protected abstract int compile(Map<File, Resource<File>> sources) throws MojoExecutionException, IOException;
 
   protected abstract String getCompilerId();
+
+  @Override
+  public void setLenientProcOnly(boolean lenient) {
+    if (lenient != !isJava8orBetter && getProc() == Proc.only) {
+      throw new IllegalArgumentException(String.format("Current javac version does not support lenientProcOnly=%s", lenient));
+    }
+  }
 }

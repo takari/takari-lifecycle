@@ -140,6 +140,16 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   protected Proc proc;
 
   /**
+   * When set to {@code true} compiler will tolerate missing types and other compile-specific errors when processing annotation only.
+   * <p>
+   * This experimental feature is meant to provide backwards compatibility for projects migrating from javac version 1.7 and earlier to jdt compiler.
+   * 
+   * @since 1.11.7
+   */
+  @Parameter
+  protected Boolean lenientProcOnly;
+
+  /**
    * <p>
    * Names of annotation processors to run. If not set, the default annotation processors discovery process applies.
    * </p>
@@ -344,6 +354,9 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       compiler.setSource(source);
       compiler.setTarget(getTarget(target, source));
       compiler.setProc(proc);
+      if (lenientProcOnly != null) {
+        compiler.setLenientProcOnly(lenientProcOnly.booleanValue());
+      }
       compiler.setGeneratedSourcesDirectory(getGeneratedSourcesDirectory());
       compiler.setAnnotationProcessors(annotationProcessors);
       compiler.setAnnotationProcessorOptions(annotationProcessorOptions);

@@ -181,4 +181,6 @@ public abstract class AbstractCompiler {
 
   public abstract int compile() throws MojoExecutionException, IOException;
 
+  public abstract void setLenientProcOnly(boolean lenient);
+
 }
