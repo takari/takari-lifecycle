@@ -7,19 +7,10 @@
  */
 package io.takari.maven.plugins.compile.javac;
 
-import io.takari.incrementalbuild.MessageSeverity;
-import io.takari.incrementalbuild.Output;
-import io.takari.incrementalbuild.Resource;
-import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
-import io.takari.maven.plugins.compile.CompilerBuildContext;
-import io.takari.maven.plugins.compile.ProjectClasspathDigester;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Writer;
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,76 +26,28 @@ import javax.tools.ToolProvider;
 
 import org.apache.maven.plugin.MojoExecutionException;
 
+import io.takari.incrementalbuild.MessageSeverity;
+import io.takari.incrementalbuild.Output;
+import io.takari.incrementalbuild.Resource;
+import io.takari.maven.plugins.compile.CompilerBuildContext;
+import io.takari.maven.plugins.compile.ProjectClasspathDigester;
+
 @Named(CompilerJavac.ID)
 public class CompilerJavac extends AbstractCompilerJavac {
 
   public static final String ID = "javac";
 
-  private static final boolean isJava7;
+  private static JavaCompiler compiler;
 
-  static {
-    boolean isJava7x = true;
-    try {
-      Class.forName("java.nio.file.Files");
-    } catch (Exception e) {
-      isJava7x = false;
+  static synchronized JavaCompiler getSystemJavaCompiler() throws MojoExecutionException {
+    if (compiler == null) {
+      compiler = ToolProvider.getSystemJavaCompiler();
     }
-    isJava7 = isJava7x;
-  }
-
-  static JavaCompiler getSystemJavaCompiler() throws MojoExecutionException {
-    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
     if (compiler == null) {
       throw new MojoExecutionException("No compiler is provided in this environment. " + "Perhaps you are running on a JRE rather than a JDK?");
     }
     return compiler;
   }
-
-  private static interface JavaCompilerFactory {
-    public JavaCompiler acquire() throws MojoExecutionException;
-
-    public void release(JavaCompiler compiler);
-  }
-
-  private static final JavaCompilerFactory REUSECREATED = new JavaCompilerFactory() {
-
-    // TODO broken if this plugin is loaded by multiple classloaders
-    // https://cwiki.apache.org/confluence/display/MAVEN/Maven+3.x+Class+Loading
-    private final Deque<JavaCompiler> compilers = new ArrayDeque<JavaCompiler>();
-
-    @Override
-    public JavaCompiler acquire() throws MojoExecutionException {
-      synchronized (compilers) {
-        if (!compilers.isEmpty()) {
-          return compilers.removeFirst();
-        }
-      }
-      return getSystemJavaCompiler();
-    }
-
-    @Override
-    public void release(JavaCompiler compiler) {
-      synchronized (compilers) {
-        compilers.addFirst(compiler);
-      }
-    }
-  };
-
-  private static final JavaCompilerFactory SINGLETON = new JavaCompilerFactory() {
-
-    private JavaCompiler compiler;
-
-    @Override
-    public void release(JavaCompiler compiler) {}
-
-    @Override
-    public synchronized JavaCompiler acquire() throws MojoExecutionException {
-      if (compiler == null) {
-        compiler = getSystemJavaCompiler();
-      }
-      return compiler;
-    }
-  };
 
   @Inject
   public CompilerJavac(CompilerBuildContext context, ProjectClasspathDigester digester) {
@@ -113,34 +56,14 @@ public class CompilerJavac extends AbstractCompilerJavac {
 
   @Override
   public int compile(Map<File, Resource<File>> sources) throws MojoExecutionException, IOException {
-    // java 6 limitations
-    // - there is severe performance penalty using new JavaCompiler instance
-    // - the same JavaCompiler cannot be used concurrently
-    // - even different JavaCompiler instances can't do annotation processing concurrently
-
-    // java 7 (and I assume newer) do not have these limitations
-
-    // The workaround is two-fold
-    // - reuse JavaCompiler instances, but not on multiple threads
-    // - do not allow in-process annotation processing
-
-    if (!isJava7 && getProc() != Proc.none) {
-      // TODO maybe allow in single-threaded mode
-      throw new MojoExecutionException("Annotation processing requires forked JVM on Java 6");
-    }
-
-    final JavaCompilerFactory factory = isJava7 ? SINGLETON : REUSECREATED;
-
-    final JavaCompiler compiler = factory.acquire();
+    final JavaCompiler compiler = getSystemJavaCompiler();
     final StandardJavaFileManager javaFileManager = compiler.getStandardFileManager(null, null, getSourceEncoding());
     try {
       compile(compiler, javaFileManager, sources);
     } finally {
       javaFileManager.flush();
       javaFileManager.close();
-      factory.release(compiler);
     }
-
     return sources.size();
   }
 
