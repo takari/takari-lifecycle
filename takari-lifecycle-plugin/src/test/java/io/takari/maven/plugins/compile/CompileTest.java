@@ -259,21 +259,24 @@ public class CompileTest extends AbstractCompileTest {
   @Test
   public void testMultipleExecutions() throws Exception {
     File basedir = resources.getBasedir("compile/multiple-executions");
-
-    // compile "other" sources, must use unique execution id
-    Xpp3Dom otherSources = new Xpp3Dom("compileSourceRoots");
-    otherSources.addChild(newParameter("root", new File(basedir, "src/other/java").getCanonicalPath()));
     MavenProject project = mojos.readMavenProject(basedir);
     MavenSession session = mojos.newMavenSession(project);
+
+    // compile "other" sources, execution id="other"
     MojoExecution execution = mojos.newMojoExecution();
     Xpp3Dom configuration = execution.getConfiguration();
-    configuration.addChild(otherSources);
+    Xpp3Dom otherIncludes = new Xpp3Dom("includes");
+    otherIncludes.addChild(newParameter("include", "other/*.java"));
+    configuration.addChild(otherIncludes);
     execution = new MojoExecution(execution.getMojoDescriptor(), "other", execution.getSource());
     execution.setConfiguration(configuration);
     mojos.executeMojo(session, project, execution);
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), "other/Other.class");
 
-    compile(basedir);
+    // compile main sources
+    Xpp3Dom includes = new Xpp3Dom("includes");
+    includes.addChild(newParameter("include", "main/*.java"));
+    compile(basedir, includes);
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), "main/Main.class");
   }
 
