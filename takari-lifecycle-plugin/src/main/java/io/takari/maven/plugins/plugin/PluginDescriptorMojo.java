@@ -77,6 +77,7 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
   @Component
   private AggregatorBuildContext context;
 
+
   @Override
   protected void executeMojo() throws MojoExecutionException {
     try {
@@ -199,6 +200,14 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
           try (InputStream is = zip.getInputStream(entry)) {
             readMojosXml(mojos, is);
           }
+          continue;
+        }
+        entry = zip.getEntry(PATH_PLUGIN_XML);
+        if (entry != null) {
+          try (InputStream is = zip.getInputStream(entry)) {
+            readPluginXml(mojos, is);
+          }
+          continue;
         }
       } catch (XmlPullParserException | IOException e) {
         logger.warn("Could not read dependency mojos.xml " + jarFile, e);
@@ -218,6 +227,12 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
   private void readMojosXml(Map<String, MojoDescriptor> mojos, InputStream is) throws XmlPullParserException, IOException {
     PluginDescriptor pluginDescriptor = new PluginDescriptorXpp3Reader().read(is);
     for (MojoDescriptor mojo : pluginDescriptor.getMojos()) {
+      mojos.put(mojo.getImplementation(), mojo);
+    }
+  }
+
+  private void readPluginXml(Map<String, MojoDescriptor> mojos, InputStream is) throws XmlPullParserException, IOException {
+    for (MojoDescriptor mojo : LegacyPluginDescriptors.readMojos(is)) {
       mojos.put(mojo.getImplementation(), mojo);
     }
   }

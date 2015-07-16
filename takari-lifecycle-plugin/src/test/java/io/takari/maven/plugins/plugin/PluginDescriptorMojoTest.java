@@ -3,6 +3,7 @@ package io.takari.maven.plugins.plugin;
 import static io.takari.maven.testing.TestMavenRuntime.newParameter;
 import static io.takari.maven.testing.TestResources.assertFileContents;
 import static io.takari.maven.testing.TestResources.cp;
+import static io.takari.maven.testing.TestResources.rm;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -55,6 +56,29 @@ public class PluginDescriptorMojoTest {
     for (File file : files) {
       mojos.newDependency(file).addTo(project);
     }
+  }
+
+  @Test
+  public void testLegacyInheritance() throws Exception {
+    File basedir = resources.getBasedir("plugin-descriptor/legacy-inheritance");
+    File legacyBasedir = new File(basedir, "legacy");
+    File pluginBasedir = new File(basedir, "plugin");
+
+    final MavenProject legacyProject = mojos.readMavenProject(legacyBasedir);
+    addDependencies(legacyProject, "apache-plugin-annotations-jar", "maven-plugin-api-jar");
+    generatePluginDescriptor(legacyProject);
+    mojos.assertBuildOutputs(legacyBasedir, "target/classes/META-INF/maven/plugin.xml", "target/classes/META-INF/takari/mojos.xml");
+    rm(legacyBasedir, "target/classes/META-INF/takari/mojos.xml"); // make it look like plugin built with maven-plugin-plugin
+    mojos.executeMojo(legacyProject, "jar");
+
+    final MavenProject pluginProject = mojos.readMavenProject(pluginBasedir);
+    addDependencies(pluginProject, "apache-plugin-annotations-jar", "maven-plugin-api-jar");
+    addDependencies(pluginProject, new File(legacyBasedir, "target/plugin-descriptor-legacy-0.1.jar"));
+
+    generatePluginDescriptor(pluginProject);
+    mojos.assertBuildOutputs(pluginBasedir, "target/classes/META-INF/maven/plugin.xml", "target/classes/META-INF/takari/mojos.xml");
+    assertFileContents(pluginBasedir, "expected/mojos.xml", "target/classes/META-INF/takari/mojos.xml");
+    assertFileContents(pluginBasedir, "expected/plugin.xml", "target/classes/META-INF/maven/plugin.xml");
   }
 
   @Test
