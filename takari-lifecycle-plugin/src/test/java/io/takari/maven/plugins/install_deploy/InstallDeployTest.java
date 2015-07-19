@@ -2,8 +2,6 @@ package io.takari.maven.plugins.install_deploy;
 
 import static io.takari.maven.testing.TestMavenRuntime.newParameter;
 import static io.takari.maven.testing.TestResources.create;
-import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
-import io.takari.maven.testing.TestResources;
 
 import java.io.File;
 import java.util.Arrays;
@@ -26,6 +24,9 @@ import org.eclipse.aether.spi.localrepo.LocalRepositoryManagerFactory;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
+
+import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
+import io.takari.maven.testing.TestResources;
 
 public class InstallDeployTest {
   @Rule
@@ -93,4 +94,34 @@ public class InstallDeployTest {
     return project;
   }
 
+  @Test
+  public void testAltDeployRepository() throws Exception {
+    File basedir = resources.getBasedir("install-deploy/basic");
+    create(basedir, "target/classes/resource.txt", "target/test-classes/resource.txt");
+
+    File localrepo = new File(basedir, "target/localrepo");
+    Assert.assertTrue(localrepo.mkdirs());
+
+    File remoterepo = new File(basedir, "target/remoterepo");
+    Assert.assertTrue(remoterepo.mkdirs());
+
+    Properties properties = new Properties();
+    properties.put("version", "1.0");
+    properties.put("repopath", remoterepo.getCanonicalPath());
+    MavenProject project = readMavenProject(basedir, properties);
+
+    MavenSession session = newSession(project, localrepo);
+
+    mojos.executeMojo(session, project, "jar", newParameter("sourceJar", "true"), newParameter("testJar", "true"));
+    Assert.assertEquals(2, project.getAttachedArtifacts().size());
+
+    File altDeploymentRepository = new File(basedir, "target/altremoterepo");
+
+    mojos.executeMojo(session, project, "deploy", newParameter("altDeploymentRepository", "default::default::file://" + altDeploymentRepository.getAbsolutePath()));
+    Assert.assertTrue(new File(altDeploymentRepository, "io/takari/lifecycle/its/test/1.0/test-1.0.jar").canRead());
+    Assert.assertTrue(new File(altDeploymentRepository, "io/takari/lifecycle/its/test/1.0/test-1.0.pom").canRead());
+    Assert.assertTrue(new File(altDeploymentRepository, "io/takari/lifecycle/its/test/1.0/test-1.0-sources.jar").canRead());
+    Assert.assertTrue(new File(altDeploymentRepository, "io/takari/lifecycle/its/test/1.0/test-1.0-tests.jar").canRead());
+
+  }
 }
