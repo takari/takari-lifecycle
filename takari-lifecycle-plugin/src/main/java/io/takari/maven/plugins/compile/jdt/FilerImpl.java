@@ -146,8 +146,6 @@ class FilerImpl implements Filer {
       if (binding instanceof SourceTypeBinding) {
         File file = new File(new String(((SourceTypeBinding) binding).getFileName()));
         inputs.put(file, context.getProcessedSource(file));
-      } else {
-        throw new UnsupportedOperationException("not implemented");
       }
     }
     return inputs.values();
