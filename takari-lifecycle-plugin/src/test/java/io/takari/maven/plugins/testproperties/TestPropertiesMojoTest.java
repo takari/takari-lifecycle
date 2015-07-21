@@ -1,7 +1,11 @@
 package io.takari.maven.plugins.testproperties;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -19,7 +23,9 @@ import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import com.google.common.base.Charsets;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
@@ -33,6 +39,9 @@ public class TestPropertiesMojoTest {
 
   @Rule
   public final IncrementalBuildRule mojos = new IncrementalBuildRule();
+
+  @Rule
+  public final TemporaryFolder temp = new TemporaryFolder();
 
   private MojoExecution newMojoExecution() throws IOException {
     MojoExecution execution = mojos.newMojoExecution("testProperties");
@@ -170,4 +179,35 @@ public class TestPropertiesMojoTest {
     Map<String, String> properties = readProperties(basedir);
     Assert.assertEquals(basedir.getCanonicalPath(), properties.get("workspaceResolver"));
   }
+
+  @Test
+  public void testDependencyProperties() throws Exception {
+    File basedir = resources.getBasedir();
+    MavenProject project = mojos.readMavenProject(basedir);
+    MavenSession session = mojos.newMavenSession(project);
+
+    Assert.assertTrue(new File(basedir, "src/test").mkdirs());
+
+    try (OutputStream os = new FileOutputStream(new File(basedir, "src/test/test.properties"))) {
+      BufferedWriter w = new BufferedWriter(new OutputStreamWriter(os, Charsets.UTF_8));
+      w.write("ga=${g:a}");
+      w.newLine();
+      w.write("ga_tests=${g:a:tests}");
+      w.newLine();
+      w.flush();
+    }
+
+    File ga = temp.newFile().getCanonicalFile();
+    File ga_tests = temp.newFile().getCanonicalFile();
+
+    mojos.newDependency(ga).setGroupId("g").setArtifactId("a").addTo(project);
+    mojos.newDependency(ga_tests).setGroupId("g").setArtifactId("a").setClassifier("tests").addTo(project);
+
+    mojos.executeMojo(session, project, "testProperties");
+
+    Map<String, String> properties = readProperties(basedir);
+    Assert.assertEquals(ga.getCanonicalPath(), properties.get("ga"));
+    Assert.assertEquals(ga_tests.getCanonicalPath(), properties.get("ga_tests"));
+  }
+
 }

@@ -210,12 +210,36 @@ public class TestPropertiesMojo extends AbstractMojo {
     try (InputStream is = new FileInputStream(metadata.getResource())) {
       Properties custom = new Properties();
       custom.load(is);
-      for (String key : custom.stringPropertyNames()) {
-        properties.put(key, expand(custom.getProperty(key)));
-      }
+      mergeCustomTestProperties(properties, custom);
     } catch (IOException e) {
       // TODO create error marker instead
       throw new MojoExecutionException("Could not read test.properties file " + testProperties, e);
+    }
+  }
+
+  private void mergeCustomTestProperties(Properties properties, Properties custom) {
+    // resource filtering configuration should match AbstractProcessResourcesMojo
+    // TODO figure out how to move this to a common component
+    Map<Object, Object> substitutes = new HashMap<Object, Object>();
+
+    for (Artifact dependency : dependencies) {
+      StringBuilder key = new StringBuilder();
+      key.append(dependency.getGroupId());
+      key.append(':').append(dependency.getArtifactId());
+      if (dependency.getClassifier() != null) {
+        key.append(':').append(dependency.getClassifier());
+      }
+      substitutes.put(key.toString(), dependency.getFile());
+    }
+
+    substitutes.putAll(projectProperties);
+    substitutes.putAll(sessionProperties);
+    substitutes.put("project", project);
+    substitutes.put("localRepository", localRepository);
+    substitutes.put("userSettingsFile", userSettingsFile);
+
+    for (String key : custom.stringPropertyNames()) {
+      properties.put(key, expand(custom.getProperty(key), substitutes));
     }
   }
 
@@ -225,17 +249,10 @@ public class TestPropertiesMojo extends AbstractMojo {
     }
   }
 
-  private String expand(String value) {
-    // resource filtering configuration should match AbstractProcessResourcesMojo
-    // TODO figure out how to move this to a common component
-    Map<Object, Object> properties = new HashMap<Object, Object>(this.projectProperties);
-    properties.putAll(sessionProperties);
-    properties.put("project", project);
-    properties.put("localRepository", localRepository);
-    properties.put("userSettingsFile", userSettingsFile);
+  private String expand(String value, Map<Object, Object> substitutes) {
     StringWriter writer = new StringWriter();
     try {
-      resourceProcessor.filter(new StringReader(value), writer, properties);
+      resourceProcessor.filter(new StringReader(value), writer, substitutes);
       return writer.toString();
     } catch (IOException e) {
       return value; // shouldn't happen
