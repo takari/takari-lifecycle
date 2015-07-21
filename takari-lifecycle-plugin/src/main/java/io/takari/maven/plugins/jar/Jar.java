@@ -7,6 +7,7 @@
  */
 package io.takari.maven.plugins.jar;
 
+import static com.google.common.collect.Iterables.size;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 
@@ -84,12 +85,13 @@ public class Jar extends TakariLifecycleMojo {
       InputSet registeredOutput = buildContext.newInputSet();
       try {
         if (classesDirectory.isDirectory()) {
-          registeredOutput.addInputs(classesDirectory, null, null);
+          Iterable<File> inputs = registeredOutput.addInputs(classesDirectory, null, null);
+          logger.debug("Analyzing main classes directory {} with {} entries", classesDirectory, size(inputs));
         } else {
           logger.warn("Main classes directory {} does not exist", classesDirectory);
         }
         // XXX this does not detect changes in archive#manifestFile.
-        registeredOutput.aggregateIfNecessary(jar, new InputAggregator() {
+        boolean processingRequired = registeredOutput.aggregateIfNecessary(jar, new InputAggregator() {
           @Override
           public void aggregate(Output<File> output, Iterable<File> inputs) throws IOException {
             logger.info("Building main JAR.");
@@ -104,6 +106,9 @@ public class Jar extends TakariLifecycleMojo {
             archive(output.getResource(), sources);
           }
         });
+        if (!processingRequired) {
+          logger.info("Main JAR is up-to-date");
+        }
         project.getArtifact().setFile(jar);
       } catch (IOException e) {
         throw new MojoExecutionException(e.getMessage(), e);
@@ -118,17 +123,24 @@ public class Jar extends TakariLifecycleMojo {
         for (String sourceRoot : project.getCompileSourceRoots()) {
           File dir = new File(sourceRoot);
           if (dir.isDirectory()) {
-            sources.putAll(dir, registeredOutput.addInputs(new File(sourceRoot), null, null));
+            Iterable<File> inputs = registeredOutput.addInputs(new File(sourceRoot), null, null);
+            logger.debug("Analyzing sources directory {} with {} entries", dir, size(inputs));
+            sources.putAll(dir, inputs);
+          } else {
+            logger.debug("Sources directory {} does not exist", dir);
           }
         }
-        registeredOutput.aggregateIfNecessary(sourceJar, new InputAggregator() {
+        boolean processingRequired = registeredOutput.aggregateIfNecessary(sourceJar, new InputAggregator() {
           @Override
           public void aggregate(Output<File> output, Iterable<File> inputs) throws IOException {
-            logger.info("Building source Jar.");
+            logger.info("Building source JAR.");
 
             archive(output.getResource(), asList(inputsSource(sources), jarManifestSource(project)));
           }
         });
+        if (!processingRequired) {
+          logger.info("Source JAR is up-to-date");
+        }
         projectHelper.attachArtifact(project, "jar", "sources", sourceJar);
       } catch (IOException e) {
         throw new MojoExecutionException(e.getMessage(), e);
@@ -140,11 +152,12 @@ public class Jar extends TakariLifecycleMojo {
       InputSet registeredOutput = buildContext.newInputSet();
       try {
         if (testClassesDirectory.isDirectory()) {
-          registeredOutput.addInputs(testClassesDirectory, null, null);
+          Iterable<File> inputs = registeredOutput.addInputs(testClassesDirectory, null, null);
+          logger.debug("Analyzing test classes directory {} with {} entries", testClassesDirectory, size(inputs));
         } else {
           logger.warn("Test classes directory {} does not exist", classesDirectory);
         }
-        registeredOutput.aggregateIfNecessary(testJar, new InputAggregator() {
+        boolean processingRequired = registeredOutput.aggregateIfNecessary(testJar, new InputAggregator() {
           @Override
           public void aggregate(Output<File> output, Iterable<File> inputs) throws IOException {
             logger.info("Building test JAR.");
@@ -152,6 +165,9 @@ public class Jar extends TakariLifecycleMojo {
             archive(output.getResource(), asList(inputsSource(testClassesDirectory, inputs), jarManifestSource(project)));
           }
         });
+        if (!processingRequired) {
+          logger.info("Test JAR is up-to-date");
+        }
       } catch (IOException e) {
         throw new MojoExecutionException(e.getMessage(), e);
       }
@@ -165,6 +181,13 @@ public class Jar extends TakariLifecycleMojo {
         .normalize(true) //
         .build();
     archiver.archive(jar, new AggregateSource(sources));
+    if (logger.isDebugEnabled()) {
+      int size = 0;
+      for (Iterable<?> source : sources) {
+        size += size(source);
+      }
+      logger.debug("Created archive {} with {} entries", jar, size);
+    }
   }
 
   static String getRelativePath(File basedir, File resource) {
