@@ -44,13 +44,13 @@ import io.takari.resources.filtering.ResourcesProcessor;
 @Mojo(name = "testProperties", requiresDependencyResolution = ResolutionScope.TEST, threadSafe = true)
 public class TestPropertiesMojo extends AbstractMojo {
 
-  @Parameter(defaultValue = "${project.properties}")
-  private Properties properties;
+  @Parameter(defaultValue = "${project.properties}", readonly = true)
+  private Properties projectProperties;
 
-  @Parameter(defaultValue = "${session.executionProperties}")
+  @Parameter(defaultValue = "${session.executionProperties}", readonly = true)
   private Properties sessionProperties;
 
-  @Parameter(defaultValue = "${project}")
+  @Parameter(defaultValue = "${project}", readonly = true)
   @Incremental(configuration = Configuration.ignore)
   protected MavenProject project;
 
@@ -76,7 +76,7 @@ public class TestPropertiesMojo extends AbstractMojo {
   private File outputFile;
 
   // @Parameter(defaultValue = "${plugin.artifactMap(io.takari.m2e.workspace:org.eclipse.m2e.workspace.cli)}")
-  @Parameter(defaultValue = "${project.artifactMap(io.takari.m2e.workspace:org.eclipse.m2e.workspace.cli)}")
+  @Parameter(defaultValue = "${project.artifactMap(io.takari.m2e.workspace:org.eclipse.m2e.workspace.cli)}", readonly = true)
   private Artifact workspaceResolver;
 
   @Parameter(defaultValue = "${project.build.directory}/workspacestate.properties")
@@ -228,7 +228,7 @@ public class TestPropertiesMojo extends AbstractMojo {
   private String expand(String value) {
     // resource filtering configuration should match AbstractProcessResourcesMojo
     // TODO figure out how to move this to a common component
-    Map<Object, Object> properties = new HashMap<Object, Object>(this.properties);
+    Map<Object, Object> properties = new HashMap<Object, Object>(this.projectProperties);
     properties.putAll(sessionProperties);
     properties.put("project", project);
     properties.put("localRepository", localRepository);
