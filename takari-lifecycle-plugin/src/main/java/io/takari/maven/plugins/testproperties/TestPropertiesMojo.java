@@ -41,7 +41,7 @@ import io.takari.incrementalbuild.ResourceMetadata;
 import io.takari.maven.plugins.util.PropertiesWriter;
 import io.takari.resources.filtering.ResourcesProcessor;
 
-@Mojo(name = "testProperties", requiresDependencyResolution = ResolutionScope.TEST, threadSafe = true)
+@Mojo(name = "testProperties", requiresDependencyResolution = ResolutionScope.TEST, configurator = "takari", threadSafe = true)
 public class TestPropertiesMojo extends AbstractMojo {
 
   @Parameter(defaultValue = "${project.properties}", readonly = true)
