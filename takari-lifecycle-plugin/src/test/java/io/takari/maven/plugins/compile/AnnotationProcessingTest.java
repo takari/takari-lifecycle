@@ -131,6 +131,12 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
   }
 
   @Test
+  public void testProc_dummyOutput() throws Exception {
+    File basedir = procCompile("compile-proc/proc", Proc.proc, newProcessors("processor.Processor_dummyOutput"));
+    mojos.assertBuildOutputs(new File(basedir, "target"), "classes/proc/Source.class");
+  }
+
+  @Test
   public void testProcTypeReference() throws Exception {
     File basedir = procCompile("compile-proc/proc-type-reference", Proc.proc);
     mojos.assertBuildOutputs(new File(basedir, "target"), //
@@ -515,6 +521,5 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         "classes/reprocess/SimpleB.class");
 
     Assert.assertEquals("10", FileUtils.fileRead(new File(target, "classes/reprocess/Annotated.value")));
-
   }
 }

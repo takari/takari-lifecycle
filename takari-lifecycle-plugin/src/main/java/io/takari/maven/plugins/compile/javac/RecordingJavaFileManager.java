@@ -10,6 +10,9 @@ package io.takari.maven.plugins.compile.javac;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.Charset;
 
 import javax.tools.FileObject;
 import javax.tools.ForwardingFileObject;
@@ -20,30 +23,43 @@ import javax.tools.StandardJavaFileManager;
 
 abstract class RecordingJavaFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> {
 
-  protected RecordingJavaFileManager(StandardJavaFileManager fileManager) {
+  private final Charset encoding;
+
+  protected RecordingJavaFileManager(StandardJavaFileManager fileManager, Charset encoding) {
     super(fileManager);
+    this.encoding = encoding;
   }
 
   @Override
-  public FileObject getFileForOutput(Location location, String packageName, String relativeName, FileObject sibling) throws IOException {
+  public FileObject getFileForOutput(Location location, String packageName, String relativeName, final FileObject sibling) throws IOException {
     FileObject fileObject = super.getFileForOutput(location, packageName, relativeName, sibling);
-    record(sibling != null ? FileObjects.toFile(sibling) : null, FileObjects.toFile(fileObject));
     return new ForwardingFileObject<FileObject>(fileObject) {
       @Override
       public OutputStream openOutputStream() throws IOException {
+        record(sibling != null ? FileObjects.toFile(sibling) : null, FileObjects.toFile(fileObject));
         return new IncrementalFileOutputStream(FileObjects.toFile(this));
+      }
+
+      @Override
+      public Writer openWriter() throws IOException {
+        return encoding != null ? new OutputStreamWriter(openOutputStream(), encoding) : new OutputStreamWriter(openOutputStream());
       }
     };
   }
 
   @Override
-  public JavaFileObject getJavaFileForOutput(Location location, String className, javax.tools.JavaFileObject.Kind kind, FileObject sibling) throws IOException {
+  public JavaFileObject getJavaFileForOutput(Location location, String className, javax.tools.JavaFileObject.Kind kind, final FileObject sibling) throws IOException {
     JavaFileObject fileObject = super.getJavaFileForOutput(location, className, kind, sibling);
-    record(sibling != null ? FileObjects.toFile(sibling) : null, FileObjects.toFile(fileObject));
     return new ForwardingJavaFileObject<JavaFileObject>(fileObject) {
       @Override
       public OutputStream openOutputStream() throws IOException {
+        record(sibling != null ? FileObjects.toFile(sibling) : null, FileObjects.toFile(fileObject));
         return new IncrementalFileOutputStream(FileObjects.toFile(this));
+      }
+
+      @Override
+      public Writer openWriter() throws IOException {
+        return encoding != null ? new OutputStreamWriter(openOutputStream(), encoding) : new OutputStreamWriter(openOutputStream());
       }
     };
   }

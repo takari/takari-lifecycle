@@ -74,7 +74,7 @@ public class CompilerJavac extends AbstractCompilerJavac {
     final Map<File, Output<File>> outputs = new HashMap<File, Output<File>>();
 
     final Iterable<String> options = getCompilerOptions();
-    final RecordingJavaFileManager recordingFileManager = new RecordingJavaFileManager(javaFileManager) {
+    final RecordingJavaFileManager recordingFileManager = new RecordingJavaFileManager(javaFileManager, getSourceEncoding()) {
       @Override
       protected void record(File inputFile, File outputFile) {
         outputs.put(outputFile, context.processOutput(outputFile));

@@ -7,8 +7,6 @@
  */
 package io.takari.maven.plugins.compile.javac;
 
-import io.takari.incrementalbuild.MessageSeverity;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -33,6 +31,8 @@ import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
+
+import io.takari.incrementalbuild.MessageSeverity;
 
 public class CompilerJavacForked {
 
@@ -279,7 +279,7 @@ public class CompilerJavacForked {
     final StandardJavaFileManager standardFileManager = compiler.getStandardFileManager(diagnosticCollector, null, sourceEncoding);
     final Iterable<? extends JavaFileObject> fileObjects = standardFileManager.getJavaFileObjectsFromFiles(config.getSources());
     final Iterable<String> options = config.getCompilerOptions();
-    final RecordingJavaFileManager recordingFileManager = new RecordingJavaFileManager(standardFileManager) {
+    final RecordingJavaFileManager recordingFileManager = new RecordingJavaFileManager(standardFileManager, sourceEncoding) {
       @Override
       protected void record(File inputFile, File outputFile) {
         output.processOutput(inputFile, outputFile);
