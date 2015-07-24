@@ -10,6 +10,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -163,7 +164,21 @@ public class JarTest {
     mojos.executeMojo(basedir, "process-resources");
     mojos.executeMojo(basedir, "jar");
     File jar = new File(basedir, "target/test-1.0.jar");
-    try (ZipFile zip = new ZipFile(jar)) {
+    assertZipEntries(jar //
+        , "D META-INF/ 315561600000" //
+        , "F META-INF/MANIFEST.MF 315561600000" //
+        , "D META-INF/maven/ 315561600000" //
+        , "D META-INF/maven/io.takari.lifecycle.its/ 315561600000" //
+        , "D META-INF/maven/io.takari.lifecycle.its/test/ 315561600000" //
+        , "F META-INF/maven/io.takari.lifecycle.its/test/pom.properties 315561600000" //
+        , "F resource.txt 315561600000" //
+        , "D subdir/ 315561600000" //
+        , "F subdir/resource.txt 315561600000" //
+    );
+  }
+
+  private static void assertZipEntries(File zipFile, String... expected) throws IOException {
+    try (ZipFile zip = new ZipFile(zipFile)) {
       Map<String, ZipEntry> sorted = new LinkedHashMap<>();
 
       Enumeration<? extends ZipEntry> entries = zip.entries();
@@ -172,23 +187,17 @@ public class JarTest {
         sorted.put(entry.getName(), entry);
       }
 
-      StringBuilder actual = new StringBuilder();
+      StringBuilder actualSb = new StringBuilder();
       for (ZipEntry entry : sorted.values()) {
-        actual.append(entry.isDirectory() ? "D " : "F ").append(entry.getName()).append(' ').append(entry.getTime()).append('\n');
+        actualSb.append(entry.isDirectory() ? "D " : "F ").append(entry.getName()).append(' ').append(entry.getTime()).append('\n');
       }
 
-      StringBuilder expected = new StringBuilder();
-      expected.append("D META-INF/ 315561600000\n");
-      expected.append("F META-INF/MANIFEST.MF 315561600000\n");
-      expected.append("D META-INF/maven/ 315561600000\n");
-      expected.append("D META-INF/maven/io.takari.lifecycle.its/ 315561600000\n");
-      expected.append("D META-INF/maven/io.takari.lifecycle.its/test/ 315561600000\n");
-      expected.append("F META-INF/maven/io.takari.lifecycle.its/test/pom.properties 315561600000\n");
-      expected.append("F resource.txt 315561600000\n");
-      expected.append("D subdir/ 315561600000\n");
-      expected.append("F subdir/resource.txt 315561600000\n");
+      StringBuilder expectedSb = new StringBuilder();
+      for (String str : expected) {
+        expectedSb.append(str).append('\n');
+      }
 
-      Assert.assertEquals(expected.toString(), actual.toString());
+      Assert.assertEquals(expectedSb.toString(), actualSb.toString());
     }
   }
 
