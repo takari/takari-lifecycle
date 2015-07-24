@@ -87,6 +87,8 @@ public class Jar extends TakariLifecycleMojo {
         if (classesDirectory.isDirectory()) {
           Iterable<File> inputs = registeredOutput.addInputs(classesDirectory, null, null);
           logger.debug("Analyzing main classes directory {} with {} entries", classesDirectory, size(inputs));
+          for (File input : inputs)
+            logger.debug("  Entry: {}", input);
         } else {
           logger.warn("Main classes directory {} does not exist", classesDirectory);
         }
@@ -204,8 +206,11 @@ public class Jar extends TakariLifecycleMojo {
 
   private List<Entry> inputsSource(File basedir, Iterable<File> inputs) {
     final List<Entry> entries = new ArrayList<>();
+    logger.debug("inputsSource - basedir {}", basedir);
     for (File input : inputs) {
       String entryName = getRelativePath(basedir, input);
+      logger.debug("  inputsSource - input {}", input);
+      logger.debug("  inputsSource - adding entry {}", entryName);
       entries.add(new FileEntry(entryName, input));
     }
     return entries;
