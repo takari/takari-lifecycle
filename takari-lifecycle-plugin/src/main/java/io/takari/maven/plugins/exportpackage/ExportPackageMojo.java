@@ -1,11 +1,5 @@
 package io.takari.maven.plugins.exportpackage;
 
-import io.takari.incrementalbuild.Output;
-import io.takari.incrementalbuild.aggregator.AggregatorBuildContext;
-import io.takari.incrementalbuild.aggregator.InputSet;
-import io.takari.incrementalbuild.aggregator.MetadataAggregator;
-import io.takari.maven.plugins.TakariLifecycleMojo;
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -25,6 +19,12 @@ import org.apache.maven.plugins.annotations.Parameter;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSet;
+
+import io.takari.incrementalbuild.Output;
+import io.takari.incrementalbuild.aggregator.AggregatorBuildContext;
+import io.takari.incrementalbuild.aggregator.InputSet;
+import io.takari.incrementalbuild.aggregator.MetadataAggregator;
+import io.takari.maven.plugins.TakariLifecycleMojo;
 
 @Mojo(name = "export-package", defaultPhase = LifecyclePhase.PROCESS_CLASSES, threadSafe = true)
 public class ExportPackageMojo extends TakariLifecycleMojo {
@@ -51,6 +51,7 @@ public class ExportPackageMojo extends TakariLifecycleMojo {
   @Override
   protected void executeMojo() throws MojoExecutionException {
     try {
+      classesDirectory = classesDirectory.getCanonicalFile();
       generateOutput();
     } catch (IOException e) {
       throw new MojoExecutionException("Could not generate export-package file", e);

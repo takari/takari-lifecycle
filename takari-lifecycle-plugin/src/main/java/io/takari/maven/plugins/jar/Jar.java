@@ -85,6 +85,7 @@ public class Jar extends TakariLifecycleMojo {
       InputSet registeredOutput = buildContext.newInputSet();
       try {
         if (classesDirectory.isDirectory()) {
+          classesDirectory = classesDirectory.getCanonicalFile();
           Iterable<File> inputs = registeredOutput.addInputs(classesDirectory, null, null);
           logger.debug("Analyzing main classes directory {} with {} entries", classesDirectory, size(inputs));
         } else {
@@ -123,7 +124,8 @@ public class Jar extends TakariLifecycleMojo {
         for (String sourceRoot : project.getCompileSourceRoots()) {
           File dir = new File(sourceRoot);
           if (dir.isDirectory()) {
-            Iterable<File> inputs = registeredOutput.addInputs(new File(sourceRoot), null, null);
+            dir = dir.getCanonicalFile();
+            Iterable<File> inputs = registeredOutput.addInputs(dir, null, null);
             logger.debug("Analyzing sources directory {} with {} entries", dir, size(inputs));
             sources.putAll(dir, inputs);
           } else {
@@ -151,12 +153,9 @@ public class Jar extends TakariLifecycleMojo {
       File testJar = new File(outputDirectory, String.format("%s-%s.jar", finalName, "tests"));
       InputSet registeredOutput = buildContext.newInputSet();
       try {
-        if (testClassesDirectory.isDirectory()) {
-          Iterable<File> inputs = registeredOutput.addInputs(testClassesDirectory, null, null);
-          logger.debug("Analyzing test classes directory {} with {} entries", testClassesDirectory, size(inputs));
-        } else {
-          logger.warn("Test classes directory {} does not exist", classesDirectory);
-        }
+        testClassesDirectory = testClassesDirectory.getCanonicalFile();
+        Iterable<File> inputs = registeredOutput.addInputs(testClassesDirectory, null, null);
+        logger.debug("Analyzing test classes directory {} with {} entries", testClassesDirectory, size(inputs));
         boolean processingRequired = registeredOutput.aggregateIfNecessary(testJar, new InputAggregator() {
           @Override
           public void aggregate(Output<File> output, Iterable<File> inputs) throws IOException {

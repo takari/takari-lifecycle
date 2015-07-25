@@ -2,6 +2,8 @@ package io.takari.maven.plugins.jar;
 
 import static io.takari.maven.testing.TestMavenRuntime.newParameter;
 import static io.takari.maven.testing.TestResources.cp;
+import static io.takari.maven.testing.TestResources.create;
+import static io.takari.maven.testing.TestResources.symlink;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -267,5 +269,43 @@ public class JarTest {
     assertTrue(new File(basedir, "target/test-1.0.jar").exists());
     assertTrue(new File(basedir, "target/test-1.0-sources.jar").exists());
     assertFalse(new File(basedir, "target/test-1.0-tests.jar").exists());
+  }
+
+  @Test
+  public void testSymlinkedDirectories() throws Exception {
+    File basedir = resources.getBasedir();
+
+    File orig = new File(basedir, "orig");
+    create(orig, "src/main/java/pkg/Class.java");
+    create(orig, "src/test/java/testpkg/Test.java");
+    create(orig, "target/classes/resource.txt", "target/classes/subdir/resource.txt");
+    symlink(new File(orig, "target/classes/symlinked-resource.txt"), new File(orig, "target/classes/resource.txt"));
+    create(orig, "target/test-classes/test-resource.txt");
+
+    File symlink = symlink(new File(basedir, "symlink"), orig);
+    mojos.executeMojo(symlink, "jar", newParameter("testJar", "true"), newParameter("sourceJar", "true"));
+    assertZipEntries(new File(symlink, "target/test-1.jar") //
+    , "D META-INF/ 315561600000" //
+        , "F META-INF/MANIFEST.MF 315561600000" //
+        , "D META-INF/maven/ 315561600000" //
+        , "D META-INF/maven/test/ 315561600000" //
+        , "D META-INF/maven/test/test/ 315561600000" //
+        , "F META-INF/maven/test/test/pom.properties 315561600000" //
+        , "F resource.txt 315561600000" //
+        , "D subdir/ 315561600000" //
+        , "F subdir/resource.txt 315561600000" //
+        , "F symlinked-resource.txt 315561600000" //
+    );
+    assertZipEntries(new File(symlink, "target/test-1-tests.jar") //
+    , "D META-INF/ 315561600000" //
+        , "F META-INF/MANIFEST.MF 315561600000" //
+        , "F test-resource.txt 315561600000" //
+    );
+    assertZipEntries(new File(symlink, "target/test-1-sources.jar") //
+    , "D META-INF/ 315561600000" //
+        , "F META-INF/MANIFEST.MF 315561600000" //
+        , "D pkg/ 315561600000" //
+        , "F pkg/Class.java 315561600000" //
+    );
   }
 }

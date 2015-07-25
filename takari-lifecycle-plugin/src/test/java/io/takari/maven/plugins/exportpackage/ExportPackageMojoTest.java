@@ -1,9 +1,9 @@
 package io.takari.maven.plugins.exportpackage;
 
+import static io.takari.maven.testing.TestResources.create;
 import static io.takari.maven.testing.TestResources.rm;
+import static io.takari.maven.testing.TestResources.symlink;
 import static io.takari.maven.testing.TestResources.touch;
-import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
-import io.takari.maven.testing.TestResources;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,6 +18,9 @@ import org.junit.Test;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
+
+import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
+import io.takari.maven.testing.TestResources;
 
 public class ExportPackageMojoTest {
 
@@ -81,6 +84,18 @@ public class ExportPackageMojoTest {
     mojos.executeMojo(basedir, "export-package");
     mojos.assertBuildOutputs(basedir, "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE);
     assertExportedPackages(basedir, new String[0]);
+  }
+
+  @Test
+  public void testBasic_symlinked() throws Exception {
+    File basedir = resources.getBasedir();
+
+    File orig = new File(basedir, "orig");
+    create(orig, "target/classes/exported/Class.class");
+    File symlink = symlink(new File(basedir, "symlink"), orig);
+
+    mojos.executeMojo(symlink, "export-package");
+    assertExportedPackages(symlink, "exported");
   }
 
   private void assertExportedPackages(File basedir, String... exportedPackages) throws IOException {
