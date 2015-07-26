@@ -12,7 +12,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.TreeSet;
 
+import org.codehaus.plexus.util.Os;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -88,6 +90,8 @@ public class ExportPackageMojoTest {
 
   @Test
   public void testBasic_symlinked() throws Exception {
+    Assume.assumeTrue(Os.isFamily(Os.FAMILY_UNIX));
+
     File basedir = resources.getBasedir();
 
     File orig = new File(basedir, "orig");

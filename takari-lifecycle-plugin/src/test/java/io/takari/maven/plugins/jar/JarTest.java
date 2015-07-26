@@ -32,7 +32,9 @@ import java.util.zip.ZipFile;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.Os;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -273,6 +275,8 @@ public class JarTest {
 
   @Test
   public void testSymlinkedDirectories() throws Exception {
+    Assume.assumeTrue(Os.isFamily(Os.FAMILY_UNIX));
+
     File basedir = resources.getBasedir();
 
     File orig = new File(basedir, "orig");

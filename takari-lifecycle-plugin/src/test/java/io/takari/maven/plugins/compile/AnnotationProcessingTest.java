@@ -1,5 +1,6 @@
 package io.takari.maven.plugins.compile;
 
+import static io.takari.maven.testing.TestResources.assertFileContents;
 import static io.takari.maven.testing.TestResources.cp;
 import static io.takari.maven.testing.TestResources.rm;
 import static io.takari.maven.testing.TestResources.touch;
@@ -409,8 +410,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     mojos.assertBuildOutputs(new File(basedir, "target"), //
         "classes/types.lst");
 
-    String actual = FileUtils.fileRead(new File(basedir, "target/classes/types.lst"));
-    Assert.assertEquals("proc.Source\n", actual);
+    assertFileContents("proc.Source\n", basedir, "target/classes/types.lst");
   }
 
   @Test

@@ -1,13 +1,12 @@
 package io.takari.maven.plugins.sisu;
 
+import static io.takari.maven.testing.TestResources.assertFileContents;
 import static io.takari.maven.testing.TestResources.cp;
 
 import java.io.File;
 import java.io.IOException;
 
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.FileUtils;
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -77,7 +76,6 @@ public class SisuIndexTest {
     for (String type : types) {
       expected.append(type).append('\n');
     }
-    String actual = FileUtils.fileRead(new File(basedir, "target/" + output + "/" + SisuIndexMojo.PATH_SISU_INDEX));
-    Assert.assertEquals(expected.toString(), actual);
+    assertFileContents(expected.toString(), basedir, "target/" + output + "/" + SisuIndexMojo.PATH_SISU_INDEX);
   }
 }

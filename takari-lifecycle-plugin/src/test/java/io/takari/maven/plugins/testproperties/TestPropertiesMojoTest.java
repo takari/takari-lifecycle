@@ -206,8 +206,8 @@ public class TestPropertiesMojoTest {
     mojos.executeMojo(session, project, "testProperties");
 
     Map<String, String> properties = readProperties(basedir);
-    Assert.assertEquals(ga.getCanonicalPath(), properties.get("ga"));
-    Assert.assertEquals(ga_tests.getCanonicalPath(), properties.get("ga_tests"));
+    Assert.assertEquals(ga.getCanonicalPath().replace('\\', '/'), properties.get("ga"));
+    Assert.assertEquals(ga_tests.getCanonicalPath().replace('\\', '/'), properties.get("ga_tests"));
   }
 
 }
