@@ -2,7 +2,6 @@ package io.takari.maven.plugins.exportpackage;
 
 import static io.takari.maven.testing.TestResources.create;
 import static io.takari.maven.testing.TestResources.rm;
-import static io.takari.maven.testing.TestResources.symlink;
 import static io.takari.maven.testing.TestResources.touch;
 
 import java.io.File;
@@ -96,7 +95,7 @@ public class ExportPackageMojoTest {
 
     File orig = new File(basedir, "orig");
     create(orig, "target/classes/exported/Class.class");
-    File symlink = symlink(new File(basedir, "symlink"), orig);
+    File symlink = java.nio.file.Files.createSymbolicLink(new File(basedir, "symlink").toPath(), orig.toPath()).toFile();
 
     mojos.executeMojo(symlink, "export-package");
     assertExportedPackages(symlink, "exported");

@@ -3,7 +3,6 @@ package io.takari.maven.plugins.jar;
 import static io.takari.maven.testing.TestMavenRuntime.newParameter;
 import static io.takari.maven.testing.TestResources.cp;
 import static io.takari.maven.testing.TestResources.create;
-import static io.takari.maven.testing.TestResources.symlink;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -283,10 +282,10 @@ public class JarTest {
     create(orig, "src/main/java/pkg/Class.java");
     create(orig, "src/test/java/testpkg/Test.java");
     create(orig, "target/classes/resource.txt", "target/classes/subdir/resource.txt");
-    symlink(new File(orig, "target/classes/symlinked-resource.txt"), new File(orig, "target/classes/resource.txt"));
+    java.nio.file.Files.createSymbolicLink(new File(orig, "target/classes/symlinked-resource.txt").toPath(), new File(orig, "target/classes/resource.txt").toPath());
     create(orig, "target/test-classes/test-resource.txt");
 
-    File symlink = symlink(new File(basedir, "symlink"), orig);
+    File symlink = java.nio.file.Files.createSymbolicLink(new File(basedir, "symlink").toPath(), orig.toPath()).toFile();
     mojos.executeMojo(symlink, "jar", newParameter("testJar", "true"), newParameter("sourceJar", "true"));
     assertZipEntries(new File(symlink, "target/test-1.jar") //
     , "D META-INF/ 315561600000" //
