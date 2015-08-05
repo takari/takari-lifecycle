@@ -121,7 +121,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         "classes/proc/AnotherGeneratedSource.class");
 
     rm(processor, "target/classes/META-INF/services/javax.annotation.processing.Processor");
-    ProjectClasspathDigester.flushCache(new File(processor, "target/classes").getCanonicalFile());
+    mojos.flushClasspathCaches();
     processAnnotations(basedir, Proc.proc, processor);
     mojos.assertBuildOutputs(new File(basedir, "target"), "classes/proc/Source.class");
     mojos.assertDeletedOutputs(new File(basedir, "target"), //
@@ -291,6 +291,8 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         "classes/proc/Source.class", //
         "generated-sources/annotations/proc/GeneratedSource.java", //
         "classes/proc/GeneratedSource.class");
+
+    mojos.flushClasspathCaches();
 
     // move generated source to module-b/src/main/java
     cp(moduleB, "src/main/java/proc/GeneratedSource.java-moved", "src/main/java/proc/GeneratedSource.java");

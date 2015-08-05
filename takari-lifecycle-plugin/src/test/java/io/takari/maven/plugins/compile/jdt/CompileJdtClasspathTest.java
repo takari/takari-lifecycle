@@ -143,6 +143,8 @@ public class CompileJdtClasspathTest extends AbstractCompileJdtTest {
   }
 
   private void compileReactor(File parent) throws Exception {
+    mojos.flushClasspathCaches();
+
     File moduleB = new File(parent, "module-b");
 
     mojos.compile(moduleB);

@@ -22,9 +22,7 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.apache.maven.execution.MavenSession;
 import org.apache.maven.execution.scope.MojoExecutionScoped;
-import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.DirectoryScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,12 +42,8 @@ public class ProjectClasspathDigester {
   private final CompilerBuildContext context;
 
   @Inject
-  public ProjectClasspathDigester(CompilerBuildContext context, MavenProject project, MavenSession session) {
+  public ProjectClasspathDigester(CompilerBuildContext context) {
     this.context = context;
-
-    // this is only needed for unit tests, but won't hurt in general
-    flushCache(new File(project.getBuild().getOutputDirectory()));
-    flushCache(new File(project.getBuild().getTestOutputDirectory()));
   }
 
   /**
@@ -189,7 +183,7 @@ public class ProjectClasspathDigester {
   /**
    * @noreference this method is public for test purposes only
    */
-  public static void flushCache(File file) {
-    CACHE.remove(file);
+  public static void flush() {
+    CACHE.clear();
   }
 }

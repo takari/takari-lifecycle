@@ -164,6 +164,8 @@ public class CompileIncrementalTest extends AbstractCompileTest {
     mojos.compile(projectA);
     mojos.assertBuildOutputs(moduleA, "target/classes/modulea/ModuleA.class", "target/classes/moving/Moving.class");
 
+    mojos.flushClasspathCaches();
+
     // change and move class to the dependency
     rm(moduleA, "src/main/java/moving/Moving.java");
     cp(moduleA, "src/main/java/modulea/ModuleA.java-changed", "src/main/java/modulea/ModuleA.java");

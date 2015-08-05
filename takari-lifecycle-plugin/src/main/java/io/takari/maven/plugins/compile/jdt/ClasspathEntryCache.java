@@ -7,35 +7,21 @@
  */
 package io.takari.maven.plugins.compile.jdt;
 
-import io.takari.maven.plugins.compile.jdt.classpath.ClasspathDirectory;
-import io.takari.maven.plugins.compile.jdt.classpath.ClasspathJar;
-import io.takari.maven.plugins.compile.jdt.classpath.DependencyClasspathEntry;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.apache.maven.execution.scope.MojoExecutionScoped;
-import org.apache.maven.project.MavenProject;
+import io.takari.maven.plugins.compile.jdt.classpath.ClasspathDirectory;
+import io.takari.maven.plugins.compile.jdt.classpath.ClasspathJar;
+import io.takari.maven.plugins.compile.jdt.classpath.DependencyClasspathEntry;
 
 @Named
-@MojoExecutionScoped
 public class ClasspathEntryCache {
 
   private static final Map<File, DependencyClasspathEntry> CACHE = new HashMap<>();
-
-  @Inject
-  public ClasspathEntryCache(MavenProject project) {
-    synchronized (CACHE) {
-      // this is only needed for unit tests, but won't hurt in general
-      CACHE.remove(normalize(new File(project.getBuild().getOutputDirectory())));
-      CACHE.remove(normalize(new File(project.getBuild().getTestOutputDirectory())));
-    }
-  }
 
   public DependencyClasspathEntry get(File location) {
     location = normalize(location);
@@ -66,5 +52,14 @@ public class ClasspathEntryCache {
       location = location.getAbsoluteFile();
     }
     return location;
+  }
+
+  /**
+   * @noreference this method is public for test purposes only
+   */
+  public static void flush() {
+    synchronized (CACHE) {
+      CACHE.clear();
+    }
   }
 }

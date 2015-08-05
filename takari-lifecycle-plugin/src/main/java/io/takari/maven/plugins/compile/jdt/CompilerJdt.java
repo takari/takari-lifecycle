@@ -67,6 +67,7 @@ import io.takari.maven.plugins.compile.AbstractCompiler;
 import io.takari.maven.plugins.compile.CompilerBuildContext;
 import io.takari.maven.plugins.compile.ProjectClasspathDigester;
 import io.takari.maven.plugins.compile.jdt.classpath.Classpath;
+import io.takari.maven.plugins.compile.jdt.classpath.ClasspathDirectory;
 import io.takari.maven.plugins.compile.jdt.classpath.ClasspathEntry;
 import io.takari.maven.plugins.compile.jdt.classpath.DependencyClasspathEntry;
 import io.takari.maven.plugins.compile.jdt.classpath.JavaInstallation;
@@ -578,7 +579,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     final List<File> files = new ArrayList<File>();
 
     if (isProcOnly()) {
-      DependencyClasspathEntry entry = classpathCache.get(getOutputDirectory());
+      DependencyClasspathEntry entry = ClasspathDirectory.create(getOutputDirectory());
       if (entry != null) {
         dependencypath.add(AccessRestrictionClasspathEntry.allowAll(entry));
         files.add(getOutputDirectory());
