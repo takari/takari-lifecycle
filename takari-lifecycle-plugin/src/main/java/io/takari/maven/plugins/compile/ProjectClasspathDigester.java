@@ -70,25 +70,26 @@ public class ProjectClasspathDigester {
     LinkedHashMap<File, ArtifactFile> digest = new LinkedHashMap<>();
 
     if (dependencies != null) {
-      for (File dependency : dependencies) {
-        ArtifactFile previousArtifact = previousArtifacts.get(dependency);
-        ArtifactFile artifact = CACHE.get(dependency);
+      for (final File dependency : dependencies) {
+        File normalized = normalize(dependency);
+        ArtifactFile previousArtifact = previousArtifacts.get(normalized);
+        ArtifactFile artifact = CACHE.get(normalized);
         if (artifact == null) {
-          if (dependency.isFile()) {
-            artifact = newFileArtifact(dependency, previousArtifact);
-          } else if (dependency.isDirectory()) {
-            artifact = newDirectoryArtifact(dependency, previousArtifact);
+          if (normalized.isFile()) {
+            artifact = newFileArtifact(normalized, previousArtifact);
+          } else if (normalized.isDirectory()) {
+            artifact = newDirectoryArtifact(normalized, previousArtifact);
           } else {
             // happens with reactor dependencies with empty source folders
             continue;
           }
-          CACHE.put(dependency, artifact);
+          CACHE.put(normalized, artifact);
         }
 
-        digest.put(dependency, artifact);
+        digest.put(normalized, artifact);
 
         if (!equals(artifact, previousArtifact)) {
-          log.debug("New or changed classpath entry {}", dependency);
+          log.debug("New or changed classpath entry {}", normalized);
         }
       }
     }
@@ -106,6 +107,14 @@ public class ProjectClasspathDigester {
     log.debug("Analyzed {} classpath dependencies ({} ms)", dependencies.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
 
     return changed;
+  }
+
+  private File normalize(File file) {
+    try {
+      return file.getCanonicalFile();
+    } catch (IOException e) {
+      return file.getAbsoluteFile();
+    }
   }
 
   private boolean equals(Collection<ArtifactFile> a, Collection<ArtifactFile> b) {
