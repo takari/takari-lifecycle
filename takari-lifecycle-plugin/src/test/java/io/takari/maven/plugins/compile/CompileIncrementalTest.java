@@ -117,10 +117,12 @@ public class CompileIncrementalTest extends AbstractCompileTest {
     mojos.assertBuildOutputs(moduleA, "target/classes/modulea/ModuleA.class");
 
     // no change rebuild
+    mojos.flushClasspathCaches();
     mojos.compile(projectA);
     mojos.assertBuildOutputs(moduleA, new String[0]);
 
     // dependency changed "structurally"
+    mojos.flushClasspathCaches();
     cp(moduleB, "src/main/java/moduleb/ModuleB.java-method", "src/main/java/moduleb/ModuleB.java");
     touch(moduleB, "src/main/java/moduleb/ModuleB.java");
     compile(moduleB);
