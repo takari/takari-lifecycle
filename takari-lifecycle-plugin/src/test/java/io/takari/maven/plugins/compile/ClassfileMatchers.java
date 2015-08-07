@@ -3,10 +3,13 @@ package io.takari.maven.plugins.compile;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Label;
@@ -58,6 +61,25 @@ class ClassfileMatchers {
       return hasLines;
     }
   };
+
+  private static class AnnotationInfo extends ClassVisitor {
+
+    private final Set<String> annotations = new HashSet<>();
+
+    public AnnotationInfo() {
+      super(Opcodes.ASM5);
+    }
+
+    @Override
+    public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+      annotations.add(desc);
+      return null;
+    }
+
+    public Set<String> getAnnotations() {
+      return annotations;
+    }
+  }
 
   private static abstract class ClassfileMatcher<T extends ClassVisitor> extends BaseMatcher<File> {
     private String description;
@@ -126,6 +148,21 @@ class ClassfileMatchers {
       @Override
       protected DebugInfo newClassVisitor() {
         return new DebugInfo();
+      }
+    };
+  }
+
+  public static Matcher<File> hasAnnotation(final String annotation) {
+    final String desc = "L" + annotation.replace('.', '/') + ";";
+    return new ClassfileMatcher<AnnotationInfo>("has annotation " + annotation) {
+      @Override
+      protected boolean matches(AnnotationInfo info) {
+        return info.getAnnotations().contains(desc);
+      }
+
+      @Override
+      protected AnnotationInfo newClassVisitor() {
+        return new AnnotationInfo();
       }
     };
   }

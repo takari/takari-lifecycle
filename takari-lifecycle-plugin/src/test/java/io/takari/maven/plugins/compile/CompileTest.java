@@ -1,5 +1,6 @@
 package io.takari.maven.plugins.compile;
 
+import static io.takari.maven.plugins.compile.ClassfileMatchers.hasAnnotation;
 import static io.takari.maven.plugins.compile.ClassfileMatchers.hasDebugLines;
 import static io.takari.maven.plugins.compile.ClassfileMatchers.hasDebugSource;
 import static io.takari.maven.plugins.compile.ClassfileMatchers.hasDebugVars;
@@ -315,5 +316,12 @@ public class CompileTest extends AbstractCompileTest {
     mojos.executeMojo(session, project, execution);
 
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), "implicit/Implicit.class");
+  }
+
+  @Test
+  public void testAnnotation() throws Exception {
+    File basedir = compile("compile/annotation");
+
+    assertThat(new File(basedir, "target/classes/annotation/AnnotatedClass.class"), hasAnnotation("annotation.Annotation"));
   }
 }
