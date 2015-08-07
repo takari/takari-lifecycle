@@ -23,7 +23,7 @@ class ClassfileMatchers {
     private boolean hasVars = false;
 
     public ClassInfo() {
-      super(Opcodes.ASM4);
+      super(Opcodes.ASM5);
     }
 
     @Override
@@ -33,7 +33,7 @@ class ClassfileMatchers {
 
     @Override
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
-      return new MethodVisitor(Opcodes.ASM4) {
+      return new MethodVisitor(Opcodes.ASM5) {
         @Override
         public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
           hasVars = true;
