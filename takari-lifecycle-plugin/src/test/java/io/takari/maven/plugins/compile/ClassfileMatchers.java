@@ -17,12 +17,12 @@ import com.google.common.io.Files;
 
 class ClassfileMatchers {
 
-  private static class ClassInfo extends ClassVisitor {
+  private static class DebugInfo extends ClassVisitor {
     private boolean hasSource = false;
     private boolean hasLines = false;
     private boolean hasVars = false;
 
-    public ClassInfo() {
+    public DebugInfo() {
       super(Opcodes.ASM5);
     }
 
@@ -59,19 +59,7 @@ class ClassfileMatchers {
     }
   };
 
-  private static ClassInfo parse(File file) throws IOException {
-    InputStream is = Files.asByteSource(file).openBufferedStream();
-    try {
-      final ClassReader r = new ClassReader(is);
-      ClassInfo info = new ClassInfo();
-      r.accept(info, 0);
-      return info;
-    } finally {
-      is.close();
-    }
-  }
-
-  private static abstract class ClassfileMatcher extends BaseMatcher<File> {
+  private static abstract class ClassfileMatcher<T extends ClassVisitor> extends BaseMatcher<File> {
     private String description;
 
     protected ClassfileMatcher(String description) {
@@ -80,8 +68,11 @@ class ClassfileMatchers {
 
     @Override
     public final boolean matches(Object item) {
-      try {
-        return matches(parse((File) item));
+      File file = (File) item;
+      try (InputStream is = Files.asByteSource(file).openBufferedStream()) {
+        T visitor = newClassVisitor();
+        new ClassReader(is).accept(visitor, 0);
+        return matches(visitor);
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
@@ -92,32 +83,49 @@ class ClassfileMatchers {
       description.appendText(this.description);
     }
 
-    protected abstract boolean matches(ClassInfo info);
+    protected abstract T newClassVisitor();
+
+    protected abstract boolean matches(T info);
   }
 
   public static Matcher<File> hasDebugSource() {
-    return new ClassfileMatcher("include debug source info") {
+    return new ClassfileMatcher<DebugInfo>("include debug source info") {
       @Override
-      protected boolean matches(ClassInfo info) {
+      protected boolean matches(DebugInfo info) {
         return info.hasSource();
+      }
+
+      @Override
+      protected DebugInfo newClassVisitor() {
+        return new DebugInfo();
       }
     };
   }
 
   public static Matcher<File> hasDebugLines() {
-    return new ClassfileMatcher("include debug lines info") {
+    return new ClassfileMatcher<DebugInfo>("include debug lines info") {
       @Override
-      protected boolean matches(ClassInfo info) {
+      protected boolean matches(DebugInfo info) {
         return info.hasLines();
+      }
+
+      @Override
+      protected DebugInfo newClassVisitor() {
+        return new DebugInfo();
       }
     };
   }
 
   public static Matcher<File> hasDebugVars() {
-    return new ClassfileMatcher("include debug lines info") {
+    return new ClassfileMatcher<DebugInfo>("include debug lines info") {
       @Override
-      protected boolean matches(ClassInfo info) {
+      protected boolean matches(DebugInfo info) {
         return info.hasVars();
+      }
+
+      @Override
+      protected DebugInfo newClassVisitor() {
+        return new DebugInfo();
       }
     };
   }
