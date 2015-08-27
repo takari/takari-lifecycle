@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.inject.Inject;
 
@@ -69,7 +70,7 @@ public class ExportPackageMojo extends TakariLifecycleMojo {
 
       @Override
       public void aggregate(Output<File> output, Map<String, String> metadata) throws IOException {
-        Set<String> exportedPackages = metadata.keySet();
+        Set<String> exportedPackages = new TreeSet<>(metadata.keySet());
         try (BufferedWriter w = new BufferedWriter(new OutputStreamWriter(output.newOutputStream(), Charsets.UTF_8))) {
           for (String exportedPackage : exportedPackages) {
             w.write(exportedPackage);
