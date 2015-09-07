@@ -14,10 +14,10 @@ import io.takari.incrementalbuild.ResourceMetadata;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
@@ -52,24 +52,39 @@ public class ResourcesProcessor {
     this.mustacheFactory.setObjectHandler(new MapReflectionObjectHandler());
   }
 
-  public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes) throws IOException {
+  public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes, String encoding) throws IOException {
     for (Resource<File> input : buildContext.registerAndProcessInputs(sourceDirectory, includes, excludes)) {
-      filterResource(input, sourceDirectory, targetDirectory, null);
+      filterResource(input, sourceDirectory, targetDirectory, null, encoding);
     }
   }
 
-  public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes, Map<Object, Object> filterProperties) throws IOException {
+  public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes, Map<Object, Object> filterProperties, String encoding) throws IOException {
     for (ResourceMetadata<File> metadata : buildContext.registerInputs(sourceDirectory, includes, excludes)) {
-      filterResource(metadata.process(), sourceDirectory, targetDirectory, filterProperties);
+      filterResource(metadata.process(), sourceDirectory, targetDirectory, filterProperties, encoding);
     }
   }
 
-  private void filterResource(Resource<File> input, File sourceDirectory, File targetDirectory, Map<Object, Object> filterProperties) throws FileNotFoundException, IOException {
+  private Reader newReader(Resource<File> resource, String encoding) throws IOException {
+    if (encoding == null) {
+      return new FileReader(resource.getResource());
+    } else {
+      return new InputStreamReader(new FileInputStream(resource.getResource()), encoding);
+    }
+  }
+
+  private Writer newWriter(Output<File> output, String encoding) throws IOException {
+    if (encoding == null) {
+      return new OutputStreamWriter(output.newOutputStream());
+    } else {
+      return new OutputStreamWriter(output.newOutputStream(), encoding);
+    }
+  }
+
+  private void filterResource(Resource<File> input, File sourceDirectory, File targetDirectory, Map<Object, Object> filterProperties, String encoding) throws IOException {
     File outputFile = relativize(sourceDirectory, targetDirectory, input.getResource());
     Output<File> output = input.associateOutput(outputFile);
     if (filterProperties != null) {
-      try (Reader reader = new FileReader(input.getResource()); Writer writer = new OutputStreamWriter(output.newOutputStream());) {
-        // FIXME decide how to handle encoding, system default most likely not it
+      try (Reader reader = newReader(input, encoding); Writer writer = newWriter(output, encoding)) {
         filter(reader, writer, filterProperties);
       }
     } else {
