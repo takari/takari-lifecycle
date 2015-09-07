@@ -49,6 +49,9 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
   @Incremental(configuration = Configuration.ignore)
   private File userSettingsFile;
 
+  @Parameter( property = "encoding", defaultValue = "${project.build.sourceEncoding}" )
+  private String encoding;
+
   @Component
   private ResourcesProcessor processor;
 
@@ -77,9 +80,9 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
           properties.put("project", project);
           properties.put("localRepository", localRepository);
           properties.put("userSettingsFile", userSettingsFile);
-          processor.process(sourceDirectory, targetDirectory, resource.getIncludes(), resource.getExcludes(), properties);
+          processor.process(sourceDirectory, targetDirectory, resource.getIncludes(), resource.getExcludes(), properties, encoding);
         } else {
-          processor.process(sourceDirectory, targetDirectory, resource.getIncludes(), resource.getExcludes());
+          processor.process(sourceDirectory, targetDirectory, resource.getIncludes(), resource.getExcludes(), encoding);
         }
       } catch (IOException e) {
         throw new MojoExecutionException(e.getMessage(), e);

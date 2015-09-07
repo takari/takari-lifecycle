@@ -21,6 +21,10 @@
   <artifactId>takari-lifecycle-plugin-its</artifactId>
   <packaging>takari-maven-component</packaging>
 
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>io.takari.maven.plugins</groupId>
