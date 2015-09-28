@@ -1,16 +1,5 @@
 package io.takari.maven.plugins.compile;
 
-import io.takari.incrementalbuild.MessageSeverity;
-import io.takari.incrementalbuild.Output;
-import io.takari.incrementalbuild.Resource;
-import io.takari.incrementalbuild.ResourceMetadata;
-import io.takari.incrementalbuild.spi.AbstractBuildContext;
-import io.takari.incrementalbuild.spi.BuildContextEnvironment;
-import io.takari.incrementalbuild.spi.DefaultBuildContextState;
-import io.takari.incrementalbuild.spi.DefaultOutput;
-import io.takari.incrementalbuild.spi.DefaultResource;
-import io.takari.incrementalbuild.spi.DefaultResourceMetadata;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -25,6 +14,17 @@ import javax.inject.Named;
 
 import org.apache.maven.execution.scope.MojoExecutionScoped;
 import org.apache.maven.project.MavenProject;
+
+import io.takari.incrementalbuild.MessageSeverity;
+import io.takari.incrementalbuild.Output;
+import io.takari.incrementalbuild.Resource;
+import io.takari.incrementalbuild.ResourceMetadata;
+import io.takari.incrementalbuild.spi.AbstractBuildContext;
+import io.takari.incrementalbuild.spi.BuildContextEnvironment;
+import io.takari.incrementalbuild.spi.DefaultBuildContextState;
+import io.takari.incrementalbuild.spi.DefaultOutput;
+import io.takari.incrementalbuild.spi.DefaultResource;
+import io.takari.incrementalbuild.spi.DefaultResourceMetadata;
 
 
 // TODO replace all Default* implementation types with corresponding API interfaces
@@ -69,7 +69,7 @@ public class CompilerBuildContext extends AbstractBuildContext {
    */
   public void addPomMessage(String message, MessageSeverity severity, Throwable cause) {
     // TODO execution line/column
-    super.addMessage(pom, 0, 0, message, severity, null);
+    super.addMessage(pom, 0, 0, message, severity, cause);
   }
 
   @Override

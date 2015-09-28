@@ -15,10 +15,15 @@ import org.eclipse.jdt.internal.compiler.problem.AbortCompilation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.takari.incrementalbuild.MessageSeverity;
+import io.takari.maven.plugins.compile.CompilerBuildContext;
+
 // TODO reconcile with BatchAnnotationProcessorManager
 class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
 
   private Logger logger = LoggerFactory.getLogger(getClass());
+
+  private final CompilerBuildContext context;
 
   private static interface ResettableProcessorIterator extends Iterator<Processor> {
 
@@ -99,7 +104,8 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
 
   }
 
-  public AnnotationProcessorManager(ProcessingEnvImpl processingEnv, StandardJavaFileManager fileManager, String[] processors) {
+  public AnnotationProcessorManager(CompilerBuildContext context, ProcessingEnvImpl processingEnv, StandardJavaFileManager fileManager, String[] processors) {
+    this.context = context;
     this._processingEnv = processingEnv;
     ClassLoader procLoader = fileManager.getClassLoader(StandardLocation.ANNOTATION_PROCESSOR_PATH);
     this.processors = processors != null //
@@ -121,7 +127,8 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
 
   @Override
   public void reportProcessorException(Processor p, Exception e) {
-    // TODO Auto-generated method stub
+    String msg = String.format("Exception executing annotation processor %s: %s", p.getClass().getName(), e.getMessage());
+    context.addPomMessage(msg, MessageSeverity.ERROR, e);
     throw new AbortCompilation(null, e);
   }
 

@@ -524,7 +524,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
         ProcessingEnvImpl processingEnv = new ProcessingEnvImpl(context, fileManager, getAnnotationProcessorOptions(), compiler, this);
 
-        compiler.annotationProcessorManager = new AnnotationProcessorManager(processingEnv, fileManager, getAnnotationProcessors());
+        compiler.annotationProcessorManager = new AnnotationProcessorManager(context, processingEnv, fileManager, getAnnotationProcessors());
         compiler.options.storeAnnotations = true;
       }
 
