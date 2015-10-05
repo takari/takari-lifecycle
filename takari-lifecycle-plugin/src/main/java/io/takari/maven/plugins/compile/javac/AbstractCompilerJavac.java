@@ -114,6 +114,9 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
     if (isVerbose()) {
       options.add("-verbose");
     }
+    if (isParametersEnabled()) {
+      options.add("-parameters");
+    }
 
     Set<Debug> debug = getDebug();
     if (debug == null || debug.contains(Debug.all)) {

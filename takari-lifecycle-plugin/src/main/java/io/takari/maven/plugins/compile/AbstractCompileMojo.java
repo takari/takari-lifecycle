@@ -170,6 +170,14 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   private boolean verbose;
 
   /**
+   * Set to <code>true</code> to store formal parameter names of constructors and methods in the generated class file 
+   * so that the method <code>java.lang.reflect.Executable.getParameters</code> from the Reflection API can retrieve them.
+   * Valid only when javac is used.
+   */
+  @Parameter(defaultValue = "false")
+  private boolean parameters;
+
+  /**
    * Sets whether generated class files include debug information or not.
    * <p>
    * Allowed values
@@ -361,6 +369,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       compiler.setAnnotationProcessors(annotationProcessors);
       compiler.setAnnotationProcessorOptions(annotationProcessorOptions);
       compiler.setVerbose(verbose);
+	  compiler.setParametersEnabled(parameters);
       compiler.setPom(pom);
       compiler.setSourceEncoding(getSourceEncoding());
       compiler.setDebug(parseDebug(debug));
