@@ -69,6 +69,9 @@ public class TestPropertiesMojo extends AbstractMojo {
   @Parameter(defaultValue = "${session.request.userSettingsFile}", readonly = true)
   private File userSettingsFile;
 
+  @Parameter(defaultValue = "${session.request.globalSettingsFile}", readonly = true)
+  private File globalSettingsFile;
+
   @Parameter(defaultValue = "${project.basedir}/src/test/test.properties")
   private File testProperties;
 
@@ -121,6 +124,9 @@ public class TestPropertiesMojo extends AbstractMojo {
       putIfAbsent(properties, "localRepository", localRepository.getBasedir());
       if (userSettingsFile != null) {
         putIfAbsent(properties, "userSettingsFile", userSettingsFile.getAbsolutePath());
+      }
+      if (globalSettingsFile != null) {
+        putIfAbsent(properties, "globalSettingsFile", globalSettingsFile.getAbsolutePath());
       }
       List<ArtifactRepository> repositories = project.getRemoteArtifactRepositories();
       for (int i = 0; i < repositories.size(); i++) {
