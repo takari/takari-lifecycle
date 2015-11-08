@@ -4,6 +4,7 @@ import static io.takari.maven.plugins.compile.ClassfileMatchers.hasAnnotation;
 import static io.takari.maven.plugins.compile.ClassfileMatchers.hasDebugLines;
 import static io.takari.maven.plugins.compile.ClassfileMatchers.hasDebugSource;
 import static io.takari.maven.plugins.compile.ClassfileMatchers.hasDebugVars;
+import static io.takari.maven.plugins.compile.ClassfileMatchers.hasMethodParameterWithName;
 import static io.takari.maven.testing.TestResources.cp;
 import static io.takari.maven.testing.TestResources.touch;
 import static org.hamcrest.core.AllOf.allOf;
@@ -14,6 +15,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
 
+import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -237,6 +239,14 @@ public class CompileTest extends AbstractCompileTest {
       //
     }
     mojos.assertMessage(new File(basedir, "src/main/java/encoding/ISO8859p5.java"), "\u043f\u043e\u0440\u0443\u0441\u0441\u043a\u0438"); // "inrussian" in UTF8 Russian
+  }
+
+  @Test
+  public void testParameters() throws Exception {
+    Assume.assumeTrue("only javac 8+ and jdt support parameters", isJava8orBetter || CompilerJdt.ID.equals(compilerId));
+    File basedir = resources.getBasedir("compile/parameters");
+    compile(basedir, newParameter("parameters", "true"), newParameter("source", "1.8"));
+    assertThat(new File(basedir, "target/classes/parameters/MethodParameter.class"), hasMethodParameterWithName("myNamedParameter"));
   }
 
   @Test

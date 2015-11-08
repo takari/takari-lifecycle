@@ -115,6 +115,10 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
       options.add("-verbose");
     }
 
+    if (isParameters()) {
+      options.add("-parameters");
+    }
+
     Set<Debug> debug = getDebug();
     if (debug == null || debug.contains(Debug.all)) {
       options.add("-g");
