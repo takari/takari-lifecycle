@@ -43,6 +43,8 @@ public abstract class AbstractCompiler {
 
   private boolean verbose;
 
+  private boolean parameters;
+
   private File pom;
 
   private Charset sourceEncoding;
@@ -129,6 +131,10 @@ public abstract class AbstractCompiler {
     this.verbose = verbose;
   }
 
+  public void setParameters(boolean parameters) {
+    this.parameters = parameters;
+  }
+
   public void setPrivatePackageReference(AccessRulesViolation privatePackageReference) {
     this.privatePackageReference = privatePackageReference;
   }
@@ -147,6 +153,10 @@ public abstract class AbstractCompiler {
 
   protected boolean isVerbose() {
     return verbose;
+  }
+
+  protected boolean isParameters() {
+    return parameters;
   }
 
   public void setPom(File pom) {

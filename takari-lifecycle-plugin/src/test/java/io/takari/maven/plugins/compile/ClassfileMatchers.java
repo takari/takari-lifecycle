@@ -81,6 +81,31 @@ class ClassfileMatchers {
     }
   }
 
+  private static class MethodParameterInfo extends ClassVisitor {
+
+    private Set<String> methodParameterNames = new HashSet<>();
+
+    public MethodParameterInfo() {
+      super(Opcodes.ASM5);
+    }
+
+    @Override
+    public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+      return new MethodVisitor(Opcodes.ASM5) {
+
+        @Override
+        public void visitParameter(String name, int access) {
+          methodParameterNames.add(name);
+          super.visitParameter(name, access);
+        }
+      };
+    }
+
+    public boolean hasMethodParameterName(String methodParameterName) {
+      return methodParameterNames.contains(methodParameterName);
+    }
+  };
+
   private static abstract class ClassfileMatcher<T extends ClassVisitor> extends BaseMatcher<File> {
     private String description;
 
@@ -163,6 +188,20 @@ class ClassfileMatchers {
       @Override
       protected AnnotationInfo newClassVisitor() {
         return new AnnotationInfo();
+      }
+    };
+  }
+
+  public static Matcher<File> hasMethodParameterWithName(final String parameter) {
+    return new ClassfileMatcher<MethodParameterInfo>("has method parameter " + parameter) {
+      @Override
+      protected boolean matches(MethodParameterInfo info) {
+        return info.hasMethodParameterName(parameter);
+      }
+
+      @Override
+      protected MethodParameterInfo newClassVisitor() {
+        return new MethodParameterInfo();
       }
     };
   }

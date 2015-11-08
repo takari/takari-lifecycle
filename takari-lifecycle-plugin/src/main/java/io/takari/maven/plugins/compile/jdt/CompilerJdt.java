@@ -499,6 +499,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     compilerOptions.performMethodsFullRecovery = false;
     compilerOptions.performStatementsRecovery = false;
     compilerOptions.verbose = isVerbose();
+    compilerOptions.produceMethodParameters = isParameters();
     compilerOptions.suppressWarnings = true;
     compilerOptions.setShowWarnings(isShowWarnings());
     compilerOptions.docCommentSupport = true;
