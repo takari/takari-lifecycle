@@ -38,7 +38,7 @@ import io.takari.maven.plugins.compile.jdt.classpath.ClasspathJar;
 import io.takari.maven.plugins.compile.jdt.classpath.JavaInstallation;
 import io.takari.maven.plugins.compile.jdt.classpath.MutableClasspathEntry;
 
-public class FileImplTest {
+public class FilerImplTest {
 
   @Rule
   public TemporaryFolder temp = new TemporaryFolder();
