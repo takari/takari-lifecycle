@@ -1,5 +1,7 @@
 package io.takari.maven.plugins.compile.jdt;
 
+import static io.takari.maven.testing.TestResources.create;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -118,6 +120,16 @@ public class FilerImplTest {
       // @throws FilerException if the same pathname has already been
       // created
     }
+
+    try {
+      create(outputDir, "test/resource.txt");
+      filer.getResource(StandardLocation.SOURCE_OUTPUT, "test", "resource.txt");
+      Assert.fail();
+    } catch (FilerException expected) {
+      // From Filer javadoc:
+      // @throws FilerException if the same pathname has already been
+      // opened for writing
+    }
   }
 
   @Test
@@ -147,6 +159,23 @@ public class FilerImplTest {
 
     FilerImpl filer = new FilerImpl(null /* context */, fileManager, null /* compiler */, null /* env */);
     filer.createSourceFile("test.Source", typeElement);
+  }
+
+  @Test
+  public void testResourceDoesNotExist() throws Exception {
+    EclipseFileManager fileManager = new EclipseFileManager(null, Charsets.UTF_8);
+
+    File outputDir = temp.newFolder();
+    fileManager.setLocation(StandardLocation.SOURCE_OUTPUT, Collections.singleton(outputDir));
+
+    FilerImpl filer = new FilerImpl(null /* context */, fileManager, null /* compiler */, null /* env */);
+
+    try {
+      filer.getResource(StandardLocation.SOURCE_OUTPUT, "", "does-not-exist");
+      Assert.fail();
+    } catch (IOException expected) {
+      // from Filer javadoc: @throws IOException if the file cannot be opened
+    }
   }
 
   private Classpath createClasspath() throws IOException {

@@ -1,6 +1,7 @@
 package io.takari.maven.plugins.compile.jdt;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -178,6 +179,12 @@ class FilerImpl implements Filer {
   @Override
   public FileObject getResource(Location location, CharSequence pkg, CharSequence relativeName) throws IOException {
     FileObject file = fileManager.getFileForInput(location, pkg.toString(), relativeName.toString());
+    if (file == null) {
+      throw new FileNotFoundException("Resource does not exist " + location + '/' + pkg + '/' + relativeName);
+    }
+    if (createdResources.contains(file.toUri())) {
+      throw new FilerException("Resource already created " + pkg + "." + relativeName);
+    }
     return file;
   }
 
