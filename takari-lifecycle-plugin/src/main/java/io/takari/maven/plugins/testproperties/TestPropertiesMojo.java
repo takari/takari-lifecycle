@@ -34,6 +34,8 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.m2e.workspace.MutableWorkspaceState;
 
+import com.google.common.collect.ImmutableSet;
+
 import io.takari.incrementalbuild.BasicBuildContext;
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
@@ -166,11 +168,14 @@ public class TestPropertiesMojo extends AbstractMojo {
   }
 
   private String getClasspathString() {
+    Set<String> scopes = ImmutableSet.of(Artifact.SCOPE_COMPILE, Artifact.SCOPE_RUNTIME);
     StringBuilder sb = new StringBuilder();
     sb.append(outputDirectory.getAbsolutePath());
     for (Artifact dependency : dependencies) {
-      sb.append(File.pathSeparatorChar);
-      sb.append(dependency.getFile().getAbsolutePath());
+      if (scopes.contains(dependency.getScope())) {
+        sb.append(File.pathSeparatorChar);
+        sb.append(dependency.getFile().getAbsolutePath());
+      }
     }
     return sb.toString();
   }
