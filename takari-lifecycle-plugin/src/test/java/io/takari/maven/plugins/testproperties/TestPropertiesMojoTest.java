@@ -210,4 +210,21 @@ public class TestPropertiesMojoTest {
     Assert.assertEquals(ga_tests.getCanonicalPath().replace('\\', '/'), properties.get("ga_tests"));
   }
 
+  @Test
+  public void testClasspathScope() throws Exception {
+    File basedir = resources.getBasedir();
+    MavenProject project = mojos.readMavenProject(basedir);
+    MavenSession session = mojos.newMavenSession(project);
+
+    File providedScoped = temp.newFile("provided.jar").getCanonicalFile();
+    File testScoped = temp.newFile("test.jar").getCanonicalFile();
+
+    mojos.newDependency(providedScoped).setGroupId("g").setArtifactId("provided").setScope("provided").addTo(project);
+    mojos.newDependency(testScoped).setGroupId("g").setArtifactId("test").setScope("test").addTo(project);
+
+    mojos.executeMojo(session, project, "testProperties");
+
+    Map<String, String> properties = readProperties(basedir);
+    Assert.assertEquals(new File(basedir, "target/classes").getCanonicalPath(), properties.get("classpath"));
+  }
 }
