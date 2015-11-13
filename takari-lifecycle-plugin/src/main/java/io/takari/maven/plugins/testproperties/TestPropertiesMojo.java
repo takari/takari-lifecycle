@@ -122,11 +122,15 @@ public class TestPropertiesMojo extends AbstractMojo {
 
       // well-known properties, TODO introduce named constants
       putIfAbsent(properties, "localRepository", localRepository.getBasedir());
-      if (userSettingsFile != null) {
+      if (isAccessible(userSettingsFile)) {
         putIfAbsent(properties, "userSettingsFile", userSettingsFile.getAbsolutePath());
+      } else {
+        logWarningNotAccessibleFile(userSettingsFile);
       }
-      if (globalSettingsFile != null) {
+      if (isAccessible(globalSettingsFile)) {
         putIfAbsent(properties, "globalSettingsFile", globalSettingsFile.getAbsolutePath());
+      } else{
+        logWarningNotAccessibleFile(globalSettingsFile);
       }
       List<ArtifactRepository> repositories = project.getRemoteArtifactRepositories();
       for (int i = 0; i < repositories.size(); i++) {
@@ -262,6 +266,25 @@ public class TestPropertiesMojo extends AbstractMojo {
       return writer.toString();
     } catch (IOException e) {
       return value; // shouldn't happen
+    }
+  }
+
+  private boolean isAccessible(File file) {
+    return file != null && file.isFile() && file.canRead();
+  }
+
+  private void logWarningNotAccessibleFile(File file) {
+    if (file != null) {
+      String msg = "File '" + file.getAbsolutePath() + "' ";
+      if (file.exists() && !file.isFile()) {
+        msg += "exists, but it is not a regular file!";
+      } else if (file.exists() && file.isFile() && !file.canRead()) {
+        msg += "exists, but can not be read!";
+      } else {
+        msg += "does not exist!";
+      }
+      msg += " It will be ignored.";
+      getLog().warn(msg);
     }
   }
 }
