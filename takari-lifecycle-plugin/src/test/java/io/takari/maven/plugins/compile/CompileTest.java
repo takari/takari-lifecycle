@@ -169,6 +169,23 @@ public class CompileTest extends AbstractCompileTest {
   }
 
   @Test
+  public void testCompile_sourceDependencies() throws Exception {
+    File dependency = resources.getBasedir("compile/basic");
+    cp(dependency, "src/main/java/basic/Basic.java", "target/classes/basic/Basic.java");
+
+    File basedir = resources.getBasedir("compile/classpath");
+    MavenProject project = mojos.readMavenProject(basedir);
+    MavenSession session = mojos.newMavenSession(project);
+    MojoExecution execution = mojos.newMojoExecution();
+
+    addDependency(project, "dependency", new File(dependency, "target/classes"));
+
+    mojos.executeMojo(session, project, execution);
+
+    mojos.assertBuildOutputs(new File(basedir, "target/classes"), "classpath/Classpath.class");
+  }
+
+  @Test
   public void testSpace() throws Exception {
     File basedir = compile("compile/spa ce");
     Assert.assertTrue(basedir.getAbsolutePath().contains(" "));

@@ -8,15 +8,18 @@
 package io.takari.maven.plugins.compile.jdt.classpath;
 
 import static org.eclipse.jdt.internal.compiler.util.SuffixConstants.SUFFIX_STRING_class;
+import static org.eclipse.jdt.internal.compiler.util.SuffixConstants.SUFFIX_STRING_java;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.eclipse.jdt.internal.compiler.batch.CompilationUnit;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.AccessRestriction;
@@ -24,6 +27,35 @@ import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 import org.osgi.framework.BundleException;
 
 public class ClasspathDirectory extends DependencyClasspathEntry implements ClasspathEntry {
+
+  public static class ClasspathCompilationUnit extends CompilationUnit {
+    public ClasspathCompilationUnit(File file, String encoding) {
+      super(null /* contents */, file.getAbsolutePath(), encoding, null /* destinationPath */, false /* ignoreOptionalProblems */);
+    }
+  }
+
+  private static class MixedClasspathDirectory extends ClasspathDirectory {
+    private final String encoding;
+
+    private MixedClasspathDirectory(File directory, Set<String> packages, Collection<String> exportedPackages, Charset encoding) {
+      super(directory, packages, exportedPackages);
+      this.encoding = encoding != null ? encoding.name() : null;
+    }
+
+    @Override
+    protected NameEnvironmentAnswer findType0(String packageName, String typeName, AccessRestriction accessRestriction) throws IOException, ClassFormatException {
+      NameEnvironmentAnswer answer = super.findType0(packageName, typeName, accessRestriction);
+      if (answer == null) {
+        String qualifiedFileName = packageName + "/" + typeName + SUFFIX_STRING_java;
+        File javaFile = new File(file, qualifiedFileName).getCanonicalFile();
+        if (javaFile.isFile()) {
+          CompilationUnit cu = new ClasspathCompilationUnit(javaFile, encoding);
+          answer = new NameEnvironmentAnswer(cu, accessRestriction);
+        }
+      }
+      return answer;
+    }
+  }
 
   private ClasspathDirectory(File directory, Set<String> packageNames, Collection<String> exportedPackages) {
     super(directory, packageNames, exportedPackages);
@@ -67,15 +99,17 @@ public class ClasspathDirectory extends DependencyClasspathEntry implements Clas
   @Override
   public NameEnvironmentAnswer findType(String packageName, String typeName, AccessRestriction accessRestriction) {
     try {
-      File classFile = getClassFile(packageName, typeName);
-      if (classFile.isFile()) {
-        ClassFileReader reader = ClassFileReader.read(classFile, false);
-        if (reader != null) {
-          return new NameEnvironmentAnswer(reader, accessRestriction);
-        }
-      }
+      return findType0(packageName, typeName, accessRestriction);
     } catch (ClassFormatException | IOException e) {
       // treat as if class file is missing
+    }
+    return null;
+  }
+
+  protected NameEnvironmentAnswer findType0(String packageName, String typeName, AccessRestriction accessRestriction) throws IOException, ClassFormatException {
+    File classFile = getClassFile(packageName, typeName);
+    if (classFile.isFile()) {
+      return new NameEnvironmentAnswer(ClassFileReader.read(classFile, false), accessRestriction);
     }
     return null;
   }
@@ -87,7 +121,17 @@ public class ClasspathDirectory extends DependencyClasspathEntry implements Clas
 
   public static ClasspathDirectory create(File directory) {
     Set<String> packages = getPackageNames(directory);
+    Collection<String> exportedPackages = getExportedPackages(directory);
+    return new ClasspathDirectory(directory, packages, exportedPackages);
+  }
 
+  public static ClasspathDirectory createMixed(File directory, Charset encoding) {
+    Set<String> packages = getPackageNames(directory);
+    Collection<String> exportedPackages = getExportedPackages(directory);
+    return new MixedClasspathDirectory(directory, packages, exportedPackages, encoding);
+  }
+
+  private static Collection<String> getExportedPackages(File directory) {
     Collection<String> exportedPackages = null;
     try (InputStream is = new FileInputStream(new File(directory, PATH_EXPORT_PACKAGE))) {
       exportedPackages = parseExportPackage(is);
@@ -101,8 +145,7 @@ public class ClasspathDirectory extends DependencyClasspathEntry implements Clas
         // silently ignore missing/bad export-package files
       }
     }
-
-    return new ClasspathDirectory(directory, packages, exportedPackages);
+    return exportedPackages;
   }
 
   public File getClassFile(String packageName, String typeName) throws IOException {

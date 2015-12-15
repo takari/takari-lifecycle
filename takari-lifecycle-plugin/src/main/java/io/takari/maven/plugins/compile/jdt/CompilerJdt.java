@@ -39,6 +39,7 @@ import org.eclipse.jdt.internal.compiler.ICompilerRequestor;
 import org.eclipse.jdt.internal.compiler.IErrorHandlingPolicy;
 import org.eclipse.jdt.internal.compiler.IProblemFactory;
 import org.eclipse.jdt.internal.compiler.apt.util.EclipseFileManager;
+import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.batch.CompilationUnit;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
@@ -512,7 +513,17 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     Classpath namingEnvironment = strategy.createClasspath();
     IErrorHandlingPolicy errorHandlingPolicy = DefaultErrorHandlingPolicies.exitAfterAllProblems();
     IProblemFactory problemFactory = ProblemFactory.getProblemFactory(Locale.getDefault());
-    Compiler compiler = new Compiler(namingEnvironment, errorHandlingPolicy, compilerOptions, this, problemFactory);
+    Compiler compiler = new Compiler(namingEnvironment, errorHandlingPolicy, compilerOptions, this, problemFactory) {
+      @Override
+      protected synchronized void addCompilationUnit(ICompilationUnit sourceUnit, CompilationUnitDeclaration parsedUnit) {
+        if (sourceUnit instanceof ClasspathDirectory.ClasspathCompilationUnit) {
+          // this compilation unit represents dependency .java file
+          // it is used to resolve type references and must not be processed otherwise
+          return;
+        }
+        super.addCompilationUnit(sourceUnit, parsedUnit);
+      }
+    };
     compiler.options.produceReferenceInfo = true;
 
     EclipseFileManager fileManager = null;
@@ -660,6 +671,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     if (result == null) {
       return; // ah?
     }
+
     final String sourceName = new String(result.getFileName());
     final File sourceFile = new File(sourceName);
 

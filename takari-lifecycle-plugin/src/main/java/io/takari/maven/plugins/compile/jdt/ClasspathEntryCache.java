@@ -67,7 +67,7 @@ public class ClasspathEntryCache {
       DependencyClasspathEntry entry = null;
       if (!CACHE.containsKey(key)) {
         if (key.file.isDirectory()) {
-          entry = ClasspathDirectory.create(key.file);
+          entry = ClasspathDirectory.createMixed(key.file, encoding);
         } else if (key.file.isFile()) {
           try {
             entry = ClasspathJar.create(key.file);
