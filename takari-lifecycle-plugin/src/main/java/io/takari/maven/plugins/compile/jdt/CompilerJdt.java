@@ -555,7 +555,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
     // XXX detect change!
     for (File file : JavaInstallation.getDefault().getClasspath()) {
-      ClasspathEntry entry = classpathCache.get(file);
+      ClasspathEntry entry = classpathCache.get(file, getSourceEncoding());
       if (entry != null) {
         entries.add(entry);
       }
@@ -588,7 +588,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     }
 
     if (mainClasses != null) {
-      DependencyClasspathEntry entry = classpathCache.get(mainClasses);
+      DependencyClasspathEntry entry = classpathCache.get(mainClasses, getSourceEncoding());
       if (entry != null) {
         dependencypath.add(AccessRestrictionClasspathEntry.allowAll(entry));
         files.add(mainClasses);
@@ -596,7 +596,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     }
 
     for (File dependency : dependencies) {
-      DependencyClasspathEntry entry = classpathCache.get(dependency);
+      DependencyClasspathEntry entry = classpathCache.get(dependency, getSourceEncoding());
       if (entry != null) {
         if (getTransitiveDependencyReference() == AccessRulesViolation.error && !directDependencies.contains(dependency)) {
           dependencypath.add(AccessRestrictionClasspathEntry.forbidAll(entry));
