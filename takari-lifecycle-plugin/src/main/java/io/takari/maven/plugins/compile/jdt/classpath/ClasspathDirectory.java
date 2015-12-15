@@ -7,6 +7,8 @@
  */
 package io.takari.maven.plugins.compile.jdt.classpath;
 
+import static org.eclipse.jdt.internal.compiler.util.SuffixConstants.SUFFIX_STRING_class;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -63,9 +65,9 @@ public class ClasspathDirectory extends DependencyClasspathEntry implements Clas
   }
 
   @Override
-  public NameEnvironmentAnswer findType(String packageName, String binaryFileName, AccessRestriction accessRestriction) {
+  public NameEnvironmentAnswer findType(String packageName, String typeName, AccessRestriction accessRestriction) {
     try {
-      String qualifiedFileName = packageName + "/" + binaryFileName;
+      String qualifiedFileName = packageName + "/" + typeName + SUFFIX_STRING_class;
       File classFile = new File(file, qualifiedFileName).getCanonicalFile();
       if (classFile.isFile() && matchQualifiedName(classFile, qualifiedFileName)) {
         ClassFileReader reader = ClassFileReader.read(classFile, false);
@@ -108,8 +110,8 @@ public class ClasspathDirectory extends DependencyClasspathEntry implements Clas
     return new ClasspathDirectory(directory, packages, exportedPackages);
   }
 
-  public File getFile(String packageName, String binaryFileName) throws IOException {
-    String qualifiedFileName = packageName + "/" + binaryFileName;
+  public File getClassFile(String packageName, String typeName) throws IOException {
+    String qualifiedFileName = packageName + "/" + typeName + SUFFIX_STRING_class;
     return new File(file, qualifiedFileName).getCanonicalFile();
   }
 }

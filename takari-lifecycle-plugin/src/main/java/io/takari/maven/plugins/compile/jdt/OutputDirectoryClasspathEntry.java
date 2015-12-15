@@ -7,15 +7,15 @@
  */
 package io.takari.maven.plugins.compile.jdt;
 
-import io.takari.maven.plugins.compile.jdt.classpath.ClasspathDirectory;
-import io.takari.maven.plugins.compile.jdt.classpath.ClasspathEntry;
-import io.takari.maven.plugins.compile.jdt.classpath.MutableClasspathEntry;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
+
+import io.takari.maven.plugins.compile.jdt.classpath.ClasspathDirectory;
+import io.takari.maven.plugins.compile.jdt.classpath.ClasspathEntry;
+import io.takari.maven.plugins.compile.jdt.classpath.MutableClasspathEntry;
 
 class OutputDirectoryClasspathEntry implements ClasspathEntry, MutableClasspathEntry {
 
@@ -39,10 +39,10 @@ class OutputDirectoryClasspathEntry implements ClasspathEntry, MutableClasspathE
   }
 
   @Override
-  public NameEnvironmentAnswer findType(String packageName, String binaryFileName) {
+  public NameEnvironmentAnswer findType(String packageName, String typeName) {
     try {
-      if (!staleOutputs.contains(delegate.getFile(packageName, binaryFileName))) {
-        return delegate.findType(packageName, binaryFileName, null);
+      if (!staleOutputs.contains(delegate.getClassFile(packageName, typeName))) {
+        return delegate.findType(packageName, typeName, null);
       }
     } catch (IOException e) {
       // treat as if class file is missing

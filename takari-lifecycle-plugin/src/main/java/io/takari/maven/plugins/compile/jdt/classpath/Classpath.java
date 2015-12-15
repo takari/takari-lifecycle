@@ -13,13 +13,12 @@ import java.util.List;
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.env.INameEnvironment;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
-import org.eclipse.jdt.internal.compiler.util.SuffixConstants;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 
-public class Classpath implements INameEnvironment, SuffixConstants {
+public class Classpath implements INameEnvironment {
 
   private final List<ClasspathEntry> entries;
 
@@ -62,9 +61,8 @@ public class Classpath implements INameEnvironment, SuffixConstants {
     NameEnvironmentAnswer suggestedAnswer = null;
     Collection<ClasspathEntry> entries = !packageName.isEmpty() ? packages.get(packageName) : this.entries;
     if (entries != null) {
-      String binaryFileName = typeName + SUFFIX_STRING_class;
       for (ClasspathEntry entry : entries) {
-        NameEnvironmentAnswer answer = entry.findType(packageName, binaryFileName);
+        NameEnvironmentAnswer answer = entry.findType(packageName, typeName);
         if (answer != null) {
           if (!answer.ignoreIfBetter()) {
             if (answer.isBetter(suggestedAnswer)) {

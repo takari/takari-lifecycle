@@ -113,11 +113,11 @@ public abstract class DependencyClasspathEntry implements ClasspathEntry {
   }
 
   @Override
-  public NameEnvironmentAnswer findType(String packageName, String binaryFileName) {
-    return findType(packageName, binaryFileName, getAccessRestriction(packageName));
+  public NameEnvironmentAnswer findType(String packageName, String typeName) {
+    return findType(packageName, typeName, getAccessRestriction(packageName));
   }
 
-  public abstract NameEnvironmentAnswer findType(String packageName, String binaryFileName, AccessRestriction accessRestriction);
+  public abstract NameEnvironmentAnswer findType(String packageName, String typeName, AccessRestriction accessRestriction);
 
   public String getEntryName() {
     return file.getAbsolutePath();

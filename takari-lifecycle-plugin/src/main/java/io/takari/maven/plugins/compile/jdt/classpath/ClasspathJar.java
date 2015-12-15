@@ -7,6 +7,8 @@
  */
 package io.takari.maven.plugins.compile.jdt.classpath;
 
+import static org.eclipse.jdt.internal.compiler.util.SuffixConstants.SUFFIX_STRING_class;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,9 +50,9 @@ public class ClasspathJar extends DependencyClasspathEntry implements ClasspathE
   }
 
   @Override
-  public NameEnvironmentAnswer findType(String packageName, String binaryFileName, AccessRestriction accessRestriction) {
+  public NameEnvironmentAnswer findType(String packageName, String typeName, AccessRestriction accessRestriction) {
     try {
-      String qualifiedFileName = packageName + "/" + binaryFileName;
+      String qualifiedFileName = packageName + "/" + typeName + SUFFIX_STRING_class;
       ClassFileReader reader = ClassFileReader.read(this.zipFile, qualifiedFileName);
       if (reader != null) {
         return new NameEnvironmentAnswer(reader, accessRestriction);

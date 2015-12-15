@@ -1,14 +1,14 @@
 package io.takari.maven.plugins.compile.jdt;
 
-import io.takari.maven.plugins.compile.jdt.classpath.ClasspathEntry;
-import io.takari.maven.plugins.compile.jdt.classpath.DependencyClasspathEntry;
-
 import java.util.Collection;
 
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.env.AccessRestriction;
 import org.eclipse.jdt.internal.compiler.env.AccessRule;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
+
+import io.takari.maven.plugins.compile.jdt.classpath.ClasspathEntry;
+import io.takari.maven.plugins.compile.jdt.classpath.DependencyClasspathEntry;
 
 class AccessRestrictionClasspathEntry implements ClasspathEntry {
   private final DependencyClasspathEntry entry;
@@ -25,8 +25,8 @@ class AccessRestrictionClasspathEntry implements ClasspathEntry {
   }
 
   @Override
-  public NameEnvironmentAnswer findType(String packageName, String binaryFileName) {
-    return entry.findType(packageName, binaryFileName, accessRestriction);
+  public NameEnvironmentAnswer findType(String packageName, String typeName) {
+    return entry.findType(packageName, typeName, accessRestriction);
   }
 
   @Override
