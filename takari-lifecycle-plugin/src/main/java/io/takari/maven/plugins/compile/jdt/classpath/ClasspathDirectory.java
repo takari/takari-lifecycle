@@ -67,9 +67,8 @@ public class ClasspathDirectory extends DependencyClasspathEntry implements Clas
   @Override
   public NameEnvironmentAnswer findType(String packageName, String typeName, AccessRestriction accessRestriction) {
     try {
-      String qualifiedFileName = packageName + "/" + typeName + SUFFIX_STRING_class;
-      File classFile = new File(file, qualifiedFileName).getCanonicalFile();
-      if (classFile.isFile() && matchQualifiedName(classFile, qualifiedFileName)) {
+      File classFile = getClassFile(packageName, typeName);
+      if (classFile.isFile()) {
         ClassFileReader reader = ClassFileReader.read(classFile, false);
         if (reader != null) {
           return new NameEnvironmentAnswer(reader, accessRestriction);
@@ -79,10 +78,6 @@ public class ClasspathDirectory extends DependencyClasspathEntry implements Clas
       // treat as if class file is missing
     }
     return null;
-  }
-
-  private boolean matchQualifiedName(File file, String qualifiedName) {
-    return file.getAbsolutePath().replace('\\', '/').endsWith(qualifiedName);
   }
 
   @Override
