@@ -7,6 +7,8 @@
  */
 package io.takari.maven.plugins.compile.jdt;
 
+import static org.eclipse.jdt.internal.compiler.util.SuffixConstants.SUFFIX_STRING_class;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -41,7 +43,7 @@ class OutputDirectoryClasspathEntry implements ClasspathEntry, MutableClasspathE
   @Override
   public NameEnvironmentAnswer findType(String packageName, String typeName) {
     try {
-      if (!staleOutputs.contains(delegate.getClassFile(packageName, typeName))) {
+      if (!staleOutputs.contains(delegate.getFile(packageName, typeName, SUFFIX_STRING_class))) {
         return delegate.findType(packageName, typeName, null);
       }
     } catch (IOException e) {

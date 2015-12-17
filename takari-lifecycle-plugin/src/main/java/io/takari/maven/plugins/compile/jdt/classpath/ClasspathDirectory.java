@@ -46,9 +46,8 @@ public class ClasspathDirectory extends DependencyClasspathEntry implements Clas
     protected NameEnvironmentAnswer findType0(String packageName, String typeName, AccessRestriction accessRestriction) throws IOException, ClassFormatException {
       NameEnvironmentAnswer answer = super.findType0(packageName, typeName, accessRestriction);
       if (answer == null) {
-        String qualifiedFileName = packageName + "/" + typeName + SUFFIX_STRING_java;
-        File javaFile = new File(file, qualifiedFileName).getCanonicalFile();
-        if (javaFile.isFile()) {
+        File javaFile = getFile(packageName, typeName, SUFFIX_STRING_java);
+        if (javaFile != null) {
           CompilationUnit cu = new ClasspathCompilationUnit(javaFile, encoding);
           answer = new NameEnvironmentAnswer(cu, accessRestriction);
         }
@@ -92,11 +91,6 @@ public class ClasspathDirectory extends DependencyClasspathEntry implements Clas
   }
 
   @Override
-  public Collection<String> getPackageNames() {
-    return packageNames;
-  }
-
-  @Override
   public NameEnvironmentAnswer findType(String packageName, String typeName, AccessRestriction accessRestriction) {
     try {
       return findType0(packageName, typeName, accessRestriction);
@@ -107,8 +101,8 @@ public class ClasspathDirectory extends DependencyClasspathEntry implements Clas
   }
 
   protected NameEnvironmentAnswer findType0(String packageName, String typeName, AccessRestriction accessRestriction) throws IOException, ClassFormatException {
-    File classFile = getClassFile(packageName, typeName);
-    if (classFile.isFile()) {
+    File classFile = getFile(packageName, typeName, SUFFIX_STRING_class);
+    if (classFile != null) {
       return new NameEnvironmentAnswer(ClassFileReader.read(classFile, false), accessRestriction);
     }
     return null;
@@ -148,8 +142,16 @@ public class ClasspathDirectory extends DependencyClasspathEntry implements Clas
     return exportedPackages;
   }
 
-  public File getClassFile(String packageName, String typeName) throws IOException {
-    String qualifiedFileName = packageName + "/" + typeName + SUFFIX_STRING_class;
-    return new File(file, qualifiedFileName).getCanonicalFile();
+  public File getFile(String packageName, String typeName, String suffix) throws IOException {
+    String qualifiedFileName = packageName + "/" + typeName + suffix;
+    File file = new File(this.file, qualifiedFileName).getCanonicalFile();
+    if (!file.isFile()) {
+      return null;
+    }
+    // must respect package/type name case even on case-insensitive filesystems
+    if (!file.getPath().replace('\\', '/').endsWith(qualifiedFileName)) {
+      return null;
+    }
+    return file;
   }
 }

@@ -30,10 +30,14 @@ public class ClasspathTest {
   }
 
   @Test
-  public void testCaseInsensitiveLookup() {
+  public void testCaseInsensitive() throws IOException {
     // affects windows and osx, linux users should not apply
-    File sourceRoot = new File("src/test/projects/compile/basic/src/main/java");
+    File sourceRoot = new File("target/test-classes").getCanonicalFile();
     ClasspathEntry cpe = ClasspathDirectory.create(sourceRoot);
-    Assert.assertNull(cpe.findType("basic", "basic.class"));
+    String pkg = getClass().getPackage().getName().replace('.', '/');
+    String cls = getClass().getSimpleName();
+    Assert.assertNotNull(cpe.findType(pkg, cls));
+    Assert.assertNull(cpe.findType(pkg, cls.toLowerCase()));
+    Assert.assertNull(cpe.findType(pkg.toUpperCase(), cls));
   }
 }
