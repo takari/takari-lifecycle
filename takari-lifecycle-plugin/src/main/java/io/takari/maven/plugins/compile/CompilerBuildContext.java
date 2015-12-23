@@ -234,6 +234,7 @@ public class CompilerBuildContext extends AbstractBuildContext {
       }
       state.setResourceMessages(resource, oldState.getResourceMessages(resource));
       state.setResourceAttributes(resource, oldState.getResourceAttributes(resource));
+      state.setResourceOutputs(resource, oldState.getResourceOutputs(resource));
 
       // XXX inputs and outputs, which ones do we need here?
     }

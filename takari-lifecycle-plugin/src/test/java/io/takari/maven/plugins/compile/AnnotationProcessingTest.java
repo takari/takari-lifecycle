@@ -21,6 +21,7 @@ import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
 import org.junit.Assume;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
 
@@ -255,7 +256,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
   }
 
   @Test
-  public void testProcessorOptions() throws Exception {
+  public void testProc_processorOptions() throws Exception {
     Xpp3Dom processors = newProcessors("processor.ProcessorWithOptions");
 
     Xpp3Dom options = new Xpp3Dom("annotationProcessorOptions");
@@ -265,7 +266,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
   }
 
   @Test
-  public void testStaleGeneratedSourcesCleanup() throws Exception {
+  public void testProc_staleGeneratedSourcesCleanup() throws Exception {
     File processor = compileAnnotationProcessor();
     File basedir = resources.getBasedir("compile-proc/proc");
 
@@ -285,6 +286,68 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         "classes/proc/GeneratedSource.class", //
         "generated-sources/annotations/proc/AnotherGeneratedSource.java", //
         "classes/proc/AnotherGeneratedSource.class");
+  }
+
+  @Test
+  @Ignore("edge case, need to fix eventually, but not a show-stopper")
+  public void testProc_incrementalDeleteLastAnnotatedSource() throws Exception {
+    File processor = compileAnnotationProcessor();
+    File basedir = resources.getBasedir("compile-proc/proc");
+
+    Xpp3Dom processors = newProcessors("processor.Processor");
+
+    // initial compilation
+    processAnnotations(basedir, Proc.proc, processor, processors);
+    mojos.assertBuildOutputs(new File(basedir, "target"), //
+        "classes/proc/Source.class", //
+        "generated-sources/annotations/proc/GeneratedSource.java", //
+        "classes/proc/GeneratedSource.class");
+
+    // no-change rebuild
+    processAnnotations(basedir, Proc.proc, processor, processors);
+    mojos.assertCarriedOverOutputs(new File(basedir, "target"), //
+        "classes/proc/Source.class", //
+        "generated-sources/annotations/proc/GeneratedSource.java", //
+        "classes/proc/GeneratedSource.class");
+
+    // remove annotated class
+    rm(basedir, "src/main/java/proc/Source.java");
+    processAnnotations(basedir, Proc.proc, processor, processors);
+    mojos.assertDeletedOutputs(new File(basedir, "target"), //
+        "generated-sources/annotations/proc/GeneratedSource.java", //
+        "classes/proc/GeneratedSource.class");
+  }
+
+  @Test
+  public void testIncrementalDelete() throws Exception {
+    File processor = compileAnnotationProcessor();
+    File basedir = resources.getBasedir("compile-proc/proc-incremental-delete");
+
+    Xpp3Dom processors = newProcessors("processor.Processor");
+
+    // initial compilation
+    processAnnotations(basedir, Proc.proc, processor, processors);
+    mojos.assertBuildOutputs(new File(basedir, "target"), //
+        "classes/proc/Keep.class", //
+        "classes/proc/Source.class", //
+        "generated-sources/annotations/proc/GeneratedSource.java", //
+        "classes/proc/GeneratedSource.class");
+
+    // no-change rebuild
+    processAnnotations(basedir, Proc.proc, processor, processors);
+    mojos.assertCarriedOverOutputs(new File(basedir, "target"), //
+        "classes/proc/Keep.class", //
+        "classes/proc/Source.class", //
+        "generated-sources/annotations/proc/GeneratedSource.java", //
+        "classes/proc/GeneratedSource.class");
+
+    // remove annotated source
+    rm(basedir, "src/main/java/proc/Source.java");
+    processAnnotations(basedir, Proc.proc, processor, processors);
+    mojos.assertDeletedOutputs(new File(basedir, "target"), //
+        "generated-sources/annotations/proc/GeneratedSource.java", //
+        "classes/proc/Source.class", //
+        "classes/proc/GeneratedSource.class");
   }
 
   @Test
