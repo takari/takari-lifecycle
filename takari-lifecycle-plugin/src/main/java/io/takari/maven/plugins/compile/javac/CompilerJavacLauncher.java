@@ -51,6 +51,10 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
 
   @Override
   public int compile(Map<File, Resource<File>> sources) throws IOException {
+    if (sources.isEmpty()) {
+      return 0;
+    }
+
     File options = File.createTempFile("javac-forked", ".options", buildDirectory);
     File output = File.createTempFile("javac-forked", ".output", buildDirectory);
     compile(options, output, sources);

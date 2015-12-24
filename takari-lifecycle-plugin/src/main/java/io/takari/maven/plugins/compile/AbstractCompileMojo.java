@@ -343,17 +343,15 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
     try {
       final List<ResourceMetadata<File>> sources = getSources();
-      if (sources.isEmpty()) {
-        log.info("No sources, skipping compilation");
-        return;
-      }
 
-      mkdirs(getOutputDirectory());
+      if (!sources.isEmpty()) {
+        mkdirs(getOutputDirectory());
+      }
 
       final List<File> classpath = getClasspath();
       Proc proc = getEffectiveProc(classpath);
 
-      if (proc != Proc.none) {
+      if (proc != Proc.none && !sources.isEmpty()) {
         mkdirs(getGeneratedSourcesDirectory());
       }
 

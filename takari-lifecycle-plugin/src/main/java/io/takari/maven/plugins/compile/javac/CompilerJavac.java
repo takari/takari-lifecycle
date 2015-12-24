@@ -56,6 +56,10 @@ public class CompilerJavac extends AbstractCompilerJavac {
 
   @Override
   public int compile(Map<File, Resource<File>> sources) throws MojoExecutionException, IOException {
+    if (sources.isEmpty()) {
+      return 0;
+    }
+
     final JavaCompiler compiler = getSystemJavaCompiler();
     final StandardJavaFileManager javaFileManager = compiler.getStandardFileManager(null, null, getSourceEncoding());
     try {

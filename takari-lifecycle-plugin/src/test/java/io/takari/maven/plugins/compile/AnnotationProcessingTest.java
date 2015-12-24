@@ -21,7 +21,6 @@ import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
 import org.junit.Assume;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
 
@@ -289,7 +288,6 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
   }
 
   @Test
-  @Ignore("edge case, need to fix eventually, but not a show-stopper")
   public void testProc_incrementalDeleteLastAnnotatedSource() throws Exception {
     File processor = compileAnnotationProcessor();
     File basedir = resources.getBasedir("compile-proc/proc");
@@ -315,6 +313,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     processAnnotations(basedir, Proc.proc, processor, processors);
     mojos.assertDeletedOutputs(new File(basedir, "target"), //
         "generated-sources/annotations/proc/GeneratedSource.java", //
+        "classes/proc/Source.class", //
         "classes/proc/GeneratedSource.class");
   }
 
