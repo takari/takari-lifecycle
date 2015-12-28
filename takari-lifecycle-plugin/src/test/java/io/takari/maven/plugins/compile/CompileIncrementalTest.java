@@ -155,6 +155,56 @@ public class CompileIncrementalTest extends AbstractCompileTest {
   }
 
   @Test
+  public void testClasspath_sourceDependency() throws Exception {
+    File basedir = resources.getBasedir("compile-incremental/classpath");
+    File moduleB = new File(basedir, "module-b");
+    File moduleA = new File(basedir, "module-a");
+
+    mojos.compile(moduleB);
+    cp(moduleB, "src/main/java/moduleb/ModuleB.java", "target/classes/moduleb/ModuleB.java");
+
+    MavenProject projectA = mojos.readMavenProject(moduleA);
+    addDependency(projectA, "module-b", new File(moduleB, "target/classes"));
+    mojos.compile(projectA);
+    mojos.assertBuildOutputs(moduleA, "target/classes/modulea/ModuleA.class");
+
+    // dependency changed "structurally"
+    projectA = mojos.readMavenProject(moduleA);
+    addDependency(projectA, "module-b", new File(moduleB, "src/main/java"));
+    cp(moduleB, "src/main/java/moduleb/ModuleB.java-method", "target/classes/moduleb/ModuleB.java");
+    touch(moduleB, "target/classes/moduleb/ModuleB.java");
+    mojos.flushClasspathCaches();
+    mojos.compile(projectA);
+    mojos.assertBuildOutputs(moduleA, "target/classes/modulea/ModuleA.class");
+  }
+
+  @Test
+  public void testClasspath_sourceAndCompiledDependency() throws Exception {
+    // the point of this test is to assert that when dependency has both .java and .class files
+    // changes to .java trigger recompilation of the (potentially) affected sources
+    // this is necessary because .java dependency can define inner/secondary types that
+    // do no have corresponding .class files
+
+    File basedir = resources.getBasedir("compile-incremental/classpath");
+    File moduleB = new File(basedir, "module-b");
+    File moduleA = new File(basedir, "module-a");
+
+    MavenProject projectA = mojos.readMavenProject(moduleA);
+    addDependency(projectA, "module-b", new File(moduleB, "src/main/java"));
+    mojos.compile(projectA);
+    mojos.assertBuildOutputs(moduleA, "target/classes/modulea/ModuleA.class");
+
+    // dependency changed "structurally"
+    projectA = mojos.readMavenProject(moduleA);
+    addDependency(projectA, "module-b", new File(moduleB, "src/main/java"));
+    cp(moduleB, "src/main/java/moduleb/ModuleB.java-method", "src/main/java/moduleb/ModuleB.java");
+    touch(moduleB, "src/main/java/moduleb/ModuleB.java");
+    mojos.flushClasspathCaches();
+    mojos.compile(projectA);
+    mojos.assertBuildOutputs(moduleA, "target/classes/modulea/ModuleA.class");
+  }
+
+  @Test
   public void testClasspath_changedClassMovedFromProjectToDependency() throws Exception {
     File basedir = resources.getBasedir("compile-incremental/move");
     File moduleB = new File(basedir, "module-b");

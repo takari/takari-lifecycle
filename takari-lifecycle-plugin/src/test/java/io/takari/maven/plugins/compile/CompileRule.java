@@ -10,6 +10,7 @@ import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
 
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
+import io.takari.maven.plugins.compile.jdt.ClasspathDigester;
 import io.takari.maven.plugins.compile.jdt.ClasspathEntryCache;
 
 public class CompileRule extends IncrementalBuildRule {
@@ -55,5 +56,6 @@ public class CompileRule extends IncrementalBuildRule {
   public void flushClasspathCaches() {
     ClasspathEntryCache.flush();
     ProjectClasspathDigester.flush();
+    ClasspathDigester.flush();
   }
 }

@@ -7,8 +7,12 @@
  */
 package io.takari.maven.plugins.compile.jdt;
 
+import static org.eclipse.jdt.internal.compiler.util.SuffixConstants.SUFFIX_STRING_class;
+import static org.eclipse.jdt.internal.compiler.util.SuffixConstants.SUFFIX_STRING_java;
+
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +35,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.hash.Funnels;
+import com.google.common.hash.Hasher;
+import com.google.common.hash.Hashing;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 
 @Named
 @MojoExecutionScoped
@@ -78,23 +87,32 @@ public class ClasspathDigester {
     Map<String, byte[]> digest = CACHE.get(file);
     if (digest == null) {
       digest = new HashMap<String, byte[]>();
+      Map<String, byte[]> sourcesDigest = new HashMap<String, byte[]>();
       JarFile jar = new JarFile(file);
       try {
         for (Enumeration<JarEntry> entries = jar.entries(); entries.hasMoreElements();) {
           JarEntry entry = entries.nextElement();
           String path = entry.getName();
-          if (path.endsWith(".class")) {
-            String type = toJavaType(path);
+          if (path.endsWith(SUFFIX_STRING_class)) {
+            String type = toJavaType(path, SUFFIX_STRING_class);
             try {
               digest.put(type, digester.digest(ClassFileReader.read(jar, path)));
             } catch (ClassFormatException e) {
-              // the class file is old for sure, according to jdt
+              // as far as jdt is concerned, the type does not exist
             }
+          } else if (path.endsWith(SUFFIX_STRING_java)) {
+            String type = toJavaType(path, SUFFIX_STRING_java);
+            Hasher hasher = Hashing.sha1().newHasher();
+            try (InputStream in = jar.getInputStream(entry)) {
+              ByteStreams.copy(in, Funnels.asOutputStream(hasher));
+            }
+            sourcesDigest.put(type, hasher.hash().asBytes());
           }
         }
       } finally {
         jar.close();
       }
+      mergeAll(digest, sourcesDigest);
       CACHE.put(file, digest);
     }
 
@@ -105,26 +123,52 @@ public class ClasspathDigester {
     Map<String, byte[]> digest = CACHE.get(directory);
     if (digest == null) {
       digest = new HashMap<String, byte[]>();
+      Map<String, byte[]> sourcesDigest = new HashMap<String, byte[]>();
       DirectoryScanner scanner = new DirectoryScanner();
       scanner.setBasedir(directory);
-      scanner.setIncludes(new String[] {"**/*.class"});
+      scanner.setIncludes(new String[] {"**/*" + SUFFIX_STRING_class, "**/*" + SUFFIX_STRING_java});
       scanner.scan();
       for (String path : scanner.getIncludedFiles()) {
-        String type = toJavaType(path);
-        try {
-          digest.put(type, digester.digest(ClassFileReader.read(new File(directory, path))));
-        } catch (ClassFormatException e) {
-          // as far as jdt is concerned, the type does not exist
+        if (path.endsWith(SUFFIX_STRING_class)) {
+          String type = toJavaType(path, SUFFIX_STRING_class);
+          try {
+            digest.put(type, digester.digest(ClassFileReader.read(new File(directory, path))));
+          } catch (ClassFormatException e) {
+            // as far as jdt is concerned, the type does not exist
+          }
+        } else {
+          String type = toJavaType(path, SUFFIX_STRING_java);
+          sourcesDigest.put(type, Files.hash(new File(directory, path), Hashing.sha1()).asBytes());
         }
       }
+      mergeAll(digest, sourcesDigest);
       CACHE.put(directory, digest);
     }
 
     return digest;
   }
 
-  public static String toJavaType(String path) {
-    path = path.substring(0, path.length() - ".class".length());
+  private void mergeAll(Map<String, byte[]> target, Map<String, byte[]> source) {
+    for (Map.Entry<String, byte[]> entry : source.entrySet()) {
+      byte[] value = target.get(entry.getKey());
+      if (value != null) {
+        byte[] temp = new byte[value.length + entry.getValue().length];
+        System.arraycopy(value, 0, temp, 0, value.length);
+        System.arraycopy(entry.getValue(), 0, temp, value.length, entry.getValue().length);
+        value = temp;
+      } else {
+        value = entry.getValue();
+      }
+      target.put(entry.getKey(), value);
+    }
+  }
+
+  public static String toJavaType(String path, String suffix) {
+    path = path.substring(0, path.length() - suffix.length());
     return path.replace('/', '.').replace('\\', '.');
+  }
+
+  public static void flush() {
+    CACHE.clear();
   }
 }
