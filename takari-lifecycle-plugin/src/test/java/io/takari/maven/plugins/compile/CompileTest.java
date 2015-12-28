@@ -351,4 +351,17 @@ public class CompileTest extends AbstractCompileTest {
 
     assertThat(new File(basedir, "target/classes/annotation/AnnotatedClass.class"), hasAnnotation("annotation.Annotation"));
   }
+
+  @Test
+  public void testInnerTypeDependency_sourceDependencies() throws Exception {
+    File basedir = resources.getBasedir("compile/inner-type-dependency");
+
+    MavenProject project = mojos.readMavenProject(basedir);
+    addDependency(project, "dependency", new File(basedir, "dependency/src/main/java"));
+
+    MavenSession session = mojos.newMavenSession(project);
+    MojoExecution execution = mojos.newMojoExecution();
+    mojos.executeMojo(session, project, execution);
+    mojos.assertBuildOutputs(new File(basedir, "target/classes"), "innertyperef/InnerTypeRef.class");
+  }
 }
