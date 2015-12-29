@@ -32,6 +32,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -248,6 +249,12 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Incremental(configuration = Configuration.ignore)
   private Set<Artifact> directDependencies;
 
+  @Parameter(defaultValue = "${project}", readonly = true)
+  @Incremental(configuration = Configuration.ignore)
+  protected MavenProject project;
+
+  //
+
   @Component
   private Map<String, AbstractCompiler> compilers;
 
@@ -353,6 +360,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
       if (proc != Proc.none && !sources.isEmpty()) {
         mkdirs(getGeneratedSourcesDirectory());
+        addGeneratedSources(project);
       }
 
       compiler.setOutputDirectory(getOutputDirectory());
@@ -480,4 +488,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   protected List<File> getProcessorpath() {
     return null;
   }
+
+  protected abstract void addGeneratedSources(MavenProject project);
 }

@@ -7,9 +7,6 @@
  */
 package io.takari.maven.plugins.compile;
 
-import io.takari.incrementalbuild.Incremental;
-import io.takari.incrementalbuild.Incremental.Configuration;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -22,6 +19,10 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
+
+import io.takari.incrementalbuild.Incremental;
+import io.takari.incrementalbuild.Incremental.Configuration;
 
 @Mojo(name = "testCompile", defaultPhase = LifecyclePhase.TEST_COMPILE, threadSafe = true, requiresDependencyResolution = ResolutionScope.TEST, configurator = "takari")
 public class TestCompileMojo extends AbstractCompileMojo {
@@ -123,5 +124,14 @@ public class TestCompileMojo extends AbstractCompileMojo {
   @Override
   protected File getMainOutputDirectory() {
     return mainOutputDirectory;
+  }
+
+  @Override
+  protected void addGeneratedSources(MavenProject project) {
+    List<String> roots = project.getTestCompileSourceRoots();
+    String root = generatedTestSourcesDirectory.getAbsolutePath();
+    if (!roots.contains(root)) {
+      roots.add(root);
+    }
   }
 }

@@ -318,6 +318,21 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
   }
 
   @Test
+  public void testProc_projectSourceRoots() throws Exception {
+    File processor = compileAnnotationProcessor();
+
+    File basedir = resources.getBasedir("compile-proc/proc");
+    MavenProject project = mojos.readMavenProject(basedir);
+    addDependency(project, "processor", new File(processor, "target/classes"));
+
+    mojos.compile(project, newParameter("proc", Proc.proc.name()), newProcessors("processor.Processor"));
+
+    Assert.assertTrue(project.getCompileSourceRoots().contains(new File(basedir, "target/generated-sources/annotations").getAbsolutePath()));
+
+    // TODO testCompile
+  }
+
+  @Test
   public void testIncrementalDelete() throws Exception {
     File processor = compileAnnotationProcessor();
     File basedir = resources.getBasedir("compile-proc/proc-incremental-delete");
@@ -380,6 +395,8 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     cp(moduleA, "src/main/java/proc/Source.java-remove-annotation", "src/main/java/proc/Source.java");
     mojos.compile(moduleB);
     mojos.assertBuildOutputs(moduleB, "target/classes/proc/GeneratedSource.class");
+    projectA = mojos.readMavenProject(moduleA);
+    addDependency(projectA, "module-b", new File(moduleB, "target/classes"));
     processAnnotations(projectA, processor, Proc.proc, processors);
     mojos.assertBuildOutputs(new File(moduleA, "target"), //
         "classes/proc/Source.class", "classes/modulea/ModuleA.class");
