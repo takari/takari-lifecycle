@@ -534,7 +534,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         fileManager.setLocation(StandardLocation.CLASS_OUTPUT, Collections.singleton(getOutputDirectory()));
         fileManager.setLocation(StandardLocation.SOURCE_OUTPUT, Collections.singleton(getGeneratedSourcesDirectory()));
 
-        ProcessingEnvImpl processingEnv = new ProcessingEnvImpl(context, fileManager, getAnnotationProcessorOptions(), compiler, this);
+        ProcessingEnvImpl processingEnv = new ProcessingEnvImpl(context, fileManager, getAnnotationProcessorOptions(), compiler, this, getProc());
 
         compiler.annotationProcessorManager = new AnnotationProcessorManager(context, processingEnv, fileManager, getAnnotationProcessors());
         compiler.options.storeAnnotations = true;

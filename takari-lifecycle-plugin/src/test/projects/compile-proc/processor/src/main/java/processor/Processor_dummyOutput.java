@@ -26,7 +26,7 @@ public class Processor_dummyOutput extends AbstractProcessor {
     for (Element element : roundEnv.getElementsAnnotatedWith(Annotation.class)) {
       try {
         filer.createResource(StandardLocation.SOURCE_OUTPUT, "",
-            "dummy" + System.currentTimeMillis());
+            "dummy" + System.currentTimeMillis(), element);
       } catch (IOException e) {
         messager.printMessage(Kind.ERROR, e.getMessage(), element);
       }

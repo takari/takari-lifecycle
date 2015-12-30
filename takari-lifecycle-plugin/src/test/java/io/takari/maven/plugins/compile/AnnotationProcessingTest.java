@@ -503,9 +503,9 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
   }
 
   @Test
-  public void testProp_processorLastRound() throws Exception {
+  public void testProc_processorLastRound() throws Exception {
     Xpp3Dom processors = newProcessors("processor.ProcessorLastRound");
-    File basedir = procCompile("compile-proc/proc", Proc.only, processors);
+    File basedir = procCompile("compile-proc/proc", Proc.onlyEX, processors);
     mojos.assertBuildOutputs(new File(basedir, "target"), //
         "classes/types.lst");
 
@@ -621,4 +621,43 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
     Assert.assertEquals("10", FileUtils.fileRead(new File(target, "classes/reprocess/Annotated.value")));
   }
+
+
+  @Test
+  public void testProc_nonIncrementalProcessor() throws Exception {
+    Assume.assumeTrue(CompilerJdt.ID.equals(compilerId));
+
+    File processor = compileAnnotationProcessor();
+    File basedir = resources.getBasedir("compile-proc/proc");
+    File target = new File(basedir, "target");
+
+    processAnnotations(basedir, Proc.procEX, processor, newProcessors("processor.NonIncrementalProcessor"));
+    mojos.assertBuildOutputs(target, //
+        "classes/proc/Source.class", //
+        "generated-sources/annotations/proc/NonIncrementalSource.java", //
+        "classes/proc/NonIncrementalSource.class");
+
+    FileUtils.deleteDirectory(target);
+    processAnnotations(basedir, Proc.onlyEX, processor, newProcessors("processor.NonIncrementalProcessor"));
+    mojos.assertBuildOutputs(target, //
+        "generated-sources/annotations/proc/NonIncrementalSource.java");
+
+    FileUtils.deleteDirectory(target);
+    try {
+      processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.NonIncrementalProcessor"));
+      Assert.fail();
+    } catch (MojoExecutionException expected) {
+      // TODO validate the error message
+    }
+
+    FileUtils.deleteDirectory(target);
+    try {
+      processAnnotations(basedir, Proc.only, processor, newProcessors("processor.NonIncrementalProcessor"));
+      Assert.fail();
+    } catch (MojoExecutionException expected) {
+      // TODO validate the error message
+    }
+
+  }
+
 }
