@@ -63,6 +63,7 @@ import io.takari.incrementalbuild.ResourceMetadata;
 import io.takari.incrementalbuild.ResourceStatus;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.AccessRulesViolation;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Debug;
+import io.takari.maven.plugins.compile.AbstractCompileMojo.DependencySourceTypes;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 import io.takari.maven.plugins.compile.AbstractCompiler;
 import io.takari.maven.plugins.compile.CompilerBuildContext;
@@ -566,7 +567,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
     // XXX detect change!
     for (File file : JavaInstallation.getDefault().getClasspath()) {
-      ClasspathEntry entry = classpathCache.get(file, getSourceEncoding());
+      ClasspathEntry entry = classpathCache.get(file);
       if (entry != null) {
         entries.add(entry);
       }
@@ -599,7 +600,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     }
 
     if (mainClasses != null) {
-      DependencyClasspathEntry entry = classpathCache.get(mainClasses, getSourceEncoding());
+      DependencyClasspathEntry entry = classpathCache.get(mainClasses);
       if (entry != null) {
         dependencypath.add(AccessRestrictionClasspathEntry.allowAll(entry));
         files.add(mainClasses);
@@ -607,8 +608,11 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     }
 
     for (File dependency : dependencies) {
-      DependencyClasspathEntry entry = classpathCache.get(dependency, getSourceEncoding());
+      DependencyClasspathEntry entry = classpathCache.get(dependency);
       if (entry != null) {
+        if (getDependencySourceTypes() == DependencySourceTypes.prefer) {
+          entry = ClasspathDirectory.createMixed(entry, getSourceEncoding());
+        }
         if (getTransitiveDependencyReference() == AccessRulesViolation.error && !directDependencies.contains(dependency)) {
           dependencypath.add(AccessRestrictionClasspathEntry.forbidAll(entry));
         } else if (getPrivatePackageReference() == AccessRulesViolation.ignore) {

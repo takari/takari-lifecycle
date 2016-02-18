@@ -165,7 +165,7 @@ public class CompileIncrementalTest extends AbstractCompileTest {
 
     MavenProject projectA = mojos.readMavenProject(moduleA);
     addDependency(projectA, "module-b", new File(moduleB, "target/classes"));
-    mojos.compile(projectA);
+    mojos.compile(projectA, newParameter("dependencySourceTypes", "prefer"));
     mojos.assertBuildOutputs(moduleA, "target/classes/modulea/ModuleA.class");
 
     // dependency changed "structurally"
@@ -174,7 +174,7 @@ public class CompileIncrementalTest extends AbstractCompileTest {
     cp(moduleB, "src/main/java/moduleb/ModuleB.java-method", "target/classes/moduleb/ModuleB.java");
     touch(moduleB, "target/classes/moduleb/ModuleB.java");
     mojos.flushClasspathCaches();
-    mojos.compile(projectA);
+    mojos.compile(projectA, newParameter("dependencySourceTypes", "prefer"));
     mojos.assertBuildOutputs(moduleA, "target/classes/modulea/ModuleA.class");
   }
 
@@ -191,7 +191,7 @@ public class CompileIncrementalTest extends AbstractCompileTest {
 
     MavenProject projectA = mojos.readMavenProject(moduleA);
     addDependency(projectA, "module-b", new File(moduleB, "src/main/java"));
-    mojos.compile(projectA);
+    mojos.compile(projectA, newParameter("dependencySourceTypes", "prefer"));
     mojos.assertBuildOutputs(moduleA, "target/classes/modulea/ModuleA.class");
 
     // dependency changed "structurally"
@@ -200,7 +200,7 @@ public class CompileIncrementalTest extends AbstractCompileTest {
     cp(moduleB, "src/main/java/moduleb/ModuleB.java-method", "src/main/java/moduleb/ModuleB.java");
     touch(moduleB, "src/main/java/moduleb/ModuleB.java");
     mojos.flushClasspathCaches();
-    mojos.compile(projectA);
+    mojos.compile(projectA, newParameter("dependencySourceTypes", "prefer"));
     mojos.assertBuildOutputs(moduleA, "target/classes/modulea/ModuleA.class");
   }
 

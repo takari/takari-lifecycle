@@ -86,6 +86,10 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     error, ignore;
   }
 
+  public static enum DependencySourceTypes {
+    prefer, ignore;
+  }
+
   /**
    * The -encoding argument for the Java compiler.
    */
@@ -226,6 +230,15 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
    */
   @Parameter(defaultValue = "ignore")
   private AccessRulesViolation privatePackageReference;
+
+  /**
+   * Controls whether compiler ignores (value {@code ignore}, the default) or prefers (value {@code prefer}), .java files when searching referenced types in project dependencies.
+   * 
+   * @see <a hred="http://docs.oracle.com/javase/7/docs/technotes/tools/windows/javac.html#searching">Searching for Types</a>
+   * @since 1.12
+   */
+  @Parameter(defaultValue = "ignore")
+  private DependencySourceTypes dependencySourceTypes;
 
   //
 
@@ -381,6 +394,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       compiler.setShowWarnings(showWarnings);
       compiler.setTransitiveDependencyReference(transitiveDependencyReference);
       compiler.setPrivatePackageReference(privatePackageReference);
+      compiler.setDependencySourceTypes(dependencySourceTypes);
 
       if (compiler instanceof CompilerJavacLauncher) {
         ((CompilerJavacLauncher) compiler).setBasedir(basedir);

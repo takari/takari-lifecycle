@@ -9,7 +9,6 @@ package io.takari.maven.plugins.compile.jdt;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,74 +21,37 @@ import io.takari.maven.plugins.compile.jdt.classpath.DependencyClasspathEntry;
 @Named
 public class ClasspathEntryCache {
 
-  private static class Key {
-    public final File file;
-    public final Charset encoding;
+  private static final Map<File, DependencyClasspathEntry> CACHE = new HashMap<>();
 
-    public Key(File file, Charset encoding) {
-      this.file = file;
-      this.encoding = encoding;
-    }
-
-    @Override
-    public int hashCode() {
-      int hash = 31;
-      hash = hash * 17 + file.hashCode();
-      hash = hash * 17 + (encoding != null ? encoding.hashCode() : 0);
-      return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (obj == this) {
-        return true;
-      }
-
-      if (!(obj instanceof Key)) {
-        return false;
-      }
-
-      Key other = (Key) obj;
-
-      return eq(file, other.file) && eq(encoding, other.encoding);
-    }
-  }
-
-  private static <T> boolean eq(T a, T b) {
-    return b != null ? a.equals(b) : b == null;
-  }
-
-  private static final Map<Key, DependencyClasspathEntry> CACHE = new HashMap<>();
-
-  public DependencyClasspathEntry get(File location, Charset encoding) {
-    final Key key = newKey(location, encoding);
+  public DependencyClasspathEntry get(File location) {
+    location = normalize(location);
     synchronized (CACHE) {
       DependencyClasspathEntry entry = null;
-      if (!CACHE.containsKey(key)) {
-        if (key.file.isDirectory()) {
-          entry = ClasspathDirectory.createMixed(key.file, encoding);
-        } else if (key.file.isFile()) {
+      if (!CACHE.containsKey(location)) {
+        if (location.isDirectory()) {
+          entry = ClasspathDirectory.create(location);
+        } else if (location.isFile()) {
           try {
-            entry = ClasspathJar.create(key.file);
+            entry = ClasspathJar.create(location);
           } catch (IOException e) {
             // not a zip/jar, ignore
           }
         }
-        CACHE.put(key, entry);
+        CACHE.put(location, entry);
       } else {
-        entry = CACHE.get(key);
+        entry = CACHE.get(location);
       }
       return entry;
     }
   }
 
-  private Key newKey(File location, Charset encoding) {
+  private File normalize(File location) {
     try {
       location = location.getCanonicalFile();
     } catch (IOException e1) {
       location = location.getAbsoluteFile();
     }
-    return new Key(location, encoding);
+    return location;
   }
 
   /**

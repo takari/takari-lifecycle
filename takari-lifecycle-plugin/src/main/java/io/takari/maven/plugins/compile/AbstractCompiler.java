@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import io.takari.incrementalbuild.ResourceMetadata;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.AccessRulesViolation;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Debug;
+import io.takari.maven.plugins.compile.AbstractCompileMojo.DependencySourceTypes;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 
 public abstract class AbstractCompiler {
@@ -58,6 +59,8 @@ public abstract class AbstractCompiler {
   private AccessRulesViolation transitiveDependencyReference;
 
   private AccessRulesViolation privatePackageReference;
+
+  private DependencySourceTypes dependencySourceTypes;
 
   protected AbstractCompiler(CompilerBuildContext context) {
     this.context = context;
@@ -181,6 +184,14 @@ public abstract class AbstractCompiler {
 
   protected boolean isShowWarnings() {
     return showWarnings;
+  }
+
+  public void setDependencySourceTypes(DependencySourceTypes dependencySourceTypes) {
+    this.dependencySourceTypes = dependencySourceTypes;
+  }
+
+  protected DependencySourceTypes getDependencySourceTypes() {
+    return dependencySourceTypes;
   }
 
   public abstract boolean setProcessorpath(List<File> processorpath) throws IOException;

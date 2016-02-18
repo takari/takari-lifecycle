@@ -44,15 +44,12 @@ public class ClasspathDirectory extends DependencyClasspathEntry implements Clas
 
     @Override
     protected NameEnvironmentAnswer findType0(String packageName, String typeName, AccessRestriction accessRestriction) throws IOException, ClassFormatException {
-      NameEnvironmentAnswer answer = super.findType0(packageName, typeName, accessRestriction);
-      if (answer == null) {
-        File javaFile = getFile(packageName, typeName, SUFFIX_STRING_java);
-        if (javaFile != null) {
-          CompilationUnit cu = new ClasspathCompilationUnit(javaFile, encoding);
-          answer = new NameEnvironmentAnswer(cu, accessRestriction);
-        }
+      File javaFile = getFile(packageName, typeName, SUFFIX_STRING_java);
+      if (javaFile != null) {
+        CompilationUnit cu = new ClasspathCompilationUnit(javaFile, encoding);
+        return new NameEnvironmentAnswer(cu, accessRestriction);
       }
-      return answer;
+      return super.findType0(packageName, typeName, accessRestriction);
     }
   }
 
@@ -119,10 +116,14 @@ public class ClasspathDirectory extends DependencyClasspathEntry implements Clas
     return new ClasspathDirectory(directory, packages, exportedPackages);
   }
 
-  public static ClasspathDirectory createMixed(File directory, Charset encoding) {
-    Set<String> packages = getPackageNames(directory);
-    Collection<String> exportedPackages = getExportedPackages(directory);
-    return new MixedClasspathDirectory(directory, packages, exportedPackages, encoding);
+  public static DependencyClasspathEntry createMixed(DependencyClasspathEntry entry, Charset encoding) {
+    if (entry instanceof MixedClasspathDirectory) {
+      return entry;
+    }
+    if (!(entry instanceof ClasspathDirectory)) {
+      return entry;
+    }
+    return new MixedClasspathDirectory(entry.file, entry.packageNames, entry.exportedPackages, encoding);
   }
 
   private static Collection<String> getExportedPackages(File directory) {

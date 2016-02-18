@@ -25,6 +25,9 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
+
 public class CompileTest extends AbstractCompileTest {
 
   public CompileTest(String compilerId) {
@@ -169,18 +172,40 @@ public class CompileTest extends AbstractCompileTest {
   }
 
   @Test
-  public void testCompile_sourceDependencies() throws Exception {
-    File dependency = resources.getBasedir("compile/basic");
-    cp(dependency, "src/main/java/basic/Basic.java", "target/classes/basic/Basic.java");
+  public void testClasspath_dependencySourceTypes_ignore() throws Exception {
+    // dependency has both .java and .class files, but .java file is corrupted
+    // assert the compiler uses .class file when dependencySourceTypes=ignore
+
+    File dependency = compile("compile/basic");
+    Files.write("corrupted", new File(dependency, "target/classes/basic/Basic.java"), Charsets.UTF_8);
+    touch(new File(dependency, "target/classes/basic/Basic.java")); // javac will pick newer file by default
 
     File basedir = resources.getBasedir("compile/classpath");
     MavenProject project = mojos.readMavenProject(basedir);
-    MavenSession session = mojos.newMavenSession(project);
-    MojoExecution execution = mojos.newMojoExecution();
 
     addDependency(project, "dependency", new File(dependency, "target/classes"));
 
-    mojos.executeMojo(session, project, execution);
+    mojos.compile(project, newParameter("dependencySourceTypes", "ignore"));
+
+    mojos.assertBuildOutputs(new File(basedir, "target/classes"), "classpath/Classpath.class");
+  }
+
+  @Test
+  public void testClasspath_dependencySourceTypes_prefer() throws Exception {
+    // dependency has both .java and .class files, but .class file is corrupted
+    // assert the compiler uses .java file when dependencySourceTypes=prefer
+
+    File dependency = compile("compile/basic");
+    cp(dependency, "src/main/java/basic/Basic.java", "target/classes/basic/Basic.java");
+    Files.write("corrupted", new File(dependency, "target/classes/basic/Basic.class"), Charsets.UTF_8);
+    touch(new File(dependency, "target/classes/basic/Basic.class")); // javac will pick newer file by default
+
+    File basedir = resources.getBasedir("compile/classpath");
+    MavenProject project = mojos.readMavenProject(basedir);
+
+    addDependency(project, "dependency", new File(dependency, "target/classes"));
+
+    mojos.compile(project, newParameter("dependencySourceTypes", "prefer"));
 
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), "classpath/Classpath.class");
   }
@@ -359,9 +384,7 @@ public class CompileTest extends AbstractCompileTest {
     MavenProject project = mojos.readMavenProject(basedir);
     addDependency(project, "dependency", new File(basedir, "dependency/src/main/java"));
 
-    MavenSession session = mojos.newMavenSession(project);
-    MojoExecution execution = mojos.newMojoExecution();
-    mojos.executeMojo(session, project, execution);
+    mojos.compile(project, newParameter("dependencySourceTypes", "prefer"));
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), "innertyperef/InnerTypeRef.class");
   }
 }

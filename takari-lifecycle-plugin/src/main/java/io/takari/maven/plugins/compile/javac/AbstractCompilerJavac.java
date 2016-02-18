@@ -23,6 +23,7 @@ import io.takari.incrementalbuild.ResourceMetadata;
 import io.takari.incrementalbuild.ResourceStatus;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.AccessRulesViolation;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Debug;
+import io.takari.maven.plugins.compile.AbstractCompileMojo.DependencySourceTypes;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 import io.takari.maven.plugins.compile.AbstractCompiler;
 import io.takari.maven.plugins.compile.CompilerBuildContext;
@@ -71,6 +72,13 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
 
     options.add("-classpath");
     options.add(classpath);
+
+    if (getDependencySourceTypes() == DependencySourceTypes.prefer) {
+      options.add("-Xprefer:source");
+    } else {
+      options.add("-sourcepath");
+      options.add("");
+    }
 
     // http://docs.oracle.com/javase/7/docs/technotes/tools/windows/javac.html#implicit
     options.add("-implicit:none");
