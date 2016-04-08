@@ -318,6 +318,26 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
   }
 
   @Test
+  public void testProc_nonIncrementalProcessor_onlyEX_deleteSource() throws Exception {
+    File processor = compileAnnotationProcessor();
+
+    File basedir = resources.getBasedir("compile-proc/proc");
+    File target = new File(basedir, "target");
+
+    Xpp3Dom processors = newProcessors("processor.NonIncrementalProcessor");
+
+    processAnnotations(basedir, Proc.onlyEX, processor, processors);
+    mojos.assertBuildOutputs(target, //
+        "generated-sources/annotations/proc/NonIncrementalSource.java");
+
+    rm(basedir, "src/main/java/proc/Source.java");
+
+    processAnnotations(basedir, Proc.onlyEX, processor, processors);
+    mojos.assertDeletedOutputs(target, //
+        "generated-sources/annotations/proc/NonIncrementalSource.java");
+  }
+
+  @Test
   public void testProc_projectSourceRoots() throws Exception {
     File processor = compileAnnotationProcessor();
 

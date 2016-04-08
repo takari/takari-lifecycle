@@ -188,6 +188,17 @@ public class CompilerBuildContext extends AbstractBuildContext {
     return outputs;
   }
 
+  public Collection<ResourceMetadata<File>> getDissociatedOutputs() {
+    List<ResourceMetadata<File>> outputs = new ArrayList<>();
+    for (File outputFile : oldState.getOutputs()) {
+      Collection<Object> outputInputs = oldState.getOutputInputs(outputFile);
+      if (outputInputs == null || outputInputs.isEmpty()) {
+        outputs.add(new DefaultResourceMetadata<File>(this, state, outputFile) {});
+      }
+    }
+    return outputs;
+  }
+
   @Override
   public DefaultOutput processOutput(File outputFile) {
     return super.processOutput(outputFile);

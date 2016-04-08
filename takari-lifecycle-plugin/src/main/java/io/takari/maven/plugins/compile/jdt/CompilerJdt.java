@@ -152,6 +152,10 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         deleteOrphanedOutputs(outputs);
       }
 
+      Collection<ResourceMetadata<File>> dissociatedOutputs = context.getDissociatedOutputs();
+      changed = changed || !dissociatedOutputs.isEmpty();
+      deleteOrphanedOutputs(dissociatedOutputs);
+
       return changed;
     }
 
