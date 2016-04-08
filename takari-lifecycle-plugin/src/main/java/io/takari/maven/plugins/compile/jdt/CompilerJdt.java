@@ -147,15 +147,20 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     protected boolean deleteOrphanedOutputs() throws IOException {
       boolean changed = false;
       for (ResourceMetadata<File> source : context.getRemovedSources()) {
-        for (ResourceMetadata<File> output : context.getAssociatedOutputs(source)) {
-          File outputFile = output.getResource();
-          context.deleteOutput(outputFile);
-          addDependentsOf(outputFile);
-          changed = true;
-        }
+        Collection<ResourceMetadata<File>> outputs = context.getAssociatedOutputs(source);
+        changed = changed || !outputs.isEmpty();
+        deleteOrphanedOutputs(outputs);
       }
 
       return changed;
+    }
+
+    protected void deleteOrphanedOutputs(Collection<ResourceMetadata<File>> outputs) throws IOException {
+      for (ResourceMetadata<File> output : outputs) {
+        File outputFile = output.getResource();
+        context.deleteOutput(outputFile);
+        addDependentsOf(outputFile);
+      }
     }
 
     protected boolean deleteStaleOutputs() throws IOException {
