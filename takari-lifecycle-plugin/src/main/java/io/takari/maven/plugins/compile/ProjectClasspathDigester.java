@@ -33,6 +33,7 @@ import com.google.common.base.Stopwatch;
 @MojoExecutionScoped
 public class ProjectClasspathDigester {
   private static final String ATTR_CLASSPATH_DIGEST = "compile.classpath.digest";
+  private static final String ATTR_SOURCEPATH_DIGEST = "compile.sourcepath.digest";
   private static final String ATTR_PROCESSORPATH_DIGEST = "compile.processorpath.digest";
 
   private final Logger log = LoggerFactory.getLogger(getClass());
@@ -51,6 +52,10 @@ public class ProjectClasspathDigester {
    */
   public boolean digestClasspath(List<File> dependencies) throws IOException {
     return digest(ATTR_CLASSPATH_DIGEST, dependencies);
+  }
+
+  public boolean digestSourcepath(List<File> dependencies) throws IOException {
+    return digest(ATTR_SOURCEPATH_DIGEST, dependencies);
   }
 
   public boolean digestProcessorpath(List<File> dependencies) throws IOException {

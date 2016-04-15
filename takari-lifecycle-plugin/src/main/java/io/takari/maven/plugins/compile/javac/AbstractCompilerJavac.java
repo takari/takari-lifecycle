@@ -48,6 +48,7 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
   private final List<ResourceMetadata<File>> sources = new ArrayList<ResourceMetadata<File>>();
 
   private String classpath;
+  private String sourcepath = "";
 
   protected AbstractCompilerJavac(CompilerBuildContext context, ProjectClasspathDigester digester) {
     super(context);
@@ -74,7 +75,7 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
 
     options.add("-Xprefer:source");
     options.add("-sourcepath");
-    options.add("");
+    options.add(sourcepath);
 
     // http://docs.oracle.com/javase/7/docs/technotes/tools/windows/javac.html#implicit
     options.add("-implicit:none");
@@ -174,6 +175,19 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
     this.classpath = cp.toString();
 
     return digester.digestClasspath(classpath);
+  }
+
+  @Override
+  public boolean setSourcepath(List<File> dependencies) throws IOException {
+    StringBuilder cp = new StringBuilder();
+    for (File dependency : dependencies) {
+      if (dependency != null) {
+        cp.append(File.pathSeparatorChar).append(dependency.getAbsolutePath());
+      }
+    }
+    this.sourcepath = cp.toString();
+
+    return digester.digestSourcepath(dependencies);
   }
 
   @Override

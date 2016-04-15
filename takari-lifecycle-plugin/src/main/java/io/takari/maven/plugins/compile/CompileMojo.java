@@ -8,6 +8,7 @@
 package io.takari.maven.plugins.compile;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -118,5 +119,10 @@ public class CompileMojo extends AbstractCompileMojo {
     if (!roots.contains(root)) {
       roots.add(root);
     }
+  }
+
+  @Override
+  protected Set<String> getMainSourceRoots() {
+    return Collections.emptySet(); // main compile does not have corresponding main sources
   }
 }

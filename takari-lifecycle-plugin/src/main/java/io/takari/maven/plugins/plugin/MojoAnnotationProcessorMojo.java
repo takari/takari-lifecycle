@@ -18,6 +18,7 @@ public class MojoAnnotationProcessorMojo extends CompileMojo {
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
     this.proc = Proc.only;
+    this.sourcepath = Sourcepath.disable; // compile phase, all dependencies are expected to be compiled by now
     this.compilerId = CompilerJdt.ID;
     this.annotationProcessors = new String[] {MojoDescriptorGleaner.class.getName()};
 

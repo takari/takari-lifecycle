@@ -36,7 +36,7 @@
     <guava.version>18.0</guava.version>
     <mavenPluginPluginVersion>3.3</mavenPluginPluginVersion>
     <m2eWorkspaceVersion>0.4.0</m2eWorkspaceVersion>
-    <pluginTestingVersion>2.8.0</pluginTestingVersion>
+    <pluginTestingVersion>2.9.0-SNAPSHOT</pluginTestingVersion>
     <takari.javaSourceVersion>1.8</takari.javaSourceVersion>
   </properties>
 

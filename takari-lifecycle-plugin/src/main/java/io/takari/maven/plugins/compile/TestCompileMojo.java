@@ -78,6 +78,12 @@ public class TestCompileMojo extends AbstractCompileMojo {
   @Incremental(configuration = Configuration.ignore)
   private boolean skip;
 
+  /**
+   * Main compile source roots, part of test sourcepath.
+   */
+  @Parameter(defaultValue = "${project.compileSourceRoots}", readonly = true, required = true)
+  private List<String> mainCompileSourceRoots;
+
   @Override
   public Set<String> getSourceRoots() {
     return new LinkedHashSet<String>(compileSourceRoots);
@@ -125,5 +131,10 @@ public class TestCompileMojo extends AbstractCompileMojo {
     if (!roots.contains(root)) {
       roots.add(root);
     }
+  }
+
+  @Override
+  protected Set<String> getMainSourceRoots() {
+    return new LinkedHashSet<>(mainCompileSourceRoots);
   }
 }

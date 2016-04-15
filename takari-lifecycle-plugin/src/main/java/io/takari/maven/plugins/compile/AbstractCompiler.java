@@ -187,6 +187,8 @@ public abstract class AbstractCompiler {
 
   public abstract boolean setClasspath(List<File> dependencies, File mainClasses, Set<File> directDependencies) throws IOException;
 
+  public abstract boolean setSourcepath(List<File> dependencies) throws IOException;
+
   public abstract boolean setSources(List<ResourceMetadata<File>> sources) throws IOException;
 
   public abstract int compile() throws MojoExecutionException, IOException;

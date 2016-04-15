@@ -13,6 +13,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -38,6 +39,8 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
 import com.google.common.io.CharStreams;
@@ -84,6 +87,10 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
   public static enum AccessRulesViolation {
     error, ignore;
+  }
+
+  public static enum Sourcepath {
+    disable, reactorDependencies;
   }
 
   /**
@@ -217,6 +224,20 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Parameter(defaultValue = "ignore")
   private AccessRulesViolation privatePackageReference;
 
+  /**
+   * Controls compilation sourcepath. If set to {@code disable}, compilation sourcepath will be empty. If set to {@code reactorProjects}, compilation sourcepath will be set to compile source roots (or
+   * test compile source roots) of dependency projects of the same reactor build. The default is {@code reactorProjects} if {@code proc=only}, otherwise the default is {@code disable}.
+   * 
+   * <p/>
+   * The main usecase is {@code proc:only} annotation processing bound to generate-sources build phase. During {@code mvn clean generate-sources} execution, the reactor dependencies classes are not
+   * available and referenced types can only be resolved from java sources.
+   * 
+   * @see http://docs.oracle.com/javase/8/docs/technotes/tools/unix/javac.html#BHCJJJAJ
+   * @since 1.12
+   */
+  @Parameter
+  protected Sourcepath sourcepath;
+
   //
 
   @Parameter(defaultValue = "${project.file}", readonly = true)
@@ -250,6 +271,9 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
   @Component
   private CompilerBuildContext context;
+
+  @Component
+  private ReactorProjects reactorProjects;
 
   public Charset getSourceEncoding() {
     return encoding == null ? null : Charset.forName(encoding);
@@ -322,6 +346,8 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
   protected abstract File getMainOutputDirectory();
 
+  protected abstract Set<String> getMainSourceRoots();
+
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
 
@@ -350,7 +376,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
       if (proc != Proc.none && !sources.isEmpty()) {
         mkdirs(getGeneratedSourcesDirectory());
-        addGeneratedSources(project);
       }
 
       compiler.setOutputDirectory(getOutputDirectory());
@@ -379,15 +404,20 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
       boolean sourcesChanged = compiler.setSources(sources);
       boolean classpathChanged = compiler.setClasspath(classpath, getMainOutputDirectory(), getDirectDependencies());
+      boolean sourcepathChanged = compiler.setSourcepath(getSourcepath(proc));
       boolean processorpathChanged = proc != Proc.none ? compiler.setProcessorpath(getProcessorpath()) : false;
 
-      if (sourcesChanged || classpathChanged || processorpathChanged) {
+      if (sourcesChanged || classpathChanged || sourcepathChanged || processorpathChanged) {
         log.info("Compiling {} sources to {}", sources.size(), getOutputDirectory());
         int compiled = compiler.compile();
         log.info("Compiled {} out of {} sources ({} ms)", compiled, sources.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
       } else {
         log.info("Skipped compilation, all {} classes are up to date", sources.size());
         context.markUptodateExecution();
+      }
+
+      if (proc != Proc.none && !sources.isEmpty()) {
+        addGeneratedSources(project);
       }
 
     } catch (IOException e) {
@@ -404,6 +434,72 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       }
     }
     return classpath;
+  }
+
+  private List<File> getSourcepath(Proc proc) throws MojoExecutionException {
+    if (sourcepath == Sourcepath.disable) {
+      return Collections.emptyList();
+    }
+    if (sourcepath == null && proc != Proc.only && proc != Proc.onlyEX) {
+      return Collections.emptyList();
+    }
+
+    if (privatePackageReference != AccessRulesViolation.ignore) {
+      // dependency export-packages are calculated for classes folder, information is not available for source folders
+      throw new MojoExecutionException("<sourcepath> parameter is not compatible with <privatePackageReference>");
+    }
+
+    Set<File> sourcepath = new LinkedHashSet<>();
+    for (String sourceRoot : Iterables.concat(getSourceRoots(), getMainSourceRoots())) {
+      addIfExists(sourcepath, sourceRoot);
+    }
+    List<Artifact> unsupportedDependencies = new ArrayList<>();
+    for (Artifact artifact : getClasspathArtifacts()) {
+      MavenProject other = reactorProjects.get(artifact);
+      if (other != null) {
+        if (artifact.getClassifier() != null && !"tests".equals(artifact.getClassifier())) {
+          // generally, can't tell anything about classified artifacts
+          unsupportedDependencies.add(artifact);
+        } else {
+          // TODO assert encoding is the same
+          for (String sourceRoot : getSourceRoots(other, artifact)) {
+            addIfExists(sourcepath, sourceRoot);
+          }
+        }
+      }
+    }
+
+    if (!unsupportedDependencies.isEmpty()) {
+      throw new MojoExecutionException("Unsupported <sourcepath> classified reactor dependencies: " + unsupportedDependencies);
+    }
+
+    if (log.isDebugEnabled()) {
+      StringBuilder msg = new StringBuilder();
+      for (File element : sourcepath) {
+        msg.append("\n   ").append(element.getAbsolutePath());
+      }
+      log.debug("Compile sourcepath: {} entries{}", sourcepath.size(), msg.toString());
+    }
+
+    return ImmutableList.copyOf(sourcepath);
+  }
+
+  private static void addIfExists(Set<File> sourcepath, String path) {
+    File file = new File(path);
+    if (file.exists()) {
+      sourcepath.add(file);
+    }
+  }
+
+  private Collection<String> getSourceRoots(MavenProject other, Artifact artifact) {
+    Set<String> sourceRoots = new LinkedHashSet<>();
+    // always add main sources, they may be needed to resolve types referenced from test-jar dependencies
+    // TODO does this mean testCompile sourcepath is wider than classpath in some cases?
+    sourceRoots.addAll(other.getCompileSourceRoots());
+    if ("test-jar".equals(artifact.getType())) {
+      sourceRoots.addAll(other.getTestCompileSourceRoots());
+    }
+    return sourceRoots;
   }
 
   private Proc getEffectiveProc(List<File> classpath) {

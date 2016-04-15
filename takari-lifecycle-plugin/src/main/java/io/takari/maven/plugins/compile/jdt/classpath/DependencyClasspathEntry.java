@@ -39,9 +39,18 @@ public abstract class DependencyClasspathEntry implements ClasspathEntry {
   protected final Set<String> exportedPackages;
 
   protected DependencyClasspathEntry(File file, Collection<String> packageNames, Collection<String> exportedPackages) {
-    this.file = file;
+    this.file = normalize(file);
     this.packageNames = ImmutableSet.copyOf(packageNames);
     this.exportedPackages = exportedPackages != null ? ImmutableSet.<String>copyOf(exportedPackages) : null;
+  }
+
+  private static File normalize(File file) {
+    try {
+      return file.getCanonicalFile();
+    } catch (IOException e) {
+      // should not happen as we know that the file exists
+      return file.getAbsoluteFile();
+    }
   }
 
   protected AccessRestriction getAccessRestriction(String packageName) {

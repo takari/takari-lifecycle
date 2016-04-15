@@ -8,6 +8,7 @@ import static io.takari.maven.testing.TestResources.touch;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -60,7 +61,11 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
   protected void processAnnotations(MavenProject project, File processor, Proc proc, Xpp3Dom... parameters) throws Exception {
     MavenSession session = mojos.newMavenSession(project);
-    MojoExecution execution = mojos.newMojoExecution();
+    processAnnotations(session, project, "compile", processor, proc, parameters);
+  }
+
+  protected void processAnnotations(MavenSession session, MavenProject project, String goal, File processor, Proc proc, Xpp3Dom... parameters) throws Exception {
+    MojoExecution execution = mojos.newMojoExecution(goal);
 
     addDependency(project, "processor", new File(processor, "target/classes"));
 
@@ -478,7 +483,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
   @Test
   public void testIncremental_proc_only() throws Exception {
     // the point of this test is to assert that changes to annotations trigger affected sources reprocessing when proc=only
-    // note that proc=only is not incremental, sources are processed in all-or-nothing manner
+    // note sourcepath=disable, otherwise proc:only is all-or-nothing
 
     File processor = compileAnnotationProcessor();
     File basedir = resources.getBasedir("compile-proc/proc-incremental-proconly");
@@ -487,12 +492,12 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     Xpp3Dom processors = newProcessors("processor.Processor");
 
     compile(basedir, processor, "compile-only");
-    processAnnotations(basedir, Proc.only, processor, processors);
+    processAnnotations(basedir, Proc.only, processor, processors, newParameter("sourcepath", "disable"));
     mojos.assertBuildOutputs(generatedSources, "proc/GeneratedConcrete.java", "proc/GeneratedAbstract.java", "proc/GeneratedAnother.java");
 
     cp(basedir, "src/main/java/proc/Abstract.java-remove-annotation", "src/main/java/proc/Abstract.java");
     compile(basedir, processor, "compile-only");
-    processAnnotations(basedir, Proc.only, processor, processors);
+    processAnnotations(basedir, Proc.only, processor, processors, newParameter("sourcepath", "disable"));
     mojos.assertDeletedOutputs(generatedSources, "proc/GeneratedConcrete.java", "proc/GeneratedAbstract.java");
     if (CompilerJdt.ID.equals(compilerId)) {
       mojos.assertCarriedOverOutputs(generatedSources, "proc/GeneratedAnother.java");
@@ -628,4 +633,127 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
   }
 
+  @Test
+  public void testSourcepathDependency() throws Exception {
+    File processor = compileAnnotationProcessor();
+    File basedir = resources.getBasedir("compile-proc/proc-sourcepath");
+
+    File dependencyBasedir = new File(basedir, "dependency");
+    File projectBasedir = new File(basedir, "project");
+
+    Xpp3Dom processors = newProcessors("processor.Processor");
+    Xpp3Dom sourcepath = newParameter("sourcepath", "reactorDependencies");
+
+    MavenProject dependency = mojos.readMavenProject(dependencyBasedir);
+    MavenProject project = mojos.readMavenProject(projectBasedir);
+
+    mojos.newDependency(new File(dependencyBasedir, "target/classes")) //
+        .setGroupId(dependency.getGroupId()) //
+        .setArtifactId(dependency.getArtifactId()) //
+        .setVersion(dependency.getVersion()) //
+        .addTo(project);
+
+    MavenSession session = mojos.newMavenSession(project);
+    session.setProjects(Arrays.asList(project, dependency));
+
+    processAnnotations(session, project, "compile", processor, Proc.only, processors, sourcepath);
+    mojos.assertBuildOutputs(new File(projectBasedir, "target"), //
+        "generated-sources/annotations/sourcepath/project/GeneratedSource.java" //
+    );
+  }
+
+  @Test
+  public void testSourcepathDependency_classifiedDependency() throws Exception {
+    File processor = compileAnnotationProcessor();
+    File basedir = resources.getBasedir("compile-proc/proc-sourcepath");
+
+    File dependencyBasedir = new File(basedir, "dependency");
+    File projectBasedir = new File(basedir, "project");
+
+    Xpp3Dom processors = newProcessors("processor.Processor");
+    Xpp3Dom sourcepath = newParameter("sourcepath", "reactorDependencies");
+
+    MavenProject dependency = mojos.readMavenProject(dependencyBasedir);
+    MavenProject project = mojos.readMavenProject(projectBasedir);
+
+    mojos.newDependency(new File(dependencyBasedir, "target/classes")) //
+        .setGroupId(dependency.getGroupId()) //
+        .setArtifactId(dependency.getArtifactId()) //
+        .setVersion(dependency.getVersion()) //
+        .setClassifier("classifier") //
+        .addTo(project);
+
+    MavenSession session = mojos.newMavenSession(project);
+    session.setProjects(Arrays.asList(project, dependency));
+
+    try {
+      processAnnotations(session, project, "compile", processor, Proc.only, processors, sourcepath);
+      Assert.fail();
+    } catch (MojoExecutionException expected) {
+      Assert.assertTrue(expected.getMessage().contains(dependency.getGroupId() + ":" + dependency.getArtifactId()));
+    }
+  }
+
+  @Test
+  public void testSourcepathIncludes() throws Exception {
+    Xpp3Dom includes = new Xpp3Dom("includes");
+    includes.addChild(newParameter("include", "sourcepath/project/*.java"));
+    Xpp3Dom processors = newProcessors("processor.Processor");
+    Xpp3Dom sourcepath = newParameter("sourcepath", "reactorDependencies");
+    File basedir = procCompile("compile-proc/proc-sourcepath-includes", Proc.only, includes, processors, sourcepath);
+    mojos.assertBuildOutputs(new File(basedir, "target"), //
+        "generated-sources/annotations/sourcepath/project/GeneratedSource.java" //
+    );
+  }
+
+  @Test
+  public void testSourcepathDependency_testCompile() throws Exception {
+    File processor = compileAnnotationProcessor();
+    File basedir = resources.getBasedir("compile-proc/proc-sourcepath");
+
+    File dependencyBasedir = new File(basedir, "dependency");
+    File projectBasedir = new File(basedir, "project");
+
+    Xpp3Dom processors = newProcessors("processor.Processor");
+    Xpp3Dom sourcepath = newParameter("sourcepath", "reactorDependencies");
+
+    MavenProject dependency = mojos.readMavenProject(dependencyBasedir);
+    MavenProject project = mojos.readMavenProject(projectBasedir);
+
+    mojos.newDependency(new File(dependencyBasedir, "target/classes")) //
+        .setGroupId(dependency.getGroupId()) //
+        .setArtifactId(dependency.getArtifactId()) //
+        .setVersion(dependency.getVersion()) //
+        .addTo(project);
+
+    mojos.newDependency(new File(dependencyBasedir, "target/test-classes")) //
+        .setGroupId(dependency.getGroupId()) //
+        .setArtifactId(dependency.getArtifactId()) //
+        .setType("test-jar") //
+        .setVersion(dependency.getVersion()) //
+        .addTo(project);
+
+    MavenSession session = mojos.newMavenSession(project);
+    session.setProjects(Arrays.asList(project, dependency));
+
+    processAnnotations(session, project, "testCompile", processor, Proc.only, processors, sourcepath);
+    mojos.assertBuildOutputs(new File(projectBasedir, "target"), //
+        "generated-test-sources/test-annotations/sourcepath/project/test/GeneratedSourceTest.java" //
+    );
+  }
+
+  @Test
+  public void testSourcepath_classpathVisibility() throws Exception {
+    Assume.assumeTrue(CompilerJdt.ID.equals(compilerId));
+
+    File basedir = resources.getBasedir();
+    Xpp3Dom sourcepath = newParameter("sourcepath", "reactorDependencies");
+    Xpp3Dom classpathVisibility = newParameter("privatePackageReference", "error");
+    try {
+      procCompile(basedir, Proc.only, sourcepath, classpathVisibility);
+      Assert.fail();
+    } catch (MojoExecutionException expected) {
+      Assert.assertTrue(expected.getMessage().contains("privatePackageReference"));
+    }
+  }
 }

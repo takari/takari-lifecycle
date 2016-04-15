@@ -74,6 +74,7 @@ import io.takari.maven.plugins.compile.jdt.classpath.ClasspathEntry;
 import io.takari.maven.plugins.compile.jdt.classpath.DependencyClasspathEntry;
 import io.takari.maven.plugins.compile.jdt.classpath.JavaInstallation;
 import io.takari.maven.plugins.compile.jdt.classpath.MutableClasspathEntry;
+import io.takari.maven.plugins.compile.jdt.classpath.SourcepathDirectory;
 
 /**
  * @TODO test classpath order changes triggers rebuild of affected sources (same type name, different classes)
@@ -103,6 +104,8 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   private List<File> dependencies;
 
   private List<File> processorpath;
+
+  private List<ClasspathEntry> sourcepath = Collections.emptyList();
 
   private List<ClasspathEntry> dependencypath;
 
@@ -513,7 +516,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     compilerOptions.setShowWarnings(isShowWarnings());
     compilerOptions.docCommentSupport = true;
 
-    if (isProcEscalate() && strategy instanceof IncrementalCompilationStrategy) {
+    if (!sourcepath.isEmpty() || (isProcEscalate() && strategy instanceof IncrementalCompilationStrategy)) {
       strategy.enqueueAllSources();
       strategy = new FullCompilationStrategy();
     }
@@ -524,7 +527,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     Compiler compiler = new Compiler(namingEnvironment, errorHandlingPolicy, compilerOptions, this, problemFactory) {
       @Override
       protected synchronized void addCompilationUnit(ICompilationUnit sourceUnit, CompilationUnitDeclaration parsedUnit) {
-        if (sourceUnit instanceof ClasspathDirectory.ClasspathCompilationUnit) {
+        if (sourceUnit instanceof SourcepathDirectory.ClasspathCompilationUnit) {
           // this compilation unit represents dependency .java file
           // it is used to resolve type references and must not be processed otherwise
           return;
@@ -586,6 +589,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       mutableentries.add(output);
     }
 
+    entries.addAll(sourcepath);
     entries.addAll(dependencypath);
 
     return new Classpath(entries, mutableentries);
@@ -651,6 +655,23 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     strategy.enqueueAffectedSources(digest, oldDigest);
 
     return !compileQueue.isEmpty();
+  }
+
+  @Override
+  public boolean setSourcepath(List<File> dependencies) throws IOException {
+    List<ClasspathEntry> sourcepath = new ArrayList<>();
+    for (File dependency : dependencies) {
+      if (dependency.isDirectory()) {
+        DependencyClasspathEntry entry = classpathCache.getSourcepathEntry(dependency, getSourceEncoding());
+        sourcepath.add(entry);
+      } else if (dependency.isFile()) {
+        throw new IllegalArgumentException();
+      }
+    }
+
+    this.sourcepath = ImmutableList.copyOf(sourcepath);
+
+    return processorpathDigester.digestSourcepath(dependencies);
   }
 
   @Override
