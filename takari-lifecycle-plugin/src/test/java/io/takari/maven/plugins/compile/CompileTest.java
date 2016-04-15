@@ -23,6 +23,7 @@ import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
 import org.junit.Assume;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.base.Charsets;
@@ -186,26 +187,6 @@ public class CompileTest extends AbstractCompileTest {
     addDependency(project, "dependency", new File(dependency, "target/classes"));
 
     mojos.compile(project, newParameter("dependencySourceTypes", "ignore"));
-
-    mojos.assertBuildOutputs(new File(basedir, "target/classes"), "classpath/Classpath.class");
-  }
-
-  @Test
-  public void testClasspath_dependencySourceTypes_prefer() throws Exception {
-    // dependency has both .java and .class files, but .class file is corrupted
-    // assert the compiler uses .java file when dependencySourceTypes=prefer
-
-    File dependency = compile("compile/basic");
-    cp(dependency, "src/main/java/basic/Basic.java", "target/classes/basic/Basic.java");
-    Files.write("corrupted", new File(dependency, "target/classes/basic/Basic.class"), Charsets.UTF_8);
-    touch(new File(dependency, "target/classes/basic/Basic.class")); // javac will pick newer file by default
-
-    File basedir = resources.getBasedir("compile/classpath");
-    MavenProject project = mojos.readMavenProject(basedir);
-
-    addDependency(project, "dependency", new File(dependency, "target/classes"));
-
-    mojos.compile(project, newParameter("dependencySourceTypes", "prefer"));
 
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), "classpath/Classpath.class");
   }
@@ -378,6 +359,7 @@ public class CompileTest extends AbstractCompileTest {
   }
 
   @Test
+  @Ignore("The test is useful but needs to be reimplemented")
   public void testInnerTypeDependency_sourceDependencies() throws Exception {
     File basedir = resources.getBasedir("compile/inner-type-dependency");
 

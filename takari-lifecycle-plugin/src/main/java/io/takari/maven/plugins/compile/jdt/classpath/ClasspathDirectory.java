@@ -37,6 +37,8 @@ public class ClasspathDirectory extends DependencyClasspathEntry implements Clas
   private static class MixedClasspathDirectory extends ClasspathDirectory {
     private final String encoding;
 
+    // TODO make sure charset comes from the dependency project.
+    // TODO ideally, escalate the build if dependency project charset changes... yikes.
     private MixedClasspathDirectory(File directory, Set<String> packages, Collection<String> exportedPackages, Charset encoding) {
       super(directory, packages, exportedPackages);
       this.encoding = encoding != null ? encoding.name() : null;
@@ -114,16 +116,6 @@ public class ClasspathDirectory extends DependencyClasspathEntry implements Clas
     Set<String> packages = getPackageNames(directory);
     Collection<String> exportedPackages = getExportedPackages(directory);
     return new ClasspathDirectory(directory, packages, exportedPackages);
-  }
-
-  public static DependencyClasspathEntry createMixed(DependencyClasspathEntry entry, Charset encoding) {
-    if (entry instanceof MixedClasspathDirectory) {
-      return entry;
-    }
-    if (!(entry instanceof ClasspathDirectory)) {
-      return entry;
-    }
-    return new MixedClasspathDirectory(entry.file, entry.packageNames, entry.exportedPackages, encoding);
   }
 
   private static Collection<String> getExportedPackages(File directory) {

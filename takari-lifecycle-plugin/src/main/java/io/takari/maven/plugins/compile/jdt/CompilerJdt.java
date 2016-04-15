@@ -63,7 +63,6 @@ import io.takari.incrementalbuild.ResourceMetadata;
 import io.takari.incrementalbuild.ResourceStatus;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.AccessRulesViolation;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Debug;
-import io.takari.maven.plugins.compile.AbstractCompileMojo.DependencySourceTypes;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 import io.takari.maven.plugins.compile.AbstractCompiler;
 import io.takari.maven.plugins.compile.CompilerBuildContext;
@@ -103,8 +102,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   private List<File> dependencies;
 
   private List<File> processorpath;
-
-  private boolean lenientProcOnly;
 
   private Classpath dependencypath;
 
@@ -619,9 +616,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     for (File dependency : dependencies) {
       DependencyClasspathEntry entry = classpathCache.get(dependency);
       if (entry != null) {
-        if (getDependencySourceTypes() == DependencySourceTypes.prefer) {
-          entry = ClasspathDirectory.createMixed(entry, getSourceEncoding());
-        }
         if (getTransitiveDependencyReference() == AccessRulesViolation.error && !directDependencies.contains(dependency)) {
           dependencypath.add(AccessRestrictionClasspathEntry.forbidAll(entry));
         } else if (getPrivatePackageReference() == AccessRulesViolation.ignore) {
@@ -675,11 +669,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   }
 
   @Override
-  public void setLenientProcOnly(boolean lenient) {
-    this.lenientProcOnly = lenient;
-  }
-
-  @Override
   public void acceptResult(CompilationResult result) {
     if (result == null) {
       return; // ah?
@@ -695,10 +684,12 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       context.setAttribute(input.getResource(), ATTR_REFERENCES, new ReferenceCollection(result.rootReferences, result.qualifiedReferences, result.simpleNameReferences));
     }
 
-    if (result.hasProblems() && (!isLenientProcOnly() || isShowWarnings())) {
+    if (result.hasProblems()) {
       for (CategorizedProblem problem : result.getProblems()) {
-        MessageSeverity severity = isLenientProcOnly() ? MessageSeverity.WARNING : problem.isError() ? MessageSeverity.ERROR : MessageSeverity.WARNING;
-        input.addMessage(problem.getSourceLineNumber(), ((DefaultProblem) problem).column, problem.getMessage(), severity, null /* cause */);
+        if (problem.isError() || isShowWarnings()) {
+          MessageSeverity severity = problem.isError() ? MessageSeverity.ERROR : MessageSeverity.WARNING;
+          input.addMessage(problem.getSourceLineNumber(), ((DefaultProblem) problem).column, problem.getMessage(), severity, null /* cause */);
+        }
       }
     }
 
@@ -732,10 +723,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
   private boolean isProcEscalate() {
     return getProc() == Proc.procEX || getProc() == Proc.onlyEX;
-  }
-
-  private boolean isLenientProcOnly() {
-    return lenientProcOnly && isProcOnly();
   }
 
   private void writeClassFile(Resource<File> input, String relativeStringName, ClassFile classFile) throws IOException {

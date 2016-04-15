@@ -86,10 +86,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     error, ignore;
   }
 
-  public static enum DependencySourceTypes {
-    prefer, ignore;
-  }
-
   /**
    * The -encoding argument for the Java compiler.
    */
@@ -143,16 +139,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
    */
   @Parameter
   protected Proc proc;
-
-  /**
-   * When set to {@code true} compiler will tolerate missing types and other compile-specific errors when processing annotation only.
-   * <p>
-   * This experimental feature is meant to provide backwards compatibility for projects migrating from javac version 1.7 and earlier to jdt compiler.
-   * 
-   * @since 1.11.7
-   */
-  @Parameter
-  protected Boolean lenientProcOnly;
 
   /**
    * <p>
@@ -230,15 +216,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
    */
   @Parameter(defaultValue = "ignore")
   private AccessRulesViolation privatePackageReference;
-
-  /**
-   * Controls whether compiler ignores (value {@code ignore}, the default) or prefers (value {@code prefer}), .java files when searching referenced types in project dependencies.
-   * 
-   * @see <a hred="http://docs.oracle.com/javase/7/docs/technotes/tools/windows/javac.html#searching">Searching for Types</a>
-   * @since 1.12
-   */
-  @Parameter(defaultValue = "ignore")
-  private DependencySourceTypes dependencySourceTypes;
 
   //
 
@@ -380,9 +357,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       compiler.setSource(source);
       compiler.setTarget(getTarget(target, source));
       compiler.setProc(proc);
-      if (lenientProcOnly != null) {
-        compiler.setLenientProcOnly(lenientProcOnly.booleanValue());
-      }
       compiler.setGeneratedSourcesDirectory(getGeneratedSourcesDirectory());
       compiler.setAnnotationProcessors(annotationProcessors);
       compiler.setAnnotationProcessorOptions(annotationProcessorOptions);
@@ -394,7 +368,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       compiler.setShowWarnings(showWarnings);
       compiler.setTransitiveDependencyReference(transitiveDependencyReference);
       compiler.setPrivatePackageReference(privatePackageReference);
-      compiler.setDependencySourceTypes(dependencySourceTypes);
 
       if (compiler instanceof CompilerJavacLauncher) {
         ((CompilerJavacLauncher) compiler).setBasedir(basedir);

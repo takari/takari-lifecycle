@@ -25,7 +25,6 @@ import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
 
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
-import io.takari.maven.plugins.compile.javac.CompilerJavacLauncher;
 import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 
 public class AnnotationProcessingTest extends AbstractCompileTest {
@@ -229,23 +228,6 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     assertProcMessage(basedir, "target/generated-sources/annotations/proc/BrokenSource.java", expected);
   }
 
-  @Test
-  public void testProc_lenientProcOnly_processorException() throws Exception {
-    Assume.assumeTrue("only javac 7 and jdt support lenientProcOnly=true", !isJava8orBetter || CompilerJdt.ID.equals(compilerId));
-
-    File basedir = resources.getBasedir("compile-proc/proc");
-
-    try {
-      procCompile(basedir, Proc.only, newProcessors("processor.ThrowExceptionProcessor"), newParameter("lenientProcOnly", "true"));
-    } catch (Exception expected) {
-      if (!CompilerJavacLauncher.ID.equals(compilerId)) {
-        Assert.assertTrue(expected.getMessage().contains("throw exception processor"));
-      } else {
-        // TODO forked compiler logs exceptions to stderr, figure out how to test it
-      }
-    }
-  }
-
   private void assertProcMessage(File basedir, String path, ErrorMessage expected) throws Exception {
     // javac reports the same compilation error twice when Proc.proc
     Set<String> messages = new HashSet<String>(mojos.getBuildContextLog().getMessages(new File(basedir, path)));
@@ -431,45 +413,6 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
       annotationProcessors.addChild(newParameter("processor", processor));
     }
     return annotationProcessors;
-  }
-
-  @Test
-  public void testLenientProcOnly_lenient() throws Exception {
-    Assume.assumeTrue("only javac 7 and jdt support lenientProcOnly=true", !isJava8orBetter || CompilerJdt.ID.equals(compilerId));
-
-    Xpp3Dom processors = newProcessors("processor.Processor");
-
-    File basedir = resources.getBasedir("compile-proc/missing-type");
-    File generatedSources = new File(basedir, "target/generated-sources/annotations");
-
-    procCompile("compile-proc/missing-type", Proc.only, processors, newParameter("lenientProcOnly", "true"));
-    mojos.assertBuildOutputs(generatedSources, "proc/GeneratedSource.java");
-    mojos.assertMessages(basedir, "src/main/java/warn/Source.java", new String[0]);
-
-    procCompile("compile-proc/missing-type", Proc.only, processors, newParameter("lenientProcOnly", "true"), newParameter("showWarnings", "true"));
-    mojos.assertBuildOutputs(generatedSources, "proc/GeneratedSource.java");
-    ErrorMessage warning = new ErrorMessage(compilerId);
-    warning.setSnippets("jdt", "WARNING", "missing cannot be resolved to a type");
-    warning.setSnippets("javac", "WARNING", "package missing does not exist");
-    mojos.assertMessage(basedir, "src/main/java/warn/Source.java", warning);
-  }
-
-  @Test
-  public void testLenientProcOnly_strict() throws Exception {
-    Assume.assumeTrue("only javac 8+ and jdt support lenientProcOnly=false", isJava8orBetter || CompilerJdt.ID.equals(compilerId));
-
-    Xpp3Dom processors = newProcessors("processor.Processor");
-    File basedir = resources.getBasedir("compile-proc/missing-type");
-    try {
-      procCompile("compile-proc/missing-type", Proc.only, processors, newParameter("lenientProcOnly", "false"));
-      Assert.fail();
-    } catch (MojoExecutionException e) {
-      // expected
-    }
-    ErrorMessage error = new ErrorMessage(compilerId);
-    error.setSnippets("jdt", "ERROR", "missing cannot be resolved to a type");
-    error.setSnippets("javac", "ERROR", "package missing does not exist");
-    mojos.assertMessage(basedir, "src/main/java/warn/Source.java", error);
   }
 
   @Test
