@@ -314,7 +314,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
   protected abstract File getOutputDirectory();
 
-  protected abstract List<File> getClasspath();
+  protected abstract List<Artifact> getClasspathArtifacts();
 
   protected abstract File getGeneratedSourcesDirectory();
 
@@ -393,6 +393,17 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     } catch (IOException e) {
       throw new MojoExecutionException("Could not compile project", e);
     }
+  }
+
+  private List<File> getClasspath() {
+    List<File> classpath = new ArrayList<File>();
+    for (Artifact artifact : getClasspathArtifacts()) {
+      File file = artifact.getFile();
+      if (file != null) {
+        classpath.add(file);
+      }
+    }
+    return classpath;
   }
 
   private Proc getEffectiveProc(List<File> classpath) {

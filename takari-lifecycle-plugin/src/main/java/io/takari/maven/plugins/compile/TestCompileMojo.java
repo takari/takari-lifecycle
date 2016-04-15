@@ -8,7 +8,6 @@
 package io.takari.maven.plugins.compile;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -100,15 +99,8 @@ public class TestCompileMojo extends AbstractCompileMojo {
   }
 
   @Override
-  public List<File> getClasspath() {
-    List<File> classpath = new ArrayList<File>();
-    for (Artifact artifact : compileArtifacts) {
-      File file = artifact.getFile();
-      if (file != null) {
-        classpath.add(file);
-      }
-    }
-    return classpath;
+  public List<Artifact> getClasspathArtifacts() {
+    return compileArtifacts;
   }
 
   @Override
