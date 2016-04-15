@@ -53,6 +53,7 @@ import org.eclipse.jdt.internal.core.builder.ProblemFactory;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.HashMultiset;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 
@@ -103,7 +104,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
   private List<File> processorpath;
 
-  private Classpath dependencypath;
+  private List<ClasspathEntry> dependencypath;
 
   private final Map<File, ResourceMetadata<File>> sources = new LinkedHashMap<>();
 
@@ -585,7 +586,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       mutableentries.add(output);
     }
 
-    entries.addAll(dependencypath.getEntries());
+    entries.addAll(dependencypath);
 
     return new Classpath(entries, mutableentries);
   }
@@ -635,7 +636,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       log.debug("Compile classpath: {} entries{}", dependencies.size(), msg.toString());
     }
 
-    this.dependencypath = new Classpath(dependencypath, null);
+    this.dependencypath = ImmutableList.copyOf(dependencypath);
 
     Stopwatch stopwatch = Stopwatch.createStarted();
     long typecount = 0, packagecount = 0;
