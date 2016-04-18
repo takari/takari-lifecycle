@@ -603,6 +603,9 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
   @Test
   public void testLastRound_typeIndex() throws Exception {
+    // apparently javac can't resolve "forward" references to types generated during apt last round
+    Assume.assumeTrue(CompilerJdt.ID.equals(compilerId));
+
     Xpp3Dom processors = newProcessors("processor.ProcessorLastRound_typeIndex");
     File basedir = procCompile("compile-proc/multiround-type-index", Proc.procEX, processors);
     File target = new File(basedir, "target");
@@ -611,7 +614,9 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         "generated-sources/annotations/generated/TypeIndex2.java", //
         "classes/generated/TypeIndex.class", //
         "classes/generated/TypeIndex2.class", //
-        "classes/typeindex/Annotated.class");
+        "classes/typeindex/Annotated.class", //
+        "classes/typeindex/Consumer.class" //
+    );
   }
 
   @Test
