@@ -15,7 +15,7 @@
   <parent>
     <groupId>io.takari</groupId>
     <artifactId>takari</artifactId>
-    <version>18</version>
+    <version>22</version>
   </parent>
 
   <groupId>io.takari.maven.plugins</groupId>
@@ -37,6 +37,7 @@
     <mavenPluginPluginVersion>3.3</mavenPluginPluginVersion>
     <m2eWorkspaceVersion>0.4.0</m2eWorkspaceVersion>
     <pluginTestingVersion>2.8.0</pluginTestingVersion>
+    <takari.javaSourceVersion>1.8</takari.javaSourceVersion>
   </properties>
 
   <scm>
