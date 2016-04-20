@@ -8,6 +8,7 @@ import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
+import org.junit.ComparisonFailure;
 
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 import io.takari.maven.plugins.compile.jdt.ClasspathDigester;
@@ -50,7 +51,9 @@ public class CompileRule extends IncrementalBuildRule {
     Collection<String> messages = getBuildContextLog().getMessages(new File(basedir, path));
     Assert.assertEquals(messages.toString(), 1, messages.size());
     String message = messages.iterator().next();
-    Assert.assertTrue(expected.isMatch(message));
+    if (!expected.isMatch(message)) {
+      throw new ComparisonFailure("", expected.toString(), message);
+    }
   }
 
   public void flushClasspathCaches() {

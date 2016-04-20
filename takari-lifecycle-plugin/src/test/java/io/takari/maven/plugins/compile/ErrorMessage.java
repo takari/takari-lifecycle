@@ -35,4 +35,16 @@ public class ErrorMessage {
     }
     return true;
   }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    for (String snippet : variants.get(compilerId)) {
+      if (sb.length() > 0) {
+        sb.append(" ... ");
+      }
+      sb.append(snippet);
+    }
+    return sb.toString();
+  }
 }
