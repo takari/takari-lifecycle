@@ -44,8 +44,8 @@ public abstract class AbstractCompileTest {
   @Rule
   public final CompileRule mojos = new CompileRule() {
     @Override
-    public MojoExecution newMojoExecution() {
-      MojoExecution execution = super.newMojoExecution();
+    public MojoExecution newMojoExecution(String goal, Xpp3Dom... parameters) {
+      MojoExecution execution = super.newMojoExecution(goal, parameters);
       execution.getConfiguration().addChild(newParameter("compilerId", compilerId));
       return execution;
     };
