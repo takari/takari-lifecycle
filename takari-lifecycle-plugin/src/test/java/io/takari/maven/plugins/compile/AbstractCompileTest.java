@@ -17,12 +17,10 @@ import io.takari.maven.testing.TestResources;
 @RunWith(Parameterized.class)
 public abstract class AbstractCompileTest {
 
-  public static final boolean isJava7orBetter;
-
   public static final boolean isJava8orBetter;
 
   static {
-    boolean _isJava7orBetter = false, _isJava8orBetter = false;
+    boolean _isJava8orBetter = false;
 
     String version = System.getProperty("java.specification.version");
     if (version != null) {
@@ -30,11 +28,9 @@ public abstract class AbstractCompileTest {
       /* int major = */Integer.parseInt(st.nextToken());
       int minor = Integer.parseInt(st.nextToken());
 
-      _isJava7orBetter = minor >= 7;
       _isJava8orBetter = minor >= 8;
     }
 
-    isJava7orBetter = _isJava7orBetter;
     isJava8orBetter = _isJava8orBetter;
   }
 

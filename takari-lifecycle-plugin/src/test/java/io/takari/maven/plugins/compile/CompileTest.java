@@ -15,19 +15,19 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
 
-import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
+
+import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 
 public class CompileTest extends AbstractCompileTest {
 
@@ -233,8 +233,6 @@ public class CompileTest extends AbstractCompileTest {
 
   @Test
   public void testSourceTargetVersion() throws Exception {
-    Assume.assumeTrue(isJava7orBetter);
-
     ErrorMessage expected = new ErrorMessage(compilerId);
     expected.setSnippets("jdt", "ERROR RequiresJava7.java [9:40] '<>' operator is not allowed for source level below 1.7");
     expected.setSnippets("javac", "ERROR RequiresJava7.java [9:50] diamond operator is not supported in -source 1.6\n" + "  (use -source 7 or higher to enable diamond operator)");
@@ -242,6 +240,7 @@ public class CompileTest extends AbstractCompileTest {
     File basedir = resources.getBasedir("compile/source-target-version");
     try {
       compile(basedir, newParameter("source", "1.6"));
+      Assert.fail();
     } catch (MojoExecutionException e) {
       // expected
     }
