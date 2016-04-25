@@ -27,8 +27,6 @@ import org.junit.Test;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 
-import io.takari.maven.plugins.compile.jdt.CompilerJdt;
-
 public class CompileTest extends AbstractCompileTest {
 
   public CompileTest(String compilerId) {
@@ -265,7 +263,6 @@ public class CompileTest extends AbstractCompileTest {
 
   @Test
   public void testParameters() throws Exception {
-    Assume.assumeTrue("only javac 8+ and jdt support parameters", isJava8orBetter || CompilerJdt.ID.equals(compilerId));
     File basedir = resources.getBasedir("compile/parameters");
     compile(basedir, newParameter("parameters", "true"), newParameter("source", "1.8"));
     assertThat(new File(basedir, "target/classes/parameters/MethodParameter.class"), hasMethodParameterWithName("myNamedParameter"));
