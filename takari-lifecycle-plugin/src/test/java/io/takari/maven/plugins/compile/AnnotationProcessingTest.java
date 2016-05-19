@@ -26,6 +26,7 @@ import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
 
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
+import io.takari.maven.plugins.compile.javac.CompilerJavac;
 import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 
 public class AnnotationProcessingTest extends AbstractCompileTest {
@@ -660,6 +661,62 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     mojos.assertBuildOutputs(new File(projectBasedir, "target"), //
         "generated-sources/annotations/sourcepath/project/GeneratedSource.java" //
     );
+  }
+
+  @Test
+  public void testSourcepathDependency_incremental() throws Exception {
+    // the point of this test is assert that changes to sourcepath files are expected to trigger reprocessing of affected sources
+
+    File processor = compileAnnotationProcessor();
+    File basedir = resources.getBasedir("compile-proc/proc-sourcepath");
+
+    File dependencyBasedir = new File(basedir, "dependency");
+    File projectBasedir = new File(basedir, "project");
+
+    Xpp3Dom processors = newProcessors("processor.Processor");
+    Xpp3Dom sourcepath = newParameter("sourcepath", "reactorDependencies");
+
+    MavenProject dependency = mojos.readMavenProject(dependencyBasedir);
+    MavenProject project = mojos.readMavenProject(projectBasedir);
+
+    mojos.newDependency(new File(dependencyBasedir, "target/classes")) //
+        .setGroupId(dependency.getGroupId()) //
+        .setArtifactId(dependency.getArtifactId()) //
+        .setVersion(dependency.getVersion()) //
+        .addTo(project);
+
+    MavenSession session = mojos.newMavenSession(project);
+    session.setProjects(Arrays.asList(project, dependency));
+
+    processAnnotations(session, project, "compile", processor, Proc.only, processors, sourcepath);
+    mojos.assertBuildOutputs(new File(projectBasedir, "target"), //
+        "generated-sources/annotations/sourcepath/project/GeneratedSource.java" //
+    );
+
+    // second, incremental, compilation with one of sourcepath files removed
+
+    rm(dependencyBasedir, "src/main/java/sourcepath/dependency/SourcepathDependency.java");
+    mojos.flushClasspathCaches();
+
+    dependency = mojos.readMavenProject(dependencyBasedir);
+    project = mojos.readMavenProject(projectBasedir);
+
+    mojos.newDependency(new File(dependencyBasedir, "target/classes")) //
+        .setGroupId(dependency.getGroupId()) //
+        .setArtifactId(dependency.getArtifactId()) //
+        .setVersion(dependency.getVersion()) //
+        .addTo(project);
+
+    session = mojos.newMavenSession(project);
+    session.setProjects(Arrays.asList(project, dependency));
+    try {
+      processAnnotations(session, project, "compile", processor, Proc.only, processors, sourcepath);
+    } catch (MojoExecutionException expected) {}
+    ErrorMessage message = new ErrorMessage(compilerId);
+    message.setSnippets(CompilerJdt.ID, "sourcepath.dependency.SourcepathDependency cannot be resolved to a type");
+    message.setSnippets(CompilerJavac.ID, "package sourcepath.dependency does not exist");
+    mojos.assertMessage(projectBasedir, "src/main/java/sourcepath/project/Source.java", message);
+    // oddly enough, both jdt and javac generate GeneratedSource despite the error
   }
 
   @Test
