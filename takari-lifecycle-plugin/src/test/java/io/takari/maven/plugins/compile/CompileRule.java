@@ -49,7 +49,9 @@ public class CompileRule extends IncrementalBuildRule {
 
   public void assertMessage(File basedir, String path, ErrorMessage expected) throws Exception {
     Collection<String> messages = getBuildContextLog().getMessages(new File(basedir, path));
-    Assert.assertEquals(messages.toString(), 1, messages.size());
+    if (messages.size() != 1) {
+      throw new ComparisonFailure("Number of messages", expected.toString(), messages.toString());
+    }
     String message = messages.iterator().next();
     if (!expected.isMatch(message)) {
       throw new ComparisonFailure("", expected.toString(), message);
