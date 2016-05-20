@@ -22,6 +22,7 @@ import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
 import org.junit.Assume;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
 
@@ -812,5 +813,32 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     } catch (MojoExecutionException expected) {
       Assert.assertTrue(expected.getMessage().contains("privatePackageReference"));
     }
+  }
+
+  @Test
+  @Ignore("Neither javac nor jdt support secondary types on sourcepath")
+  public void testSourcepathSecondatytype() throws Exception {
+    File processor = compileAnnotationProcessor();
+    File basedir = resources.getBasedir("compile-proc/proc-sourcepath-secondarytype");
+
+    File dependencyBasedir = new File(basedir, "dependency");
+    File projectBasedir = new File(basedir, "project");
+
+    Xpp3Dom processors = newProcessors("processor.Processor");
+    Xpp3Dom sourcepath = newParameter("sourcepath", "reactorDependencies");
+
+    MavenProject dependency = mojos.readMavenProject(dependencyBasedir);
+    MavenProject project = mojos.readMavenProject(projectBasedir);
+
+    mojos.newDependency(new File(dependencyBasedir, "target/classes")) //
+        .setGroupId(dependency.getGroupId()) //
+        .setArtifactId(dependency.getArtifactId()) //
+        .setVersion(dependency.getVersion()) //
+        .addTo(project);
+
+    MavenSession session = mojos.newMavenSession(project);
+    session.setProjects(Arrays.asList(project, dependency));
+
+    processAnnotations(session, project, "compile", processor, Proc.only, processors, sourcepath);
   }
 }
