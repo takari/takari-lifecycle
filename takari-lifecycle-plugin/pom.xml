@@ -120,17 +120,17 @@
     <dependency>
       <groupId>org.eclipse.tycho</groupId>
       <artifactId>org.eclipse.jdt.core</artifactId>
-      <version>3.11.0.v20150520-2033</version>
+      <version>3.12.0.v20160516-2131</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.tycho</groupId>
       <artifactId>org.eclipse.jdt.compiler.apt</artifactId>
-      <version>1.2.0.v20150514-0146</version>
+      <version>1.2.100.v20160418-1457</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.tycho</groupId>
       <artifactId>org.eclipse.osgi</artifactId>
-      <version>3.10.100.v20150521-1310</version>
+      <version>3.11.0.v20160603-1336</version>
     </dependency>
     <!-- Resources -->
     <dependency>

@@ -13,12 +13,14 @@ import java.security.NoSuchAlgorithmException;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.FieldInfo;
 import org.eclipse.jdt.internal.compiler.classfmt.MethodInfo;
+import org.eclipse.jdt.internal.compiler.codegen.AnnotationTargetTypeConstants;
 import org.eclipse.jdt.internal.compiler.env.ClassSignature;
 import org.eclipse.jdt.internal.compiler.env.EnumConstantSignature;
 import org.eclipse.jdt.internal.compiler.env.IBinaryAnnotation;
 import org.eclipse.jdt.internal.compiler.env.IBinaryElementValuePair;
 import org.eclipse.jdt.internal.compiler.env.IBinaryNestedType;
 import org.eclipse.jdt.internal.compiler.env.IBinaryType;
+import org.eclipse.jdt.internal.compiler.env.IBinaryTypeAnnotation;
 import org.eclipse.jdt.internal.compiler.impl.Constant;
 import org.eclipse.jdt.internal.compiler.lookup.TagBits;
 import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
@@ -27,6 +29,8 @@ import com.google.common.base.Charsets;
 
 /**
  * Adopted from {@link ClassFileReader#hasStructuralChanges(byte[], boolean, boolean)}
+ * 
+ * Last updated to match JDT I20160517-2000.
  */
 public class ClassfileDigester {
 
@@ -58,6 +62,7 @@ public class ClassfileDigester {
     updateLong(classFile.getTagBits() & OnlyStructuralTagBits);
     // annotations
     updateAnnotations(classFile.getAnnotations());
+    updateTypeAnnotations(classFile.getTypeAnnotations());
 
     // generic signature
     updateChars(classFile.getGenericSignature());
@@ -92,7 +97,7 @@ public class ClassfileDigester {
     MethodInfo[] methodInfos = (MethodInfo[]) classFile.getMethods();
     if (methodInfos != null) {
       for (int i = 0; i < methodInfos.length; i++) {
-        updateMethod(methodInfos[i]);
+        updateMethod(classFile, methodInfos[i]);
       }
     }
 
@@ -112,7 +117,7 @@ public class ClassfileDigester {
     return digester.digest();
   }
 
-  private void updateMethod(MethodInfo methodInfo) {
+  private void updateMethod(IBinaryType classFile, MethodInfo methodInfo) {
     // generic signature
     updateChars(methodInfo.getGenericSignature());
     updateInt(methodInfo.getModifiers());
@@ -120,8 +125,9 @@ public class ClassfileDigester {
     updateAnnotations(methodInfo.getAnnotations());
     // parameter annotations:
     for (int i = 0; i < methodInfo.getAnnotatedParametersCount(); i++) {
-      updateAnnotations(methodInfo.getParameterAnnotations(i));
+      updateAnnotations(methodInfo.getParameterAnnotations(i, classFile.getName()));
     }
+    updateTypeAnnotations(methodInfo.getTypeAnnotations());
 
     updateChars(methodInfo.getSelector());
     updateChars(methodInfo.getMethodDescriptor());
@@ -139,6 +145,7 @@ public class ClassfileDigester {
     updateInt(fieldInfo.getModifiers());
     updateLong(fieldInfo.getTagBits() & TagBits.AnnotationDeprecated);
     updateAnnotations(fieldInfo.getAnnotations());
+    updateTypeAnnotations(fieldInfo.getTypeAnnotations());
     updateChars(fieldInfo.getName());
     updateChars(fieldInfo.getTypeName());
     updateBoolean(fieldInfo.hasConstant());
@@ -223,6 +230,25 @@ public class ClassfileDigester {
     } else {
       throw new IllegalArgumentException("Unsupported annotation value " + object.toString());
     }
+  }
+
+  private void updateTypeAnnotations(IBinaryTypeAnnotation[] typeAnnotations) {
+    if (typeAnnotations != null) {
+      for (IBinaryTypeAnnotation typeAnnotation : typeAnnotations) {
+        if (!affectsSignature(typeAnnotation)) {
+          continue;
+        }
+        updateAnnotation(typeAnnotation.getAnnotation());
+      }
+    }
+  }
+
+  private boolean affectsSignature(IBinaryTypeAnnotation typeAnnotation) {
+    int targetType = typeAnnotation.getTargetType();
+    if (targetType >= AnnotationTargetTypeConstants.LOCAL_VARIABLE && targetType <= AnnotationTargetTypeConstants.METHOD_REFERENCE_TYPE_ARGUMENT) {
+      return false; // affects detail within a block
+    }
+    return true;
   }
 
   //
