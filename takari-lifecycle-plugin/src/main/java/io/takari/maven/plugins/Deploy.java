@@ -18,6 +18,8 @@ import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.deployment.DeployRequest;
 import org.eclipse.aether.deployment.DeploymentException;
+import org.eclipse.aether.repository.Authentication;
+import org.eclipse.aether.repository.AuthenticationSelector;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.util.artifact.SubArtifact;
 
@@ -104,6 +106,11 @@ public class Deploy extends TakariLifecycleMojo {
       String url = matcher.group(3).trim();
 
       RemoteRepository.Builder builder = new RemoteRepository.Builder(id, layout, url);
+
+      // Retrieve the appropriate authentication
+      final AuthenticationSelector authenticationSelector = repositorySystemSession.getAuthenticationSelector();
+      final Authentication authentication = authenticationSelector.getAuthentication(builder.build());
+      builder.setAuthentication(authentication);
 
       return builder.build();
     }
