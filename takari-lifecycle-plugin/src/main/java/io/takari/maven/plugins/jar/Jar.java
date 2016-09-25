@@ -51,7 +51,7 @@ public class Jar extends TakariLifecycleMojo {
   private String finalName;
 
   @Parameter(defaultValue = "${project.build.directory}")
-  private File outputDirectory;
+  protected File outputDirectory;
 
   @Parameter(defaultValue = "true", property = "mainJar")
   private boolean mainJar;
