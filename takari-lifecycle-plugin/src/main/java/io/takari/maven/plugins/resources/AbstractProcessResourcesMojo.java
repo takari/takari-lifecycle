@@ -7,23 +7,24 @@
  */
 package io.takari.maven.plugins.resources;
 
-import io.takari.incrementalbuild.BuildContext;
-import io.takari.incrementalbuild.Incremental;
-import io.takari.incrementalbuild.Incremental.Configuration;
-import io.takari.maven.plugins.TakariLifecycleMojo;
-import io.takari.resources.filtering.ResourcesProcessor;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
+
+import io.takari.incrementalbuild.BuildContext;
+import io.takari.incrementalbuild.Incremental;
+import io.takari.incrementalbuild.Incremental.Configuration;
+import io.takari.maven.plugins.TakariLifecycleMojo;
+import io.takari.resources.filtering.ResourcesProcessor;
 
 public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
 
@@ -49,7 +50,7 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
   @Incremental(configuration = Configuration.ignore)
   private File userSettingsFile;
 
-  @Parameter( property = "encoding", defaultValue = "${project.build.sourceEncoding}" )
+  @Parameter(property = "encoding", defaultValue = "${project.build.sourceEncoding}")
   private String encoding;
 
   @Component
@@ -80,7 +81,8 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
           properties.put("project", project);
           properties.put("localRepository", localRepository);
           properties.put("userSettingsFile", userSettingsFile);
-          processor.process(sourceDirectory, targetDirectory, resource.getIncludes(), resource.getExcludes(), properties, encoding);
+          List<File> filters = project.getFilters().stream().map(File::new).collect(Collectors.toList());
+          processor.process(sourceDirectory, targetDirectory, resource.getIncludes(), resource.getExcludes(), properties, filters, encoding);
         } else {
           processor.process(sourceDirectory, targetDirectory, resource.getIncludes(), resource.getExcludes(), encoding);
         }

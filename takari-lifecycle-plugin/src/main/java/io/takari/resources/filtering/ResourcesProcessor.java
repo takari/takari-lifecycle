@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -38,11 +39,17 @@ public class ResourcesProcessor {
   }
 
   public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes, Map<Object, Object> filterProperties, String encoding) throws IOException {
-    filterProcessor.process(sourceDirectory, targetDirectory, includes, excludes, filterProperties, encoding);
+    filterProcessor.process(sourceDirectory, targetDirectory, includes, excludes, filterProperties, Collections.emptyList(), encoding);
+  }
+
+  public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes, Map<Object, Object> filterProperties, List<File> filters, String encoding)
+      throws IOException {
+    filterProcessor.process(sourceDirectory, targetDirectory, includes, excludes, filterProperties, filters, encoding);
   }
 
   public void filter(Reader reader, Writer writer, Map<Object, Object> properties) throws IOException {
     filterProcessor.filter(reader, writer, properties);
   }
+
 
 }

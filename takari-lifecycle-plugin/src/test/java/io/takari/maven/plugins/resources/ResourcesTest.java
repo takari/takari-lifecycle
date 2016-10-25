@@ -4,8 +4,6 @@ import static io.takari.maven.testing.TestMavenRuntime.newParameter;
 import static io.takari.maven.testing.TestResources.assertFileContents;
 import static io.takari.maven.testing.TestResources.cp;
 import static io.takari.maven.testing.TestResources.rm;
-import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
-import io.takari.maven.testing.TestResources;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -18,6 +16,9 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import com.google.common.io.Files;
+
+import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
+import io.takari.maven.testing.TestResources;
 
 public class ResourcesTest {
 
@@ -72,6 +73,13 @@ public class ResourcesTest {
   @Test
   public void resourcesWithFiltering() throws Exception {
     File basedir = resources.getBasedir("resources/project-with-resources-filtered");
+    mojos.executeMojo(basedir, "process-resources");
+    assertFileContents(basedir, "expected-resource.txt", "target/classes/resource.txt");
+  }
+
+  @Test
+  public void resourcesWithProjectFilters() throws Exception {
+    File basedir = resources.getBasedir("resources/project-with-resources-filters");
     mojos.executeMojo(basedir, "process-resources");
     assertFileContents(basedir, "expected-resource.txt", "target/classes/resource.txt");
   }
