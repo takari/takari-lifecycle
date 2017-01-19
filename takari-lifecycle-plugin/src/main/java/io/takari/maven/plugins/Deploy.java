@@ -10,6 +10,8 @@ package io.takari.maven.plugins;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.inject.Inject;
+
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -21,6 +23,8 @@ import org.eclipse.aether.deployment.DeploymentException;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.util.artifact.SubArtifact;
 
+import io.takari.incrementalbuild.Incremental;
+import io.takari.incrementalbuild.Incremental.Configuration;
 import io.takari.maven.plugins.util.AetherUtils;
 
 /**
@@ -40,6 +44,13 @@ public class Deploy extends TakariLifecycleMojo {
    */
   @Parameter(property = "altDeploymentRepository")
   private String altDeploymentRepository;
+
+  @Parameter(defaultValue = "false", property = "deployAtEnd")
+  @Incremental(configuration = Configuration.ignore)
+  protected boolean deployAtEnd;
+
+  @Inject
+  private DeployParticipant deployParticipant;
 
   @Override
   public void executeMojo() throws MojoExecutionException {
@@ -82,10 +93,15 @@ public class Deploy extends TakariLifecycleMojo {
 
     deployRequest.setRepository(remoteRepository(project));
 
-    try {
-      repositorySystem.deploy(repositorySystemSession, deployRequest);
-    } catch (DeploymentException e) {
-      throw new MojoExecutionException(e.getMessage(), e);
+    if (!deployAtEnd) {
+      try {
+        deployParticipant.deploy(repositorySystemSession, deployRequest);
+      } catch (DeploymentException e) {
+        throw new MojoExecutionException(e.getMessage(), e);
+      }
+    } else {
+      getLog().info("Will deploy " + project.getGroupId() + ":" + project.getArtifactId() + ":" + project.getVersion() + " at the end of build");
+      deployParticipant.deployAtEnd(deployRequest);
     }
   }
 

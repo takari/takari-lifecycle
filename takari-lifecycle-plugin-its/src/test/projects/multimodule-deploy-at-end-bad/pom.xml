@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2014 Takari, Inc.
+    All rights reserved. This program and the accompanying materials
+    are made available under the terms of the Eclipse Public License v1.0
+    which accompanies this distribution, and is available at
+    http://www.eclipse.org/legal/epl-v10.html
+
+-->
+
+<project>
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>io.takari.lifecycle.its.multimodule-deploy-at-end-bad</groupId>
+  <artifactId>parent</artifactId>
+  <version>1.0</version>
+  <packaging>pom</packaging>
+
+  <distributionManagement>
+    <repository>
+      <id>repoid</id>
+      <url>file://${repopath}</url>
+    </repository>
+    <snapshotRepository>
+      <id>repoid</id>
+      <url>file://${repopath}</url>
+    </snapshotRepository>
+  </distributionManagement>
+
+  <description>
+  The point of this test is to verify deploy at end is not performed 
+  when last module of multi-module build has errors
+  </description>
+
+  <modules>
+    <module>modulea</module>
+    <module>moduleb</module>
+  </modules>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>io.takari.maven.plugins</groupId>
+        <artifactId>takari-lifecycle-plugin</artifactId>
+        <version>${it-plugin.version}</version>
+        <extensions>true</extensions>
+        <configuration>
+          <deployAtEnd>true</deployAtEnd>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
