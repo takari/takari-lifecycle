@@ -28,6 +28,7 @@ public class DeployAtEndTest extends AbstractIntegrationTest {
         .execute("deploy");
 
     result.assertErrorFreeLog();
+    result.assertLogText("Performing deploy at end");
 
     File group = new File(remoterepo, "io/takari/lifecycle/its/multimodule-deploy-at-end");
     Assert.assertTrue(new File(group, "parent/1.0/parent-1.0.pom").canRead());
@@ -50,6 +51,7 @@ public class DeployAtEndTest extends AbstractIntegrationTest {
 
     result.assertLogText("[ERROR]");
     result.assertLogText("Basic.java:[10,24] <identifier> expected");
+    result.assertLogText("Not performing deploy at end due to errors");
 
     File group = new File(remoterepo, "io/takari/lifecycle/its/multimodule-deploy-at-end-bad");
     Assert.assertFalse(new File(group, "parent/1.0/parent-1.0.pom").canRead());

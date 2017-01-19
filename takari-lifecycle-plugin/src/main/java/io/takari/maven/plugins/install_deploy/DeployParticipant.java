@@ -1,4 +1,4 @@
-package io.takari.maven.plugins;
+package io.takari.maven.plugins.install_deploy;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,31 +39,37 @@ public class DeployParticipant extends AbstractMavenLifecycleParticipant {
 
   @Override
   public void afterSessionEnd(MavenSession session) throws MavenExecutionException {
-    boolean noerrors = session.getResult().getExceptions().isEmpty();
+    boolean errors = !session.getResult().getExceptions().isEmpty();
 
-    if (!deployAtEndRequests.isEmpty() && noerrors) {
+    if (!deployAtEndRequests.isEmpty()) {
+
       log.info("");
       log.info("------------------------------------------------------------------------");
-      log.info("-- Performing deploy at end                                           --");
-      log.info("------------------------------------------------------------------------");
 
-      synchronized (deployAtEndRequests) {
-        for (DeployRequest deployRequest : deployAtEndRequests) {
-          try {
-            deploy(session.getRepositorySession(), deployRequest);
-          } catch (DeploymentException e) {
-            log.error(e.getMessage(), e);
-            throw new MavenExecutionException(e.getMessage(), e);
+      if (errors) {
+        log.info("-- Not performing deploy at end due to errors                         --");
+      } else {
+        log.info("-- Performing deploy at end                                           --");
+        log.info("------------------------------------------------------------------------");
+
+        synchronized (deployAtEndRequests) {
+          for (DeployRequest deployRequest : deployAtEndRequests) {
+            try {
+              deploy(session.getRepositorySession(), deployRequest);
+            } catch (DeploymentException e) {
+              log.error(e.getMessage(), e);
+              throw new MavenExecutionException(e.getMessage(), e);
+            }
           }
+          deployAtEndRequests.clear();
         }
-        deployAtEndRequests.clear();
       }
 
       log.info("------------------------------------------------------------------------");
     }
   }
 
-  public List<DeployRequest> getDeployAtEndRequests() {
+  List<DeployRequest> getDeployAtEndRequests() {
     return Collections.unmodifiableList(deployAtEndRequests);
   }
 

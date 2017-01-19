@@ -25,7 +25,6 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
-import io.takari.maven.plugins.DeployParticipant;
 import io.takari.maven.testing.TestResources;
 
 public class InstallDeployTest {
