@@ -1,12 +1,12 @@
 package io.tesla.maven.plugins.test;
 
-import io.takari.maven.testing.executor.MavenExecutionResult;
-import io.takari.maven.testing.executor.MavenRuntime.MavenRuntimeBuilder;
-
 import java.io.File;
 
 import org.junit.Assert;
 import org.junit.Test;
+
+import io.takari.maven.testing.executor.MavenExecutionResult;
+import io.takari.maven.testing.executor.MavenRuntime.MavenRuntimeBuilder;
 
 public class MultimoduleSkipInstallDeployTest extends AbstractIntegrationTest {
 
@@ -32,8 +32,8 @@ public class MultimoduleSkipInstallDeployTest extends AbstractIntegrationTest {
     Assert.assertTrue(new File(group, "modulea/1.0/modulea-1.0.pom").canRead());
     Assert.assertTrue(new File(group, "modulea/1.0/modulea-1.0.jar").canRead());
 
-    Assert.assertFalse(new File(group, "moduleb/1.0/modulea-1.0.pom").canRead());
-    Assert.assertFalse(new File(group, "moduleb/1.0/modulea-1.0.jar").canRead());
+    Assert.assertFalse(new File(group, "moduleb/1.0/moduleb-1.0.pom").canRead());
+    Assert.assertFalse(new File(group, "moduleb/1.0/moduleb-1.0.jar").canRead());
   }
 
 }
