@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project>
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>io.takari.lifecycle.its</groupId>
+  <artifactId>test</artifactId>
+  <version>${version}</version>
+  <packaging>pom</packaging>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+  
+  <modules>
+    <module>modulea</module>
+    <module>moduleb</module>
+  </modules>
+
+  <distributionManagement>
+    <repository>
+      <id>repoid</id>
+      <url>file://${repopath}</url>
+    </repository>
+    <snapshotRepository>
+      <id>repoid</id>
+      <url>file://${repopath}</url>
+    </snapshotRepository>
+  </distributionManagement>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>io.takari.maven.plugins</groupId>
+        <artifactId>takari-lifecycle-plugin</artifactId>
+        <configuration>
+          <deployAtEnd>true</deployAtEnd>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
