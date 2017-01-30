@@ -8,9 +8,13 @@ import static io.takari.maven.testing.TestResources.rm;
 import java.io.File;
 import java.io.FileOutputStream;
 
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.project.MavenProject;
 import org.junit.Rule;
 import org.junit.Test;
+
+import com.google.common.collect.ImmutableList;
 
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 import io.takari.maven.testing.TestProperties;
@@ -217,5 +221,32 @@ public class PluginDescriptorMojoTest {
 
     mojos.executeMojo(project, "plugin-descriptor");
     mojos.assertCarriedOverOutputs(plugin, "target/classes/META-INF/maven/plugin.xml", "target/classes/META-INF/takari/mojos.xml");
+  }
+
+  @Test
+  public void testSourcepathDependency() throws Exception {
+    // assert that MojoAnnotationProcessorMojo honours sourcepath=reactorDependencies
+
+    File basedir = resources.getBasedir("plugin-descriptor/sourcepath-dependency");
+    File dependency = new File(basedir, "dependency");
+    File plugin = new File(basedir, "plugin");
+
+    MavenProject dependencyProject = mojos.readMavenProject(dependency);
+    MavenProject pluginProject = mojos.readMavenProject(plugin);
+    addDependencies(pluginProject, "apache-plugin-annotations-jar", "maven-plugin-api-jar");
+    mojos.newDependency(new File(dependencyProject.getBuild().getOutputDirectory())) //
+        .setGroupId(dependencyProject.getGroupId()) //
+        .setArtifactId(dependencyProject.getArtifactId()) //
+        .setVersion(dependencyProject.getVersion()) //
+        .addTo(pluginProject);
+    Artifact dependencyArtifact = dependencyProject.getArtifact();
+    dependencyArtifact.setScope(Artifact.SCOPE_COMPILE);
+    pluginProject.getArtifacts().add(dependencyArtifact);
+    MavenSession session = mojos.newMavenSession(pluginProject);
+    session.setProjects(ImmutableList.of(dependencyProject, pluginProject));
+    session.setCurrentProject(pluginProject);
+    mojos.executeMojo(session, pluginProject, "mojo-annotation-processor", newParameter("sourcepath", "reactorDependencies"));
+    mojos.executeMojo(session, pluginProject, "plugin-descriptor");
+    mojos.assertBuildOutputs(plugin, "target/classes/META-INF/maven/plugin.xml", "target/classes/META-INF/takari/mojos.xml");
   }
 }
