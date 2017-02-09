@@ -17,11 +17,14 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.settings.Server;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.deployment.DeployRequest;
 import org.eclipse.aether.deployment.DeploymentException;
+import org.eclipse.aether.repository.Authentication;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.util.artifact.SubArtifact;
+import org.eclipse.aether.util.repository.AuthenticationBuilder;
 
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
@@ -121,10 +124,20 @@ public class Deploy extends TakariLifecycleMojo {
       String url = matcher.group(3).trim();
 
       RemoteRepository.Builder builder = new RemoteRepository.Builder(id, layout, url);
-
+      Server server = settings.getServer(id);
+      if (server != null) {
+        builder.setAuthentication(createAuthentication(server));
+      }
       return builder.build();
     }
 
     return AetherUtils.toRepo(project.getDistributionManagementArtifactRepository());
+  }
+
+  private Authentication createAuthentication(Server server) {
+    AuthenticationBuilder authBuilder = new AuthenticationBuilder();
+    authBuilder.addUsername(server.getUsername()).addPassword(server.getPassword());
+    authBuilder.addPrivateKey(server.getPrivateKey(), server.getPassphrase());
+    return authBuilder.build();
   }
 }
