@@ -4,8 +4,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
@@ -13,34 +20,44 @@ import org.eclipse.jdt.internal.compiler.env.AccessRestriction;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 import org.osgi.framework.BundleException;
 
+import com.google.common.collect.ImmutableMap;
+
 abstract class AbstractClasspathDirectory extends DependencyClasspathEntry implements ClasspathEntry {
 
-  protected AbstractClasspathDirectory(File directory) {
-    super(directory, getPackageNames(directory), getExportedPackages(directory));
+  private final Map<String, File> files;
+
+  protected AbstractClasspathDirectory(File directory, Set<String> packages, Map<String, File> files) {
+    super(directory, packages, getExportedPackages(directory));
+    this.files = ImmutableMap.copyOf(files);
   }
 
-  protected static Set<String> getPackageNames(File directory) {
-    Set<String> packages = new HashSet<String>();
-    populatePackageNames(packages, directory, "");
-    return packages;
-  }
-
-  private static void populatePackageNames(Set<String> packageNames, File directory, String packageName) {
-    if (!packageName.isEmpty()) {
-      packageNames.add(packageName);
-    }
-    File[] files = directory.listFiles();
-    if (files != null) {
-      for (File file : files) {
-        if (file.isDirectory()) {
-          populatePackageNames(packageNames, file, childPackageName(packageName, file.getName()));
+  protected static void scanDirectory(File directory, String suffix, Set<String> packages, Map<String, File> files) {
+    try {
+      Path basedir = directory.toPath();
+      Files.walkFileTree(basedir, new SimpleFileVisitor<Path>() {
+        @Override
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+          String relpath = basedir.relativize(dir).toString();
+          if (!relpath.isEmpty()) {
+            packages.add(relpath.replace('\\', '/'));
+          }
+          return FileVisitResult.CONTINUE;
         }
-      }
-    }
-  }
 
-  private static String childPackageName(String packageName, String childName) {
-    return packageName.isEmpty() ? childName : packageName + "/" + childName;
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+          String relpath = basedir.relativize(file).toString();
+          if (relpath.endsWith(suffix)) {
+            files.put(relpath.substring(0, relpath.length() - suffix.length()).replace('\\', '/'), file.toFile());
+          }
+          return FileVisitResult.CONTINUE;
+        }
+      });
+    } catch (NoSuchFileException expected) {
+      // the directory does not exist, nothing to be alarmed about
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
   @Override
@@ -72,17 +89,9 @@ abstract class AbstractClasspathDirectory extends DependencyClasspathEntry imple
     return exportedPackages;
   }
 
-  public File getFile(String packageName, String typeName, String suffix) throws IOException {
-    String qualifiedFileName = packageName + "/" + typeName + suffix;
-    File file = new File(this.file, qualifiedFileName).getCanonicalFile();
-    if (!file.isFile()) {
-      return null;
-    }
-    // must respect package/type name case even on case-insensitive filesystems
-    if (!file.getPath().replace('\\', '/').endsWith(qualifiedFileName)) {
-      return null;
-    }
-    return file;
+  public File getFile(String packageName, String typeName) throws IOException {
+    String qualifiedFileName = packageName + "/" + typeName;
+    return files.get(qualifiedFileName);
   }
 
 }

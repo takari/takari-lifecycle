@@ -11,6 +11,10 @@ import static org.eclipse.jdt.internal.compiler.util.SuffixConstants.SUFFIX_STRI
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
@@ -19,13 +23,13 @@ import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 
 public class ClasspathDirectory extends AbstractClasspathDirectory implements ClasspathEntry {
 
-  private ClasspathDirectory(File directory) {
-    super(directory);
+  private ClasspathDirectory(File directory, Set<String> packages, Map<String, File> files) {
+    super(directory, packages, files);
   }
 
   @Override
   protected NameEnvironmentAnswer findType0(String packageName, String typeName, AccessRestriction accessRestriction) throws IOException, ClassFormatException {
-    File classFile = getFile(packageName, typeName, SUFFIX_STRING_class);
+    File classFile = getFile(packageName, typeName);
     if (classFile != null) {
       return new NameEnvironmentAnswer(ClassFileReader.read(classFile, false), accessRestriction);
     }
@@ -38,7 +42,10 @@ public class ClasspathDirectory extends AbstractClasspathDirectory implements Cl
   }
 
   public static ClasspathDirectory create(File directory) {
-    return new ClasspathDirectory(directory);
+    Set<String> packages = new HashSet<>();
+    Map<String, File> files = new HashMap<>();
+    scanDirectory(directory, SUFFIX_STRING_class, packages, files);
+    return new ClasspathDirectory(directory, packages, files);
   }
 
 }

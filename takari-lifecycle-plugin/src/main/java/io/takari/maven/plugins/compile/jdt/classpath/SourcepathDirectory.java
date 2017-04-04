@@ -5,6 +5,10 @@ import static org.eclipse.jdt.internal.compiler.util.SuffixConstants.SUFFIX_STRI
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.jdt.internal.compiler.batch.CompilationUnit;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
@@ -21,14 +25,14 @@ public class SourcepathDirectory extends AbstractClasspathDirectory {
 
   private final String encoding;
 
-  private SourcepathDirectory(File directory, Charset encoding) {
-    super(directory);
+  private SourcepathDirectory(File directory, Set<String> packages, Map<String, File> files, Charset encoding) {
+    super(directory, packages, files);
     this.encoding = encoding != null ? encoding.name() : null;
   }
 
   @Override
   protected NameEnvironmentAnswer findType0(String packageName, String typeName, AccessRestriction accessRestriction) throws IOException, ClassFormatException {
-    File javaFile = getFile(packageName, typeName, SUFFIX_STRING_java);
+    File javaFile = getFile(packageName, typeName);
     if (javaFile != null) {
       CompilationUnit cu = new ClasspathCompilationUnit(javaFile, encoding);
       return new NameEnvironmentAnswer(cu, accessRestriction);
@@ -42,7 +46,10 @@ public class SourcepathDirectory extends AbstractClasspathDirectory {
   }
 
   public static SourcepathDirectory create(File directory, Charset encoding) {
-    return new SourcepathDirectory(directory, encoding);
+    Set<String> packages = new HashSet<>();
+    Map<String, File> files = new HashMap<>();
+    scanDirectory(directory, SUFFIX_STRING_java, packages, files);
+    return new SourcepathDirectory(directory, packages, files, encoding);
   }
 
 }
