@@ -8,7 +8,6 @@
 package io.takari.maven.plugins.compile.jdt;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
@@ -40,12 +39,8 @@ class OutputDirectoryClasspathEntry implements ClasspathEntry, MutableClasspathE
 
   @Override
   public NameEnvironmentAnswer findType(String packageName, String typeName) {
-    try {
-      if (!staleOutputs.contains(delegate.getFile(packageName, typeName))) {
-        return delegate.findType(packageName, typeName, null);
-      }
-    } catch (IOException e) {
-      // treat as if class file is missing
+    if (!staleOutputs.contains(delegate.getFile(packageName, typeName))) {
+      return delegate.findType(packageName, typeName, null);
     }
     return null;
   }

@@ -3,7 +3,6 @@ package io.takari.maven.plugins.compile.jdt.classpath;
 import static org.eclipse.jdt.internal.compiler.util.SuffixConstants.SUFFIX_STRING_java;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,7 +10,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.jdt.internal.compiler.batch.CompilationUnit;
-import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.AccessRestriction;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 
@@ -31,7 +29,7 @@ public class SourcepathDirectory extends AbstractClasspathDirectory {
   }
 
   @Override
-  protected NameEnvironmentAnswer findType0(String packageName, String typeName, AccessRestriction accessRestriction) throws IOException, ClassFormatException {
+  public NameEnvironmentAnswer findType(String packageName, String typeName, AccessRestriction accessRestriction) {
     File javaFile = getFile(packageName, typeName);
     if (javaFile != null) {
       CompilationUnit cu = new ClasspathCompilationUnit(javaFile, encoding);

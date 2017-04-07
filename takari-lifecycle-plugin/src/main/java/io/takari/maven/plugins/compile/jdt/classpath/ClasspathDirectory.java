@@ -28,10 +28,14 @@ public class ClasspathDirectory extends AbstractClasspathDirectory implements Cl
   }
 
   @Override
-  protected NameEnvironmentAnswer findType0(String packageName, String typeName, AccessRestriction accessRestriction) throws IOException, ClassFormatException {
-    File classFile = getFile(packageName, typeName);
-    if (classFile != null) {
-      return new NameEnvironmentAnswer(ClassFileReader.read(classFile, false), accessRestriction);
+  public NameEnvironmentAnswer findType(String packageName, String typeName, AccessRestriction accessRestriction) {
+    try {
+      File classFile = getFile(packageName, typeName);
+      if (classFile != null) {
+        return new NameEnvironmentAnswer(ClassFileReader.read(classFile, false), accessRestriction);
+      }
+    } catch (ClassFormatException | IOException e) {
+      // treat as if type is missing
     }
     return null;
   }

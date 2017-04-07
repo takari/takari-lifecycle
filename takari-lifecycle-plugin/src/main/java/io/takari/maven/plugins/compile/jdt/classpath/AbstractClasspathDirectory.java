@@ -15,9 +15,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
-import org.eclipse.jdt.internal.compiler.env.AccessRestriction;
-import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 import org.osgi.framework.BundleException;
 
 import com.google.common.collect.ImmutableMap;
@@ -60,18 +57,6 @@ abstract class AbstractClasspathDirectory extends DependencyClasspathEntry imple
     }
   }
 
-  @Override
-  public NameEnvironmentAnswer findType(String packageName, String typeName, AccessRestriction accessRestriction) {
-    try {
-      return findType0(packageName, typeName, accessRestriction);
-    } catch (ClassFormatException | IOException e) {
-      // treat as if class file is missing
-    }
-    return null;
-  }
-
-  protected abstract NameEnvironmentAnswer findType0(String packageName, String typeName, AccessRestriction accessRestriction) throws IOException, ClassFormatException;
-
   private static Collection<String> getExportedPackages(File directory) {
     Collection<String> exportedPackages = null;
     try (InputStream is = new FileInputStream(new File(directory, PATH_EXPORT_PACKAGE))) {
@@ -89,7 +74,7 @@ abstract class AbstractClasspathDirectory extends DependencyClasspathEntry imple
     return exportedPackages;
   }
 
-  public File getFile(String packageName, String typeName) throws IOException {
+  public File getFile(String packageName, String typeName) {
     String qualifiedFileName = packageName + "/" + typeName;
     return files.get(qualifiedFileName);
   }
