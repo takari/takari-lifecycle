@@ -9,7 +9,7 @@ import io.takari.maven.testing.executor.MavenExecutionResult;
 import io.takari.maven.testing.executor.MavenRuntime.MavenRuntimeBuilder;
 import io.takari.maven.testing.executor.MavenVersions;
 
-@MavenVersions({"3.3.1", "3.3.9"})
+@MavenVersions({"3.3.9", "3.5.0"})
 public class DeployAtEndTest extends AbstractIntegrationTest {
 
   public DeployAtEndTest(MavenRuntimeBuilder verifierBuilder) throws Exception {
