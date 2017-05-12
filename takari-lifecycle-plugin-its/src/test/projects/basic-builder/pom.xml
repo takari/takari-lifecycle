@@ -1,0 +1,49 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>io.takari.lifecycle.its.basic</groupId>
+  <artifactId>basic-builder</artifactId>
+  <version>1.0</version>
+  <packaging>takari-maven-plugin</packaging>
+
+  <dependencies>
+    <dependency>
+      <groupId>io.takari.builder</groupId>
+      <artifactId>takari-builder</artifactId>
+      <version>${incrementalbuild.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.takari.builder</groupId>
+      <artifactId>takari-builder-apt</artifactId>
+      <version>${incrementalbuild.version}</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+  
+  <distributionManagement>
+    <repository>
+      <id>repoid</id>
+      <url>file://${repopath}</url>
+    </repository>
+    <snapshotRepository>
+      <id>repoid</id>
+      <url>file://${repopath}</url>
+    </snapshotRepository>
+  </distributionManagement>
+  
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>io.takari.maven.plugins</groupId>
+        <artifactId>takari-lifecycle-plugin</artifactId>
+        <version>${it-plugin.version}</version>
+        <extensions>true</extensions>
+        <configuration>
+          <sourceJar>true</sourceJar>
+          <testJar>true</testJar>
+          <proc>procEX</proc>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

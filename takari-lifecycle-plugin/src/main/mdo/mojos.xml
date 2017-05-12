@@ -194,6 +194,10 @@
             <multiplicity>*</multiplicity>
           </association>
         </field>
+        <field>
+          <name>takariBuilder</name>
+          <type>boolean</type>
+        </field>
       </fields>
     </class>
 

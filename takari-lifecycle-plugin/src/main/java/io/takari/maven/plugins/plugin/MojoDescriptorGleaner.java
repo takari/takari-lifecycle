@@ -124,6 +124,14 @@ public class MojoDescriptorGleaner extends AbstractProcessor {
       if (getElementUtils().isDeprecated(type)) {
         descriptor.setDeprecated("No reason given"); // TODO parse javadoc
       }
+      // This is not ideal
+      // the proper way would be to add support for processorPath to compiler plugin
+      // which would allow us to do this as part of takari-builder annotation processing
+      // without adding takari-builder-apt to the compile classpath
+      // we intend to do this properly... soon
+      if (isTakariBuilderMojo(type)) {
+        descriptor.setTakariBuilder(true);
+      }
       descriptor.setDescription(getDescription(type));
     }
 
@@ -133,6 +141,11 @@ public class MojoDescriptorGleaner extends AbstractProcessor {
     Sorting.sortRequirements(descriptor.getRequirements());
 
     return descriptor;
+  }
+
+  private boolean isTakariBuilderMojo(TypeElement type) {
+    TypeElement abstractIncrementalMojoType = getElementUtils().getTypeElement("io.takari.builder.internal.maven.AbstractIncrementalMojo");
+    return abstractIncrementalMojoType != null && getTypeUtils().isSubtype(type.asType(), abstractIncrementalMojoType.asType());
   }
 
   private void processTypeFields(TypeElement type, MojoDescriptor descriptor) {

@@ -47,6 +47,23 @@ public class MojoDescriptorGleanerTest {
     Assert.assertEquals("java.util.List", getParameter(d, "listParameter").getType());
     Assert.assertEquals("boolean", getParameter(d, "booleanParameter").getType());
     Assert.assertEquals("java.lang.String[]", getParameter(d, "arrayParameter").getType());
+
+    Assert.assertFalse(d.isTakariBuilder());
+  }
+
+  @Test
+  public void testGleanerForBuilder() throws Exception {
+    File basedir = resources.getBasedir("plugin-descriptor/basic-builder");
+    MavenProject project = mojos.readMavenProject(basedir);
+    addDependency(project, "apache-plugin-annotations-jar");
+    addDependency(project, "maven-plugin-api-jar");
+    addDependency(project, "takari-builder-jar");
+    mojos.executeMojo(project, "compile", newParameter("compilerId", "jdt"));
+    mojos.executeMojo(project, "mojo-annotation-processor");
+
+    MojoDescriptor d = readDescriptor(basedir, "BasicBuilder");
+
+    Assert.assertTrue(d.isTakariBuilder());
   }
 
   private MojoParameter getParameter(MojoDescriptor descriptor, String fieldName) {

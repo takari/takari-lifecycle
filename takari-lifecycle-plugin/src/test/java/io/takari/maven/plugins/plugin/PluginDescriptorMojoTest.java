@@ -38,7 +38,7 @@ public class PluginDescriptorMojoTest {
 
     generatePluginDescriptor(project);
 
-    mojos.assertBuildOutputs(basedir, "target/classes/META-INF/maven/plugin.xml");
+    mojos.assertBuildOutputs(basedir, "target/classes/META-INF/maven/plugin.xml", "target/classes/META-INF/m2e/lifecycle-mapping-metadata.xml");
     assertFileContents(basedir, "expected/plugin.xml", "target/classes/META-INF/maven/plugin.xml");
   }
 
@@ -71,7 +71,8 @@ public class PluginDescriptorMojoTest {
     final MavenProject legacyProject = mojos.readMavenProject(legacyBasedir);
     addDependencies(legacyProject, "apache-plugin-annotations-jar", "maven-plugin-api-jar");
     generatePluginDescriptor(legacyProject);
-    mojos.assertBuildOutputs(legacyBasedir, "target/classes/META-INF/maven/plugin.xml");
+
+    mojos.assertBuildOutputs(legacyBasedir, "target/classes/META-INF/maven/plugin.xml", "target/classes/META-INF/m2e/lifecycle-mapping-metadata.xml");
     rm(legacyBasedir, "target/classes/META-INF/takari/mojos.xml"); // make it look like plugin built with maven-plugin-plugin
     mojos.executeMojo(legacyProject, "jar");
 
@@ -80,7 +81,7 @@ public class PluginDescriptorMojoTest {
     addDependencies(pluginProject, new File(legacyBasedir, "target/plugin-descriptor-legacy-0.1.jar"));
 
     generatePluginDescriptor(pluginProject);
-    mojos.assertBuildOutputs(pluginBasedir, "target/classes/META-INF/maven/plugin.xml");
+    mojos.assertBuildOutputs(pluginBasedir, "target/classes/META-INF/maven/plugin.xml", "target/classes/META-INF/m2e/lifecycle-mapping-metadata.xml");
     assertFileContents(pluginBasedir, "expected/mojos.xml", "target/classes/META-INF/takari/mojos.xml");
     assertFileContents(pluginBasedir, "expected/plugin.xml", "target/classes/META-INF/maven/plugin.xml");
   }
@@ -99,10 +100,11 @@ public class PluginDescriptorMojoTest {
 
     // initial build
     generatePluginDescriptor(abstractProject);
-    mojos.assertBuildOutputs(abstractBasedir, "target/classes/META-INF/maven/plugin.xml");
+
+    mojos.assertBuildOutputs(abstractBasedir, "target/classes/META-INF/maven/plugin.xml", "target/classes/META-INF/m2e/lifecycle-mapping-metadata.xml");
     assertFileContents(abstractBasedir, "expected/mojos.xml", "target/classes/META-INF/takari/mojos.xml");
     generatePluginDescriptor(concreteProject);
-    mojos.assertBuildOutputs(concreteBasedir, "target/classes/META-INF/maven/plugin.xml");
+    mojos.assertBuildOutputs(concreteBasedir, "target/classes/META-INF/maven/plugin.xml", "target/classes/META-INF/m2e/lifecycle-mapping-metadata.xml");
     assertFileContents(concreteBasedir, "expected/mojos.xml", "target/classes/META-INF/takari/mojos.xml");
     assertFileContents(concreteBasedir, "expected/plugin.xml", "target/classes/META-INF/maven/plugin.xml");
 
@@ -137,12 +139,12 @@ public class PluginDescriptorMojoTest {
     addDependencies(project, "apache-plugin-annotations-jar", "maven-plugin-api-jar");
 
     generatePluginDescriptor(project);
-    mojos.assertBuildOutputs(basedir, "target/classes/META-INF/maven/plugin.xml");
+    mojos.assertBuildOutputs(basedir, "target/classes/META-INF/maven/plugin.xml", "target/classes/META-INF/m2e/lifecycle-mapping-metadata.xml");
     assertFileContents(basedir, "expected/plugin.xml", "target/classes/META-INF/maven/plugin.xml");
 
     cp(basedir, "src/main/java/io/takari/lifecycle/uts/plugindescriptor/IndirectReference.java-changed", "src/main/java/io/takari/lifecycle/uts/plugindescriptor/IndirectReference.java");
     generatePluginDescriptor(project);
-    mojos.assertBuildOutputs(basedir, "target/classes/META-INF/maven/plugin.xml");
+    mojos.assertBuildOutputs(basedir, "target/classes/META-INF/maven/plugin.xml", "target/classes/META-INF/m2e/lifecycle-mapping-metadata.xml");
     assertFileContents(basedir, "expected/plugin.xml-changed", "target/classes/META-INF/maven/plugin.xml");
   }
 
@@ -154,12 +156,12 @@ public class PluginDescriptorMojoTest {
     addDependencies(project, "apache-plugin-annotations-jar", "maven-plugin-api-jar");
 
     generatePluginDescriptor(project);
-    mojos.assertBuildOutputs(basedir, "target/classes/META-INF/maven/plugin.xml");
+    mojos.assertBuildOutputs(basedir, "target/classes/META-INF/maven/plugin.xml", "target/classes/META-INF/m2e/lifecycle-mapping-metadata.xml");
     assertFileContents(basedir, "expected/plugin.xml", "target/classes/META-INF/maven/plugin.xml");
 
     cp(basedir, "src/main/java/io/takari/lifecycle/uts/plugindescriptor/AbstractBasicMojo.java-changed", "src/main/java/io/takari/lifecycle/uts/plugindescriptor/AbstractBasicMojo.java");
     generatePluginDescriptor(project);
-    mojos.assertBuildOutputs(basedir, "target/classes/META-INF/maven/plugin.xml");
+    mojos.assertBuildOutputs(basedir, "target/classes/META-INF/maven/plugin.xml", "target/classes/META-INF/m2e/lifecycle-mapping-metadata.xml");
     assertFileContents(basedir, "expected/plugin.xml-changed", "target/classes/META-INF/maven/plugin.xml");
   }
 
@@ -207,7 +209,7 @@ public class PluginDescriptorMojoTest {
     addDependencies(project, "apache-plugin-annotations-jar", "maven-plugin-api-jar");
     addDependencies(project, new File(dependency, "target/classes"));
     generatePluginDescriptor(project);
-    mojos.assertBuildOutputs(plugin, "target/classes/META-INF/maven/plugin.xml");
+    mojos.assertBuildOutputs(plugin, "target/classes/META-INF/maven/plugin.xml", "target/classes/META-INF/m2e/lifecycle-mapping-metadata.xml");
 
     cp(dependency, "src/main/java/io/takari/lifecycle/uts/plugindescriptor/ComponentClass.java-private-change", "src/main/java/io/takari/lifecycle/uts/plugindescriptor/ComponentClass.java");
     mojos.executeMojo(dependency, "compile");
@@ -220,7 +222,7 @@ public class PluginDescriptorMojoTest {
     mojos.assertCarriedOverOutputs(plugin, "target/classes/META-INF/takari/mojos.xml");
 
     mojos.executeMojo(project, "plugin-descriptor");
-    mojos.assertCarriedOverOutputs(plugin, "target/classes/META-INF/maven/plugin.xml");
+    mojos.assertCarriedOverOutputs(plugin, "target/classes/META-INF/maven/plugin.xml", "target/classes/META-INF/m2e/lifecycle-mapping-metadata.xml");
   }
 
   @Test
@@ -247,6 +249,20 @@ public class PluginDescriptorMojoTest {
     session.setCurrentProject(pluginProject);
     mojos.executeMojo(session, pluginProject, "mojo-annotation-processor", newParameter("sourcepath", "reactorDependencies"));
     mojos.executeMojo(session, pluginProject, "plugin-descriptor");
-    mojos.assertBuildOutputs(plugin, "target/classes/META-INF/maven/plugin.xml");
+    mojos.assertBuildOutputs(plugin, "target/classes/META-INF/maven/plugin.xml", "target/classes/META-INF/m2e/lifecycle-mapping-metadata.xml");
+  }
+
+  @Test
+  public void testBuilderM2eMetadataGeneration() throws Exception {
+    File basedir = resources.getBasedir("plugin-descriptor/basic-builder");
+
+    MavenProject project = mojos.readMavenProject(basedir);
+    addDependencies(project, "apache-plugin-annotations-jar", "maven-plugin-api-jar", "takari-builder-jar");
+
+    generatePluginDescriptor(project);
+
+    mojos.assertBuildOutputs(basedir, "target/classes/META-INF/maven/plugin.xml", "target/classes/META-INF/m2e/lifecycle-mapping-metadata.xml");
+    assertFileContents(basedir, "expected/plugin.xml", "target/classes/META-INF/maven/plugin.xml");
+    assertFileContents(basedir, "expected/lifecycle-mapping-metadata.xml", "target/classes/META-INF/m2e/lifecycle-mapping-metadata.xml");
   }
 }

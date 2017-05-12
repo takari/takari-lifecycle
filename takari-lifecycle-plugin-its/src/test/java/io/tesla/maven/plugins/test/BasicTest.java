@@ -88,6 +88,45 @@ public class BasicTest extends AbstractIntegrationTest {
   }
 
   @Test
+  public void testBasicBuilder() throws Exception {
+    File basedir = resources.getBasedir("basic-builder");
+
+    File remoterepo = new File(basedir, "remoterepo");
+    Assert.assertTrue(remoterepo.mkdirs());
+
+    File localrepo = properties.getLocalRepository();
+
+    MavenExecutionResult result = verifier.forProject(basedir) //
+        .withCliOption("-Drepopath=" + remoterepo.getCanonicalPath()) //
+        .withCliOption("-Dincrementalbuild.version=" + properties.get("incrementalbuild.version")) //
+        .execute("deploy");
+
+    result.assertErrorFreeLog();
+
+    // TODO assert expected mojos were executed
+    // TODO assertFileExist, etc
+    // TODO assert jar content
+    Assert.assertTrue(new File(basedir, "target/basic-builder-1.0.jar").canRead());
+    Assert.assertTrue(new File(basedir, "target/basic-builder-1.0-sources.jar").canRead());
+    Assert.assertTrue(new File(basedir, "target/basic-builder-1.0-tests.jar").canRead());
+    Assert.assertTrue(new File(basedir, "target/classes/META-INF/m2e/lifecycle-mapping-metadata.xml").canRead());
+
+    File localGroup = new File(localrepo, "io/takari/lifecycle/its/basic");
+    Assert.assertTrue(new File(localGroup, "basic-builder/1.0/basic-builder-1.0.pom").canRead());
+    Assert.assertTrue(new File(localGroup, "basic-builder/1.0/basic-builder-1.0.jar").canRead());
+    Assert.assertTrue(new File(localGroup, "basic-builder/1.0/basic-builder-1.0-sources.jar").canRead());
+    Assert.assertTrue(new File(localGroup, "basic-builder/1.0/basic-builder-1.0-tests.jar").canRead());
+
+    File remoteGroup = new File(remoterepo, "io/takari/lifecycle/its/basic");
+    Assert.assertTrue(new File(remoteGroup, "basic-builder/1.0/basic-builder-1.0.pom").canRead());
+    Assert.assertTrue(new File(remoteGroup, "basic-builder/1.0/basic-builder-1.0.jar").canRead());
+    Assert.assertTrue(new File(remoteGroup, "basic-builder/1.0/basic-builder-1.0-sources.jar").canRead());
+    Assert.assertTrue(new File(remoteGroup, "basic-builder/1.0/basic-builder-1.0-tests.jar").canRead());
+
+
+  }
+
+  @Test
   public void testBasicComponent() throws Exception {
     File basedir = resources.getBasedir("basic-component");
 
