@@ -9,6 +9,9 @@ package processor;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.Writer;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -35,17 +38,21 @@ public class MyAnnotationProcessor extends AbstractProcessor {
         String clsQualifiedName = pkg.getQualifiedName() + "." + clsSimpleName;
         JavaFileObject sourceFile =
             processingEnv.getFiler().createSourceFile(clsQualifiedName, element);
-        BufferedWriter w = new BufferedWriter(sourceFile.openWriter());
+        OutputStream ios = sourceFile.openOutputStream();
+        OutputStreamWriter writer = new OutputStreamWriter(ios, "UTF-8");
+        BufferedWriter w = new BufferedWriter(writer);
         try {
           w.append("package ").append(pkg.getQualifiedName()).append(";");
           w.newLine();
           w.append("public class ").append(clsSimpleName).append(" { }");
         } finally {
           w.close();
+          writer.close();
+          ios.close();
         }
       } catch (IOException e) {
         e.printStackTrace();
-      }
+      } 
     }
     return true;
   }
