@@ -130,12 +130,18 @@ class FilerImpl implements Filer {
       throw new FilerException("Attempt to recreate file for type " + name);
     }
     return new JavaFileObjectImpl(sourceFile, new FileObjectDelegate(getInputs(originatingElements)) {
+
+      private boolean closed = false;
+
       @Override
       protected void onClose(Output<File> generatedSource) {
-        // TODO optimize if the regenerated sources didn't change compared the previous build
-        CompilationUnit unit = new CompilationUnit(null, generatedSource.getResource().getAbsolutePath(), null /* encoding */);
-        processingEnv.addNewUnit(unit);
-        incrementalCompiler.addGeneratedSource(generatedSource);
+        if (!closed) {
+          closed = true;
+          // TODO optimize if the regenerated sources didn't change compared the previous build
+          CompilationUnit unit = new CompilationUnit(null, generatedSource.getResource().getAbsolutePath(), null /* encoding */);
+          processingEnv.addNewUnit(unit);
+          incrementalCompiler.addGeneratedSource(generatedSource);
+        }
       }
     });
   }
