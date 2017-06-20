@@ -168,8 +168,8 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   private boolean verbose;
 
   /**
-   * Set to <code>true</code> to store formal parameter names of constructors and methods in the generated class
-   * file so that the method java.lang.reflect.Executable.getParameters from the Reflection API can retrieve them.
+   * Set to <code>true</code> to store formal parameter names of constructors and methods in the generated class file so that the method java.lang.reflect.Executable.getParameters from the Reflection
+   * API can retrieve them.
    */
   @Parameter(defaultValue = "false")
   private boolean parameters;
@@ -404,7 +404,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
       boolean sourcesChanged = compiler.setSources(sources);
       boolean classpathChanged = compiler.setClasspath(classpath, getMainOutputDirectory(), getDirectDependencies());
-      boolean sourcepathChanged = compiler.setSourcepath(getSourcepath(proc));
+      boolean sourcepathChanged = compiler.setSourcepath(getSourcepath(proc), toFileSet(getSourceRoots()));
       boolean processorpathChanged = proc != Proc.none ? compiler.setProcessorpath(getProcessorpath()) : false;
 
       if (sourcesChanged || classpathChanged || sourcepathChanged || processorpathChanged) {
@@ -423,6 +423,12 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     } catch (IOException e) {
       throw new MojoExecutionException("Could not compile project", e);
     }
+  }
+
+  private static Set<File> toFileSet(Set<String> paths) {
+    Set<File> files = new LinkedHashSet<>();
+    paths.forEach(path -> files.add(new File(path)));
+    return files;
   }
 
   private List<File> getClasspath() {

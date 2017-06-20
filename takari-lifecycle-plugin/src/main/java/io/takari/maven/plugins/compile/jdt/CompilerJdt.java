@@ -658,11 +658,17 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   }
 
   @Override
-  public boolean setSourcepath(List<File> dependencies) throws IOException {
+  public boolean setSourcepath(List<File> dependencies, Set<File> sourceRoots) throws IOException {
     List<ClasspathEntry> sourcepath = new ArrayList<>();
     for (File dependency : dependencies) {
       if (dependency.isDirectory()) {
-        DependencyClasspathEntry entry = classpathCache.getSourcepathEntry(dependency, getSourceEncoding());
+        final DependencyClasspathEntry entry;
+        if (sourceRoots.contains(dependency)) {
+          // own source roots can be mutable, don't cache
+          entry = SourcepathDirectory.create(dependency, getSourceEncoding());
+        } else {
+          entry = classpathCache.getSourcepathEntry(dependency, getSourceEncoding());
+        }
         sourcepath.add(entry);
       } else if (dependency.isFile()) {
         throw new IllegalArgumentException();

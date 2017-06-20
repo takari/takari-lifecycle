@@ -841,4 +841,50 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
     processAnnotations(session, project, "compile", processor, Proc.only, processors, sourcepath);
   }
+
+  @Test
+  public void testSourcepathCache() throws Exception {
+    // project-a has its generated sources directory configured as compile source root
+    // project-b depends on project-a generated sources
+    // both project-a and project-b run proc=only sourcepath=reactorDependencies
+
+    File processor = compileAnnotationProcessor();
+    File basedir = resources.getBasedir("compile-proc/proc-sourcepath-cache");
+
+    Xpp3Dom processors = newProcessors("processor.Processor");
+    Xpp3Dom sourcepath = newParameter("sourcepath", "reactorDependencies");
+    Xpp3Dom procOnly = newParameter("proc", Proc.only.name());
+
+    // setting up project-a
+    File projectaBasedir = new File(basedir, "project-a");
+    MavenProject projecta = mojos.readMavenProject(projectaBasedir);
+    addDependency(projecta, "processor", new File(processor, "target/classes"));
+    projecta.addCompileSourceRoot(new File(projectaBasedir, "target/generated-sources/annotations").getCanonicalPath());
+
+    // setting up project-b
+    File projectbBasedir = new File(basedir, "project-b");
+    MavenProject projectb = mojos.readMavenProject(projectbBasedir);
+    addDependency(projectb, "processor", new File(processor, "target/classes"));
+    mojos.newDependency(new File(projectaBasedir, "target/classes")) //
+        .setGroupId(projecta.getGroupId()) //
+        .setArtifactId(projecta.getArtifactId()) //
+        .setVersion(projecta.getVersion()) //
+        .addTo(projectb);
+
+    MavenSession session = mojos.newMavenSession(projecta);
+    session.setProjects(Arrays.asList(projecta, projecta));
+
+    // process annotations in project-a
+    mojos.executeMojo(session, projecta, "compile", procOnly, processors, sourcepath);
+    mojos.assertBuildOutputs(new File(projectaBasedir, "target"), //
+        "generated-sources/annotations/sourcepath/projecta/GeneratedSourceA.java" //
+    );
+
+    // process annotations in project-b, requires access to project-a generated sources
+    session.setCurrentProject(projectb);
+    mojos.executeMojo(session, projectb, "compile", procOnly, processors, sourcepath);
+    mojos.assertBuildOutputs(new File(projectbBasedir, "target"), //
+        "generated-sources/annotations/sourcepath/projectb/GeneratedSourceB.java" //
+    );
+  }
 }

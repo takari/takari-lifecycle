@@ -178,7 +178,7 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
   }
 
   @Override
-  public boolean setSourcepath(List<File> dependencies) throws IOException {
+  public boolean setSourcepath(List<File> dependencies, Set<File> sourceRoots) throws IOException {
     StringBuilder cp = new StringBuilder();
     for (File dependency : dependencies) {
       if (dependency != null) {
