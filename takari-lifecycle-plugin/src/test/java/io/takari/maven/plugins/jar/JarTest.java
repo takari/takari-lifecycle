@@ -288,7 +288,7 @@ public class JarTest {
     File symlink = java.nio.file.Files.createSymbolicLink(new File(basedir, "symlink").toPath(), orig.toPath()).toFile();
     mojos.executeMojo(symlink, "jar", newParameter("testJar", "true"), newParameter("sourceJar", "true"));
     assertZipEntries(new File(symlink, "target/test-1.jar") //
-    , "D META-INF/ 315561600000" //
+        , "D META-INF/ 315561600000" //
         , "F META-INF/MANIFEST.MF 315561600000" //
         , "D META-INF/maven/ 315561600000" //
         , "D META-INF/maven/test/ 315561600000" //
@@ -300,12 +300,12 @@ public class JarTest {
         , "F symlinked-resource.txt 315561600000" //
     );
     assertZipEntries(new File(symlink, "target/test-1-tests.jar") //
-    , "D META-INF/ 315561600000" //
+        , "D META-INF/ 315561600000" //
         , "F META-INF/MANIFEST.MF 315561600000" //
         , "F test-resource.txt 315561600000" //
     );
     assertZipEntries(new File(symlink, "target/test-1-sources.jar") //
-    , "D META-INF/ 315561600000" //
+        , "D META-INF/ 315561600000" //
         , "F META-INF/MANIFEST.MF 315561600000" //
         , "D pkg/ 315561600000" //
         , "F pkg/Class.java 315561600000" //

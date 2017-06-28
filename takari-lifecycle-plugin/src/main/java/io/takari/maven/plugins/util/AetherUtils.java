@@ -88,9 +88,8 @@ public class AetherUtils {
     /*
      * NOTE: From Artifact.hasClassifier(), an empty string and a null both denote "no classifier". However, some plugins only check for null, so be sure to nullify an empty classifier.
      */
-    org.apache.maven.artifact.Artifact result =
-        new org.apache.maven.artifact.DefaultArtifact(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion(), null, artifact.getProperty(ArtifactProperties.TYPE,
-            artifact.getExtension()), nullify(artifact.getClassifier()), handler);
+    org.apache.maven.artifact.Artifact result = new org.apache.maven.artifact.DefaultArtifact(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion(), null,
+        artifact.getProperty(ArtifactProperties.TYPE, artifact.getExtension()), nullify(artifact.getClassifier()), handler);
 
     result.setFile(artifact.getFile());
     result.setResolved(artifact.getFile() != null);
@@ -135,9 +134,8 @@ public class AetherUtils {
       props = Collections.singletonMap(ArtifactProperties.LOCAL_PATH, localPath);
     }
 
-    Artifact result =
-        new DefaultArtifact(artifact.getGroupId(), artifact.getArtifactId(), artifact.getClassifier(), artifact.getArtifactHandler().getExtension(), version, props, newArtifactType(
-            artifact.getType(), artifact.getArtifactHandler()));
+    Artifact result = new DefaultArtifact(artifact.getGroupId(), artifact.getArtifactId(), artifact.getClassifier(), artifact.getArtifactHandler().getExtension(), version, props,
+        newArtifactType(artifact.getType(), artifact.getArtifactHandler()));
     result = result.setFile(artifact.getFile());
 
     return result;

@@ -77,12 +77,12 @@ public class FilteringResourcesTest extends AbstractIntegrationTest {
   @Test
   public void testSourceEncoding() throws Exception {
     File basedir = resources.getBasedir("filtering-source-encoding");
-    //command line -Dfile.encoding=... not work. It must be first params. withCliOptions add it to the end
-    //need use JAVA_TOOL_OPTIONS
+    // command line -Dfile.encoding=... not work. It must be first params. withCliOptions add it to the end
+    // need use JAVA_TOOL_OPTIONS
     Map<String, String> env = new HashMap<>();
-    //for test data need encoding windows-1251
+    // for test data need encoding windows-1251
     env.put("JAVA_TOOL_OPTIONS", "-Dfile.encoding=windows-1251");
-    //default charset cached on first access, so need new process on every test run
+    // default charset cached on first access, so need new process on every test run
     MavenRuntime forkedVerifier = verifierForkedBuilder.withEnvironment(env).build();
     MavenExecution verifierBuilder = forkedVerifier.forProject(basedir);
     Properties props = filter(verifierBuilder);

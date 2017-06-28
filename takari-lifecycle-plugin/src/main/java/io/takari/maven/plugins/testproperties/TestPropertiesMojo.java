@@ -131,7 +131,7 @@ public class TestPropertiesMojo extends AbstractMojo {
       }
       if (isAccessible(globalSettingsFile)) {
         putIfAbsent(properties, "globalSettingsFile", globalSettingsFile.getAbsolutePath());
-      } else{
+      } else {
         logWarningNotAccessibleFile(globalSettingsFile);
       }
       List<ArtifactRepository> repositories = project.getRemoteArtifactRepositories();
