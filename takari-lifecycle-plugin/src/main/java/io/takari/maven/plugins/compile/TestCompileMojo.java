@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.model.Dependency;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -136,5 +137,10 @@ public class TestCompileMojo extends AbstractCompileMojo {
   @Override
   protected Set<String> getMainSourceRoots() {
     return new LinkedHashSet<>(mainCompileSourceRoots);
+  }
+
+  @Override
+  protected List<Dependency> getProcessorpathDependencies() {
+    return null;
   }
 }

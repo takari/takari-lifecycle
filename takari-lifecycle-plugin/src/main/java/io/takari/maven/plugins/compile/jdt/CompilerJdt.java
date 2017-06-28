@@ -541,7 +541,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     try {
       if (!isProcNone()) {
         fileManager = new EclipseFileManager514121(null, getSourceEncoding());
-        fileManager.setLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH, dependencies);
+        fileManager.setLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH, processorpath);
         fileManager.setLocation(StandardLocation.CLASS_OUTPUT, Collections.singleton(getOutputDirectory()));
         fileManager.setLocation(StandardLocation.SOURCE_OUTPUT, Collections.singleton(getGeneratedSourcesDirectory()));
 
@@ -684,10 +684,8 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   public boolean setProcessorpath(List<File> processorpath) throws IOException {
     if (processorpath == null) {
       this.processorpath = dependencies;
-    } else if (processorpath.isEmpty()) {
-      this.processorpath = Collections.emptyList();
     } else {
-      throw new IllegalArgumentException();
+      this.processorpath = ImmutableList.copyOf(processorpath);
     }
     if (!isProcNone() && processorpathDigester.digestProcessorpath(this.processorpath)) {
       log.debug("Annotation processor path changed, recompiling all sources");

@@ -28,12 +28,14 @@ import java.util.zip.ZipFile;
 import javax.tools.JavaFileObject.Kind;
 
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.eclipse.aether.RepositorySystemSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -264,6 +266,10 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Incremental(configuration = Configuration.ignore)
   protected MavenProject project;
 
+  @Parameter(defaultValue = "${repositorySystemSession}", readonly = true)
+  @Incremental(configuration = Configuration.ignore)
+  protected RepositorySystemSession repositorySession;
+
   //
 
   @Component
@@ -274,6 +280,9 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
   @Component
   private ReactorProjects reactorProjects;
+
+  @Component
+  private ProcessorpathResolver processorpathResolver;
 
   public Charset getSourceEncoding() {
     return encoding == null ? null : Charset.forName(encoding);
@@ -347,6 +356,8 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   protected abstract File getMainOutputDirectory();
 
   protected abstract Set<String> getMainSourceRoots();
+
+  protected abstract List<Dependency> getProcessorpathDependencies();
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
@@ -585,8 +596,15 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     return dir;
   }
 
-  protected List<File> getProcessorpath() {
-    return null;
+  /**
+   * Returns possibly empty list of explicitly specified processorpath entries. Returns {@code null} if the project classpath should be searched for annotation processors.
+   */
+  protected List<File> getProcessorpath() throws MojoExecutionException {
+    List<Dependency> dependencies = getProcessorpathDependencies();
+    if (dependencies == null) {
+      return null;
+    }
+    return processorpathResolver.resolve(repositorySession, project, dependencies);
   }
 
   protected abstract void addGeneratedSources(MavenProject project);
