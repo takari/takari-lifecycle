@@ -24,6 +24,10 @@ public class CompileRule extends IncrementalBuildRule {
 
   public void compile(MavenProject project, Xpp3Dom... parameters) throws Exception {
     MavenSession session = newMavenSession(project);
+    compile(session, project, parameters);
+  }
+
+  public void compile(MavenSession session, MavenProject project, Xpp3Dom... parameters) throws Exception {
     MojoExecution execution = newMojoExecution();
 
     if (parameters != null) {

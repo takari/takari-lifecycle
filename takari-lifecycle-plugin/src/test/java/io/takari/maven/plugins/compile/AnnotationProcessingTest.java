@@ -636,6 +636,51 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
   }
 
   @Test
+  public void testProc_processorpath() throws Exception {
+    MavenProject annotations = mojos.readMavenProject(resources.getBasedir("compile-proc/processorpath-annotation"));
+    mojos.compile(annotations);
+
+    MavenProject processor = mojos.readMavenProject(resources.getBasedir("compile-proc/processorpath-processor"));
+    mojos.newDependency(new File(annotations.getBasedir(), "target/classes")).setArtifactId("annotations").addTo(processor);
+    mojos.compile(processor);
+    cp(processor.getBasedir(), "src/main/resources/META-INF/services/javax.annotation.processing.Processor", "target/classes/META-INF/services/javax.annotation.processing.Processor");
+
+    File basedir = resources.getBasedir("compile-proc/proc");
+    MavenProject project = mojos.readMavenProject(basedir);
+    mojos.newDependency(new File(annotations.getBasedir(), "target/classes")).setArtifactId("annotations").addTo(project);
+
+    MavenSession session = mojos.newMavenSession(project);
+    SimpleReactorReader.builder() //
+        .addProjects(annotations, processor, project) //
+        .toSession(session.getRepositorySession());
+
+    session.setProjects(Arrays.asList(annotations, processor, project));
+    session.setCurrentProject(project);
+    Xpp3Dom processorpath = new Xpp3Dom("processorpath");
+    processorpath.addChild(newProcessorpathEntry(processor));
+    mojos.compile(session, project, newParameter("proc", "proc"), processorpath);
+    mojos.assertBuildOutputs(new File(basedir, "target"), //
+        "classes/proc/Source.class", //
+        "generated-sources/annotations/proc/GeneratedSource.java", //
+        "classes/proc/GeneratedSource.class");
+  }
+
+  @Test
+  public void testProc_emptyProcessorPath() throws Exception {
+    File basedir = procCompile("compile-proc/proc", Proc.proc, new Xpp3Dom("processorpath"));
+    mojos.assertBuildOutputs(new File(basedir, "target"), //
+        "classes/proc/Source.class");
+  }
+
+  private Xpp3Dom newProcessorpathEntry(MavenProject processor) {
+    Xpp3Dom entry = new Xpp3Dom("processor");
+    entry.addChild(newParameter("groupId", processor.getGroupId()));
+    entry.addChild(newParameter("artifactId", processor.getArtifactId()));
+    entry.addChild(newParameter("version", processor.getVersion()));
+    return entry;
+  }
+
+  @Test
   public void testSourcepathDependency() throws Exception {
     File processor = compileAnnotationProcessor();
     File basedir = resources.getBasedir("compile-proc/proc-sourcepath");

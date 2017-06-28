@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.model.Dependency;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -72,6 +73,30 @@ public class CompileMojo extends AbstractCompileMojo {
   @Incremental(configuration = Configuration.ignore)
   private boolean skipMain;
 
+  /**
+   * Processor path defines where to find annotation processors; if not configured, project classpath will be searched for processors. The primary usecase is to avoid unintentional "leakage" of
+   * build-time tools and their dependencies to production classpath. Additionally, separate processor path is likely to reduce number of incremental builds escalated due to annotation processing
+   * runtime path change.
+   * 
+   * <p/>
+   * Configuration uses the same syntax as project {@code <dependency>}, and processor path is resolved using {@code compile+runtime} resolution scope.
+   * 
+   * <p/>
+   * To help align artifacts versions used by project classpath path and processor path:
+   * <ul>
+   * <li>Project {@code <dependencyManagement>} is used during processor path resolution.</li>
+   * <li>If processor path dependency {@code <version>} is omitted and project dependencies have artifact with matching (groupId,artifactId) tuple, the project dependency version will be used to
+   * resolve processor path.</li>
+   * </ul>
+   * 
+   * <strong>EXPERIMENTAL</strong>. This parameter is experimental and can be changed or removed without prior notice.
+   * 
+   * @since 1.12.6
+   */
+  @Parameter
+  @Incremental(configuration = Configuration.ignore)
+  private List<Dependency> processorpath;
+
   @Override
   public Set<String> getSourceRoots() {
     return new LinkedHashSet<String>(compileSourceRoots);
@@ -124,5 +149,10 @@ public class CompileMojo extends AbstractCompileMojo {
   @Override
   protected Set<String> getMainSourceRoots() {
     return Collections.emptySet(); // main compile does not have corresponding main sources
+  }
+
+  @Override
+  protected List<Dependency> getProcessorpathDependencies() {
+    return processorpath;
   }
 }

@@ -18,6 +18,9 @@ import java.util.Set;
 
 import org.apache.maven.plugin.MojoExecutionException;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
+
 import io.takari.incrementalbuild.Resource;
 import io.takari.incrementalbuild.ResourceMetadata;
 import io.takari.incrementalbuild.ResourceStatus;
@@ -49,6 +52,7 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
 
   private String classpath;
   private String sourcepath = "";
+  private String processorpath;
 
   protected AbstractCompilerJavac(CompilerBuildContext context, ProjectClasspathDigester digester) {
     super(context);
@@ -96,6 +100,11 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
     if (getProc() != Proc.none) {
       options.add("-s");
       options.add(getGeneratedSourcesDirectory().getAbsolutePath());
+
+      if (processorpath != null) {
+        options.add("-processorpath");
+        options.add(processorpath);
+      }
 
       if (getAnnotationProcessors() != null) {
         options.add("-processor");
@@ -237,9 +246,16 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
   @Override
   public boolean setProcessorpath(List<File> processorpath) throws IOException {
     if (processorpath != null) {
-      throw new IllegalArgumentException();
+      if (log.isDebugEnabled()) {
+        StringBuilder msg = new StringBuilder();
+        for (File element : processorpath) {
+          msg.append("\n   ").append(element);
+        }
+        log.debug("Processorpath: {} entries{}", processorpath.size(), msg.toString());
+      }
+      this.processorpath = Joiner.on(File.pathSeparatorChar).join(processorpath);
     }
-    return false;
+    return digester.digestProcessorpath(processorpath != null ? processorpath : ImmutableList.<File>of());
   }
 
   @Override
