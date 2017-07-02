@@ -63,6 +63,11 @@ public class CompilerBuildContext extends AbstractBuildContext {
     }
   }
 
+  @Override
+  public void markUptodateOutput(File outputFile) {
+    super.markUptodateOutput(outputFile);
+  }
+
   /**
    * Adds messages associated with mojo execution in project pom.xml. This is useful to capture compiler failures, i.e. exception in the compiler itself. These messages are carried-over during
    * no-changed rebuild and trigger build failures as expected. These messages are discarded during full or incremental build and must be recreated as needed.

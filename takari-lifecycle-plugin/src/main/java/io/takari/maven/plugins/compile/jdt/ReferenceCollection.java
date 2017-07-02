@@ -14,6 +14,7 @@ package io.takari.maven.plugins.compile.jdt;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -22,6 +23,8 @@ import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.lookup.TypeConstants;
 import org.eclipse.jdt.internal.core.builder.NameSet;
 import org.eclipse.jdt.internal.core.builder.QualifiedNameSet;
+
+import com.google.common.collect.ImmutableSet;
 
 
 // adopted from org.eclipse.jdt.internal.core.builder.ReferenceCollection because we need Serializable
@@ -32,10 +35,16 @@ class ReferenceCollection implements Serializable {
   final Set<String> simpleNameReferences;
   final Set<String> rootReferences;
 
-  protected ReferenceCollection(char[][] rootReferences, char[][][] qualifiedNameReferences, char[][] simpleNameReferences) {
-    this.qualifiedNameReferences = toStringSet(qualifiedNameReferences);
-    this.simpleNameReferences = toStringSet(simpleNameReferences);
-    this.rootReferences = toStringSet(rootReferences);
+  public ReferenceCollection(char[][] rootReferences, char[][][] qualifiedNameReferences, char[][] simpleNameReferences) {
+    this.qualifiedNameReferences = ImmutableSet.copyOf(toStringSet(qualifiedNameReferences));
+    this.simpleNameReferences = ImmutableSet.copyOf(toStringSet(simpleNameReferences));
+    this.rootReferences = ImmutableSet.copyOf(toStringSet(rootReferences));
+  }
+
+  public ReferenceCollection() {
+    this.qualifiedNameReferences = new LinkedHashSet<>();
+    this.simpleNameReferences = new LinkedHashSet<>();
+    this.rootReferences = new LinkedHashSet<>();
   }
 
   private Set<String> toStringSet(char[][] strings) {
@@ -93,13 +102,15 @@ class ReferenceCollection implements Serializable {
    * 
    * @see BuildContext#recordDependencies(String[])
    */
-  public void addDependencies(String[] typeNameDependencies) {
+  public void addDependencies(Collection<String> typeNameDependencies) {
     // if each qualified type name is already known then all of its subNames can be skipped
     // and its expected that very few qualified names in typeNameDependencies need to be added
     // but could always take 'p1.p2.p3.X' and make all qualified names 'p1' 'p1.p2' 'p1.p2.p3' 'p1.p2.p3.X', then intern
-    char[][][] qNames = new char[typeNameDependencies.length][][];
-    for (int i = typeNameDependencies.length; --i >= 0;)
-      qNames[i] = CharOperation.splitOn('.', typeNameDependencies[i].toCharArray());
+    char[][][] qNames = new char[typeNameDependencies.size()][][];
+    Iterator<String> typeNameDependency = typeNameDependencies.iterator();
+    for (int i = 0; typeNameDependency.hasNext(); i++) {
+      qNames[i] = CharOperation.splitOn('.', typeNameDependency.next().toCharArray());
+    }
     qNames = internQualifiedNames(qNames, false);
 
     next: for (int i = qNames.length; --i >= 0;) {

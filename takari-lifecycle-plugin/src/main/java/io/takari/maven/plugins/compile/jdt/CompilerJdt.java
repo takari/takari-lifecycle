@@ -98,6 +98,8 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
    */
   private static final String ATTR_REFERENCES = "jdt.references";
 
+  private static final String ATTR_APTSTATE = "jdt.aptstate";
+
   private List<File> dependencies;
 
   private List<File> processorpath;
@@ -130,6 +132,8 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
      */
     protected final Set<File> staleOutputs = new HashSet<>();
 
+    protected AnnotationProcessingState aptstate;
+
     public abstract boolean setSources(List<ResourceMetadata<File>> sources) throws IOException;
 
     public abstract void enqueueAffectedSources(HashMap<String, byte[]> digest, Map<String, byte[]> oldDigest) throws IOException;
@@ -141,6 +145,12 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     protected abstract void addDependentsOf(File resource);
 
     public abstract int compile(Classpath namingEnvironment, Compiler compiler) throws IOException;
+
+    protected CompilationStrategy() {
+      if (!isProcNone()) {
+        aptstate = context.getAttribute(ATTR_APTSTATE, true, AnnotationProcessingState.class);
+      }
+    }
 
     public Classpath createClasspath() throws IOException {
       return CompilerJdt.this.createClasspath(staleOutputs);
@@ -165,10 +175,13 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
     protected void deleteOrphanedOutputs(Collection<ResourceMetadata<File>> outputs) throws IOException {
       for (ResourceMetadata<File> output : outputs) {
-        File outputFile = output.getResource();
-        context.deleteOutput(outputFile);
-        addDependentsOf(outputFile);
+        deleteOrphanedOutput(output.getResource());
       }
+    }
+
+    protected void deleteOrphanedOutput(File outputFile) throws IOException {
+      context.deleteOutput(outputFile);
+      addDependentsOf(outputFile);
     }
 
     protected boolean deleteStaleOutputs() throws IOException {
@@ -219,17 +232,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
     @Override
     public int compile(Classpath namingEnvironment, Compiler compiler) throws IOException {
-      // if (getProc() == Proc.only) {
-      // // proc==only cannot be implemented incrementally
-      // // changed sources may require types defined in sources that did not change,
-      // // which are not available during incremental build without generated .class files
-      // for (ResourceMetadata<File> source : sources.values()) {
-      // if (!compileQueue.containsKey(source.getResource())) {
-      // enqueue(source);
-      // }
-      // }
-      // }
-
       // incremental compilation loop
       // keep calling the compiler while there are sources in the queue
       while (!compileQueue.isEmpty()) {
@@ -252,6 +254,8 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
         enqueueAffectedSources();
       }
+
+      persistAnnotationProcessingState(compiler, aptstate);
 
       return processedSources.size();
     }
@@ -280,7 +284,20 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       return compilationRequired || !compileQueue.isEmpty();
     }
 
-    private void enqueueAffectedSources() throws IOException {
+    private void enqueueAllAnnotatedSources() {
+      Set<File> annotatedSources = aptstate.processedSources;
+      Set<File> writtenOutputs = aptstate.writtenOutputs;
+      aptstate = null; // this needs to be before enqueue(File) to avoid recursion
+      for (File annotatedSource : annotatedSources) {
+        enqueue(annotatedSource);
+      }
+      staleOutputs.addAll(writtenOutputs);
+    }
+
+    private void enqueueAffectedSources() {
+      if (aptstate != null && aptstate.referencedTypes.includes(qualifiedNames, simpleNames, rootNames)) {
+        enqueueAllAnnotatedSources();
+      }
       for (ResourceMetadata<File> input : sources.values()) {
         final File resource = input.getResource();
         if (!processedQueue.contains(resource) && resource.canRead()) {
@@ -342,12 +359,32 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     }
 
     private void enqueue(ResourceMetadata<File> input) {
-      File sourceFile = input.getResource();
-      if (processedSources.count(sourceFile) > 10) {
+      enqueue(input.getResource());
+    }
+
+    private void enqueue(File sourceFile) {
+      if (processedSources.count(sourceFile) > 15) {
+        // this is meant to prevent endless recompiles and exact number of recompiles is not important
+        // note that processedSources can be incremented multiple times for the same source during compilation bootstrap
+        // - the source has changed
+        // - any type referenced by the source has changed
+        // - any annotated source has changed
+        // - any typed referenced during annotation processing has changed
         throw new IllegalStateException("Too many recompiles " + sourceFile);
       }
-      processedSources.add(sourceFile);
-      compileQueue.put(sourceFile, newSourceFile(sourceFile));
+      if (aptstate != null && aptstate.processedSources.contains(sourceFile)) {
+        enqueueAllAnnotatedSources();
+      } else {
+        processedSources.add(sourceFile);
+        compileQueue.put(sourceFile, newSourceFile(sourceFile));
+      }
+    }
+
+    @Override
+    protected void deleteOrphanedOutput(File outputFile) throws IOException {
+      if (aptstate == null || !aptstate.writtenOutputs.contains(outputFile)) {
+        super.deleteOrphanedOutput(outputFile);
+      }
     }
 
     @Override
@@ -428,14 +465,21 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
     @Override
     public int compile(Classpath namingEnvironment, Compiler compiler) throws IOException {
-      if (!compileQueue.isEmpty()) {
-        processSources();
+      processSources();
 
+      if (aptstate != null) {
+        staleOutputs.addAll(aptstate.writtenOutputs);
+        aptstate = null;
+      }
+
+      if (!compileQueue.isEmpty()) {
         ICompilationUnit[] compilationUnits = compileQueue.values().toArray(new ICompilationUnit[compileQueue.size()]);
         compiler.compile(compilationUnits);
-
-        deleteStaleOutputs();
       }
+
+      persistAnnotationProcessingState(compiler, null);
+
+      deleteStaleOutputs();
 
       return compileQueue.size();
     }
@@ -559,6 +603,22 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         fileManager.close();
       }
     }
+  }
+
+  private void persistAnnotationProcessingState(Compiler compiler, AnnotationProcessingState carryOverState) {
+    if (compiler.annotationProcessorManager == null) {
+      return; // not processing annotations
+    }
+    final AnnotationProcessingState aptstate;
+    if (carryOverState != null) {
+      // incremental build did not need to process annotations, carry over the state and outputs to the next build
+      aptstate = carryOverState;
+      aptstate.writtenOutputs.forEach(context::markUptodateOutput);
+    } else {
+      AnnotationProcessorManager aptmanager = (AnnotationProcessorManager) compiler.annotationProcessorManager;
+      aptstate = new AnnotationProcessingState(aptmanager.getProcessedSources(), aptmanager.getReferencedTypes(), aptmanager.getWittenOutputs());
+    }
+    context.setAttribute(ATTR_APTSTATE, aptstate);
   }
 
   @Override

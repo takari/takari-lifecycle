@@ -30,6 +30,8 @@ import org.eclipse.jdt.internal.compiler.batch.CompilationUnit;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 
+import com.google.common.collect.ImmutableSet;
+
 import io.takari.incrementalbuild.Output;
 import io.takari.incrementalbuild.Resource;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
@@ -44,6 +46,7 @@ class FilerImpl implements Filer {
   private final boolean incremental;
 
   private final Set<URI> createdResources = new HashSet<>();
+  private final Set<File> writtenFiles = new HashSet<>();
 
   private class FileObjectDelegate {
     private final Collection<Resource<File>> inputs;
@@ -53,7 +56,9 @@ class FilerImpl implements Filer {
     }
 
     public OutputStream openOutputStream(URI uri) throws IOException {
-      final Output<File> output = context.processOutput(new File(uri));
+      File outputFile = new File(uri);
+      writtenFiles.add(outputFile);
+      final Output<File> output = context.processOutput(outputFile);
       for (Resource<File> input : inputs) {
         input.associateOutput(output);
       }
@@ -204,5 +209,9 @@ class FilerImpl implements Filer {
 
   public void hardReset() {
     this.createdResources.clear();
+  }
+
+  public Set<File> getWrittenFiles() {
+    return ImmutableSet.copyOf(writtenFiles);
   }
 }

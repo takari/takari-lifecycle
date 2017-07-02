@@ -26,6 +26,9 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
 
+import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.TypeSpec;
+
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 import io.takari.maven.plugins.compile.javac.CompilerJavac;
 import io.takari.maven.plugins.compile.jdt.CompilerJdt;
@@ -487,6 +490,8 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     // the point of this test is to assert that changes to annotations trigger affected sources reprocessing when proc=only
     // note sourcepath=disable, otherwise proc:only is all-or-nothing
 
+    // TODO this test likely becomes redundant when annotation processing is always all-or-nothing
+
     File processor = compileAnnotationProcessor();
     File basedir = resources.getBasedir("compile-proc/proc-incremental-proconly");
     File generatedSources = new File(basedir, "target/generated-sources/annotations");
@@ -502,7 +507,9 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     processAnnotations(basedir, Proc.only, processor, processors, newParameter("sourcepath", "disable"));
     mojos.assertDeletedOutputs(generatedSources, "proc/GeneratedConcrete.java", "proc/GeneratedAbstract.java");
     if (CompilerJdt.ID.equals(compilerId)) {
-      mojos.assertCarriedOverOutputs(generatedSources, "proc/GeneratedAnother.java");
+      // annotation processing is always all-or-nothing, all outputs are always recreated
+      // mojos.assertCarriedOverOutputs(generatedSources, "proc/GeneratedAnother.java");
+      mojos.assertBuildOutputs(generatedSources, "proc/GeneratedAnother.java");
     } else {
       mojos.assertBuildOutputs(generatedSources, "proc/GeneratedAnother.java");
     }
@@ -670,6 +677,56 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     File basedir = procCompile("compile-proc/proc", Proc.proc, new Xpp3Dom("processorpath"));
     mojos.assertBuildOutputs(new File(basedir, "target"), //
         "classes/proc/Source.class");
+  }
+
+  @Test
+  public void testProc_incrementalTypeJump() throws Exception {
+    // assert incremental behaviour when processor uses Elements to access non-annotated types
+    // jdt is expected to run annotation processor if referenced non-annotated types change
+    // (obviously still need to run apt when annotated types change, but that is tested elsewhere)
+
+    File processor = compileAnnotationProcessor();
+    File basedir = resources.getBasedir("compile-proc/proc");
+    File src = new File(basedir, "src/main/java");
+
+    // processor references non-existing type proc.SourceJump
+    processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.TypeJumpingProcessor"));
+    mojos.assertBuildOutputs(new File(basedir, "target"), //
+        "classes/proc/Source.class");
+
+    // create proc.SourceJump, assert apt ran as expected
+    JavaFile.builder("proc", TypeSpec.classBuilder("SourceJump").build()).build().writeTo(src);
+    processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.TypeJumpingProcessor"));
+    mojos.assertBuildOutputs(new File(basedir, "target"), //
+        "classes/proc.SourceJump", // the generated resource
+        "classes/proc/Source.class", //
+        "classes/proc/SourceJump.class" //
+    );
+
+    // create proc.Unrelated, assert apt did NOT run
+    JavaFile.builder("proc", TypeSpec.classBuilder("Unrelated").build()).build().writeTo(src);
+    processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.TypeJumpingProcessor"));
+    if (CompilerJdt.ID.equals(compilerId)) {
+      // jdt is supposed to compile the new type but carry-over everything else
+      mojos.assertBuildOutputs(new File(basedir, "target"), //
+          "classes/proc/Unrelated.class");
+      mojos.assertDeletedOutputs(new File(basedir, "target"), new String[0]);
+      mojos.assertCarriedOverOutputs(new File(basedir, "target"), //
+          "classes/proc.SourceJump", // the generated resource
+          "classes/proc/Source.class", //
+          "classes/proc/SourceJump.class" //
+      );
+    } else {
+      // javac recompiles everything
+      mojos.assertBuildOutputs(new File(basedir, "target"), //
+          "classes/proc.SourceJump", // the generated resource
+          "classes/proc/Source.class", //
+          "classes/proc/SourceJump.class", //
+          "classes/proc/Unrelated.class" //
+      );
+    }
+
+    new Object();
   }
 
   private Xpp3Dom newProcessorpathEntry(MavenProject processor) {
