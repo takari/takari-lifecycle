@@ -28,7 +28,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.tools.StandardLocation;
 
-import org.apache.maven.plugin.MojoExecutionException;
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ClassFile;
@@ -458,7 +457,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   }
 
   @Override
-  public int compile() throws MojoExecutionException, IOException {
+  public int compile() throws IOException {
     Map<String, String> args = new HashMap<String, String>();
     // XXX figure out how to reuse source/target check from jdt
     // org.eclipse.jdt.internal.compiler.batch.Main.validateOptions(boolean)
