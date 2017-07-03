@@ -9,19 +9,13 @@ import javax.tools.StandardLocation;
 
 import org.eclipse.jdt.internal.compiler.apt.dispatch.BaseAnnotationProcessorManager;
 import org.eclipse.jdt.internal.compiler.apt.dispatch.ProcessorInfo;
-import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
-import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.problem.AbortCompilation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.takari.incrementalbuild.MessageSeverity;
 import io.takari.maven.plugins.compile.CompilerBuildContext;
 
 // TODO reconcile with BatchAnnotationProcessorManager
 class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
-
-  private Logger logger = LoggerFactory.getLogger(getClass());
 
   private final CompilerBuildContext context;
 
@@ -32,8 +26,6 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
   }
 
   private final ResettableProcessorIterator processors;
-
-  private boolean finished;
 
   private static class SpecifiedProcessors implements ResettableProcessorIterator {
 
@@ -132,17 +124,6 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
     throw new AbortCompilation(null, e);
   }
 
-  @Override
-  public void processAnnotations(CompilationUnitDeclaration[] units, ReferenceBinding[] referenceBindings, boolean isLastRound) {
-    if (finished) {
-      // workaround eclipse jdt compiler bug 468893
-      logger.warn("Suppressed duplicate processingOver==true annotation processor invocation, see Eclipse bug 468893");
-      return;
-    }
-    finished = isLastRound;
-    super.processAnnotations(units, referenceBindings, isLastRound);
-  }
-
   /**
    * Resets this annotation processor manager between incremental compiler loop iterations.
    */
@@ -154,6 +135,5 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
     _round = 0;
     // clear/reset this class state
     processors.reset();
-    finished = false;
   }
 }
