@@ -762,12 +762,9 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       strategy.addDependentsOf(CharOperation.toString(classFile.getCompoundName()));
     }
 
-    final BufferedOutputStream os = new BufferedOutputStream(output.newOutputStream());
-    try {
+    try (final BufferedOutputStream os = new BufferedOutputStream(output.newOutputStream())) {
       os.write(bytes);
       os.flush();
-    } finally {
-      os.close();
     }
   }
 
