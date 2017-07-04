@@ -20,11 +20,17 @@ class OutputDirectoryClasspathEntry implements ClasspathEntry, MutableClasspathE
 
   private final File directory;
 
+  /**
+   * <strong>Live</strong> collection of output files to ignore. New files are added to the collection during lifespan of this OutputDirectoryClasspathEntry instance. The idea is to hide to-be-deleted
+   * files from classpath.
+   */
   private final Collection<File> staleOutputs;
 
   private ClasspathDirectory delegate;
 
-
+  /**
+   * @param staleOutputs is a <strong>live</strong> collection of output files to ignore.
+   */
   public OutputDirectoryClasspathEntry(File directory, Collection<File> staleOutputs) {
     this.directory = directory;
     this.staleOutputs = staleOutputs;

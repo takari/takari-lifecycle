@@ -50,10 +50,8 @@ import org.eclipse.jdt.internal.compiler.util.SuffixConstants;
 import org.eclipse.jdt.internal.core.builder.ProblemFactory;
 
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Multimap;
 import com.google.common.collect.Multiset;
 
 import io.takari.incrementalbuild.MessageSeverity;
@@ -124,7 +122,13 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   private final ProjectClasspathDigester processorpathDigester;
 
   private abstract class CompilationStrategy {
-    protected final Multimap<File, File> sourceOutputs = HashMultimap.create();
+
+    /**
+     * To-be-deleted output files created during prior builds. These files are hidden from compile path.
+     * 
+     * @see OutputDirectoryClasspathEntry#OutputDirectoryClasspathEntry(File, Collection).
+     */
+    protected final Set<File> staleOutputs = new HashSet<>();
 
     public abstract boolean setSources(List<ResourceMetadata<File>> sources) throws IOException;
 
@@ -139,7 +143,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     public abstract int compile(Classpath namingEnvironment, Compiler compiler) throws IOException;
 
     public Classpath createClasspath() throws IOException {
-      return CompilerJdt.this.createClasspath(sourceOutputs.values());
+      return CompilerJdt.this.createClasspath(staleOutputs);
     }
 
     public abstract void addGeneratedSource(Output<File> generatedSource);
@@ -169,27 +173,25 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
     protected boolean deleteStaleOutputs() throws IOException {
       boolean changed = false;
-      for (File sourceFile : sourceOutputs.keySet()) {
-        for (File associatedOutput : sourceOutputs.get(sourceFile)) {
-          if (!context.isProcessedOutput(associatedOutput)) {
-            context.deleteOutput(associatedOutput);
-            addDependentsOf(associatedOutput);
-            changed = true;
-          }
+      for (File staleOutput : staleOutputs) {
+        if (!context.isProcessedOutput(staleOutput)) {
+          context.deleteOutput(staleOutput);
+          addDependentsOf(staleOutput);
+          changed = true;
         }
       }
       return changed;
     }
 
     /**
-     * Marks sources as "processed" in the build context. Masks old associated outputs from naming environments by adding them to {@link #sourceOutputs} map.
+     * Marks sources as "processed" in the build context. Masks old associated outputs from naming environments by adding them to {@link #staleOutputs}.
      */
     protected void processSources() {
-      sourceOutputs.clear();
+      staleOutputs.clear();
       for (File sourceFile : compileQueue.keySet()) {
         ResourceMetadata<File> source = sources.get(sourceFile);
         for (ResourceMetadata<File> output : context.getAssociatedOutputs(source)) {
-          sourceOutputs.put(sourceFile, output.getResource());
+          staleOutputs.add(output.getResource());
         }
         sources.put(source.getResource(), source.process());
       }
@@ -570,6 +572,9 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     return new CompilationUnit(null, fileName, encoding, getOutputDirectory().getAbsolutePath(), false);
   }
 
+  /**
+   * @param staleOutputs is a <strong>live</strong> collection of output files to ignore.
+   */
   private Classpath createClasspath(Collection<File> staleOutputs) throws IOException {
     final List<ClasspathEntry> entries = new ArrayList<ClasspathEntry>();
     final List<MutableClasspathEntry> mutableentries = new ArrayList<MutableClasspathEntry>();
