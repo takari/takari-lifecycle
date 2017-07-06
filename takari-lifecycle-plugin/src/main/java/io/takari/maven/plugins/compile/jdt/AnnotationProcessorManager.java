@@ -41,15 +41,12 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
   private boolean recordingReferencedTypes = true;
   private final Set<String> referencedTypes = new LinkedHashSet<>();
 
-  private static interface ResettableProcessorIterator extends Iterator<Processor> {
+  private boolean suppressRegularRounds = false;
+  private boolean suppressLastRound = false;
 
-    void reset();
+  private final Iterator<Processor> processors;
 
-  }
-
-  private final ResettableProcessorIterator processors;
-
-  private static class SpecifiedProcessors implements ResettableProcessorIterator {
+  private static class SpecifiedProcessors implements Iterator<Processor> {
 
     private final ClassLoader loader;
     private final String[] processors;
@@ -79,14 +76,9 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
     public void remove() {
       throw new UnsupportedOperationException();
     }
-
-    @Override
-    public void reset() {
-      idx = 0;
-    }
   }
 
-  private static class DiscoveredProcessors implements ResettableProcessorIterator {
+  private static class DiscoveredProcessors implements Iterator<Processor> {
 
     private final ServiceLoader<Processor> loader;
     private Iterator<Processor> iterator;
@@ -110,12 +102,6 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
     public void remove() {
       throw new UnsupportedOperationException();
     }
-
-    @Override
-    public void reset() {
-      this.iterator = loader.iterator();
-    }
-
   }
 
   public AnnotationProcessorManager(CompilerBuildContext context, ProcessingEnvImpl processingEnv, StandardJavaFileManager fileManager, String[] processors) {
@@ -156,14 +142,8 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
   /**
    * Resets this annotation processor manager between incremental compiler loop iterations.
    */
-  public void hardReset() {
-    // clear/reset parent state
-    ((ProcessingEnvImpl) _processingEnv).hardReset();
-    _processors.clear();
-    _isFirstRound = true;
-    _round = 0;
-    // clear/reset this class state
-    processors.reset();
+  public void incrementalIterationReset() {
+    ((ProcessingEnvImpl) _processingEnv).incrementalIterationReset();
   }
 
   private class _RoundEnvImpl extends RoundEnvImpl {
@@ -212,6 +192,14 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
   // copied from BaseAnnotationProcessorManager in order to create custom RoundEnvImpl impl. boo.
   @Override
   public void processAnnotations(CompilationUnitDeclaration[] units, ReferenceBinding[] referenceBindings, boolean isLastRound) {
+    if (!isLastRound && suppressRegularRounds) {
+      return;
+    }
+
+    if (isLastRound && suppressLastRound) {
+      return;
+    }
+
     RoundEnvImpl roundEnv = new _RoundEnvImpl(units, referenceBindings, isLastRound, _processingEnv);
     if (_isFirstRound) {
       _isFirstRound = false;
@@ -223,6 +211,14 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
     }
     RoundDispatcher dispatcher = new RoundDispatcher(this, roundEnv, roundEnv.getRootAnnotations(), traceProcessorInfo, traceRounds);
     dispatcher.round();
+  }
+
+  public void suppressRegularRounds(boolean suppress) {
+    this.suppressRegularRounds = suppress;
+  }
+
+  public void suppressLastRound(boolean suppress) {
+    this.suppressLastRound = suppress;
   }
 
   public Set<File> getProcessedSources() {

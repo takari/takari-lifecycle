@@ -118,11 +118,11 @@ class ProcessingEnvImpl extends BaseProcessingEnvImpl {
     return _factory;
   }
 
-  public void hardReset() {
+  public void incrementalIterationReset() {
     reset();
     setErrorRaised(false);
 
-    ((FilerImpl) _filer).hardReset();
+    ((FilerImpl) _filer).incrementalIterationReset();
   }
 
   public void addReferencedTypeObserver(Consumer<String> observer) {

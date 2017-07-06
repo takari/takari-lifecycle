@@ -45,6 +45,7 @@ import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
 import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
 import org.eclipse.jdt.internal.compiler.impl.IrritantSet;
+import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.eclipse.jdt.internal.compiler.util.SuffixConstants;
 import org.eclipse.jdt.internal.core.builder.ProblemFactory;
@@ -232,6 +233,13 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
     @Override
     public int compile(Classpath namingEnvironment, Compiler compiler) throws IOException {
+      AnnotationProcessorManager aptmanager = (AnnotationProcessorManager) compiler.annotationProcessorManager;
+
+      if (aptmanager != null) {
+        // suppress APT lastRound during incremental compile loop
+        aptmanager.suppressLastRound(true);
+      }
+
       // incremental compilation loop
       // keep calling the compiler while there are sources in the queue
       while (!compileQueue.isEmpty()) {
@@ -246,13 +254,24 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         compiler.compile(compilationUnits);
         namingEnvironment.reset();
 
-        if (compiler.annotationProcessorManager != null) {
-          ((AnnotationProcessorManager) compiler.annotationProcessorManager).hardReset();
+        if (aptmanager != null) {
+          aptmanager.incrementalIterationReset();
         }
 
         deleteStaleOutputs(); // delete stale outputs and enqueue affected sources
 
         enqueueAffectedSources();
+      }
+
+      // run apt last round iff doing annotation processing and ran regular apt rounds
+      if (aptmanager != null && aptstate == null) {
+        // tell apt manager we are running APT lastRound
+        aptmanager.suppressRegularRounds(true);
+        aptmanager.suppressLastRound(false);
+
+        // trick the compiler to run APT without any source or binary types
+        compiler.referenceBindings = new ReferenceBinding[0];
+        compiler.compile(new ICompilationUnit[0]);
       }
 
       persistAnnotationProcessingState(compiler, aptstate);
