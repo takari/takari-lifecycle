@@ -65,20 +65,16 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     proc, only, none,
 
     /**
-     * Like {@link #proc}, but processes and compiles all sources if any source needs to be processed and/or compiled.
-     * <p>
-     * This is an experimental workaround for jdt compiler bug 447546, has no effect on javac-based compilers
+     * Same as {@link #proc}
      * 
-     * @see https://bugs.eclipse.org/bugs/show_bug.cgi?id=447546
+     * @deprecated use {@link #proc}
      */
     procEX,
 
     /**
-     * Like {@link #only}, but processes all sources if any source needs to be processed.
-     * <p>
-     * This is an experimental workaround for jdt compiler bug 447546, has no effect on javac-based compilers
+     * Same as {@link #only}
      * 
-     * @see https://bugs.eclipse.org/bugs/show_bug.cgi?id=447546
+     * @deprecated use {@link #only}
      */
     onlyEX
   }
@@ -457,7 +453,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     if (sourcepath == Sourcepath.disable) {
       return Collections.emptyList();
     }
-    if (sourcepath == null && proc != Proc.only && proc != Proc.onlyEX) {
+    if (sourcepath == null && proc != Proc.only) {
       return Collections.emptyList();
     }
 
@@ -551,6 +547,13 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
         throw new IllegalArgumentException(msg.toString());
       }
       proc = Proc.none;
+    }
+    if (proc == Proc.procEX) {
+      log.warn("proc=procEX is deprecated, use proc=proc.");
+      proc = Proc.proc;
+    } else if (proc == Proc.onlyEX) {
+      log.warn("proc=onlyEX is deprecated, use proc=only.");
+      proc = Proc.only;
     }
     return proc;
   }

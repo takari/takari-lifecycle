@@ -33,7 +33,6 @@ import org.junit.rules.TemporaryFolder;
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
 
-import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 import io.takari.maven.plugins.compile.CompilerBuildContext;
 import io.takari.maven.plugins.compile.jdt.classpath.Classpath;
 import io.takari.maven.plugins.compile.jdt.classpath.ClasspathEntry;
@@ -50,7 +49,7 @@ public class FilerImplTest {
   public void testGetResource_unsupportedLocation() throws Exception {
     EclipseFileManager fileManager = new EclipseFileManager(null, Charsets.UTF_8);
 
-    FilerImpl filer = new FilerImpl(null /* context */, fileManager, null /* compiler */, null /* env */, Proc.procEX);
+    FilerImpl filer = new FilerImpl(null /* context */, fileManager, null /* compiler */, null /* env */);
 
     try {
       filer.getResource(StandardLocation.SOURCE_PATH, "", "test");
@@ -69,7 +68,7 @@ public class FilerImplTest {
     classpath.add(new File("src/test/projects/compile-jdt-proc/getresource-location-classpath/dependency.zip"));
     fileManager.setLocation(StandardLocation.CLASS_PATH, classpath);
 
-    FilerImpl filer = new FilerImpl(null /* context */, fileManager, null /* compiler */, null /* env */, Proc.procEX);
+    FilerImpl filer = new FilerImpl(null /* context */, fileManager, null /* compiler */, null /* env */);
 
     Assert.assertEquals("dir resource", toString(filer.getResource(StandardLocation.CLASS_PATH, "", "dirresource.txt")));
     // Assert.assertEquals("jar resource", toString(filer.getResource(StandardLocation.CLASS_PATH, "", "jarresource.txt")));
@@ -89,7 +88,7 @@ public class FilerImplTest {
     File outputDir = temp.newFolder();
     fileManager.setLocation(StandardLocation.SOURCE_OUTPUT, Collections.singleton(outputDir));
 
-    FilerImpl filer = new FilerImpl(null /* context */, fileManager, null /* compiler */, null /* env */, Proc.procEX);
+    FilerImpl filer = new FilerImpl(null /* context */, fileManager, null /* compiler */, null /* env */);
 
     filer.createSourceFile("test.Source");
     try {
@@ -110,7 +109,7 @@ public class FilerImplTest {
     File outputDir = temp.newFolder();
     fileManager.setLocation(StandardLocation.SOURCE_OUTPUT, Collections.singleton(outputDir));
 
-    FilerImpl filer = new FilerImpl(null /* context */, fileManager, null /* compiler */, null /* env */, Proc.procEX);
+    FilerImpl filer = new FilerImpl(null /* context */, fileManager, null /* compiler */, null /* env */);
 
     filer.createResource(StandardLocation.SOURCE_OUTPUT, "test", "resource.txt");
     try {
@@ -154,11 +153,11 @@ public class FilerImplTest {
     CompilerBuildContext context = null;
     Map<String, String> processorOptions = null;
     CompilerJdt incrementalCompiler = null;
-    ProcessingEnvImpl env = new ProcessingEnvImpl(context, fileManager, processorOptions, compiler, incrementalCompiler, Proc.procEX);
+    ProcessingEnvImpl env = new ProcessingEnvImpl(context, fileManager, processorOptions, compiler, incrementalCompiler);
 
     TypeElement typeElement = env.getElementUtils().getTypeElement("java.lang.Object");
 
-    FilerImpl filer = new FilerImpl(null /* context */, fileManager, null /* compiler */, null /* env */, Proc.procEX);
+    FilerImpl filer = new FilerImpl(null /* context */, fileManager, null /* compiler */, null /* env */);
     filer.createSourceFile("test.Source", typeElement);
   }
 
@@ -169,7 +168,7 @@ public class FilerImplTest {
     File outputDir = temp.newFolder();
     fileManager.setLocation(StandardLocation.SOURCE_OUTPUT, Collections.singleton(outputDir));
 
-    FilerImpl filer = new FilerImpl(null /* context */, fileManager, null /* compiler */, null /* env */, Proc.procEX);
+    FilerImpl filer = new FilerImpl(null /* context */, fileManager, null /* compiler */, null /* env */);
 
     try {
       filer.getResource(StandardLocation.SOURCE_OUTPUT, "", "does-not-exist");

@@ -18,7 +18,7 @@ public class NonIncrementalProcessor extends ProcessorImpl {
       throws IOException {
     String clsQualifiedName = pkgName + "." + clsSimpleName;
 
-    // note this does not pass originating element to Filer, hense "non-incremental"
+    // note this does not pass originating element to Filer, hence "non-incremental"
     return processingEnv.getFiler().createSourceFile(clsQualifiedName);
   }
 

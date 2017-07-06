@@ -34,7 +34,6 @@ import com.google.common.collect.ImmutableSet;
 
 import io.takari.incrementalbuild.Output;
 import io.takari.incrementalbuild.Resource;
-import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 import io.takari.maven.plugins.compile.CompilerBuildContext;
 
 class FilerImpl implements Filer {
@@ -43,7 +42,6 @@ class FilerImpl implements Filer {
   private final StandardJavaFileManager fileManager;
   private final ProcessingEnvImpl processingEnv;
   private final CompilerJdt incrementalCompiler;
-  private final boolean incremental;
 
   private final Set<URI> createdResources = new HashSet<>();
   private final Set<File> writtenFiles = new HashSet<>();
@@ -120,12 +118,11 @@ class FilerImpl implements Filer {
 
   }
 
-  public FilerImpl(CompilerBuildContext context, StandardJavaFileManager fileManager, CompilerJdt incrementalCompiler, ProcessingEnvImpl processingEnv, Proc proc) {
+  public FilerImpl(CompilerBuildContext context, StandardJavaFileManager fileManager, CompilerJdt incrementalCompiler, ProcessingEnvImpl processingEnv) {
     this.context = context;
     this.fileManager = fileManager;
     this.incrementalCompiler = incrementalCompiler;
     this.processingEnv = processingEnv;
-    this.incremental = proc == Proc.proc || proc == Proc.only;
   }
 
   @Override
@@ -151,12 +148,8 @@ class FilerImpl implements Filer {
     });
   }
 
+  // TODO is not used, probably better to remove
   private Collection<Resource<File>> getInputs(Element[] elements) {
-    if (incremental && elements.length == 0) {
-      throw new IllegalArgumentException("originatingElements must be provided during incremental annotation processing.\n " //
-          + "fix the annotation processor or use procEX/onlyEX as a workaround");
-    }
-
     Map<File, Resource<File>> inputs = new HashMap<>();
     for (Element element : elements) {
       if (!(element instanceof ElementImpl)) {

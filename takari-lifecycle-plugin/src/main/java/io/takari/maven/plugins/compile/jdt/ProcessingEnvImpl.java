@@ -26,7 +26,6 @@ import org.eclipse.jdt.internal.compiler.lookup.PackageBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 
-import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 import io.takari.maven.plugins.compile.CompilerBuildContext;
 
 // TODO reconcile with BatchProcessingEnvImpl
@@ -37,8 +36,8 @@ class ProcessingEnvImpl extends BaseProcessingEnvImpl {
   // TODO this shadows private member of the superclass, not pretty
   private final Factory _factory;
 
-  public ProcessingEnvImpl(CompilerBuildContext context, StandardJavaFileManager fileManager, Map<String, String> processorOptions, Compiler compiler, CompilerJdt incrementalCompiler, Proc proc) {
-    this._filer = new FilerImpl(context, fileManager, incrementalCompiler, this, proc);
+  public ProcessingEnvImpl(CompilerBuildContext context, StandardJavaFileManager fileManager, Map<String, String> processorOptions, Compiler compiler, CompilerJdt incrementalCompiler) {
+    this._filer = new FilerImpl(context, fileManager, incrementalCompiler, this);
     this._messager = new MessagerImpl(context, this);
     this._processorOptions = processorOptions != null ? processorOptions : Collections.<String, String>emptyMap();
     this._compiler = compiler;

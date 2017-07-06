@@ -318,13 +318,13 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
     Xpp3Dom processors = newProcessors("processor.NonIncrementalProcessor");
 
-    processAnnotations(basedir, Proc.onlyEX, processor, processors);
+    processAnnotations(basedir, Proc.only, processor, processors);
     mojos.assertBuildOutputs(target, //
         "generated-sources/annotations/proc/NonIncrementalSource.java");
 
     rm(basedir, "src/main/java/proc/Source.java");
 
-    processAnnotations(basedir, Proc.onlyEX, processor, processors);
+    processAnnotations(basedir, Proc.only, processor, processors);
     mojos.assertDeletedOutputs(target, //
         "generated-sources/annotations/proc/NonIncrementalSource.java");
   }
@@ -478,7 +478,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
   @Test
   public void testProc_processorLastRound() throws Exception {
     Xpp3Dom processors = newProcessors("processor.ProcessorLastRound");
-    File basedir = procCompile("compile-proc/proc", Proc.onlyEX, processors);
+    File basedir = procCompile("compile-proc/proc", Proc.only, processors);
     mojos.assertBuildOutputs(new File(basedir, "target"), //
         "classes/types.lst");
 
@@ -544,14 +544,14 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     File processor = compileAnnotationProcessor();
     File basedir = resources.getBasedir("compile-proc/multiround-type-reference");
 
-    processAnnotations(basedir, Proc.procEX, processor, newProcessors("processor.ProcessorLastRound"));
+    processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.ProcessorLastRound"));
     mojos.assertBuildOutputs(new File(basedir, "target"), //
         "classes/proc/Source.class", //
         "classes/proc/AnotherSource.class", //
         "classes/types.lst");
 
     cp(basedir, "src/main/java/proc/Source.java-changed", "src/main/java/proc/Source.java");
-    processAnnotations(basedir, Proc.procEX, processor, newProcessors("processor.ProcessorLastRound"));
+    processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.ProcessorLastRound"));
     mojos.assertBuildOutputs(new File(basedir, "target"), //
         "classes/proc/Source.class", //
         "classes/proc/AnotherSource.class", //
@@ -564,7 +564,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     Assume.assumeTrue(CompilerJdt.ID.equals(compilerId));
 
     Xpp3Dom processors = newProcessors("processor.ProcessorLastRound_typeIndex");
-    File basedir = procCompile("compile-proc/multiround-type-index", Proc.procEX, processors);
+    File basedir = procCompile("compile-proc/multiround-type-index", Proc.proc, processors);
     File target = new File(basedir, "target");
     mojos.assertBuildOutputs(target, //
         "generated-sources/annotations/generated/TypeIndex.java", //
@@ -613,33 +613,28 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     File basedir = resources.getBasedir("compile-proc/proc");
     File target = new File(basedir, "target");
 
-    processAnnotations(basedir, Proc.procEX, processor, newProcessors("processor.NonIncrementalProcessor"));
+    processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.NonIncrementalProcessor"));
     mojos.assertBuildOutputs(target, //
         "classes/proc/Source.class", //
         "generated-sources/annotations/proc/NonIncrementalSource.java", //
         "classes/proc/NonIncrementalSource.class");
 
     FileUtils.deleteDirectory(target);
-    processAnnotations(basedir, Proc.onlyEX, processor, newProcessors("processor.NonIncrementalProcessor"));
+    processAnnotations(basedir, Proc.only, processor, newProcessors("processor.NonIncrementalProcessor"));
     mojos.assertBuildOutputs(target, //
         "generated-sources/annotations/proc/NonIncrementalSource.java");
 
     FileUtils.deleteDirectory(target);
-    try {
-      processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.NonIncrementalProcessor"));
-      Assert.fail();
-    } catch (MojoExecutionException expected) {
-      // TODO validate the error message
-    }
+    processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.NonIncrementalProcessor"));
+    mojos.assertBuildOutputs(target, //
+        "classes/proc/Source.class", //
+        "generated-sources/annotations/proc/NonIncrementalSource.java", //
+        "classes/proc/NonIncrementalSource.class");
 
     FileUtils.deleteDirectory(target);
-    try {
-      processAnnotations(basedir, Proc.only, processor, newProcessors("processor.NonIncrementalProcessor"));
-      Assert.fail();
-    } catch (MojoExecutionException expected) {
-      // TODO validate the error message
-    }
-
+    processAnnotations(basedir, Proc.only, processor, newProcessors("processor.NonIncrementalProcessor"));
+    mojos.assertBuildOutputs(target, //
+        "generated-sources/annotations/proc/NonIncrementalSource.java");
   }
 
   @Test

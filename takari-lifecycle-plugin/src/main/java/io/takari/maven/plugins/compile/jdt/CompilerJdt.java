@@ -580,7 +580,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     compilerOptions.setShowWarnings(isShowWarnings());
     compilerOptions.docCommentSupport = true;
 
-    if (!sourcepath.isEmpty() || (isProcEscalate() && strategy instanceof IncrementalCompilationStrategy)) {
+    if (!sourcepath.isEmpty() && strategy instanceof IncrementalCompilationStrategy) {
       strategy.enqueueAllSources();
       strategy = new FullCompilationStrategy();
     }
@@ -609,7 +609,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         fileManager.setLocation(StandardLocation.CLASS_OUTPUT, Collections.singleton(getOutputDirectory()));
         fileManager.setLocation(StandardLocation.SOURCE_OUTPUT, Collections.singleton(getGeneratedSourcesDirectory()));
 
-        ProcessingEnvImpl processingEnv = new ProcessingEnvImpl(context, fileManager, getAnnotationProcessorOptions(), compiler, this, getProc());
+        ProcessingEnvImpl processingEnv = new ProcessingEnvImpl(context, fileManager, getAnnotationProcessorOptions(), compiler, this);
 
         compiler.annotationProcessorManager = new AnnotationProcessorManager(context, processingEnv, fileManager, getAnnotationProcessors());
         compiler.options.storeAnnotations = true;
@@ -823,15 +823,11 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   }
 
   private boolean isProcOnly() {
-    return getProc() == Proc.only || getProc() == Proc.onlyEX;
+    return getProc() == Proc.only;
   }
 
   private boolean isProcNone() {
     return getProc() == Proc.none;
-  }
-
-  private boolean isProcEscalate() {
-    return getProc() == Proc.procEX || getProc() == Proc.onlyEX;
   }
 
   private void writeClassFile(Resource<File> input, String relativeStringName, ClassFile classFile) throws IOException {
