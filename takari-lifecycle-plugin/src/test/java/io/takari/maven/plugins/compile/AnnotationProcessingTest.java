@@ -26,6 +26,9 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.Parameterized.Parameters;
 
+import com.squareup.javapoet.AnnotationSpec;
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
 
@@ -116,6 +119,34 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         "classes/proc/GeneratedSource.class", //
         "generated-sources/annotations/proc/AnotherGeneratedSource.java", //
         "classes/proc/AnotherGeneratedSource.class");
+  }
+
+  @Test
+  public void testProc_incrementalTypeIndex() throws Exception {
+    File processor = compileAnnotationProcessor();
+    File basedir = resources.getBasedir("compile-proc/proc");
+    File src = new File(basedir, "src/main/java");
+
+    processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.ProcessorLastRound"));
+    mojos.assertBuildOutputs(new File(basedir, "target/classes"), "proc/Source.class", "types.lst");
+    assertFileContents("proc.Source\n", basedir, "target/classes/types.lst");
+
+    // create new annotated source and run incremental build
+    JavaFile.builder("proc", //
+        TypeSpec.classBuilder("AnotherSource") //
+            .addAnnotation(AnnotationSpec.builder(ClassName.get("processor", "Annotation")).build()) //
+            .build()) //
+        .build().writeTo(src);
+    processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.ProcessorLastRound"));
+    mojos.assertBuildOutputs(new File(basedir, "target/classes"), "proc/Source.class", "proc/AnotherSource.class", "types.lst");
+    assertFileContents("proc.AnotherSource\nproc.Source\n", basedir, "target/classes/types.lst");
+
+    // delete the new source and run incremental build
+    rm(src, "proc/AnotherSource.java");
+    processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.ProcessorLastRound"));
+    mojos.assertBuildOutputs(new File(basedir, "target/classes"), "proc/Source.class", "types.lst");
+    mojos.assertDeletedOutputs(new File(basedir, "target/classes"), "proc/AnotherSource.class");
+    assertFileContents("proc.Source\n", basedir, "target/classes/types.lst");
   }
 
   @Test
@@ -983,5 +1014,33 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     mojos.assertBuildOutputs(new File(projectbBasedir, "target"), //
         "generated-sources/annotations/sourcepath/projectb/GeneratedSourceB.java" //
     );
+  }
+
+  @Test
+  public void testAnnotatedMember_incrementalProcessingTrigger() throws Exception {
+    File processor = compileAnnotationProcessor();
+    File basedir = resources.getBasedir();
+    File src = new File(basedir, "src/main/java");
+
+    // initial build, writes annotated field path is written to elements.lst file
+    AnnotationSpec annotation = AnnotationSpec.builder(ClassName.get("processor", "Annotation")).build();
+    JavaFile.builder("proc", //
+        TypeSpec.classBuilder("AnnotatedMemberSource") //
+            .addField(FieldSpec.builder(String.class, "annotatedfield").addAnnotation(annotation).build()) //
+            .build()) //
+        .build().writeTo(src);
+    processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.AnnotatedElementsListProcessor"));
+    mojos.assertBuildOutputs(new File(basedir, "target/classes"), "proc/AnnotatedMemberSource.class", "elements.lst");
+    assertFileContents("/proc/AnnotatedMemberSource/annotatedfield FIELD\n", basedir, "target/classes/elements.lst");
+
+    // incremental build, introduce new annotated element and assert elements.lst includes both the new and the old elements
+    JavaFile.builder("proc", //
+        TypeSpec.classBuilder("AnnotatedSource") //
+            .addAnnotation(annotation) //
+            .build()) //
+        .build().writeTo(src);
+    processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.AnnotatedElementsListProcessor"));
+    mojos.assertBuildOutputs(new File(basedir, "target/classes"), "proc/AnnotatedMemberSource.class", "proc/AnnotatedSource.class", "elements.lst");
+    assertFileContents("/proc/AnnotatedMemberSource/annotatedfield FIELD\n/proc/AnnotatedSource CLASS\n", basedir, "target/classes/elements.lst");
   }
 }

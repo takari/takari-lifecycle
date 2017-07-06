@@ -210,6 +210,8 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         sources.put(source.getResource(), source.process());
       }
     }
+
+    public abstract void onAnnotationProcessing();
   }
 
   private class IncrementalCompilationStrategy extends CompilationStrategy {
@@ -308,7 +310,9 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       Set<File> writtenOutputs = aptstate.writtenOutputs;
       aptstate = null; // this needs to be before enqueue(File) to avoid recursion
       for (File annotatedSource : annotatedSources) {
-        enqueue(annotatedSource);
+        if (annotatedSource.isFile()) {
+          enqueue(annotatedSource);
+        }
       }
       staleOutputs.addAll(writtenOutputs);
     }
@@ -445,6 +449,13 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       sources.put(generatedSource.getResource(), generatedSource);
       processedQueue.add(generatedSource.getResource());
     }
+
+    @Override
+    public void onAnnotationProcessing() {
+      if (aptstate != null) {
+        enqueueAllAnnotatedSources();
+      }
+    }
   }
 
   private class FullCompilationStrategy extends CompilationStrategy {
@@ -505,6 +516,11 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
     @Override
     public void addGeneratedSource(Output<File> generatedSource) {
+      // full strategy compiles all sources in one pass
+    }
+
+    @Override
+    public void onAnnotationProcessing() {
       // full strategy compiles all sources in one pass
     }
   }
@@ -611,7 +627,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
         ProcessingEnvImpl processingEnv = new ProcessingEnvImpl(context, fileManager, getAnnotationProcessorOptions(), compiler, this);
 
-        compiler.annotationProcessorManager = new AnnotationProcessorManager(context, processingEnv, fileManager, getAnnotationProcessors());
+        compiler.annotationProcessorManager = new AnnotationProcessorManager(context, processingEnv, fileManager, getAnnotationProcessors(), this);
         compiler.options.storeAnnotations = true;
       }
 
@@ -872,6 +888,10 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
   public void addGeneratedSource(Output<File> generatedSource) {
     strategy.addGeneratedSource(generatedSource);
+  }
+
+  public void onAnnotationProcessing() {
+    strategy.onAnnotationProcessing();
   }
 
 }

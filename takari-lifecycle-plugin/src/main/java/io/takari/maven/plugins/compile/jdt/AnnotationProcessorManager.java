@@ -10,6 +10,7 @@ import java.util.function.Supplier;
 
 import javax.annotation.processing.Processor;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.NestingKind;
 import javax.lang.model.element.TypeElement;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
@@ -20,6 +21,7 @@ import org.eclipse.jdt.internal.compiler.apt.dispatch.ProcessorInfo;
 import org.eclipse.jdt.internal.compiler.apt.dispatch.RoundDispatcher;
 import org.eclipse.jdt.internal.compiler.apt.dispatch.RoundEnvImpl;
 import org.eclipse.jdt.internal.compiler.apt.model.ElementImpl;
+import org.eclipse.jdt.internal.compiler.apt.model.TypeElementImpl;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
@@ -45,6 +47,8 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
   private boolean suppressLastRound = false;
 
   private final Iterator<Processor> processors;
+
+  private final CompilerJdt incrementalCompiler;
 
   private static class SpecifiedProcessors implements Iterator<Processor> {
 
@@ -104,9 +108,10 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
     }
   }
 
-  public AnnotationProcessorManager(CompilerBuildContext context, ProcessingEnvImpl processingEnv, StandardJavaFileManager fileManager, String[] processors) {
+  public AnnotationProcessorManager(CompilerBuildContext context, ProcessingEnvImpl processingEnv, StandardJavaFileManager fileManager, String[] processors, CompilerJdt incrementalCompiler) {
     this.context = context;
     this._processingEnv = processingEnv;
+    this.incrementalCompiler = incrementalCompiler;
     ClassLoader procLoader = fileManager.getClassLoader(StandardLocation.ANNOTATION_PROCESSOR_PATH);
     this.processors = processors != null //
         ? new SpecifiedProcessors(procLoader, processors) //
@@ -125,7 +130,20 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
     if (processors.hasNext()) {
       Processor processor = processors.next();
       processor.init(_processingEnv);
-      ProcessorInfo procecssorInfo = new ProcessorInfo(processor);
+      ProcessorInfo procecssorInfo = new ProcessorInfo(processor) {
+
+        // the goal is to notify incrementalCompiler when annotation processing is taking place
+        // as of jdt.apt 1.3.0 this method is called right before running an annotation processor
+        // which is close enough to what we need
+        @Override
+        public boolean computeSupportedAnnotations(Set<TypeElement> annotations, Set<TypeElement> result) {
+          boolean shouldCall = super.computeSupportedAnnotations(annotations, result);
+          if (shouldCall) {
+            incrementalCompiler.onAnnotationProcessing();
+          }
+          return shouldCall;
+        }
+      };
       _processors.add(procecssorInfo); // TODO this needs to happen in RoundDispatcher.round()
       return procecssorInfo;
     }
@@ -171,13 +189,9 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
         Set<? extends Element> elements = elementsSupplier.get();
         if (_recordingReferencedTypes) {
           for (Element element : elements) {
-            if (!(element instanceof ElementImpl)) {
-              throw new IllegalArgumentException();
-            }
-            Binding binding = ((ElementImpl) element)._binding;
-            if (binding instanceof SourceTypeBinding) {
-              File file = new File(new String(((SourceTypeBinding) binding).getFileName()));
-              processedSources.add(file);
+            File sourceFile = getSourceFile((ElementImpl) element);
+            if (sourceFile != null) {
+              processedSources.add(sourceFile);
             }
           }
         }
@@ -186,6 +200,34 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
       } finally {
         recordingReferencedTypes = _recordingReferencedTypes;
       }
+    }
+
+    /**
+     * Given {@code Element}, returns source file that defines the element. Returns {@code null} if the element is not defined in a source file.
+     */
+    private File getSourceFile(ElementImpl element) {
+      TypeElementImpl topLevelType = getTopLevelType(element);
+      if (topLevelType == null) {
+        // TODO package-info.java annotation?
+        return null;
+      }
+      Binding binding = topLevelType._binding;
+      if (binding instanceof SourceTypeBinding) {
+        return new File(new String(((SourceTypeBinding) binding).getFileName()));
+      }
+      return null;
+    }
+
+    /**
+     * Returns enclosing top-level type of the element. Returns {@code null} if the element does not have enclosing top-level type.
+     */
+    private TypeElementImpl getTopLevelType(ElementImpl element) {
+      for (; element != null; element = (ElementImpl) element.getEnclosingElement()) {
+        if (element instanceof TypeElementImpl && ((TypeElementImpl) element).getNestingKind() == NestingKind.TOP_LEVEL) {
+          return (TypeElementImpl) element;
+        }
+      }
+      return null;
     }
   }
 
