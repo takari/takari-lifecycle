@@ -1029,7 +1029,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
             .addField(FieldSpec.builder(String.class, "annotatedfield").addAnnotation(annotation).build()) //
             .build()) //
         .build().writeTo(src);
-    processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.AnnotatedElementsListProcessor"));
+    processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.ElementsListProcessor"));
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), "proc/AnnotatedMemberSource.class", "elements.lst");
     assertFileContents("/proc/AnnotatedMemberSource/annotatedfield FIELD\n", basedir, "target/classes/elements.lst");
 
@@ -1039,8 +1039,43 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
             .addAnnotation(annotation) //
             .build()) //
         .build().writeTo(src);
-    processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.AnnotatedElementsListProcessor"));
+    processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.ElementsListProcessor"));
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), "proc/AnnotatedMemberSource.class", "proc/AnnotatedSource.class", "elements.lst");
     assertFileContents("/proc/AnnotatedMemberSource/annotatedfield FIELD\n/proc/AnnotatedSource CLASS\n", basedir, "target/classes/elements.lst");
+  }
+
+  @Test
+  public void testNestedTypeReference() throws Exception {
+    File processor = compileAnnotationProcessor();
+    File basedir = resources.getBasedir();
+    File src = new File(basedir, "src/main/java");
+
+    // initial build
+    JavaFile.builder("proc", //
+        TypeSpec.classBuilder("Dependency") //
+            .addType(TypeSpec.classBuilder("Nested").build()) //
+            .build()) //
+        .build().writeTo(src);
+    AnnotationSpec annotation = AnnotationSpec.builder(ClassName.get("processor", "Annotation")).build();
+    JavaFile.builder("proc", //
+        TypeSpec.classBuilder("AnnotatedSource") //
+            .addField(FieldSpec.builder(ClassName.get("proc", "Dependency"), "annotatedfield").addAnnotation(annotation).build()) //
+            .build()) //
+        .build().writeTo(src);
+    processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.ElementsTypeMemberListProcessor"));
+    mojos.assertBuildOutputs(new File(basedir, "target/classes"), "proc/AnnotatedSource.class", "proc/Dependency.class", "proc/Dependency$Nested.class", "elements.lst");
+    assertFileContents("<init> CONSTRUCTOR\n", basedir, "target/classes/elements.lst");
+
+    // add new member to Dependency.Nested type, run incremental build
+    JavaFile.builder("proc", //
+        TypeSpec.classBuilder("Dependency") //
+            .addType(TypeSpec.classBuilder("Nested") //
+                .addField(FieldSpec.builder(String.class, "nestedTypeField").build()) //
+                .build()) //
+            .build()) //
+        .build().writeTo(src);
+    processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.ElementsTypeMemberListProcessor"));
+    mojos.assertBuildOutputs(new File(basedir, "target/classes"), "proc/AnnotatedSource.class", "proc/Dependency.class", "proc/Dependency$Nested.class", "elements.lst");
+    assertFileContents("<init> CONSTRUCTOR\nnestedTypeField FIELD\n", basedir, "target/classes/elements.lst");
   }
 }

@@ -78,7 +78,12 @@ class ProcessingEnvImpl extends BaseProcessingEnvImpl {
       private void observeType(TypeBinding binding) {
         binding = binding.leafComponentType().erasure();
         if (binding instanceof ReferenceBinding) {
-          observeType(((ReferenceBinding) binding).compoundName);
+          ReferenceBinding referenceBinding = (ReferenceBinding) binding;
+          observeType(referenceBinding.compoundName);
+          // TODO only track referenced member types (requires jdt.apt changes)
+          for (ReferenceBinding memberType : referenceBinding.memberTypes()) {
+            observeType(memberType.compoundName);
+          }
         }
       }
 
