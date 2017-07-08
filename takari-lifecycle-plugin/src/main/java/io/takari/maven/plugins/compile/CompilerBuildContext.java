@@ -144,7 +144,7 @@ public class CompilerBuildContext extends AbstractBuildContext {
     return sources;
   }
 
-  private boolean isJavaSource(Object resource) {
+  public static boolean isJavaSource(Object resource) {
     return resource instanceof File && ((File) resource).getName().endsWith(".java"); // TODO find proper constant
   }
 
@@ -183,22 +183,21 @@ public class CompilerBuildContext extends AbstractBuildContext {
     return addAssociatedOutputs(new HashMap<File, ResourceMetadata<File>>(), source).values();
   }
 
+  @Override
+  protected Collection<? extends ResourceMetadata<File>> getAssociatedOutputs(DefaultBuildContextState state, Object resource) {
+    return super.getAssociatedOutputs(state, resource);
+  }
+
+  @SuppressWarnings("unchecked")
+  public Collection<ResourceMetadata<File>> getAssociatedOutputs(File source) {
+    return (Collection<ResourceMetadata<File>>) super.getAssociatedOutputs(getState(source), source);
+  }
+
   private Map<File, ResourceMetadata<File>> addAssociatedOutputs(Map<File, ResourceMetadata<File>> outputs, ResourceMetadata<File> resource) {
     for (ResourceMetadata<File> output : super.getAssociatedOutputs(getState(resource.getResource()), resource.getResource())) {
       if (!outputs.containsKey(output.getResource())) {
         outputs.put(output.getResource(), output);
         addAssociatedOutputs(outputs, output);
-      }
-    }
-    return outputs;
-  }
-
-  public Collection<ResourceMetadata<File>> getDissociatedOutputs() {
-    List<ResourceMetadata<File>> outputs = new ArrayList<>();
-    for (File outputFile : oldState.getOutputs()) {
-      Collection<Object> outputInputs = oldState.getOutputInputs(outputFile);
-      if (outputInputs == null || outputInputs.isEmpty()) {
-        outputs.add(new DefaultResourceMetadata<File>(this, state, outputFile) {});
       }
     }
     return outputs;

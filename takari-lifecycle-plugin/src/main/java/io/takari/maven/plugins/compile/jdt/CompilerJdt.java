@@ -7,6 +7,8 @@
  */
 package io.takari.maven.plugins.compile.jdt;
 
+import static io.takari.maven.plugins.compile.CompilerBuildContext.isJavaSource;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -84,6 +86,31 @@ import io.takari.maven.plugins.compile.jdt.classpath.SourcepathDirectory;
 public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor {
   public static final String ID = "jdt";
 
+  /*
+   * Notes on build context usage by this compiler implementation.
+   * 
+   * Classpath, sourcepath and processorpath digests are persisted as context-level attributes (internally, the context associates them with project pom.xml). Classpath (should really be called
+   * "compile path") "structural" digest algorithm ignores changes to class method bodies and avoids unnecessary recompilations (see ClassfileDigester). Sourcepath and processorpath digest algorithm
+   * is common for all compiler implementations (see ProjectClasspathDigester).
+   * 
+   * Java source ReferenceCollection is persisted as input file attribute.
+   * 
+   * Output .class file "structural" digest is persisted as output file attribute.
+   * 
+   * Tracking of inputs, outputs and their associations:
+   * 
+   * - Build context tracks association between java sources and their corresponding class files.
+   * 
+   * - Build context does NOT track originating elements of source/resources generated during annotation processing. All sources processed by apt and all written outputs are tracked in
+   * AnnotationProcessingState. Note that build context still tracks association between apt-generated sources and their corresponding class files. Annotation processing is performed "atomically",
+   * that is, if any source requires (re)processing, all apt outputs generated during previous builds are declared stale (see below) and all sources are (re)processed.
+   * 
+   * - Outputs associated with modified sources are marked as "stale" before compilation but not physically deleted. At the end of compilation stales outputs that were not overwritten are deleted.
+   * This is meant to work with IncrementalFileOutputStream, which does not modify filesystem when incremental compilation regenerates exactly the same content.
+   * 
+   * - Outputs associated with removed inputs are deleted before compilation.
+   */
+
   /**
    * Output .class file structure hash
    */
@@ -95,11 +122,16 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   private static final String ATTR_CLASSPATH_DIGEST = "jdt.classpath.digest";
 
   /**
+   * Annotation processing state
+   * 
+   * @see AnnotationProcessingState
+   */
+  private static final String ATTR_APTSTATE = "jdt.aptstate";
+
+  /**
    * Java source {@link ReferenceCollection}
    */
   private static final String ATTR_REFERENCES = "jdt.references";
-
-  private static final String ATTR_APTSTATE = "jdt.aptstate";
 
   private List<File> dependencies;
 
@@ -162,25 +194,31 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     protected boolean deleteOrphanedOutputs() throws IOException {
       boolean changed = false;
       for (ResourceMetadata<File> source : context.getRemovedSources()) {
-        Collection<ResourceMetadata<File>> outputs = context.getAssociatedOutputs(source);
-        changed = changed || !outputs.isEmpty();
-        deleteOrphanedOutputs(outputs);
+        changed = deleteAssociatedOutputs(source) || changed;
       }
-
-      Collection<ResourceMetadata<File>> dissociatedOutputs = context.getDissociatedOutputs();
-      changed = changed || !dissociatedOutputs.isEmpty();
-      deleteOrphanedOutputs(dissociatedOutputs);
 
       return changed;
     }
 
-    protected void deleteOrphanedOutputs(Collection<ResourceMetadata<File>> outputs) throws IOException {
-      for (ResourceMetadata<File> output : outputs) {
-        deleteOrphanedOutput(output.getResource());
-      }
+    protected boolean deleteAssociatedOutputs(ResourceMetadata<File> resource) throws IOException {
+      return deleteOutputs(context.getAssociatedOutputs(resource));
     }
 
-    protected void deleteOrphanedOutput(File outputFile) throws IOException {
+    protected boolean deleteAssociatedOutputs(File resource) throws IOException {
+      return deleteOutputs(context.getAssociatedOutputs(resource));
+    }
+
+    protected boolean deleteOutputs(Collection<ResourceMetadata<File>> outputs) throws IOException {
+      for (ResourceMetadata<File> output : outputs) {
+        deleteOutput(output.getResource());
+      }
+      return !outputs.isEmpty();
+    }
+
+    protected void deleteOutput(File outputFile) throws IOException {
+      if (isJavaSource(outputFile)) {
+        deleteAssociatedOutputs(outputFile);
+      }
       context.deleteOutput(outputFile);
       addDependentsOf(outputFile);
     }
@@ -188,12 +226,13 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     protected boolean deleteStaleOutputs() throws IOException {
       boolean changed = false;
       for (File staleOutput : staleOutputs) {
+        // TODO is it possible for an output to be processed in one compilation iteration but become obsolete during the next?
         if (!context.isProcessedOutput(staleOutput)) {
-          context.deleteOutput(staleOutput);
-          addDependentsOf(staleOutput);
+          deleteOutput(staleOutput);
           changed = true;
         }
       }
+      staleOutputs.clear();
       return changed;
     }
 
@@ -201,7 +240,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
      * Marks sources as "processed" in the build context. Masks old associated outputs from naming environments by adding them to {@link #staleOutputs}.
      */
     protected void processSources() {
-      staleOutputs.clear();
       for (File sourceFile : compileQueue.keySet()) {
         ResourceMetadata<File> source = sources.get(sourceFile);
         for (ResourceMetadata<File> output : context.getAssociatedOutputs(source)) {
@@ -250,7 +288,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
       // incremental compilation loop
       // keep calling the compiler while there are sources in the queue
-      while (!compileQueue.isEmpty()) {
+      while (!compileQueue.isEmpty() || !staleOutputs.isEmpty()) {
         processedQueue.clear();
         processedQueue.addAll(compileQueue.keySet());
 
@@ -320,7 +358,10 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
           enqueue(annotatedSource);
         }
       }
-      staleOutputs.addAll(writtenOutputs);
+      for (File writtenOutput : writtenOutputs) {
+        staleOutputs.add(writtenOutput);
+        context.getAssociatedOutputs(writtenOutput).forEach(output -> staleOutputs.add(output.getResource()));
+      }
     }
 
     private void enqueueAffectedSources() {
@@ -409,12 +450,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       }
     }
 
-    @Override
-    protected void deleteOrphanedOutput(File outputFile) throws IOException {
-      if (aptstate == null || !aptstate.writtenOutputs.contains(outputFile)) {
-        super.deleteOrphanedOutput(outputFile);
-      }
-    }
 
     @Override
     public void enqueueAffectedSources(HashMap<String, byte[]> digest, Map<String, byte[]> oldDigest) throws IOException {
@@ -461,6 +496,16 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       if (aptstate != null) {
         enqueueAllAnnotatedSources();
       }
+    }
+
+    @Override
+    protected boolean deleteAssociatedOutputs(ResourceMetadata<File> resource) throws IOException {
+      boolean changed = false;
+      if (aptstate != null && aptstate.processedSources.contains(resource.getResource())) {
+        enqueueAllAnnotatedSources();
+        changed = true;
+      }
+      return super.deleteAssociatedOutputs(resource) || changed;
     }
   }
 

@@ -8,10 +8,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.URI;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.processing.Filer;
@@ -25,15 +22,11 @@ import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
 
-import org.eclipse.jdt.internal.compiler.apt.model.ElementImpl;
 import org.eclipse.jdt.internal.compiler.batch.CompilationUnit;
-import org.eclipse.jdt.internal.compiler.lookup.Binding;
-import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 
 import com.google.common.collect.ImmutableSet;
 
 import io.takari.incrementalbuild.Output;
-import io.takari.incrementalbuild.Resource;
 import io.takari.maven.plugins.compile.CompilerBuildContext;
 
 class FilerImpl implements Filer {
@@ -47,19 +40,10 @@ class FilerImpl implements Filer {
   private final Set<File> writtenFiles = new HashSet<>();
 
   private class FileObjectDelegate {
-    private final Collection<Resource<File>> inputs;
-
-    public FileObjectDelegate(Collection<Resource<File>> inputs) {
-      this.inputs = inputs;
-    }
-
     public OutputStream openOutputStream(URI uri) throws IOException {
       File outputFile = new File(uri);
       writtenFiles.add(outputFile);
       final Output<File> output = context.processOutput(outputFile);
-      for (Resource<File> input : inputs) {
-        input.associateOutput(output);
-      }
       return new FilterOutputStream(output.newOutputStream()) {
         @Override
         public void close() throws IOException {
@@ -131,7 +115,7 @@ class FilerImpl implements Filer {
     if (!createdResources.add(sourceFile.toUri())) {
       throw new FilerException("Attempt to recreate file for type " + name);
     }
-    return new JavaFileObjectImpl(sourceFile, new FileObjectDelegate(getInputs(originatingElements)) {
+    return new JavaFileObjectImpl(sourceFile, new FileObjectDelegate() {
 
       private boolean closed = false;
 
@@ -148,29 +132,13 @@ class FilerImpl implements Filer {
     });
   }
 
-  // TODO is not used, probably better to remove
-  private Collection<Resource<File>> getInputs(Element[] elements) {
-    Map<File, Resource<File>> inputs = new HashMap<>();
-    for (Element element : elements) {
-      if (!(element instanceof ElementImpl)) {
-        throw new IllegalArgumentException();
-      }
-      Binding binding = ((ElementImpl) element)._binding;
-      if (binding instanceof SourceTypeBinding) {
-        File file = new File(new String(((SourceTypeBinding) binding).getFileName()));
-        inputs.put(file, context.getProcessedSource(file));
-      }
-    }
-    return inputs.values();
-  }
-
   @Override
   public JavaFileObject createClassFile(CharSequence name, Element... originatingElements) throws IOException {
     JavaFileObject classFile = fileManager.getJavaFileForOutput(StandardLocation.CLASS_OUTPUT, name.toString(), JavaFileObject.Kind.CLASS, null);
     if (!createdResources.add(classFile.toUri())) {
       throw new FilerException("Attempt to recreate file for class " + name);
     }
-    return new JavaFileObjectImpl(classFile, new FileObjectDelegate(getInputs(originatingElements)) {
+    return new JavaFileObjectImpl(classFile, new FileObjectDelegate() {
       @Override
       protected void onClose(Output<File> generatedClass) {
         // TODO processingEnv.addNewClassFile
@@ -185,7 +153,7 @@ class FilerImpl implements Filer {
     if (!createdResources.add(file.toUri())) {
       throw new FilerException("Attempt to recreate file for resource " + pkg + "." + relativeName);
     }
-    return new FileObjectImpl(file, new FileObjectDelegate(getInputs(originatingElements)));
+    return new FileObjectImpl(file, new FileObjectDelegate());
   }
 
   @Override
