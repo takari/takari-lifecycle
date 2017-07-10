@@ -193,4 +193,8 @@ public abstract class AbstractCompiler {
 
   public abstract int compile() throws MojoExecutionException, IOException;
 
+  public void skipCompile() {
+    context.markUptodateExecution();
+  }
+
 }

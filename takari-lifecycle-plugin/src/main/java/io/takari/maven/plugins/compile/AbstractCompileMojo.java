@@ -419,8 +419,8 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
         int compiled = compiler.compile();
         log.info("Compiled {} out of {} sources ({} ms)", compiled, sources.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
       } else {
+        compiler.skipCompile();
         log.info("Skipped compilation, all {} classes are up to date", sources.size());
-        context.markUptodateExecution();
       }
 
       if (proc != Proc.none && !sources.isEmpty()) {

@@ -212,6 +212,12 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     }
 
     public abstract void onAnnotationProcessing();
+
+    public void skipCompile() {
+      if (aptstate != null) {
+        context.setAttribute(ATTR_APTSTATE, aptstate);
+      }
+    }
   }
 
   private class IncrementalCompilationStrategy extends CompilationStrategy {
@@ -894,4 +900,9 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     strategy.onAnnotationProcessing();
   }
 
+  @Override
+  public void skipCompile() {
+    strategy.skipCompile();
+    super.skipCompile();
+  }
 }
