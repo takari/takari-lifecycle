@@ -106,7 +106,7 @@ public class CompilerBuildContext extends AbstractBuildContext {
   public Collection<ResourceMetadata<File>> getRemovedSources() {
     Collection<ResourceMetadata<File>> sources = new ArrayList<>();
     for (Object resource : oldState.getResources().keySet()) {
-      if (isSource(resource) && !oldState.isOutput(resource) && !isRegisteredResource(resource)) {
+      if (isJavaSource(resource) && !oldState.isOutput(resource) && !isRegisteredResource(resource)) {
         sources.add(newResourceMetadata(oldState, (File) resource));
       }
     }
@@ -117,7 +117,7 @@ public class CompilerBuildContext extends AbstractBuildContext {
    * Returns original or generated source processed during this build. Throws {@link IllegalStateException} if no such source.
    */
   public Resource<File> getProcessedSource(File sourceFile) {
-    if (!isProcessedResource(sourceFile) || !isSource(sourceFile)) {
+    if (!isProcessedResource(sourceFile) || !isJavaSource(sourceFile)) {
       // JDT may decide to compile more sources than it was asked to in some cases
       // TODO investigate when this happens and decide what to do about it
       throw new IllegalArgumentException();
@@ -131,7 +131,7 @@ public class CompilerBuildContext extends AbstractBuildContext {
   public Collection<ResourceMetadata<File>> getRegisteredSources() {
     List<ResourceMetadata<File>> sources = new ArrayList<>();
     for (Object resource : state.getResources().keySet()) {
-      if (isSource(resource)) {
+      if (isJavaSource(resource)) {
         DefaultBuildContextState state = isProcessedResource(resource) ? this.state : this.oldState;
         sources.add(newResourceMetadata(state, (File) resource));
       }
@@ -139,7 +139,7 @@ public class CompilerBuildContext extends AbstractBuildContext {
     return sources;
   }
 
-  private boolean isSource(Object resource) {
+  private boolean isJavaSource(Object resource) {
     return resource instanceof File && ((File) resource).getName().endsWith(".java"); // TODO find proper constant
   }
 
