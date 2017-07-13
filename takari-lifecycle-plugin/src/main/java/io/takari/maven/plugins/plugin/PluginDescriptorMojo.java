@@ -5,8 +5,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -34,12 +32,11 @@ import io.takari.maven.plugins.plugin.model.MojoParameter;
 import io.takari.maven.plugins.plugin.model.MojoRequirement;
 import io.takari.maven.plugins.plugin.model.PluginDescriptor;
 import io.takari.maven.plugins.plugin.model.io.xpp3.PluginDescriptorXpp3Reader;
-import io.takari.maven.plugins.plugin.model.io.xpp3.PluginDescriptorXpp3Writer;
 
 @Mojo(name = "plugin-descriptor", defaultPhase = LifecyclePhase.PROCESS_CLASSES, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE)
 public class PluginDescriptorMojo extends TakariLifecycleMojo {
 
-  private static final String PATH_MOJOS_XML = "META-INF/takari/mojos.xml";
+  static final String PATH_MOJOS_XML = "META-INF/takari/mojos.xml";
 
   private static final String PATH_PLUGIN_XML = "META-INF/maven/plugin.xml";
 
@@ -80,7 +77,14 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
 
   @Override
   protected void executeMojo() throws MojoExecutionException {
+
     try {
+      File mojosXml = new File(outputDirectory, PATH_MOJOS_XML);
+      if (!mojosXml.isFile()) {
+        // the project does not have any mojos, don't create empty plugin.xml
+        return;
+      }
+
       InputSet inputSet = context.newInputSet();
 
       final Set<File> classpathJars = new LinkedHashSet<>();
@@ -95,18 +99,12 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
           }
         }
       }
+      inputSet.addInput(new File(outputDirectory, PATH_MOJOS_XML));
 
-      final Iterable<File> files = inputSet.addInputs(generatedSourcesDirectory, Collections.singleton("*.mojo.xml"), null);
       inputSet.aggregateIfNecessary(new File(outputDirectory, PATH_PLUGIN_XML), new InputAggregator() {
         @Override
         public void aggregate(Output<File> output, Iterable<File> inputs) throws IOException {
-          createPluginXml(output, files, classpathFiles, classpathJars);
-        }
-      });
-      inputSet.aggregateIfNecessary(new File(outputDirectory, PATH_MOJOS_XML), new InputAggregator() {
-        @Override
-        public void aggregate(Output<File> output, Iterable<File> inputs) throws IOException {
-          createMojosXml(output, files);
+          createPluginXml(output, mojosXml, classpathFiles, classpathJars);
         }
       });
     } catch (IOException e) {
@@ -114,21 +112,9 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
     }
   }
 
-  protected void createMojosXml(Output<File> output, Iterable<File> files) throws IOException {
-    PluginDescriptor mojos = new PluginDescriptor();
-    List<MojoDescriptor> descriptors = new ArrayList<>(loadMojos(files).values());
-    Sorting.sortDescriptors(descriptors);
-    for (MojoDescriptor descriptor : descriptors) {
-      mojos.addMojo(descriptor);
-    }
-    try (OutputStream out = output.newOutputStream()) {
-      new PluginDescriptorXpp3Writer().write(out, mojos);
-    }
-  }
-
-  protected void createPluginXml(Output<File> output, Iterable<File> inputs, Set<File> classpathFiles, Set<File> classpathJars) throws IOException {
+  protected void createPluginXml(Output<File> output, File input, Set<File> classpathFiles, Set<File> classpathJars) throws IOException {
     Map<String, MojoDescriptor> classpathMojos = loadClasspathMojos(classpathFiles, classpathJars);
-    Map<String, MojoDescriptor> mojos = loadMojos(inputs);
+    Map<String, MojoDescriptor> mojos = loadMojos(input);
 
     PluginDescriptor plugin = newPluginDescriptor();
 
@@ -179,14 +165,12 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
     return false;
   }
 
-  private Map<String, MojoDescriptor> loadMojos(Iterable<File> inputs) throws IOException {
+  private Map<String, MojoDescriptor> loadMojos(File mojosXml) throws IOException {
     Map<String, MojoDescriptor> mojos = new HashMap<>();
-    for (File mojoXml : inputs) {
-      try (InputStream is = new FileInputStream(mojoXml)) {
-        readMojosXml(mojos, is);
-      } catch (XmlPullParserException e) {
-        throw new IOException(e);
-      }
+    try (InputStream is = new FileInputStream(mojosXml)) {
+      readMojosXml(mojos, is);
+    } catch (XmlPullParserException e) {
+      throw new IOException(e);
     }
     return mojos;
   }

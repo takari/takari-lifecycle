@@ -1,23 +1,29 @@
 package io.takari.maven.plugins.plugin;
 
+import static io.takari.maven.plugins.plugin.PluginDescriptorMojo.PATH_MOJOS_XML;
+
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeMap;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
+import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
@@ -38,11 +44,18 @@ import io.takari.maven.plugins.plugin.model.io.xpp3.PluginDescriptorXpp3Writer;
 @SupportedSourceVersion(SourceVersion.RELEASE_7)
 public class MojoDescriptorGleaner extends AbstractProcessor {
 
+  private final TreeMap<String, MojoDescriptor> descriptors = new TreeMap<>();
+
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-    for (Element element : roundEnv.getRootElements()) {
+    for (TypeElement element : getAnnotatedTypes(roundEnv)) {
+      MojoDescriptor descriptor = processType(element);
+      descriptors.put(descriptor.getImplementation(), descriptor);
+    }
+
+    if (roundEnv.processingOver() && !descriptors.isEmpty()) {
       try {
-        writeMojoXml(processType((TypeElement) element), element);
+        writeMojosXml(descriptors);
       } catch (IOException e) {
         // TODO it'd be nice to capture IOException somewhere too
         processingEnv.getMessager().printMessage(Kind.ERROR, "Could not create aggregate output " + e.getMessage());
@@ -50,6 +63,25 @@ public class MojoDescriptorGleaner extends AbstractProcessor {
     }
 
     return false; // don't claim the annotations, other processors are welcome to use them
+  }
+
+  private Set<TypeElement> getAnnotatedTypes(RoundEnvironment roundEnv) {
+    Set<TypeElement> types = new HashSet<>();
+    roundEnv.getElementsAnnotatedWith(Mojo.class).forEach(type -> types.add((TypeElement) type));
+    addAnnotatedMembers(types, roundEnv, Parameter.class);
+    addAnnotatedMembers(types, roundEnv, Component.class);
+    return types;
+  }
+
+  private void addAnnotatedMembers(Set<TypeElement> types, RoundEnvironment roundEnv, Class<? extends Annotation> annotation) {
+    for (Element member : roundEnv.getElementsAnnotatedWith(annotation)) {
+      Element type = member.getEnclosingElement();
+      if (type.getEnclosingElement().getKind() == ElementKind.PACKAGE) {
+        types.add((TypeElement) type);
+      } else {
+        processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, annotation + " only applicable to top-level class members", member);
+      }
+    }
   }
 
   @Override
@@ -204,17 +236,14 @@ public class MojoDescriptorGleaner extends AbstractProcessor {
     return str == null || str.isEmpty();
   }
 
-  void writeMojoXml(MojoDescriptor descriptor, Element... elements) throws IOException {
-    if (descriptor.getGoal() == null && descriptor.getParameters().isEmpty() && descriptor.getRequirements().isEmpty()) {
-      // roundEnv.getRootElements() returns all classes, regardless of #getSupportedAnnotationTypes
-      // TODO need to investigate if this is a bug or a feature
-      return;
-    }
+  void writeMojosXml(TreeMap<String, MojoDescriptor> descriptors) throws IOException {
     PluginDescriptor mojos = new PluginDescriptor();
-    mojos.addMojo(descriptor);
-    FileObject output = processingEnv.getFiler().createResource(StandardLocation.SOURCE_OUTPUT, "", descriptor.getImplementation() + ".mojo.xml", elements);
-    try (OutputStream os = output.openOutputStream()) {
-      new PluginDescriptorXpp3Writer().write(os, mojos);
+    for (MojoDescriptor descriptor : descriptors.values()) {
+      mojos.addMojo(descriptor);
+    }
+    FileObject output = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", PATH_MOJOS_XML);
+    try (OutputStream out = output.openOutputStream()) {
+      new PluginDescriptorXpp3Writer().write(out, mojos);
     }
   }
 

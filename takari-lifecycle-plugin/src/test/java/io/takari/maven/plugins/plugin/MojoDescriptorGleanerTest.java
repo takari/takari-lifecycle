@@ -1,5 +1,6 @@
 package io.takari.maven.plugins.plugin;
 
+import static io.takari.maven.plugins.plugin.PluginDescriptorMojo.PATH_MOJOS_XML;
 import static io.takari.maven.testing.TestMavenRuntime.newParameter;
 
 import java.io.File;
@@ -67,7 +68,7 @@ public class MojoDescriptorGleanerTest {
   }
 
   private MojoDescriptor readDescriptor(File basedir, String classname) throws IOException, XmlPullParserException {
-    try (InputStream is = new FileInputStream(new File(basedir, "target/generated-sources/annotations/io.takari.lifecycle.uts.plugindescriptor." + classname + ".mojo.xml"))) {
+    try (InputStream is = new FileInputStream(new File(basedir, "target/classes/" + PATH_MOJOS_XML))) {
       PluginDescriptor descriptor = new PluginDescriptorXpp3Reader().read(is);
       Assert.assertEquals(1, descriptor.getMojos().size());
       return descriptor.getMojos().get(0);
