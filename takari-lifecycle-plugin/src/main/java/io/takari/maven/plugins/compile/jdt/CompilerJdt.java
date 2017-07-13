@@ -541,7 +541,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     EclipseFileManager fileManager = null;
     try {
       if (!isProcNone()) {
-        fileManager = new EclipseFileManager514121(null, getSourceEncoding());
+        fileManager = new EclipseFileManager(null, getSourceEncoding());
         fileManager.setLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH, processorpath);
         fileManager.setLocation(StandardLocation.CLASS_OUTPUT, Collections.singleton(getOutputDirectory()));
         fileManager.setLocation(StandardLocation.SOURCE_OUTPUT, Collections.singleton(getGeneratedSourcesDirectory()));

@@ -14,11 +14,11 @@ import javax.tools.StandardLocation;
 import org.eclipse.jdt.internal.compiler.apt.util.EclipseFileManager;
 import org.junit.Test;
 
-public class EclipseFileManager514121Test {
+public class EclipseFileManagerTest {
 
   @Test
-  public void testCloseClassloaders() throws Exception {
-    EclipseFileManager fileManager = new EclipseFileManager514121(null, StandardCharsets.UTF_8);
+  public void test514121_closeClassloaders() throws Exception {
+    EclipseFileManager fileManager = new EclipseFileManager(null, StandardCharsets.UTF_8);
     List<File> classpath = new ArrayList<>();
     classpath.add(new File("src/test/jars/commons-lang-2.0.jar"));
     fileManager.setLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH, classpath);
