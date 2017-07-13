@@ -758,9 +758,21 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   private void writeClassFile(Resource<File> input, String relativeStringName, ClassFile classFile) throws IOException {
     final byte[] bytes = classFile.getBytes();
     final File outputFile = new File(getOutputDirectory(), relativeStringName);
+
+    // context.associatedOutput resets output attributes set during earlier iterations of this incremental compile
+    // so deal with classfile digest before context.associatedOutput
+    final byte[] oldHash = context.getAttribute(outputFile, ATTR_CLASS_DIGEST, byte[].class);
+    final byte[] hash = digestClassFile(outputFile, bytes);
+    boolean significantChange = oldHash == null || hash == null || !Arrays.equals(hash, oldHash);
+
     final Output<File> output = context.associatedOutput(input, outputFile);
 
-    boolean significantChange = digestClassFile(output, bytes);
+    if (hash != null) {
+      // TODO evaluate if this is useful
+      // trade-off is between storing digest on disk between builds
+      // and recomputing the hash each time class files are written
+      context.setAttribute(outputFile, ATTR_CLASS_DIGEST, hash);
+    }
 
     if (significantChange) {
       // find all sources that reference this type and put them into work queue
@@ -773,19 +785,14 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     }
   }
 
-  private boolean digestClassFile(Output<File> output, byte[] definition) {
-    boolean significantChange = true;
+  private byte[] digestClassFile(File outputFile, byte[] definition) {
     try {
-      ClassFileReader reader = new ClassFileReader(definition, output.getResource().getAbsolutePath().toCharArray());
-      byte[] hash = digester.digest(reader);
-      if (hash != null) {
-        byte[] oldHash = (byte[]) context.setAttribute(output.getResource(), ATTR_CLASS_DIGEST, hash);
-        significantChange = oldHash == null || !Arrays.equals(hash, oldHash);
-      }
+      ClassFileReader reader = new ClassFileReader(definition, outputFile.getAbsolutePath().toCharArray());
+      return digester.digest(reader);
     } catch (ClassFormatException e) {
       // ignore this class
     }
-    return significantChange;
+    return null;
   }
 
   public void addGeneratedSource(Output<File> generatedSource) {

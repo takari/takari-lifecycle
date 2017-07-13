@@ -193,4 +193,21 @@ public class CompileIncrementalTest extends AbstractCompileTest {
     }
     Assert.assertFalse(new File(classes, "nested/B.class").exists());
   }
+
+  @Test
+  public void testCrossref() throws Exception {
+    // two java files reference each other (via private static final members)
+    // "structural" change in one file causes "structural" in the other and vice versa
+    // assert incremental compiler does not go into endless loop
+
+    // initial compile
+    File basedir = compile("compile-incremental/crossref");
+    File classes = new File(basedir, "target/classes");
+    mojos.assertBuildOutputs(classes, "crossref/A.class", "crossref/B.class");
+
+    // change one of the files and incrementally recompile
+    cp(basedir, "src/main/java/crossref/A.java-modified", "src/main/java/crossref/A.java");
+    compile(basedir);
+    mojos.assertBuildOutputs(classes, "crossref/A.class", "crossref/B.class");
+  }
 }
