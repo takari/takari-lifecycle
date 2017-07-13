@@ -37,7 +37,7 @@
     <mavenPluginPluginVersion>3.3</mavenPluginPluginVersion>
     <m2eWorkspaceVersion>0.4.0</m2eWorkspaceVersion>
     <pluginTestingVersion>2.9.0</pluginTestingVersion>
-    <takariLifecycleVersion>1.12.1</takariLifecycleVersion>
+    <takariLifecycleVersion>1.13.0</takariLifecycleVersion>
     <takari.javaSourceVersion>1.8</takari.javaSourceVersion>
   </properties>
 
