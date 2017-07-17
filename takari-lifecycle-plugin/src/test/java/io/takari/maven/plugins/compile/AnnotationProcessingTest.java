@@ -4,6 +4,7 @@ import static io.takari.maven.testing.TestResources.assertFileContents;
 import static io.takari.maven.testing.TestResources.cp;
 import static io.takari.maven.testing.TestResources.rm;
 import static io.takari.maven.testing.TestResources.touch;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
@@ -468,6 +469,48 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     }
 
     processAnnotations(basedir, null, null);
+  }
+
+  @Test
+  public void testRequireProc_processorpathMasksClasspath() throws Exception {
+    // assert annotation processors present on project classpath are ignored when processorpath is configured
+
+    File processor = compileAnnotationProcessor();
+    File basedir = resources.getBasedir("compile-proc/require-proc");
+    processAnnotations(basedir, null, processor, new Xpp3Dom("processorpath"));
+    mojos.assertBuildOutputs(new File(basedir, "target"), //
+        "classes/proc/Source.class");
+  }
+
+  @Test
+  public void testRequireProc_processorpath() throws Exception {
+    MavenProject annotations = mojos.readMavenProject(resources.getBasedir("compile-proc/processorpath-annotation"));
+    mojos.compile(annotations);
+
+    MavenProject processor = mojos.readMavenProject(resources.getBasedir("compile-proc/processorpath-processor"));
+    mojos.newDependency(new File(annotations.getBasedir(), "target/classes")).setArtifactId("annotations").addTo(processor);
+    mojos.compile(processor);
+    cp(processor.getBasedir(), "src/main/resources/META-INF/services/javax.annotation.processing.Processor", "target/classes/META-INF/services/javax.annotation.processing.Processor");
+
+    File basedir = resources.getBasedir("compile-proc/proc");
+    MavenProject project = mojos.readMavenProject(basedir);
+    mojos.newDependency(new File(annotations.getBasedir(), "target/classes")).setArtifactId("annotations").addTo(project);
+
+    MavenSession session = mojos.newMavenSession(project);
+    SimpleReactorReader.builder() //
+        .addProjects(annotations, processor, project) //
+        .toSession(session.getRepositorySession());
+
+    session.setProjects(Arrays.asList(annotations, processor, project));
+    session.setCurrentProject(project);
+    Xpp3Dom processorpath = new Xpp3Dom("processorpath");
+    processorpath.addChild(newProcessorpathEntry(processor));
+    try {
+      mojos.compile(session, project, processorpath);
+      fail();
+    } catch (IllegalArgumentException expected) {
+      // TODO assert message
+    }
   }
 
   @Test

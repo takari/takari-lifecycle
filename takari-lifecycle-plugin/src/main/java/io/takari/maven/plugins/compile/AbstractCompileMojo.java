@@ -379,7 +379,8 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       }
 
       final List<File> classpath = getClasspath();
-      Proc proc = getEffectiveProc(classpath);
+      final List<File> processorpath = getProcessorpath();
+      Proc proc = getEffectiveProc(classpath, processorpath);
 
       if (proc != Proc.none && !sources.isEmpty()) {
         mkdirs(getGeneratedSourcesDirectory());
@@ -412,7 +413,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       boolean sourcesChanged = compiler.setSources(sources);
       boolean classpathChanged = compiler.setClasspath(classpath, getMainOutputDirectory(), getDirectDependencies());
       boolean sourcepathChanged = compiler.setSourcepath(getSourcepath(proc), toFileSet(getSourceRoots()));
-      boolean processorpathChanged = proc != Proc.none ? compiler.setProcessorpath(getProcessorpath()) : false;
+      boolean processorpathChanged = proc != Proc.none ? compiler.setProcessorpath(processorpath) : false;
 
       if (sourcesChanged || classpathChanged || sourcepathChanged || processorpathChanged) {
         log.info("Compiling {} sources to {}", sources.size(), getOutputDirectory());
@@ -515,11 +516,11 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     return sourceRoots;
   }
 
-  private Proc getEffectiveProc(List<File> classpath) {
+  private Proc getEffectiveProc(List<File> classpath, List<File> processorpath) {
     Proc proc = this.proc;
     if (proc == null) {
       Multimap<File, String> processors = TreeMultimap.create();
-      for (File jar : classpath) {
+      for (File jar : processorpath != null ? processorpath : classpath) {
         if (jar.isFile()) {
           try (ZipFile zip = new ZipFile(jar)) {
             ZipEntry entry = zip.getEntry("META-INF/services/javax.annotation.processing.Processor");
