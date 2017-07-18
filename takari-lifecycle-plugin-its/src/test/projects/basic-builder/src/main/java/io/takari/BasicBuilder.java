@@ -1,4 +1,4 @@
-package com.testing.enumbuilder;
+package io.takari;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -16,6 +16,7 @@ import io.takari.builder.BuilderContext;
 import io.takari.builder.GeneratedSourcesDirectory;
 import io.takari.builder.InputDirectoryFiles;
 import io.takari.builder.LifecyclePhase;
+import io.takari.builder.OutputFile;
 import io.takari.builder.Parameter;
 
 public class BasicBuilder {
