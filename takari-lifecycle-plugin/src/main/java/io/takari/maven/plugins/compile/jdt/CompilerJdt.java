@@ -245,7 +245,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         for (ResourceMetadata<File> output : context.getAssociatedOutputs(source)) {
           staleOutputs.add(output.getResource());
         }
-        sources.put(source.getResource(), source.process());
+        sources.put(source.getResource(), context.processInput(source));
       }
     }
 
@@ -288,10 +288,53 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
       // incremental compilation loop
       // keep calling the compiler while there are sources in the queue
+      incrementalCompilationLoop(namingEnvironment, compiler, aptmanager);
+
+      // run apt last round iff doing annotation processing and ran regular apt rounds
+      if (aptmanager != null && aptstate == null) {
+        // tell apt manager we are running APT lastRound
+        aptmanager.suppressRegularRounds(true);
+        aptmanager.suppressLastRound(false);
+
+        // even if a class was processed it would need recompiled once types are generated.
+        processedQueue.clear();
+
+        // trick the compiler to run APT without any source or binary types
+        compiler.referenceBindings = new ReferenceBinding[0];
+        compiler.compile(new ICompilationUnit[0]);
+        namingEnvironment.reset();
+        aptmanager.incrementalIterationReset();
+        deleteStaleOutputs();
+
+        enqueueAffectedSources();
+        // all apt rounds are now suppressed.
+        aptmanager.suppressLastRound(true);
+        // compile class that rely on apt completing
+        incrementalCompilationLoop(namingEnvironment, compiler, aptmanager);
+      }
+
+
+      persistAnnotationProcessingState(compiler, aptstate);
+
+      return processedSources.size();
+    }
+
+    /**
+     * This loop handles the incremental compilation of classes in the compileQueue. Regular apt rounds may occur in this loop, but the apt final round will not.
+     * 
+     * This loop will be called once after the apt final round is processed to compile all effected types. All prior errors are ignored when a type is recompiled.
+     * 
+     * @param namingEnvironment
+     * @param compiler
+     * @param aptmanager
+     * @throws IOException
+     */
+    private void incrementalCompilationLoop(Classpath namingEnvironment, Compiler compiler, AnnotationProcessorManager aptmanager) throws IOException {
       while (!compileQueue.isEmpty() || !staleOutputs.isEmpty()) {
         processedQueue.clear();
         processedQueue.addAll(compileQueue.keySet());
 
+        // prior errors are wiped away within.
         processSources();
 
         // invoke the compiler
@@ -308,21 +351,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
         enqueueAffectedSources();
       }
-
-      // run apt last round iff doing annotation processing and ran regular apt rounds
-      if (aptmanager != null && aptstate == null) {
-        // tell apt manager we are running APT lastRound
-        aptmanager.suppressRegularRounds(true);
-        aptmanager.suppressLastRound(false);
-
-        // trick the compiler to run APT without any source or binary types
-        compiler.referenceBindings = new ReferenceBinding[0];
-        compiler.compile(new ICompilationUnit[0]);
-      }
-
-      persistAnnotationProcessingState(compiler, aptstate);
-
-      return processedSources.size();
     }
 
     @Override
@@ -663,8 +691,18 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
           // it is used to resolve type references and must not be processed otherwise
           return;
         }
-        super.addCompilationUnit(sourceUnit, parsedUnit);
+        // growth of the internal unitsToProcess array is handled via multiplication of it's current size,
+        // so if size is 0, we should just go ahead and handle it here.
+        if (this.unitsToProcess.length == 0) {
+          this.unitsToProcess = new CompilationUnitDeclaration[4];
+          this.unitsToProcess[0] = parsedUnit;
+          this.totalUnits = 1;
+        } else {
+          super.addCompilationUnit(sourceUnit, parsedUnit);
+        }
       }
+
+
     };
     compiler.options.produceReferenceInfo = true;
 

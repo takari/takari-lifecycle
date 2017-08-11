@@ -210,6 +210,91 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
   }
 
   @Test
+  public void testProcRef_annotationProcessors() throws Exception {
+    Xpp3Dom processors = newProcessors("processor.Processor");
+    File basedir = procCompile("compile-proc/proc-type-reference", Proc.proc, processors);
+    mojos.assertBuildOutputs(new File(basedir, "target"), //
+        "classes/proc/Source.class", //
+        "generated-sources/annotations/proc/GeneratedSource.java", //
+        "classes/proc/GeneratedSource.class", //
+        "classes/proc/GeneratedSourceSubclass.class");
+  }
+
+  @Test
+  public void testProcRef_annotationProcessors_LastRound() throws Exception {
+    // javac can't handle forward references in the last round, but jdt can.
+    Assume.assumeTrue(CompilerJdt.ID.equals(compilerId));
+    Xpp3Dom processors = newProcessors("processor.ProcessorImplLastRound");
+    File basedir = procCompile("compile-proc/proc-type-reference", Proc.proc, processors);
+
+    mojos.assertBuildOutputs(new File(basedir, "target"), //
+        "classes/proc/Source.class", //
+        "generated-sources/annotations/proc/GeneratedSource.java", //
+        "classes/proc/GeneratedSource.class", //
+        "classes/proc/GeneratedSourceSubclass.class");
+  }
+
+  @Test
+  public void testProcRef_annotationProcessors_recompile() throws Exception {
+    Xpp3Dom processors = newProcessors("processor.Processor");
+    File basedir = procCompile("compile-proc/proc-type-reference", Proc.proc, processors);
+    mojos.assertBuildOutputs(new File(basedir, "target"), //
+        "classes/proc/Source.class", //
+        "generated-sources/annotations/proc/GeneratedSource.java", //
+        "classes/proc/GeneratedSource.class", //
+        "classes/proc/GeneratedSourceSubclass.class");
+
+    touch(basedir, "src/main/java/proc/Source.java");
+
+    procCompile(basedir, Proc.proc, processors);
+
+    String[] expectedOuput;
+    if (CompilerJdt.ID.equals(compilerId)) {
+      // incremental compile no subclass
+      expectedOuput = new String[] {//
+          "classes/proc/Source.class", //
+          "generated-sources/annotations/proc/GeneratedSource.java", //
+          "classes/proc/GeneratedSource.class"};
+    } else {
+      expectedOuput = new String[] { //
+          "classes/proc/Source.class", //
+          "generated-sources/annotations/proc/GeneratedSource.java", //
+          "classes/proc/GeneratedSource.class", //
+          "classes/proc/GeneratedSourceSubclass.class"};
+    }
+    mojos.assertBuildOutputs(new File(basedir, "target"), expectedOuput);
+  }
+
+  @Test
+  public void testProcRef_annotationProcessors_LastRound_recompile() throws Exception {
+    // javac can't handle forward references in the last round, but jdt can.
+    Assume.assumeTrue(CompilerJdt.ID.equals(compilerId));
+    Xpp3Dom processors = newProcessors("processor.ProcessorImplLastRound");
+    File basedir = procCompile("compile-proc/proc-type-reference", Proc.proc, processors);
+    mojos.assertBuildOutputs(new File(basedir, "target"), //
+        "classes/proc/Source.class", //
+        "generated-sources/annotations/proc/GeneratedSource.java", //
+        "classes/proc/GeneratedSource.class", //
+        "classes/proc/GeneratedSourceSubclass.class");
+
+    touch(basedir, "src/main/java/proc/Source.java");
+
+    procCompile(basedir, Proc.proc, processors);
+
+    // okay this is a little wonky. Since source was recompiled, we delete it's
+    // apt generated type, which is referenced by GeneratedSourceSubclass, once it's
+    // deleted we then generated the GeneratedSource, compile it, and then have to
+    // recompile GeneratedSourceSubclass, hence it appears in this test and not
+    // testProcRef_annotationProcessors_recompile's list of output for jdt.
+    mojos.assertBuildOutputs(new File(basedir, "target"), //
+        "classes/proc/Source.class", //
+        "generated-sources/annotations/proc/GeneratedSource.java", //
+        "classes/proc/GeneratedSource.class", //
+        "classes/proc/GeneratedSourceSubclass.class");
+  }
+
+
+  @Test
   public void testProc_processorErrorMessage() throws Exception {
     Xpp3Dom processors = newProcessors("processor.ErrorMessageProcessor");
     File basedir = resources.getBasedir("compile-proc/proc");

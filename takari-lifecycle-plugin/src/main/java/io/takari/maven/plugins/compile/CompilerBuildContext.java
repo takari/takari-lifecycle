@@ -208,6 +208,11 @@ public class CompilerBuildContext extends AbstractBuildContext {
     return super.processOutput(outputFile);
   }
 
+  public Resource<File> processInput(ResourceMetadata<File> inputResource) {
+    super.processResource(inputResource.getResource());
+    return inputResource.process();
+  }
+
   @Override
   public void deleteOutput(File outputFile) throws IOException {
     super.deleteOutput(outputFile);
