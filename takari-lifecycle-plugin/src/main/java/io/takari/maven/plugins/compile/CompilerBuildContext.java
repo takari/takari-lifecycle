@@ -208,6 +208,15 @@ public class CompilerBuildContext extends AbstractBuildContext {
     return super.processOutput(outputFile);
   }
 
+  /**
+   * This method is similar to ResourceMetadata.process(), but discards state associated with the inputResource during each invocation. Useful when recompiling the same source multiple times during
+   * incremental build iterations.
+   */
+  public Resource<File> processInput(ResourceMetadata<File> inputResource) {
+    super.processResource(inputResource.getResource());
+    return inputResource.process();
+  }
+
   @Override
   public void deleteOutput(File outputFile) throws IOException {
     super.deleteOutput(outputFile);
