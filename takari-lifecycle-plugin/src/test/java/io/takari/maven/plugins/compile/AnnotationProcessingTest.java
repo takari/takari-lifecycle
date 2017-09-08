@@ -199,6 +199,19 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         "generated-sources/annotations/proc/GeneratedSource.java");
   }
 
+  // The following five tests help test the behavior of the full and incremental
+  // compile strategies of the CompilerJdt with regards to Annotation Processing.
+  // Incremental compile is triggered on the last two tests with a second compile step
+  // to force apt to run in a course grained incremental manner.
+  // Both final round only and during each round APT code generators are tested.
+
+  /**
+   * This test compiles with the a non-final round processor.
+   * 
+   * There are no forward references that attempt to use the newly generated type.
+   * 
+   * Note the use of "processor.Processor" and the "compile-proc/proc" project in this test.
+   */
   @Test
   public void testProc_annotationProcessors() throws Exception {
     Xpp3Dom processors = newProcessors("processor.Processor");
@@ -209,6 +222,15 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         "classes/proc/GeneratedSource.class");
   }
 
+  /**
+   * This test generates code in each round of an apt processor.
+   * 
+   * There are is a forward reference which attempt to use the newly generated type as a super class.
+   * 
+   * Any reference to the new type would be sufficient for this test.
+   * 
+   * Note the use of "processor.Processor" and the "compile-proc/proc-type-reference" project in this test.
+   */
   @Test
   public void testProcRef_annotationProcessors() throws Exception {
     Xpp3Dom processors = newProcessors("processor.Processor");
@@ -220,6 +242,16 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         "classes/proc/GeneratedSourceSubclass.class");
   }
 
+
+  /**
+   * This test generates code in the final round of an apt processor.
+   * 
+   * There are is a forward reference which attempt to use the newly generated type as a super class.
+   * 
+   * Any reference to the new type would be sufficient for this test.
+   * 
+   * Note the use of "processor.ProcessorImplLastRound" and the "compile-proc/proc-type-reference" project in this test.
+   */
   @Test
   public void testProcRef_annotationProcessors_LastRound() throws Exception {
     // javac can't handle forward references in the last round, but jdt can.
@@ -234,6 +266,15 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         "classes/proc/GeneratedSourceSubclass.class");
   }
 
+  /**
+   * This test generates code in each round of an apt processor.
+   * 
+   * There are is a forward reference which attempt to use the newly generated type as a super class. Any reference to the new type would be sufficient for this test.
+   * 
+   * This test the touches an annotated type and runs an incremental compile where much of the same code is forced to be recompiled.
+   * 
+   * Note the use of "processor.Processor" and the "compile-proc/proc-type-reference" project in this test.
+   */
   @Test
   public void testProcRef_annotationProcessors_recompile() throws Exception {
     Xpp3Dom processors = newProcessors("processor.Processor");
@@ -250,13 +291,15 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
     String[] expectedOuput;
     if (CompilerJdt.ID.equals(compilerId)) {
-      // incremental compile no subclass
+      // incremental in jdt compile means that GeneratedSourceSubclass sees no
+      // structural change and doesn't need to be recompiled.
       expectedOuput = new String[] {//
           "classes/proc/Source.class", //
           "generated-sources/annotations/proc/GeneratedSource.java", //
           "classes/proc/GeneratedSource.class"};
     } else {
       expectedOuput = new String[] { //
+          // everything is recompiled by javac
           "classes/proc/Source.class", //
           "generated-sources/annotations/proc/GeneratedSource.java", //
           "classes/proc/GeneratedSource.class", //
@@ -265,6 +308,15 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     mojos.assertBuildOutputs(new File(basedir, "target"), expectedOuput);
   }
 
+  /**
+   * This test generates code in the final round of an apt processor.
+   * 
+   * There are is a forward reference which attempt to use the newly generated type as a super class. Any reference to the new type would be sufficient for this test.
+   * 
+   * This test the touches an annotated type and runs an incremental compile where much of the same code is forced to be recompiled.
+   * 
+   * Note the use of "processor.ProcessorImplLastRound" and the "compile-proc/proc-type-reference" project in this test.
+   */
   @Test
   public void testProcRef_annotationProcessors_LastRound_recompile() throws Exception {
     // javac can't handle forward references in the last round, but jdt can.

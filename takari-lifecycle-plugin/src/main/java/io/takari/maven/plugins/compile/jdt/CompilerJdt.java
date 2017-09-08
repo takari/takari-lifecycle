@@ -313,7 +313,6 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         incrementalCompilationLoop(namingEnvironment, compiler, aptmanager);
       }
 
-
       persistAnnotationProcessingState(compiler, aptstate);
 
       return processedSources.size();
@@ -322,19 +321,15 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     /**
      * This loop handles the incremental compilation of classes in the compileQueue. Regular apt rounds may occur in this loop, but the apt final round will not.
      * 
-     * This loop will be called once after the apt final round is processed to compile all effected types. All prior errors are ignored when a type is recompiled.
-     * 
-     * @param namingEnvironment
-     * @param compiler
-     * @param aptmanager
-     * @throws IOException
+     * This loop will be called once after the apt final round is processed to compile all effected types. All prior error/warn/info messages, referenced types, generated outputs and other per-input
+     * information tracked by in build context are ignored when a type is recompiled.
      */
     private void incrementalCompilationLoop(Classpath namingEnvironment, Compiler compiler, AnnotationProcessorManager aptmanager) throws IOException {
       while (!compileQueue.isEmpty() || !staleOutputs.isEmpty()) {
         processedQueue.clear();
         processedQueue.addAll(compileQueue.keySet());
 
-        // prior errors are wiped away within.
+        // All prior error/warn/info messages, referenced types, generated outputs and other per-input information tracked by in build context are wiped away within.
         processSources();
 
         // invoke the compiler
@@ -694,8 +689,11 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         // growth of the internal unitsToProcess array is handled via multiplication of it's current size,
         // so if size is 0, we should just go ahead and handle it here.
         if (this.unitsToProcess.length == 0) {
+          // start out with a size other than 0, so that it can be doubled safely by the super method.
+          // starting with 4 to prevent the first couple of doublings and corresponding copying.
           this.unitsToProcess = new CompilationUnitDeclaration[4];
           this.unitsToProcess[0] = parsedUnit;
+          // this tracks the units added, it must be incremented ever time a new type is added.
           this.totalUnits = 1;
         } else {
           super.addCompilationUnit(sourceUnit, parsedUnit);
