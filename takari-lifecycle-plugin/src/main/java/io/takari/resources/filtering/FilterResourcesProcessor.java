@@ -142,7 +142,7 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
       }
       if (result instanceof MissingWrapper && missingPropertyAction != MissingPropertyAction.empty) {
         if (missingPropertyAction == MissingPropertyAction.fail) {
-          throw new IllegalStateException("Missing property " + name + " required for filtering");
+          throw new MustacheException("Missing property '" + name + "' required for filtering");
         }
         if (missingPropertyAction == MissingPropertyAction.leave) {
           result = new Wrapper() {

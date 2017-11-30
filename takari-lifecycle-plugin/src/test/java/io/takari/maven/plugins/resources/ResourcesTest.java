@@ -4,10 +4,12 @@ import static io.takari.maven.testing.TestMavenRuntime.newParameter;
 import static io.takari.maven.testing.TestResources.assertFileContents;
 import static io.takari.maven.testing.TestResources.cp;
 import static io.takari.maven.testing.TestResources.rm;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.nio.charset.Charset;
 
+import com.github.mustachejava.MustacheException;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.project.MavenProject;
@@ -79,7 +81,7 @@ public class ResourcesTest {
   }
 
   @Test
-  public void resourcesWithFilteringLeaveEmpty() throws Exception {
+  public void resourcesWithFilteringEmpty() throws Exception {
     File basedir = resources.getBasedir("resources/project-with-resources-filtered");
     mojos.executeMojo(basedir, "process-resources", newParameter("missingPropertyAction", "empty"));
     assertFileContents(basedir, "expected-resource-empty.txt", "target/classes/resource.txt");
@@ -92,10 +94,15 @@ public class ResourcesTest {
     assertFileContents(basedir, "expected-resource-leave.txt", "target/classes/resource.txt");
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void resourcesWithFilteringFail() throws Exception {
     File basedir = resources.getBasedir("resources/project-with-resources-filtered");
-    mojos.executeMojo(basedir, "process-resources", newParameter("missingPropertyAction", "fail"));
+    try {
+      mojos.executeMojo(basedir, "process-resources", newParameter("missingPropertyAction", "fail"));
+      fail("Should fail with missing resource");
+    } catch (MustacheException e) {
+      // good
+    }
   }
 
   @Test
