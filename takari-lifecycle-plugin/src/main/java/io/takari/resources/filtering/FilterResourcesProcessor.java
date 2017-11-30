@@ -24,6 +24,7 @@ import java.util.Properties;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheException;
+import com.github.mustachejava.reflect.MissingWrapper;
 import com.github.mustachejava.reflect.ReflectionObjectHandler;
 import com.github.mustachejava.util.GuardException;
 import com.github.mustachejava.util.Wrapper;
@@ -33,20 +34,17 @@ import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.Output;
 import io.takari.incrementalbuild.Resource;
 import io.takari.incrementalbuild.ResourceMetadata;
+import io.takari.maven.plugins.resources.AbstractProcessResourcesMojo.MissingPropertyAction;
 
 class FilterResourcesProcessor extends AbstractResourceProcessor {
 
   private final BuildContext buildContext;
 
-  private final DefaultMustacheFactory mustacheFactory;
-
   public FilterResourcesProcessor(BuildContext buildContext) {
     this.buildContext = buildContext;
-    this.mustacheFactory = new NoEncodingMustacheFactory();
-    this.mustacheFactory.setObjectHandler(new MapReflectionObjectHandler());
   }
 
-  public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes, Map<Object, Object> filterProperties, List<File> filters, String encoding)
+  public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes, Map<Object, Object> filterProperties, List<File> filters, String encoding, MissingPropertyAction mpa)
       throws IOException {
     Map<Object, Object> effectiveProperties = new HashMap<>(filterProperties);
     for (File filter : filters) {
@@ -57,7 +55,7 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
       });
     }
     for (ResourceMetadata<File> metadata : buildContext.registerInputs(sourceDirectory, includes, excludes)) {
-      filterResource(metadata.process(), sourceDirectory, targetDirectory, effectiveProperties, encoding);
+      filterResource(metadata.process(), sourceDirectory, targetDirectory, effectiveProperties, encoding, mpa);
     }
   }
 
@@ -71,16 +69,18 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
     return Maps.fromProperties(properties);
   }
 
-  private void filterResource(Resource<File> input, File sourceDirectory, File targetDirectory, Map<Object, Object> filterProperties, String encoding) throws IOException {
+  private void filterResource(Resource<File> input, File sourceDirectory, File targetDirectory, Map<Object, Object> filterProperties, String encoding, MissingPropertyAction mpa) throws IOException {
     File outputFile = relativize(sourceDirectory, targetDirectory, input.getResource());
     Output<File> output = input.associateOutput(outputFile);
     try (Reader reader = newReader(input, encoding); Writer writer = newWriter(output, encoding)) {
-      filter(reader, writer, filterProperties);
+      filter(reader, writer, filterProperties, mpa);
     }
   }
 
-  public void filter(Reader reader, Writer writer, Map<Object, Object> properties) throws IOException {
-    Mustache mustache = mustacheFactory.compile(reader, "maven", "${", "}");
+  public void filter(Reader reader, Writer writer, Map<Object, Object> properties, MissingPropertyAction mpa) throws IOException {
+    NoEncodingMustacheFactory factory = new NoEncodingMustacheFactory();
+    factory.setObjectHandler(new MapReflectionObjectHandler(mpa));
+    Mustache mustache = factory.compile(reader, "maven", "${", "}");
     mustache.execute(writer, properties).close();
   }
 
@@ -117,19 +117,43 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
   // workaround for https://github.com/spullara/mustache.java/issues/92
   // performs full-name map lookup before falling back to dot-notation parsing
   private static class MapReflectionObjectHandler extends ReflectionObjectHandler {
+    private final MissingPropertyAction missingPropertyAction;
+
+    public MapReflectionObjectHandler(final MissingPropertyAction missingPropertyAction) {
+      this.missingPropertyAction = missingPropertyAction;
+    }
+
     @Override
     public Wrapper find(final String name, Object[] scopes) {
+      Wrapper result = null;
       for (final Object scope : scopes) {
         if (scope instanceof Map && ((Map) scope).containsKey(name)) {
-          return new Wrapper() {
+          result = new Wrapper() {
             @Override
             public Object call(Object[] scopes) throws GuardException {
               return ((Map) scope).get(name);
             }
           };
+          break;
         }
       }
-      return super.find(name, scopes);
+      if (result == null) {
+        result = super.find(name, scopes);
+      }
+      if (result instanceof MissingWrapper && missingPropertyAction != MissingPropertyAction.empty) {
+        if (missingPropertyAction == MissingPropertyAction.fail) {
+          throw new IllegalStateException("Missing property " + name + " required for filtering");
+        }
+        if (missingPropertyAction == MissingPropertyAction.leave) {
+          result = new Wrapper() {
+            @Override
+            public Object call(Object[] scopes) throws GuardException {
+              return "${" + name + "}";
+            }
+          };
+        }
+      }
+      return result;
     }
 
     @Override

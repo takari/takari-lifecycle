@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import io.takari.maven.plugins.resources.AbstractProcessResourcesMojo.MissingPropertyAction;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.execution.ProjectDependencyGraph;
@@ -267,7 +268,7 @@ public class TestPropertiesMojo extends AbstractMojo {
   private String expand(String value, Map<Object, Object> substitutes) {
     StringWriter writer = new StringWriter();
     try {
-      resourceProcessor.filter(new StringReader(value), writer, substitutes);
+      resourceProcessor.filter(new StringReader(value), writer, substitutes, MissingPropertyAction.empty);
       return writer.toString();
     } catch (IOException e) {
       return value; // shouldn't happen

@@ -11,6 +11,7 @@ import java.nio.charset.Charset;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -74,7 +75,27 @@ public class ResourcesTest {
   public void resourcesWithFiltering() throws Exception {
     File basedir = resources.getBasedir("resources/project-with-resources-filtered");
     mojos.executeMojo(basedir, "process-resources");
-    assertFileContents(basedir, "expected-resource.txt", "target/classes/resource.txt");
+    assertFileContents(basedir, "expected-resource-empty.txt", "target/classes/resource.txt");
+  }
+
+  @Test
+  public void resourcesWithFilteringLeaveEmpty() throws Exception {
+    File basedir = resources.getBasedir("resources/project-with-resources-filtered");
+    mojos.executeMojo(basedir, "process-resources", newParameter("missingPropertyAction", "empty"));
+    assertFileContents(basedir, "expected-resource-empty.txt", "target/classes/resource.txt");
+  }
+
+  @Test
+  public void resourcesWithFilteringLeave() throws Exception {
+    File basedir = resources.getBasedir("resources/project-with-resources-filtered");
+    mojos.executeMojo(basedir, "process-resources", newParameter("missingPropertyAction", "leave"));
+    assertFileContents(basedir, "expected-resource-leave.txt", "target/classes/resource.txt");
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void resourcesWithFilteringFail() throws Exception {
+    File basedir = resources.getBasedir("resources/project-with-resources-filtered");
+    mojos.executeMojo(basedir, "process-resources", newParameter("missingPropertyAction", "fail"));
   }
 
   @Test
