@@ -109,7 +109,7 @@ public class CompilerJavac extends AbstractCompilerJavac {
               resource = outputs.get(file);
             }
             if (resource != null) {
-              resource.addMessage((int) diagnostic.getLineNumber(), (int) diagnostic.getColumnNumber(), message, severity, null);
+              resource.addMessage((int) diagnostic.getLineNumber(), (int) diagnostic.getColumnNumber(), message, getFailOnError() ? severity : MessageSeverity.WARNING, null);
             } else {
               log.warn("Unexpected java {} resource {}", source.getKind(), source.toUri().toASCIIString());
             }

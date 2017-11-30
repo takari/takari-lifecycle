@@ -365,4 +365,35 @@ public class CompileTest extends AbstractCompileTest {
     mojos.compile(project, newParameter("dependencySourceTypes", "prefer"));
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), "innertyperef/InnerTypeRef.class");
   }
+
+  @Test
+  public void testFailOnErrorTrue() throws Exception {
+    try{
+      compile("compile/failOnError");
+      Assert.fail();
+    } catch (MojoExecutionException e) {
+      if(compilerId.equals("jdt")){
+        Assert.assertTrue(e.getMessage().contains("Error.java:[5:13] Strin cannot be resolved to a type"));
+      }else if(compilerId.equals("javac")){
+        Assert.assertTrue(e.getMessage().contains("src/main/java/basic/Error.java:[5:13] cannot find symbol"));
+      }else if(compilerId.equals("forked-javac")){
+        Assert.assertTrue(e.getMessage().contains("src/main/java/basic/Error.java:[5:13] cannot find symbol"));
+      }else{
+        Assert.fail();
+      }
+    }
+  }
+
+  @Test
+  public void testFailOnErrorFalse() throws Exception {
+    try{
+      File basedir = resources.getBasedir("compile/failOnError");
+      compile("compile/failOnError", newParameter("failOnError", "false"));
+      if(compilerId.equals("jdt")){
+        mojos.assertBuildOutputs(new File(basedir, "target/classes"), "basic/Basic.class");
+      }
+    } catch (MojoExecutionException e) {
+      Assert.fail();
+    }
+  }
 }

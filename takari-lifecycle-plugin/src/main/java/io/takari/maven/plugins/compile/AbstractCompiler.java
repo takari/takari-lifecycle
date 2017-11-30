@@ -55,6 +55,8 @@ public abstract class AbstractCompiler {
 
   private boolean showWarnings;
 
+  private boolean failOnError = true;
+
   private AccessRulesViolation transitiveDependencyReference;
 
   private AccessRulesViolation privatePackageReference;
@@ -196,5 +198,10 @@ public abstract class AbstractCompiler {
   public void skipCompile() {
     context.markUptodateExecution();
   }
+
+  protected boolean getFailOnError(){ return failOnError; }
+
+  protected void setFailOnError(boolean failOnError){ this.failOnError = failOnError; }
+
 
 }
