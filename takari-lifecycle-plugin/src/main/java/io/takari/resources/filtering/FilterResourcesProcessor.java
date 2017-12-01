@@ -37,6 +37,9 @@ import io.takari.incrementalbuild.ResourceMetadata;
 import io.takari.maven.plugins.resources.AbstractProcessResourcesMojo.MissingPropertyAction;
 
 class FilterResourcesProcessor extends AbstractResourceProcessor {
+  private static final String M_START = "${";
+
+  private static final String M_END = "}";
 
   private final BuildContext buildContext;
 
@@ -79,8 +82,8 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
 
   public void filter(Reader reader, Writer writer, Map<Object, Object> properties, MissingPropertyAction mpa) throws IOException {
     NoEncodingMustacheFactory factory = new NoEncodingMustacheFactory();
-    factory.setObjectHandler(new MapReflectionObjectHandler(mpa));
-    Mustache mustache = factory.compile(reader, "maven", "${", "}");
+    factory.setObjectHandler(new MapReflectionObjectHandler(buildContext, mpa));
+    Mustache mustache = factory.compile(reader, "maven", M_START, M_END);
     mustache.execute(writer, properties).close();
   }
 
@@ -117,9 +120,12 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
   // workaround for https://github.com/spullara/mustache.java/issues/92
   // performs full-name map lookup before falling back to dot-notation parsing
   private static class MapReflectionObjectHandler extends ReflectionObjectHandler {
+    private final BuildContext context;
+
     private final MissingPropertyAction missingPropertyAction;
 
-    public MapReflectionObjectHandler(final MissingPropertyAction missingPropertyAction) {
+    public MapReflectionObjectHandler(final BuildContext context, final MissingPropertyAction missingPropertyAction) {
+      this.context = context;
       this.missingPropertyAction = missingPropertyAction;
     }
 
@@ -148,7 +154,7 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
           result = new Wrapper() {
             @Override
             public Object call(Object[] scopes) throws GuardException {
-              return "${" + name + "}";
+              return M_START + name + M_END;
             }
           };
         }
