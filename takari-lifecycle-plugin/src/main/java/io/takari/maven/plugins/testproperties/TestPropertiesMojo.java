@@ -120,7 +120,7 @@ public class TestPropertiesMojo extends AbstractMojo {
    * @since 1.13.4
    */
   @Parameter
-  protected MissingPropertyAction missingPropertyAction = MissingPropertyAction.empty;
+  protected MissingPropertyAction missingPropertyAction = MissingPropertyAction.DEFAULT;
 
   @Component
   private BasicBuildContext context;

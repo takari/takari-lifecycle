@@ -43,7 +43,7 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
    * @since 1.13.4
    */
   @Parameter
-  protected MissingPropertyAction missingPropertyAction = MissingPropertyAction.empty;
+  protected MissingPropertyAction missingPropertyAction = MissingPropertyAction.DEFAULT;
 
   @Parameter(defaultValue = "${project.properties}")
   @Incremental(configuration = Configuration.ignore)
