@@ -20,6 +20,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import io.takari.incrementalbuild.BuildContext;
+import io.takari.incrementalbuild.Resource;
 
 @Named
 @Singleton
@@ -47,8 +48,8 @@ public class ResourcesProcessor {
     filterProcessor.process(sourceDirectory, targetDirectory, includes, excludes, filterProperties, filters, encoding, mpa);
   }
 
-  public void filter(Reader reader, Writer writer, Map<Object, Object> properties, MissingPropertyAction mpa) throws IOException {
-    filterProcessor.filter(null, reader, writer, properties, mpa);
+  public void filter(Resource resource, Reader reader, Writer writer, Map<Object, Object> properties, MissingPropertyAction mpa) throws IOException {
+    filterProcessor.filter(resource, reader, writer, properties, mpa);
   }
 
 

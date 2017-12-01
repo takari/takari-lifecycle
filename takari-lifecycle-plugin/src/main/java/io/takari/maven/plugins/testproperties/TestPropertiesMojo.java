@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import io.takari.incrementalbuild.BuildContext;
+import io.takari.incrementalbuild.Resource;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.execution.ProjectDependencyGraph;
@@ -122,6 +124,9 @@ public class TestPropertiesMojo extends AbstractMojo {
 
   @Component
   private BasicBuildContext context;
+
+  @Component
+  private BuildContext buildContext;
 
   @Component
   private ResourcesProcessor resourceProcessor;
@@ -238,18 +243,18 @@ public class TestPropertiesMojo extends AbstractMojo {
   }
 
   private void mergeCustomTestProperties(Properties properties) throws MojoExecutionException {
-    ResourceMetadata<File> metadata = context.registerInput(testProperties);
+    ResourceMetadata<File> metadata = buildContext.registerInput(testProperties);
     try (InputStream is = new FileInputStream(metadata.getResource())) {
       Properties custom = new Properties();
       custom.load(is);
-      mergeCustomTestProperties(properties, custom);
+      mergeCustomTestProperties(metadata.process(), properties, custom);
     } catch (IOException e) {
       // TODO create error marker instead
       throw new MojoExecutionException("Could not read test.properties file " + testProperties, e);
     }
   }
 
-  private void mergeCustomTestProperties(Properties properties, Properties custom) {
+  private void mergeCustomTestProperties(Resource resource, Properties properties, Properties custom) {
     // resource filtering configuration should match AbstractProcessResourcesMojo
     // TODO figure out how to move this to a common component
     Map<Object, Object> substitutes = new HashMap<Object, Object>();
@@ -271,7 +276,7 @@ public class TestPropertiesMojo extends AbstractMojo {
     substitutes.put("userSettingsFile", userSettingsFile);
 
     for (String key : custom.stringPropertyNames()) {
-      properties.put(key, expand(custom.getProperty(key), substitutes));
+      properties.put(key, expand(resource, custom.getProperty(key), substitutes));
     }
   }
 
@@ -281,10 +286,10 @@ public class TestPropertiesMojo extends AbstractMojo {
     }
   }
 
-  private String expand(String value, Map<Object, Object> substitutes) {
+  private String expand(Resource resource, String value, Map<Object, Object> substitutes) {
     StringWriter writer = new StringWriter();
     try {
-      resourceProcessor.filter(new StringReader(value), writer, substitutes, missingPropertyAction);
+      resourceProcessor.filter(resource, new StringReader(value), writer, substitutes, missingPropertyAction);
       return writer.toString();
     } catch (IOException e) {
       return value; // shouldn't happen

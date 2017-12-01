@@ -29,7 +29,6 @@ import com.github.mustachejava.reflect.ReflectionObjectHandler;
 import com.github.mustachejava.util.GuardException;
 import com.github.mustachejava.util.Wrapper;
 import com.google.common.collect.Maps;
-
 import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.MessageSeverity;
 import io.takari.incrementalbuild.Output;
@@ -80,7 +79,7 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
     }
   }
 
-  public void filter(/*nullable*/ Resource resource, Reader reader, Writer writer, Map<Object, Object> properties, MissingPropertyAction mpa) throws IOException {
+  public void filter(Resource resource, Reader reader, Writer writer, Map<Object, Object> properties, MissingPropertyAction mpa) throws IOException {
     NoEncodingMustacheFactory factory = new NoEncodingMustacheFactory();
     factory.setObjectHandler(new MapReflectionObjectHandler(resource, mpa));
     Mustache mustache = factory.compile(reader, "maven", M_START, M_END);
@@ -124,7 +123,7 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
 
     private final MissingPropertyAction missingPropertyAction;
 
-    public MapReflectionObjectHandler(/*nullable*/  final Resource resource, final MissingPropertyAction missingPropertyAction) {
+    public MapReflectionObjectHandler(final Resource resource, final MissingPropertyAction missingPropertyAction) {
       this.resource = resource;
       this.missingPropertyAction = missingPropertyAction;
     }
