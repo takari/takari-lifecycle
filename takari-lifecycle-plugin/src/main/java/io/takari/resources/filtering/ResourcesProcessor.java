@@ -20,7 +20,6 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import io.takari.incrementalbuild.BuildContext;
-import io.takari.maven.plugins.resources.AbstractProcessResourcesMojo.MissingPropertyAction;
 
 @Named
 @Singleton

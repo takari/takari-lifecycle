@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import io.takari.maven.plugins.resources.AbstractProcessResourcesMojo.MissingPropertyAction;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.execution.ProjectDependencyGraph;
@@ -42,6 +41,7 @@ import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
 import io.takari.incrementalbuild.ResourceMetadata;
 import io.takari.maven.plugins.util.PropertiesWriter;
+import io.takari.resources.filtering.MissingPropertyAction;
 import io.takari.resources.filtering.ResourcesProcessor;
 
 @Mojo(name = "testProperties", requiresDependencyResolution = ResolutionScope.TEST, configurator = "takari", threadSafe = true)
@@ -103,6 +103,22 @@ public class TestPropertiesMojo extends AbstractMojo {
   @Parameter(defaultValue = "${session.projectDependencyGraph}", readonly = true)
   @Incremental(configuration = Configuration.ignore)
   private ProjectDependencyGraph reactorDependencies;
+
+  /**
+   * Sets what should be the outcome when filtering hits a missing property.
+   * <p>
+   * Allowed values are:
+   * </p>
+   * <ul>
+   * <li><code>empty</code> - The filtered value will be empty string (default).</li>
+   * <li><code>leave</code> - The filtered value will be left as-is, unfiltered (basically the expression itself, mimics maven-resources-plugin).</li>
+   * <li><code>fail</code> - Missing property will be reported as error and fails the build.</li>
+   * </ul>
+   *
+   * @since 1.13.4
+   */
+  @Parameter
+  protected MissingPropertyAction missingPropertyAction = MissingPropertyAction.empty;
 
   @Component
   private BasicBuildContext context;
@@ -268,7 +284,7 @@ public class TestPropertiesMojo extends AbstractMojo {
   private String expand(String value, Map<Object, Object> substitutes) {
     StringWriter writer = new StringWriter();
     try {
-      resourceProcessor.filter(new StringReader(value), writer, substitutes, MissingPropertyAction.empty);
+      resourceProcessor.filter(new StringReader(value), writer, substitutes, missingPropertyAction);
       return writer.toString();
     } catch (IOException e) {
       return value; // shouldn't happen

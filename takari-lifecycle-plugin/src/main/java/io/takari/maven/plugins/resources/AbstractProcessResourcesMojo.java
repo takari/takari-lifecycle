@@ -24,23 +24,20 @@ import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
 import io.takari.maven.plugins.TakariLifecycleMojo;
+import io.takari.resources.filtering.MissingPropertyAction;
 import io.takari.resources.filtering.ResourcesProcessor;
 
 public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
 
-  public enum MissingPropertyAction {
-    empty, leave, fail
-  }
-
   /**
-   * Sets what should be the outcome when filtering resource refers to a missing property.
+   * Sets what should be the outcome when filtering hits a missing property.
    * <p>
    * Allowed values are:
    * </p>
    * <ul>
-   * <li><code>empty</code> - The default: the filtered value will be empty string.</li>
-   * <li><code>leave</code> - Leaves the value as-is, basically the expression itself (maven-resources-plugin default).</li>
-   * <li><code>fail</code> - Fails the build if property value not found.</li>
+   * <li><code>empty</code> - The filtered value will be empty string (default).</li>
+   * <li><code>leave</code> - The filtered value will be left as-is, unfiltered (basically the expression itself, mimics maven-resources-plugin).</li>
+   * <li><code>fail</code> - Missing property will be reported as error and fails the build.</li>
    * </ul>
    *
    * @since 1.13.4

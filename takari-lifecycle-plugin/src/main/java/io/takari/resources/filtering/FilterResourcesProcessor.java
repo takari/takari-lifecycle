@@ -34,7 +34,6 @@ import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.Output;
 import io.takari.incrementalbuild.Resource;
 import io.takari.incrementalbuild.ResourceMetadata;
-import io.takari.maven.plugins.resources.AbstractProcessResourcesMojo.MissingPropertyAction;
 
 class FilterResourcesProcessor extends AbstractResourceProcessor {
   private static final String M_START = "${";
