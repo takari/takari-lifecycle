@@ -99,7 +99,7 @@ public class ResourcesTest {
     File basedir = resources.getBasedir("resources/project-with-resources-filtered");
     try {
       mojos.executeMojo(basedir, "process-resources", newParameter("missingPropertyAction", "fail"));
-      Assert.fail("Should fail with missing resource");
+      Assert.fail("Should fail with missing property");
     } catch (MojoExecutionException e) {
       Assert.assertThat(e.getMessage(), containsString("Filtering: property 'nonExistant' not found"));
     }

@@ -18,8 +18,10 @@ import org.apache.maven.artifact.handler.DefaultArtifactHandler;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.execution.ProjectDependencyGraph;
 import org.apache.maven.plugin.MojoExecution;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -33,6 +35,9 @@ import com.google.common.io.Files;
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 import io.takari.maven.testing.TestResources;
 
+import static io.takari.maven.testing.TestMavenRuntime.newParameter;
+import static org.hamcrest.CoreMatchers.containsString;
+
 public class TestPropertiesMojoTest {
   @Rule
   public final TestResources resources = new TestResources();
@@ -43,8 +48,8 @@ public class TestPropertiesMojoTest {
   @Rule
   public final TemporaryFolder temp = new TemporaryFolder();
 
-  private MojoExecution newMojoExecution() throws IOException {
-    MojoExecution execution = mojos.newMojoExecution("testProperties");
+  private MojoExecution newMojoExecution(Xpp3Dom... parameters) throws IOException {
+    MojoExecution execution = mojos.newMojoExecution("testProperties", parameters);
     PluginDescriptor pluginDescriptor = execution.getMojoDescriptor().getPluginDescriptor();
 
     ArtifactHandler handler = new DefaultArtifactHandler("jar");
@@ -146,6 +151,41 @@ public class TestPropertiesMojoTest {
     TestResources.cp(basedir, "src/test/modified-test.properties", "src/test/test.properties");
     mojos.executeMojo(session, project, newMojoExecution());
     Assert.assertEquals("modified-value", readProperties(basedir).get("custom"));
+  }
+
+  @Test
+  public void testMissingTestPropertiesEmpty() throws Exception {
+    File basedir = resources.getBasedir("testproperties/missing-test-properties");
+    MavenProject project = mojos.readMavenProject(basedir);
+    MavenSession session = mojos.newMavenSession(project);
+
+    mojos.executeMojo(session, project, newMojoExecution(newParameter("missingPropertyAction", "empty")));
+    Assert.assertEquals("", readProperties(basedir).get("custom"));
+  }
+
+  @Test
+  public void testMissingTestPropertiesLeave() throws Exception {
+    File basedir = resources.getBasedir("testproperties/missing-test-properties");
+    MavenProject project = mojos.readMavenProject(basedir);
+    MavenSession session = mojos.newMavenSession(project);
+
+    mojos.executeMojo(session, project, newMojoExecution(newParameter("missingPropertyAction", "leave")));
+    Assert.assertEquals("${missing}", readProperties(basedir).get("custom"));
+  }
+
+  @Test
+  public void testMissingTestPropertiesFail() throws Exception {
+    File basedir = resources.getBasedir("testproperties/missing-test-properties");
+    MavenProject project = mojos.readMavenProject(basedir);
+    MavenSession session = mojos.newMavenSession(project);
+
+    try {
+      mojos.executeMojo(session, project, newMojoExecution(newParameter("missingPropertyAction", "fail")));
+      Assert.fail("Should fail with missing property");
+    }
+    catch (MojoExecutionException e) {
+      Assert.assertThat(e.getMessage(), containsString("Filtering: property 'missing' not found"));
+    }
   }
 
   @Test
