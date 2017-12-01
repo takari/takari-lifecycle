@@ -157,7 +157,7 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
             resource.addMessage(1, 1, message, MessageSeverity.ERROR, null);
           }
         }
-        if (missingPropertyAction == MissingPropertyAction.leave) {
+        else if (missingPropertyAction == MissingPropertyAction.leave) {
           result = new Wrapper() {
             @Override
             public Object call(Object[] scopes) throws GuardException {
