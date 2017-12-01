@@ -31,6 +31,7 @@ import com.github.mustachejava.util.Wrapper;
 import com.google.common.collect.Maps;
 
 import io.takari.incrementalbuild.BuildContext;
+import io.takari.incrementalbuild.MessageSeverity;
 import io.takari.incrementalbuild.Output;
 import io.takari.incrementalbuild.Resource;
 import io.takari.incrementalbuild.ResourceMetadata;
@@ -75,13 +76,13 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
     File outputFile = relativize(sourceDirectory, targetDirectory, input.getResource());
     Output<File> output = input.associateOutput(outputFile);
     try (Reader reader = newReader(input, encoding); Writer writer = newWriter(output, encoding)) {
-      filter(reader, writer, filterProperties, mpa);
+      filter(input, reader, writer, filterProperties, mpa);
     }
   }
 
-  public void filter(Reader reader, Writer writer, Map<Object, Object> properties, MissingPropertyAction mpa) throws IOException {
+  public void filter(/*nullable*/ Resource resource, Reader reader, Writer writer, Map<Object, Object> properties, MissingPropertyAction mpa) throws IOException {
     NoEncodingMustacheFactory factory = new NoEncodingMustacheFactory();
-    factory.setObjectHandler(new MapReflectionObjectHandler(buildContext, mpa));
+    factory.setObjectHandler(new MapReflectionObjectHandler(resource, mpa));
     Mustache mustache = factory.compile(reader, "maven", M_START, M_END);
     mustache.execute(writer, properties).close();
   }
@@ -119,12 +120,12 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
   // workaround for https://github.com/spullara/mustache.java/issues/92
   // performs full-name map lookup before falling back to dot-notation parsing
   private static class MapReflectionObjectHandler extends ReflectionObjectHandler {
-    private final BuildContext context;
+    private final Resource resource;
 
     private final MissingPropertyAction missingPropertyAction;
 
-    public MapReflectionObjectHandler(final BuildContext context, final MissingPropertyAction missingPropertyAction) {
-      this.context = context;
+    public MapReflectionObjectHandler(/*nullable*/  final Resource resource, final MissingPropertyAction missingPropertyAction) {
+      this.resource = resource;
       this.missingPropertyAction = missingPropertyAction;
     }
 
@@ -147,7 +148,14 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
       }
       if (result instanceof MissingWrapper && missingPropertyAction != MissingPropertyAction.empty) {
         if (missingPropertyAction == MissingPropertyAction.fail) {
-          throw new MustacheException("Missing property '" + name + "' required for filtering");
+          String message = "Filtering: property '" + name + "' not found";
+          if (resource == null) {
+            throw new MustacheException(message);
+          }
+          else {
+            // TODO: get line/col somehow
+            resource.addMessage(1, 1, message, MessageSeverity.ERROR, null);
+          }
         }
         if (missingPropertyAction == MissingPropertyAction.leave) {
           result = new Wrapper() {

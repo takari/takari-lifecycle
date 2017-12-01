@@ -48,7 +48,7 @@ public class ResourcesProcessor {
   }
 
   public void filter(Reader reader, Writer writer, Map<Object, Object> properties, MissingPropertyAction mpa) throws IOException {
-    filterProcessor.filter(reader, writer, properties, mpa);
+    filterProcessor.filter(null, reader, writer, properties, mpa);
   }
 
 

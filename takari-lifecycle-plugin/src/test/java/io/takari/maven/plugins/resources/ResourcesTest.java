@@ -4,16 +4,16 @@ import static io.takari.maven.testing.TestMavenRuntime.newParameter;
 import static io.takari.maven.testing.TestResources.assertFileContents;
 import static io.takari.maven.testing.TestResources.cp;
 import static io.takari.maven.testing.TestResources.rm;
-import static org.junit.Assert.fail;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.endsWith;
 
 import java.io.File;
 import java.nio.charset.Charset;
 
-import com.github.mustachejava.MustacheException;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -99,9 +99,9 @@ public class ResourcesTest {
     File basedir = resources.getBasedir("resources/project-with-resources-filtered");
     try {
       mojos.executeMojo(basedir, "process-resources", newParameter("missingPropertyAction", "fail"));
-      fail("Should fail with missing resource");
-    } catch (MustacheException e) {
-      // good
+      Assert.fail("Should fail with missing resource");
+    } catch (MojoExecutionException e) {
+      Assert.assertThat(e.getMessage(), containsString("Filtering: property 'nonExistant' not found"));
     }
   }
 
