@@ -39,6 +39,10 @@
     <pluginTestingVersion>2.9.0</pluginTestingVersion>
     <takariLifecycleVersion>1.13.0</takariLifecycleVersion>
     <takari.javaSourceVersion>1.8</takari.javaSourceVersion>
+
+    <!-- To make project Idea friendly -->
+    <maven.compiler.source>${takari.javaSourceVersion}</maven.compiler.source>
+    <maven.compiler.target>${takari.javaSourceVersion}</maven.compiler.target>
   </properties>
 
   <scm>
