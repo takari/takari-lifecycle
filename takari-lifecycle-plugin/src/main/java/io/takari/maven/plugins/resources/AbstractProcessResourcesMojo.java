@@ -24,9 +24,26 @@ import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
 import io.takari.maven.plugins.TakariLifecycleMojo;
+import io.takari.resources.filtering.MissingPropertyAction;
 import io.takari.resources.filtering.ResourcesProcessor;
 
 public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
+
+  /**
+   * Sets what should be the outcome when filtering hits a missing property.
+   * <p>
+   * Allowed values are:
+   * </p>
+   * <ul>
+   * <li><code>empty</code> - The filtered value will be empty string (default).</li>
+   * <li><code>leave</code> - The filtered value will be left as-is, unfiltered (basically the expression itself, mimics maven-resources-plugin).</li>
+   * <li><code>fail</code> - Missing property will be reported as error and fails the build.</li>
+   * </ul>
+   *
+   * @since 1.13.4
+   */
+  @Parameter
+  protected MissingPropertyAction missingPropertyAction = MissingPropertyAction.DEFAULT;
 
   @Parameter(defaultValue = "${project.properties}")
   @Incremental(configuration = Configuration.ignore)
@@ -82,7 +99,7 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
           properties.put("localRepository", localRepository);
           properties.put("userSettingsFile", userSettingsFile);
           List<File> filters = project.getFilters().stream().map(File::new).collect(Collectors.toList());
-          processor.process(sourceDirectory, targetDirectory, resource.getIncludes(), resource.getExcludes(), properties, filters, encoding);
+          processor.process(sourceDirectory, targetDirectory, resource.getIncludes(), resource.getExcludes(), properties, filters, encoding, missingPropertyAction);
         } else {
           processor.process(sourceDirectory, targetDirectory, resource.getIncludes(), resource.getExcludes(), encoding);
         }

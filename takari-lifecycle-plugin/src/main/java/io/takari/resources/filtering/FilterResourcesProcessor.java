@@ -24,29 +24,29 @@ import java.util.Properties;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheException;
+import com.github.mustachejava.reflect.MissingWrapper;
 import com.github.mustachejava.reflect.ReflectionObjectHandler;
 import com.github.mustachejava.util.GuardException;
 import com.github.mustachejava.util.Wrapper;
 import com.google.common.collect.Maps;
-
 import io.takari.incrementalbuild.BuildContext;
+import io.takari.incrementalbuild.MessageSeverity;
 import io.takari.incrementalbuild.Output;
 import io.takari.incrementalbuild.Resource;
 import io.takari.incrementalbuild.ResourceMetadata;
 
 class FilterResourcesProcessor extends AbstractResourceProcessor {
+  private static final String M_START = "${";
+
+  private static final String M_END = "}";
 
   private final BuildContext buildContext;
 
-  private final DefaultMustacheFactory mustacheFactory;
-
   public FilterResourcesProcessor(BuildContext buildContext) {
     this.buildContext = buildContext;
-    this.mustacheFactory = new NoEncodingMustacheFactory();
-    this.mustacheFactory.setObjectHandler(new MapReflectionObjectHandler());
   }
 
-  public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes, Map<Object, Object> filterProperties, List<File> filters, String encoding)
+  public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes, Map<Object, Object> filterProperties, List<File> filters, String encoding, MissingPropertyAction mpa)
       throws IOException {
     Map<Object, Object> effectiveProperties = new HashMap<>(filterProperties);
     for (File filter : filters) {
@@ -57,7 +57,7 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
       });
     }
     for (ResourceMetadata<File> metadata : buildContext.registerInputs(sourceDirectory, includes, excludes)) {
-      filterResource(metadata.process(), sourceDirectory, targetDirectory, effectiveProperties, encoding);
+      filterResource(metadata.process(), sourceDirectory, targetDirectory, effectiveProperties, encoding, mpa);
     }
   }
 
@@ -71,16 +71,18 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
     return Maps.fromProperties(properties);
   }
 
-  private void filterResource(Resource<File> input, File sourceDirectory, File targetDirectory, Map<Object, Object> filterProperties, String encoding) throws IOException {
+  private void filterResource(Resource<File> input, File sourceDirectory, File targetDirectory, Map<Object, Object> filterProperties, String encoding, MissingPropertyAction mpa) throws IOException {
     File outputFile = relativize(sourceDirectory, targetDirectory, input.getResource());
     Output<File> output = input.associateOutput(outputFile);
     try (Reader reader = newReader(input, encoding); Writer writer = newWriter(output, encoding)) {
-      filter(reader, writer, filterProperties);
+      filter(input, reader, writer, filterProperties, mpa);
     }
   }
 
-  public void filter(Reader reader, Writer writer, Map<Object, Object> properties) throws IOException {
-    Mustache mustache = mustacheFactory.compile(reader, "maven", "${", "}");
+  public void filter(Resource resource, Reader reader, Writer writer, Map<Object, Object> properties, MissingPropertyAction mpa) throws IOException {
+    NoEncodingMustacheFactory factory = new NoEncodingMustacheFactory();
+    factory.setObjectHandler(new MapReflectionObjectHandler(resource, mpa));
+    Mustache mustache = factory.compile(reader, "maven", M_START, M_END);
     mustache.execute(writer, properties).close();
   }
 
@@ -117,19 +119,53 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
   // workaround for https://github.com/spullara/mustache.java/issues/92
   // performs full-name map lookup before falling back to dot-notation parsing
   private static class MapReflectionObjectHandler extends ReflectionObjectHandler {
+    private final Resource resource;
+
+    private final MissingPropertyAction missingPropertyAction;
+
+    public MapReflectionObjectHandler(final Resource resource, final MissingPropertyAction missingPropertyAction) {
+      this.resource = resource;
+      this.missingPropertyAction = missingPropertyAction;
+    }
+
     @Override
     public Wrapper find(final String name, Object[] scopes) {
+      Wrapper result = null;
       for (final Object scope : scopes) {
         if (scope instanceof Map && ((Map) scope).containsKey(name)) {
-          return new Wrapper() {
+          result = new Wrapper() {
             @Override
             public Object call(Object[] scopes) throws GuardException {
               return ((Map) scope).get(name);
             }
           };
+          break;
         }
       }
-      return super.find(name, scopes);
+      if (result == null) {
+        result = super.find(name, scopes);
+      }
+      if (result instanceof MissingWrapper && missingPropertyAction != MissingPropertyAction.empty) {
+        if (missingPropertyAction == MissingPropertyAction.fail) {
+          String message = "Filtering: property '" + name + "' not found";
+          if (resource == null) {
+            throw new MustacheException(message);
+          }
+          else {
+            // TODO: get line/col somehow
+            resource.addMessage(1, 1, message, MessageSeverity.ERROR, null);
+          }
+        }
+        else if (missingPropertyAction == MissingPropertyAction.leave) {
+          result = new Wrapper() {
+            @Override
+            public Object call(Object[] scopes) throws GuardException {
+              return M_START + name + M_END;
+            }
+          };
+        }
+      }
+      return result;
     }
 
     @Override

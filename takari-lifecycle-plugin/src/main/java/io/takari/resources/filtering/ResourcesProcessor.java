@@ -20,6 +20,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import io.takari.incrementalbuild.BuildContext;
+import io.takari.incrementalbuild.Resource;
 
 @Named
 @Singleton
@@ -38,17 +39,17 @@ public class ResourcesProcessor {
     copyProcessor.process(sourceDirectory, targetDirectory, includes, excludes, encoding);
   }
 
-  public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes, Map<Object, Object> filterProperties, String encoding) throws IOException {
-    filterProcessor.process(sourceDirectory, targetDirectory, includes, excludes, filterProperties, Collections.emptyList(), encoding);
+  public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes, Map<Object, Object> filterProperties, String encoding, MissingPropertyAction mpa) throws IOException {
+    filterProcessor.process(sourceDirectory, targetDirectory, includes, excludes, filterProperties, Collections.emptyList(), encoding, mpa);
   }
 
-  public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes, Map<Object, Object> filterProperties, List<File> filters, String encoding)
+  public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes, Map<Object, Object> filterProperties, List<File> filters, String encoding, MissingPropertyAction mpa)
       throws IOException {
-    filterProcessor.process(sourceDirectory, targetDirectory, includes, excludes, filterProperties, filters, encoding);
+    filterProcessor.process(sourceDirectory, targetDirectory, includes, excludes, filterProperties, filters, encoding, mpa);
   }
 
-  public void filter(Reader reader, Writer writer, Map<Object, Object> properties) throws IOException {
-    filterProcessor.filter(reader, writer, properties);
+  public void filter(Resource resource, Reader reader, Writer writer, Map<Object, Object> properties, MissingPropertyAction mpa) throws IOException {
+    filterProcessor.filter(resource, reader, writer, properties, mpa);
   }
 
 

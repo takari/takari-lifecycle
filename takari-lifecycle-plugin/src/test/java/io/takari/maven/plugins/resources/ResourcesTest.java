@@ -4,12 +4,15 @@ import static io.takari.maven.testing.TestMavenRuntime.newParameter;
 import static io.takari.maven.testing.TestResources.assertFileContents;
 import static io.takari.maven.testing.TestResources.cp;
 import static io.takari.maven.testing.TestResources.rm;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.endsWith;
 
 import java.io.File;
 import java.nio.charset.Charset;
 
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -74,7 +77,32 @@ public class ResourcesTest {
   public void resourcesWithFiltering() throws Exception {
     File basedir = resources.getBasedir("resources/project-with-resources-filtered");
     mojos.executeMojo(basedir, "process-resources");
-    assertFileContents(basedir, "expected-resource.txt", "target/classes/resource.txt");
+    assertFileContents(basedir, "expected-resource-empty.txt", "target/classes/resource.txt");
+  }
+
+  @Test
+  public void resourcesWithFilteringEmpty() throws Exception {
+    File basedir = resources.getBasedir("resources/project-with-resources-filtered");
+    mojos.executeMojo(basedir, "process-resources", newParameter("missingPropertyAction", "empty"));
+    assertFileContents(basedir, "expected-resource-empty.txt", "target/classes/resource.txt");
+  }
+
+  @Test
+  public void resourcesWithFilteringLeave() throws Exception {
+    File basedir = resources.getBasedir("resources/project-with-resources-filtered");
+    mojos.executeMojo(basedir, "process-resources", newParameter("missingPropertyAction", "leave"));
+    assertFileContents(basedir, "expected-resource-leave.txt", "target/classes/resource.txt");
+  }
+
+  @Test
+  public void resourcesWithFilteringFail() throws Exception {
+    File basedir = resources.getBasedir("resources/project-with-resources-filtered");
+    try {
+      mojos.executeMojo(basedir, "process-resources", newParameter("missingPropertyAction", "fail"));
+      Assert.fail("Should fail with missing property");
+    } catch (MojoExecutionException e) {
+      Assert.assertThat(e.getMessage(), containsString("Filtering: property 'nonExistant' not found"));
+    }
   }
 
   @Test
