@@ -144,6 +144,8 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
   private final Map<File, ResourceMetadata<File>> sources = new LinkedHashMap<>();
 
+  private Set<String> referencedClasspathEntries = new LinkedHashSet<>();
+
   /**
    * Set of ICompilationUnit to be compiled.
    */
@@ -719,6 +721,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         compiler.options.storeAnnotations = true;
       }
 
+      referencedClasspathEntries = namingEnvironment.getReferencedEntries();
       return strategy.compile(namingEnvironment, compiler);
     } finally {
       if (fileManager != null) {
@@ -986,5 +989,10 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   public void skipCompile() {
     strategy.skipCompile();
     super.skipCompile();
+  }
+
+  @Override
+  public Set<String> getReferencedClasspathEntries() {
+    return referencedClasspathEntries;
   }
 }

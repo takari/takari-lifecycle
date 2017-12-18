@@ -273,6 +273,11 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
     return compile(files);
   }
 
+  @Override
+  public Set<String> getReferencedClasspathEntries() {
+    return null;
+  }
+
   protected abstract int compile(Map<File, Resource<File>> sources) throws MojoExecutionException, IOException;
 
   protected abstract String getCompilerId();

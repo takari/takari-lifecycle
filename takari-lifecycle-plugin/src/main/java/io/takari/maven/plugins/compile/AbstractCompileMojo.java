@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +51,7 @@ import com.google.common.io.Files;
 
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
+import io.takari.incrementalbuild.MessageSeverity;
 import io.takari.incrementalbuild.ResourceMetadata;
 import io.takari.maven.plugins.compile.javac.CompilerJavacLauncher;
 import io.takari.maven.plugins.exportpackage.ExportPackageMojo;
@@ -221,6 +223,15 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
    */
   @Parameter(defaultValue = "ignore")
   private AccessRulesViolation privatePackageReference;
+
+  /**
+   * Sets "unused dependency declaration" policy violation action
+   * <p>
+   * If {@code error}, any dependencies declared in project pom.xml file must be referenced. A lack of reference to any declared dependency will result in compilation errors. If {@code ignore} (the
+   * default) declaring dependencies without referencing them is allowed.
+   */
+  @Parameter(defaultValue = "ignore")
+  private AccessRulesViolation unusedDeclaredDependency;
 
   /**
    * Controls compilation sourcepath. If set to {@code disable}, compilation sourcepath will be empty. If set to {@code reactorProjects}, compilation sourcepath will be set to compile source roots (or
@@ -400,6 +411,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       compiler.setDebug(parseDebug(debug));
       compiler.setShowWarnings(showWarnings);
       compiler.setTransitiveDependencyReference(transitiveDependencyReference);
+      compiler.setUnusedDeclaredDependency(unusedDeclaredDependency);
       compiler.setPrivatePackageReference(privatePackageReference);
 
       if (compiler instanceof CompilerJavacLauncher) {
@@ -419,6 +431,9 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
         log.info("Compiling {} sources to {}", sources.size(), getOutputDirectory());
         int compiled = compiler.compile();
         log.info("Compiled {} out of {} sources ({} ms)", compiled, sources.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
+        if (compiler.getReferencedClasspathEntries() != null && !compiler.getReferencedClasspathEntries().isEmpty()) {
+          checkDependencyReferences(compiler.getReferencedClasspathEntries());
+        }
       } else {
         compiler.skipCompile();
         log.info("Skipped compilation, all {} classes are up to date", sources.size());
@@ -430,6 +445,67 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
     } catch (IOException e) {
       throw new MojoExecutionException("Could not compile project", e);
+    }
+  }
+
+  private void checkDependencyReferences(Set<String> referencedEntries) throws MojoExecutionException {
+    Set<Artifact> referencedArtifacts = new LinkedHashSet<>();
+    Set<Artifact> undeclaredArtifacts = new LinkedHashSet<>();
+    Set<Artifact> unusedArtifacts = new LinkedHashSet<>();
+    List<File> processorpath = getProcessorpath();
+
+    // Find the equivalent artifact equivalent for each referenced entry
+    for (String entry : referencedEntries) {
+      for (Artifact artifact : getClasspathArtifacts()) {
+        if (entry.equals(artifact.getFile().getAbsolutePath())) {
+          referencedArtifacts.add(artifact);
+        }
+      }
+    }
+
+    if (directDependencies != null) {
+      // Check each direct dependency for existence in referenced artifacts
+      for (Artifact dependency : directDependencies) {
+        if (!referencedArtifacts.contains(dependency)) {
+          // Check if artifact is used for APT
+          if (processorpath == null || !processorpath.contains(dependency.getFile())) {
+            unusedArtifacts.add(dependency);
+          }
+        }
+      }
+
+      // Check all referenced artifacts to see if they're declared as a direct dependency
+      for (Artifact artifact : referencedArtifacts) {
+        boolean found = false;
+        Iterator<Artifact> it = directDependencies.iterator();
+        while (it.hasNext()) {
+          if (artifact.equals(it.next())) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          undeclaredArtifacts.add(artifact);
+        }
+      }
+    }
+
+    // Log or fail the build for any referenced artifacts that are not declared as a direct dependency
+    if (!undeclaredArtifacts.isEmpty()) {
+      if (unusedDeclaredDependency == AccessRulesViolation.error) {
+        context.addPomMessage("The following dependencies are in use but are undeclared: " + undeclaredArtifacts, MessageSeverity.ERROR, null);
+      } else {
+        log.warn(pom.getAbsolutePath() + ": The following dependencies are in use but are undeclared: {}", undeclaredArtifacts);
+      }
+    }
+
+    // Log or fail the build for any direct dependencies that are never referenced
+    if (!unusedArtifacts.isEmpty()) {
+      if (unusedDeclaredDependency == AccessRulesViolation.error) {
+        context.addPomMessage("The following dependencies are declared but are not used: " + unusedArtifacts, MessageSeverity.ERROR, null);
+      } else {
+        log.warn(pom.getAbsolutePath() + ": The following dependencies are declared but are not used: {}", unusedArtifacts);
+      }
     }
   }
 

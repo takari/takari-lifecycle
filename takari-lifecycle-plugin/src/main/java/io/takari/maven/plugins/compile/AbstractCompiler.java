@@ -59,6 +59,8 @@ public abstract class AbstractCompiler {
 
   private AccessRulesViolation privatePackageReference;
 
+  private AccessRulesViolation unusedDeclaredDependency;
+
   protected AbstractCompiler(CompilerBuildContext context) {
     this.context = context;
   }
@@ -151,6 +153,14 @@ public abstract class AbstractCompiler {
     this.transitiveDependencyReference = transitiveDependencyReference;
   }
 
+  protected AccessRulesViolation getUnusedDeclaredDependency() {
+    return unusedDeclaredDependency;
+  }
+
+  public void setUnusedDeclaredDependency(AccessRulesViolation unusedDeclaredDependency) {
+    this.unusedDeclaredDependency = unusedDeclaredDependency;
+  }
+
   protected boolean isVerbose() {
     return verbose;
   }
@@ -196,5 +206,7 @@ public abstract class AbstractCompiler {
   public void skipCompile() {
     context.markUptodateExecution();
   }
+
+  public abstract Set<String> getReferencedClasspathEntries();
 
 }

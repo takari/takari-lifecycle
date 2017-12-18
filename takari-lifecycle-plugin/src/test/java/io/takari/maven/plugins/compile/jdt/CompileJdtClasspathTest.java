@@ -1,11 +1,14 @@
 package io.takari.maven.plugins.compile.jdt;
 
 import static io.takari.maven.testing.TestResources.cp;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -140,6 +143,29 @@ public class CompileJdtClasspathTest extends AbstractCompileJdtTest {
     addDependency(moduleA, "module-b-comment", new File(parent, "module-b/module-b-comment.jar"));
     mojos.compile(moduleA);
     mojos.assertBuildOutputs(parent, "module-a/target/classes/reactor/modulea/ModuleA.class");
+  }
+
+  @Test
+  public void testReactorUnused() throws Exception {
+    File parent = resources.getBasedir("compile-jdt-classpath/reactor-unused");
+    Xpp3Dom unused = new Xpp3Dom("unusedDeclaredDependency");
+    unused.setValue("error");
+
+    mojos.flushClasspathCaches();
+
+    File moduleB = new File(parent, "module-b");
+
+    mojos.compile(moduleB, unused);
+
+    MavenProject moduleA = mojos.readMavenProject(new File(parent, "module-a"));
+    addDependency(moduleA, "module-b", new File(moduleB, "target/classes"));
+
+    try {
+      mojos.compile(moduleA, unused);
+      fail();
+    } catch (MojoExecutionException e) {
+      assertTrue(e.getLocalizedMessage().contains("The following dependencies are declared but are not used: [test:module-b:jar:1.0:compile]"));
+    }
   }
 
   private void compileReactor(File parent) throws Exception {

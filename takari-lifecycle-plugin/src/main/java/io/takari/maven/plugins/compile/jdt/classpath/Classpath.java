@@ -8,7 +8,9 @@
 package io.takari.maven.plugins.compile.jdt.classpath;
 
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.env.INameEnvironment;
@@ -26,10 +28,13 @@ public class Classpath implements INameEnvironment {
 
   private Multimap<String, ClasspathEntry> packages;
 
+  private Set<String> referencedentries;
+
   public Classpath(List<ClasspathEntry> entries, List<MutableClasspathEntry> localentries) {
     this.entries = entries;
     this.mutableentries = localentries;
     this.packages = newPackageIndex(entries);
+    this.referencedentries = new LinkedHashSet<>();
   }
 
   private static Multimap<String, ClasspathEntry> newPackageIndex(List<ClasspathEntry> entries) {
@@ -58,14 +63,20 @@ public class Classpath implements INameEnvironment {
   }
 
   private NameEnvironmentAnswer findType(String packageName, String typeName) {
+    String used = "";
     NameEnvironmentAnswer suggestedAnswer = null;
     Collection<ClasspathEntry> entries = !packageName.isEmpty() ? packages.get(packageName) : this.entries;
     if (entries != null) {
       for (ClasspathEntry entry : entries) {
         NameEnvironmentAnswer answer = entry.findType(packageName, typeName);
         if (answer != null) {
+          used = entry.getEntryDescription();
+          if (used.endsWith("[?**/*]")) {
+            used = used.substring(0, used.length() - 7);
+          }
           if (!answer.ignoreIfBetter()) {
             if (answer.isBetter(suggestedAnswer)) {
+              referencedentries.add(used);
               return answer;
             }
           } else if (answer.isBetter(suggestedAnswer)) {
@@ -74,6 +85,9 @@ public class Classpath implements INameEnvironment {
           }
         }
       }
+    }
+    if (!used.isEmpty()) {
+      referencedentries.add(used);
     }
     return suggestedAnswer;
   }
@@ -101,5 +115,9 @@ public class Classpath implements INameEnvironment {
 
   public List<ClasspathEntry> getEntries() {
     return entries;
+  }
+
+  public Set<String> getReferencedEntries() {
+    return referencedentries;
   }
 }
