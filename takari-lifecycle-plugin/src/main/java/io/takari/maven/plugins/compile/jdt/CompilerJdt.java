@@ -751,7 +751,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   private CompilationUnit newSourceFile(File source) {
     final String fileName = source.getAbsolutePath();
     final String encoding = getSourceEncoding() != null ? getSourceEncoding().name() : null;
-    return new CompilationUnit(null, fileName, encoding, getOutputDirectory().getAbsolutePath(), false);
+    return new CompilationUnit(null /* contents */, fileName, encoding, getOutputDirectory().getAbsolutePath(), false /* ignoreOptionalProblems */, null /* modName */);
   }
 
   /**

@@ -17,7 +17,7 @@ public class SourcepathDirectory extends AbstractClasspathDirectory {
 
   public static class ClasspathCompilationUnit extends CompilationUnit {
     public ClasspathCompilationUnit(File file, String encoding) {
-      super(null /* contents */, file.getAbsolutePath(), encoding, null /* destinationPath */, false /* ignoreOptionalProblems */);
+      super(null /* contents */, file.getAbsolutePath(), encoding, null /* destinationPath */, false /* ignoreOptionalProblems */, null /* modName */);
     }
   }
 

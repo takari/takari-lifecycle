@@ -8,13 +8,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.env.AccessRestriction;
 import org.eclipse.jdt.internal.compiler.env.AccessRule;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
-import org.eclipse.osgi.framework.util.Headers;
+import org.eclipse.osgi.framework.util.CaseInsensitiveDictionaryMap;
 import org.eclipse.osgi.util.ManifestElement;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
@@ -85,7 +86,7 @@ public abstract class DependencyClasspathEntry implements ClasspathEntry {
   }
 
   protected static Collection<String> parseBundleManifest(InputStream is) throws IOException, BundleException {
-    Headers<String, String> headers = Headers.parseManifest(is);
+    Map<String, String> headers = parseManifest(is);
     if (!headers.containsKey(Constants.BUNDLE_SYMBOLICNAME)) {
       return null; // not an OSGi bundle
     }
@@ -98,6 +99,12 @@ public abstract class DependencyClasspathEntry implements ClasspathEntry {
       packages.add(element.getValue().replace('.', '/'));
     }
     return packages;
+  }
+
+  private static CaseInsensitiveDictionaryMap<String, String> parseManifest(InputStream is) throws IOException, BundleException {
+    CaseInsensitiveDictionaryMap<String, String> headers = new CaseInsensitiveDictionaryMap<>();
+    ManifestElement.parseBundleManifest(is, headers);
+    return headers;
   }
 
   @Override
