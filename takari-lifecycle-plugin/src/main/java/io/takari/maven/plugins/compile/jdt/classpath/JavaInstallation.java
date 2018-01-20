@@ -7,73 +7,87 @@
  */
 package io.takari.maven.plugins.compile.jdt.classpath;
 
-import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.ProviderNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.function.Predicate;
 
 import org.eclipse.jdt.internal.compiler.util.Util;
 
-// mostly copy&paste from tycho
+import com.google.common.collect.ImmutableList;
+
 public class JavaInstallation {
-  private static final FilenameFilter POTENTIAL_ZIP_FILTER = new FilenameFilter() {
-    @Override
-    public boolean accept(File dir, String name) {
-      return Util.isPotentialZipArchive(name);
-    }
-  };
+  private static final Predicate<Path> POTENTIAL_ZIP_FILTER = p -> Util.isPotentialZipArchive(p.getFileName().toString());
 
-  private final File javaHome;
+  private final List<Path> classpath;
 
-  public JavaInstallation(File javaHome) {
-    this.javaHome = javaHome;
+  private JavaInstallation(List<Path> classpath) {
+    this.classpath = ImmutableList.copyOf(classpath);
   }
 
   /**
    * Returns default classpath associated with this java installation. The classpath includes bootstrap, extendion and endorsed entries.
    */
-  public List<Path> getClasspath() throws IOException {
+  public List<Path> getClasspath() {
+    return classpath;
+  }
+
+  private static List<Path> getJava8() throws IOException {
+    // mostly copy&paste from tycho
     // See org.eclipse.jdt.internal.compiler.batch.Main.setPaths
 
-    List<File> classpath = new ArrayList<File>();
+    List<Path> classpath = new ArrayList<>();
+
+    Path javaHome = Util.getJavaHome().toPath();
 
     // boot classpath
-    File directoryToCheck;
-    if (isAppleJDK()) {
-      directoryToCheck = new File(javaHome, "../Classes");
-    } else {
-      directoryToCheck = new File(javaHome, "lib");
-    }
-    scanForArchives(classpath, directoryToCheck);
+    scanForArchives(classpath, javaHome.resolve("lib"));
 
     // endorsed libraries
-    scanForArchives(classpath, new File(javaHome, "lib/endorsed"));
+    scanForArchives(classpath, javaHome.resolve("lib/endorsed"));
 
     // extension libraries
-    scanForArchives(classpath, new File(javaHome, "lib/ext"));
+    scanForArchives(classpath, javaHome.resolve("lib/ext"));
 
-    return classpath.stream().map(File::toPath).collect(Collectors.toList());
+    return classpath;
   }
 
-  protected boolean isAppleJDK() {
-    return System.getProperty("java.vendor").startsWith("Apple");
-  }
-
-  private void scanForArchives(List<File> classPathList, File dir) {
-    if (dir.isDirectory()) {
-      File[] zipFiles = dir.listFiles(POTENTIAL_ZIP_FILTER);
-      if (zipFiles != null) {
-        for (File zipFile : zipFiles) {
-          classPathList.add(zipFile);
-        }
-      }
+  private static void scanForArchives(List<Path> classPathList, Path dir) throws IOException {
+    if (Files.isDirectory(dir)) {
+      Files.list(dir).filter(POTENTIAL_ZIP_FILTER).forEach(classPathList::add);
     }
   }
 
-  public static JavaInstallation getDefault() {
-    return new JavaInstallation(Util.getJavaHome());
+  private static List<Path> getJrtFs() throws IOException {
+    // http://openjdk.java.net/jeps/220
+    FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
+    List<Path> classpath = new ArrayList<>();
+    for (Path root : fs.getRootDirectories()) {
+      Files.list(root.resolve("modules")).forEach(classpath::add);
+    }
+    // technically, this leaks open FileSystem instance
+    // which is okay, since singleton #instance is never released
+    return classpath;
+  }
+
+  private static JavaInstallation instance;
+
+  public static synchronized JavaInstallation getDefault() throws IOException {
+    if (instance == null) {
+      List<Path> cp;
+      try {
+        cp = getJrtFs();
+      } catch (ProviderNotFoundException e) {
+        cp = getJava8();
+      }
+      instance = new JavaInstallation(cp);
+    }
+    return instance;
   }
 }

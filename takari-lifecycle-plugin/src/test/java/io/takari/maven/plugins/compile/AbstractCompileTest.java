@@ -18,20 +18,27 @@ import io.takari.maven.testing.TestResources;
 public abstract class AbstractCompileTest {
 
   public static final boolean isJava8orBetter;
+  public static final boolean isJava9orBetter;
 
   static {
     boolean _isJava8orBetter = false;
+    boolean _isJava9orBetter = false;
 
     String version = System.getProperty("java.specification.version");
     if (version != null) {
       StringTokenizer st = new StringTokenizer(version, ".");
-      /* int major = */Integer.parseInt(st.nextToken());
-      int minor = Integer.parseInt(st.nextToken());
-
-      _isJava8orBetter = minor >= 8;
+      int major = Integer.parseInt(st.nextToken());
+      if (major >= 9) {
+        _isJava8orBetter = true;
+        _isJava9orBetter = true;
+      } else {
+        int minor = Integer.parseInt(st.nextToken());
+        _isJava8orBetter = minor >= 8;
+      }
     }
 
     isJava8orBetter = _isJava8orBetter;
+    isJava9orBetter = _isJava9orBetter;
   }
 
   @Rule

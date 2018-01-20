@@ -20,6 +20,23 @@ import com.google.common.io.Files;
 
 class ClassfileMatchers {
 
+  private static class TargetVersion extends ClassVisitor {
+    public TargetVersion() {
+      super(Opcodes.ASM6);
+    }
+
+    private int version;
+
+    @Override
+    public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+      this.version = version;
+    }
+
+    public int getVersion() {
+      return version;
+    }
+  }
+
   private static class DebugInfo extends ClassVisitor {
     private boolean hasSource = false;
     private boolean hasLines = false;
@@ -202,6 +219,20 @@ class ClassfileMatchers {
       @Override
       protected MethodParameterInfo newClassVisitor() {
         return new MethodParameterInfo();
+      }
+    };
+  }
+
+  public static Matcher<File> isVersion(int version) {
+    return new ClassfileMatcher<TargetVersion>("is version " + version) {
+      @Override
+      protected boolean matches(TargetVersion info) {
+        return info.getVersion() == version;
+      }
+
+      @Override
+      protected TargetVersion newClassVisitor() {
+        return new TargetVersion();
       }
     };
   }

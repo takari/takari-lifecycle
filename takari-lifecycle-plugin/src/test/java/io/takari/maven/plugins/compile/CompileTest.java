@@ -5,11 +5,13 @@ import static io.takari.maven.plugins.compile.ClassfileMatchers.hasDebugLines;
 import static io.takari.maven.plugins.compile.ClassfileMatchers.hasDebugSource;
 import static io.takari.maven.plugins.compile.ClassfileMatchers.hasDebugVars;
 import static io.takari.maven.plugins.compile.ClassfileMatchers.hasMethodParameterWithName;
+import static io.takari.maven.plugins.compile.ClassfileMatchers.isVersion;
 import static io.takari.maven.testing.TestResources.cp;
 import static io.takari.maven.testing.TestResources.touch;
 import static org.hamcrest.core.AllOf.allOf;
 import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -134,6 +136,13 @@ public class CompileTest extends AbstractCompileTest {
     mojos.executeMojo(session, project, execution);
     mojos.assertBuildOutputs(testClasses, new String[0]);
     mojos.assertDeletedOutputs(testClasses, new String[0]);
+  }
+
+  @Test
+  public void testBasic_java9() throws Exception {
+    assumeTrue(isJava9orBetter);
+    File basedir = compile("compile/basic", newParameter("source", "9"));
+    assertThat(new File(basedir, "target/classes/basic/Basic.class"), isVersion(53));
   }
 
   @Test
