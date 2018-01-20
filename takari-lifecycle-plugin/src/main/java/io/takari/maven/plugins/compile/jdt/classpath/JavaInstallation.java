@@ -10,8 +10,10 @@ package io.takari.maven.plugins.compile.jdt.classpath;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.eclipse.jdt.internal.compiler.util.Util;
 
@@ -33,7 +35,7 @@ public class JavaInstallation {
   /**
    * Returns default classpath associated with this java installation. The classpath includes bootstrap, extendion and endorsed entries.
    */
-  public List<File> getClasspath() throws IOException {
+  public List<Path> getClasspath() throws IOException {
     // See org.eclipse.jdt.internal.compiler.batch.Main.setPaths
 
     List<File> classpath = new ArrayList<File>();
@@ -53,7 +55,7 @@ public class JavaInstallation {
     // extension libraries
     scanForArchives(classpath, new File(javaHome, "lib/ext"));
 
-    return classpath;
+    return classpath.stream().map(File::toPath).collect(Collectors.toList());
   }
 
   protected boolean isAppleJDK() {

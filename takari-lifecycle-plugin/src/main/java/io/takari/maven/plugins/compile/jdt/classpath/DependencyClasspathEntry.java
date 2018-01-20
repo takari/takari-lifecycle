@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -33,25 +34,16 @@ public abstract class DependencyClasspathEntry implements ClasspathEntry {
 
   protected static final String PATH_MANIFESTMF = "META-INF/MANIFEST.MF";
 
-  protected final File file;
+  protected final Path file;
 
   protected final Set<String> packageNames;
 
   protected final Set<String> exportedPackages;
 
-  protected DependencyClasspathEntry(File file, Collection<String> packageNames, Collection<String> exportedPackages) {
-    this.file = normalize(file);
+  protected DependencyClasspathEntry(Path file, Collection<String> packageNames, Collection<String> exportedPackages) {
+    this.file = PathNormalizer.getCanonicalPath(file);
     this.packageNames = ImmutableSet.copyOf(packageNames);
     this.exportedPackages = exportedPackages != null ? ImmutableSet.<String>copyOf(exportedPackages) : null;
-  }
-
-  private static File normalize(File file) {
-    try {
-      return file.getCanonicalFile();
-    } catch (IOException e) {
-      // should not happen as we know that the file exists
-      return file.getAbsoluteFile();
-    }
   }
 
   protected AccessRestriction getAccessRestriction(String packageName) {
@@ -136,6 +128,6 @@ public abstract class DependencyClasspathEntry implements ClasspathEntry {
   public abstract NameEnvironmentAnswer findType(String packageName, String typeName, AccessRestriction accessRestriction);
 
   public String getEntryName() {
-    return file.getAbsolutePath();
+    return file.toString();
   }
 }

@@ -7,9 +7,10 @@
  */
 package io.takari.maven.plugins.compile.jdt;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,6 +19,7 @@ import javax.inject.Named;
 import io.takari.maven.plugins.compile.jdt.classpath.ClasspathDirectory;
 import io.takari.maven.plugins.compile.jdt.classpath.ClasspathJar;
 import io.takari.maven.plugins.compile.jdt.classpath.DependencyClasspathEntry;
+import io.takari.maven.plugins.compile.jdt.classpath.PathNormalizer;
 import io.takari.maven.plugins.compile.jdt.classpath.SourcepathDirectory;
 
 @Named
@@ -27,16 +29,16 @@ public class ClasspathEntryCache {
     DependencyClasspathEntry newClasspathEntry();
   }
 
-  private static final Map<File, DependencyClasspathEntry> CACHE = new HashMap<>();
+  private static final Map<Path, DependencyClasspathEntry> CACHE = new HashMap<>();
 
-  private static final Map<File, DependencyClasspathEntry> SOURCEPATH_CACHE = new HashMap<>();
+  private static final Map<Path, DependencyClasspathEntry> SOURCEPATH_CACHE = new HashMap<>();
 
-  public DependencyClasspathEntry get(File location) {
+  public DependencyClasspathEntry get(Path location) {
     return get(CACHE, location, () -> {
       DependencyClasspathEntry entry = null;
-      if (location.isDirectory()) {
+      if (Files.isDirectory(location)) {
         entry = ClasspathDirectory.create(location);
-      } else if (location.isFile()) {
+      } else if (Files.isRegularFile(location)) {
         try {
           entry = ClasspathJar.create(location);
         } catch (IOException e) {
@@ -47,12 +49,12 @@ public class ClasspathEntryCache {
     });
   }
 
-  public DependencyClasspathEntry getSourcepathEntry(File location, Charset encoding) {
+  public DependencyClasspathEntry getSourcepathEntry(Path location, Charset encoding) {
     return get(SOURCEPATH_CACHE, location, () -> SourcepathDirectory.create(location, encoding));
   }
 
-  private static DependencyClasspathEntry get(Map<File, DependencyClasspathEntry> cache, File location, Factory factory) {
-    location = normalize(location);
+  private static DependencyClasspathEntry get(Map<Path, DependencyClasspathEntry> cache, Path location, Factory factory) {
+    location = PathNormalizer.getCanonicalPath(location);
     synchronized (cache) {
       DependencyClasspathEntry entry = null;
       if (!cache.containsKey(location)) {
@@ -63,15 +65,6 @@ public class ClasspathEntryCache {
       }
       return entry;
     }
-  }
-
-  private static File normalize(File location) {
-    try {
-      location = location.getCanonicalFile();
-    } catch (IOException e) {
-      location = location.getAbsoluteFile();
-    }
-    return location;
   }
 
   /**

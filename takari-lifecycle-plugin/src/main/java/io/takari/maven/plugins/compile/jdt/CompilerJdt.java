@@ -12,6 +12,7 @@ import static io.takari.maven.plugins.compile.CompilerBuildContext.isJavaSource;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -762,7 +763,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     final List<MutableClasspathEntry> mutableentries = new ArrayList<MutableClasspathEntry>();
 
     // XXX detect change!
-    for (File file : JavaInstallation.getDefault().getClasspath()) {
+    for (Path file : JavaInstallation.getDefault().getClasspath()) {
       ClasspathEntry entry = classpathCache.get(file);
       if (entry != null) {
         entries.add(entry);
@@ -789,7 +790,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     final List<File> files = new ArrayList<File>();
 
     if (isProcOnly()) {
-      DependencyClasspathEntry entry = ClasspathDirectory.create(getOutputDirectory());
+      DependencyClasspathEntry entry = ClasspathDirectory.create(getOutputDirectory().toPath());
       if (entry != null) {
         dependencypath.add(AccessRestrictionClasspathEntry.allowAll(entry));
         files.add(getOutputDirectory());
@@ -797,7 +798,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     }
 
     if (mainClasses != null) {
-      DependencyClasspathEntry entry = classpathCache.get(mainClasses);
+      DependencyClasspathEntry entry = classpathCache.get(mainClasses.toPath());
       if (entry != null) {
         dependencypath.add(AccessRestrictionClasspathEntry.allowAll(entry));
         files.add(mainClasses);
@@ -805,7 +806,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     }
 
     for (File dependency : dependencies) {
-      DependencyClasspathEntry entry = classpathCache.get(dependency);
+      DependencyClasspathEntry entry = classpathCache.get(dependency.toPath());
       if (entry != null) {
         if (getTransitiveDependencyReference() == AccessRulesViolation.error && !directDependencies.contains(dependency)) {
           dependencypath.add(AccessRestrictionClasspathEntry.forbidAll(entry));
@@ -851,9 +852,9 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         final DependencyClasspathEntry entry;
         if (sourceRoots.contains(dependency)) {
           // own source roots can be mutable, don't cache
-          entry = SourcepathDirectory.create(dependency, getSourceEncoding());
+          entry = SourcepathDirectory.create(dependency.toPath(), getSourceEncoding());
         } else {
-          entry = classpathCache.getSourcepathEntry(dependency, getSourceEncoding());
+          entry = classpathCache.getSourcepathEntry(dependency.toPath(), getSourceEncoding());
         }
         sourcepath.add(entry);
       } else if (dependency.isFile()) {

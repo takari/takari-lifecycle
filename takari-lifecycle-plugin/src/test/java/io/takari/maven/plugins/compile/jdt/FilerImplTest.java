@@ -6,6 +6,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -181,8 +183,8 @@ public class FilerImplTest {
   private Classpath createClasspath() throws IOException {
     final List<ClasspathEntry> entries = new ArrayList<ClasspathEntry>();
     final List<MutableClasspathEntry> mutableentries = new ArrayList<MutableClasspathEntry>();
-    for (File file : JavaInstallation.getDefault().getClasspath()) {
-      if (file.isFile()) {
+    for (Path file : JavaInstallation.getDefault().getClasspath()) {
+      if (Files.isRegularFile(file)) {
         try {
           entries.add(ClasspathJar.create(file));
         } catch (IOException e) {

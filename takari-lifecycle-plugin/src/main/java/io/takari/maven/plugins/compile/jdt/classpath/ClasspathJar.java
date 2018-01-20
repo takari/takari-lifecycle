@@ -9,9 +9,9 @@ package io.takari.maven.plugins.compile.jdt.classpath;
 
 import static org.eclipse.jdt.internal.compiler.util.SuffixConstants.SUFFIX_STRING_class;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -29,7 +29,7 @@ public class ClasspathJar extends DependencyClasspathEntry implements ClasspathE
 
   private final ZipFile zipFile;
 
-  private ClasspathJar(File file, ZipFile zipFile, Collection<String> packageNames, Collection<String> exportedPackages) throws IOException {
+  private ClasspathJar(Path file, ZipFile zipFile, Collection<String> packageNames, Collection<String> exportedPackages) throws IOException {
     super(file, packageNames, exportedPackages);
     this.zipFile = zipFile;
   }
@@ -65,11 +65,11 @@ public class ClasspathJar extends DependencyClasspathEntry implements ClasspathE
 
   @Override
   public String toString() {
-    return "Classpath for jar file " + file.getPath(); //$NON-NLS-1$
+    return "Classpath for jar file " + file.toString(); //$NON-NLS-1$
   }
 
-  public static ClasspathJar create(File file) throws IOException {
-    ZipFile zipFile = new ZipFile(file);
+  public static ClasspathJar create(Path file) throws IOException {
+    ZipFile zipFile = new ZipFile(file.toFile());
     Set<String> packageNames = getPackageNames(zipFile);
     Collection<String> exportedPackages = null;
     // TODO do not look for exported packages in java standard library

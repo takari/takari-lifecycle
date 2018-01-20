@@ -2,6 +2,8 @@ package io.takari.maven.plugins.compile.jdt.classpath;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,14 +16,14 @@ public class ClasspathTest {
   @Test
   public void testEmptyJarPackage() throws Exception {
     final List<ClasspathEntry> entries = new ArrayList<ClasspathEntry>();
-    for (File file : JavaInstallation.getDefault().getClasspath()) {
-      if (file.isFile()) {
+    for (Path file : JavaInstallation.getDefault().getClasspath()) {
+      if (Files.isRegularFile(file)) {
         try {
           entries.add(ClasspathJar.create(file));
         } catch (IOException e) {
           // ignore
         }
-      } else if (file.isDirectory()) {
+      } else if (Files.isDirectory(file)) {
         entries.add(ClasspathDirectory.create(file));
       }
     }
@@ -33,7 +35,7 @@ public class ClasspathTest {
   public void testCaseInsensitive() throws IOException {
     // affects windows and osx, linux users should not apply
     File sourceRoot = new File("target/test-classes").getCanonicalFile();
-    ClasspathEntry cpe = ClasspathDirectory.create(sourceRoot);
+    ClasspathEntry cpe = ClasspathDirectory.create(sourceRoot.toPath());
     String pkg = getClass().getPackage().getName().replace('.', '/');
     String cls = getClass().getSimpleName();
     Assert.assertNotNull(cpe.findType(pkg, cls));

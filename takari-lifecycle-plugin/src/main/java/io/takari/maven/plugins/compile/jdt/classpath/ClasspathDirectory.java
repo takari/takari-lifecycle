@@ -9,8 +9,10 @@ package io.takari.maven.plugins.compile.jdt.classpath;
 
 import static org.eclipse.jdt.internal.compiler.util.SuffixConstants.SUFFIX_STRING_class;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -23,16 +25,18 @@ import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 
 public class ClasspathDirectory extends AbstractClasspathDirectory implements ClasspathEntry {
 
-  private ClasspathDirectory(File directory, Set<String> packages, Map<String, File> files) {
+  private ClasspathDirectory(Path directory, Set<String> packages, Map<String, Path> files) {
     super(directory, packages, files);
   }
 
   @Override
   public NameEnvironmentAnswer findType(String packageName, String typeName, AccessRestriction accessRestriction) {
     try {
-      File classFile = getFile(packageName, typeName);
+      Path classFile = getFile(packageName, typeName);
       if (classFile != null) {
-        return new NameEnvironmentAnswer(ClassFileReader.read(classFile, false), accessRestriction);
+        try (InputStream is = Files.newInputStream(classFile)) {
+          return new NameEnvironmentAnswer(ClassFileReader.read(is, classFile.getFileName().toString(), false), accessRestriction);
+        }
       }
     } catch (ClassFormatException | IOException e) {
       // treat as if type is missing
@@ -45,9 +49,9 @@ public class ClasspathDirectory extends AbstractClasspathDirectory implements Cl
     return "Classpath for directory " + file;
   }
 
-  public static ClasspathDirectory create(File directory) {
+  public static ClasspathDirectory create(Path directory) {
     Set<String> packages = new HashSet<>();
-    Map<String, File> files = new HashMap<>();
+    Map<String, Path> files = new HashMap<>();
     scanDirectory(directory, SUFFIX_STRING_class, packages, files);
     return new ClasspathDirectory(directory, packages, files);
   }

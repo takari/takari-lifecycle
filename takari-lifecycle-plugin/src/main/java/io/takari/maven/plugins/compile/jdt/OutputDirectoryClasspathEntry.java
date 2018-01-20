@@ -8,6 +8,7 @@
 package io.takari.maven.plugins.compile.jdt;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
@@ -17,6 +18,8 @@ import io.takari.maven.plugins.compile.jdt.classpath.ClasspathEntry;
 import io.takari.maven.plugins.compile.jdt.classpath.MutableClasspathEntry;
 
 class OutputDirectoryClasspathEntry implements ClasspathEntry, MutableClasspathEntry {
+
+  // TODO convert to nio Path. for consistency
 
   private final File directory;
 
@@ -35,7 +38,7 @@ class OutputDirectoryClasspathEntry implements ClasspathEntry, MutableClasspathE
     this.directory = directory;
     this.staleOutputs = staleOutputs;
 
-    this.delegate = ClasspathDirectory.create(directory);
+    this.delegate = ClasspathDirectory.create(directory.toPath());
   }
 
   @Override
@@ -45,7 +48,8 @@ class OutputDirectoryClasspathEntry implements ClasspathEntry, MutableClasspathE
 
   @Override
   public NameEnvironmentAnswer findType(String packageName, String typeName) {
-    if (!staleOutputs.contains(delegate.getFile(packageName, typeName))) {
+    Path file = delegate.getFile(packageName, typeName);
+    if (file != null && !staleOutputs.contains(file.toFile())) {
       return delegate.findType(packageName, typeName, null);
     }
     return null;
@@ -53,7 +57,7 @@ class OutputDirectoryClasspathEntry implements ClasspathEntry, MutableClasspathE
 
   @Override
   public void reset() {
-    this.delegate = ClasspathDirectory.create(directory);
+    this.delegate = ClasspathDirectory.create(directory.toPath());
   }
 
   @Override
