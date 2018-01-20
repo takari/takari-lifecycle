@@ -30,7 +30,7 @@ import com.google.common.base.Charsets;
 /**
  * Adopted from {@link ClassFileReader#hasStructuralChanges(byte[], boolean, boolean)}
  * 
- * Last updated to match JDT I20160517-2000.
+ * Last updated to match JDT I20171206-0800.
  */
 public class ClassfileDigester {
 
