@@ -31,6 +31,13 @@ public class SourcepathDirectory extends AbstractClasspathDirectory {
   @Override
   public NameEnvironmentAnswer findType(String packageName, String typeName, AccessRestriction accessRestriction) {
     Path javaFile = getFile(packageName, typeName);
+
+    // Could be looking for a nested class, so try using outer class file name.
+    // ASSUMPTION: '$' is ONLY used in a compiler generated class file names.
+    if (javaFile == null && typeName.indexOf("$") > 0) {
+      javaFile = getFile(packageName, typeName.split("\\$")[0]);
+    }
+
     if (javaFile != null) {
       CompilationUnit cu = new ClasspathCompilationUnit(javaFile, encoding);
       return new NameEnvironmentAnswer(cu, accessRestriction);

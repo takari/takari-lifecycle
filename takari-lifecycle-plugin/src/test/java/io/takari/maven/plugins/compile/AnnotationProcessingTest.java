@@ -973,6 +973,38 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
   }
 
   @Test
+  public void testSourcepathDependencyNestedTypeThroughBinaryDependency() throws Exception {
+    File processor = compileAnnotationProcessor();
+    File basedir = resources.getBasedir("compile-proc/proc-sourcepath-nestedtype-through-binary");
+
+    File dependencyBasedir = new File(basedir, "dependency");
+    File binaryDependencyBasedir = new File(basedir, "binary-dependency");
+    File projectBasedir = new File(basedir, "project");
+
+    Xpp3Dom processors = newProcessors("processor.EnclosedElementsProcessor");
+    Xpp3Dom sourcepath = newParameter("sourcepath", "reactorDependencies");
+
+    MavenProject dependency = mojos.readMavenProject(dependencyBasedir);
+    MavenProject project = mojos.readMavenProject(projectBasedir);
+
+    mojos.newDependency(new File(binaryDependencyBasedir, "target/binary-dependency-1.0.jar")).addTo(project);
+
+    mojos.newDependency(new File(dependencyBasedir, "target/classes")) //
+        .setGroupId(dependency.getGroupId()) //
+        .setArtifactId(dependency.getArtifactId()) //
+        .setVersion(dependency.getVersion()) //
+        .addTo(project);
+
+    MavenSession session = mojos.newMavenSession(project);
+    session.setProjects(Arrays.asList(project, dependency));
+
+    processAnnotations(session, project, "compile", processor, Proc.only, processors, sourcepath);
+    mojos.assertBuildOutputs(new File(projectBasedir, "target"), //
+        "generated-sources/annotations/sourcepath/nestedtype/project/GeneratedSource.java" //
+    );
+  }
+
+  @Test
   public void testSourcepathDependency_incremental() throws Exception {
     // the point of this test is assert that changes to sourcepath files are expected to trigger reprocessing of affected sources
 
