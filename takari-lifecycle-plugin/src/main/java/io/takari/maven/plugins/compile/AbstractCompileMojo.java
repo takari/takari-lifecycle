@@ -448,7 +448,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     }
   }
 
-  private void checkDependencyReferences(Set<String> referencedEntries) throws MojoExecutionException {
+  private void checkDependencyReferences(Set<String> referencedEntries) throws MojoExecutionException, IOException {
     Set<Artifact> referencedArtifacts = new LinkedHashSet<>();
     Set<Artifact> undeclaredArtifacts = new LinkedHashSet<>();
     Set<Artifact> unusedArtifacts = new LinkedHashSet<>();
@@ -457,7 +457,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     // Find the equivalent artifact equivalent for each referenced entry
     for (String entry : referencedEntries) {
       for (Artifact artifact : getClasspathArtifacts()) {
-        if (entry.equals(artifact.getFile().getAbsolutePath())) {
+        if (entry.equals(artifact.getFile().getCanonicalPath())) {
           referencedArtifacts.add(artifact);
         }
       }
