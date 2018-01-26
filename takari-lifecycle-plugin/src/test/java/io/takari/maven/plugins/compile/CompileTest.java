@@ -374,4 +374,35 @@ public class CompileTest extends AbstractCompileTest {
     mojos.compile(project, newParameter("dependencySourceTypes", "prefer"));
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), "innertyperef/InnerTypeRef.class");
   }
+
+  @Test
+  public void testReactorUnused() throws Exception {
+    ErrorMessage expected = new ErrorMessage(compilerId);
+    expected.setSnippets("jdt", "ERROR pom.xml [0:0] The following dependencies are declared but are not used: [test:module-b:jar:1.0:compile]");
+    File parent = resources.getBasedir("compile-jdt-classpath/reactor-unused");
+    Xpp3Dom unused = new Xpp3Dom("unusedDeclaredDependency");
+    unused.setValue("error");
+
+    mojos.flushClasspathCaches();
+
+    File moduleB = new File(parent, "module-b");
+
+    try {
+      mojos.compile(moduleB, unused);
+    } catch (IllegalArgumentException e) {
+      ErrorMessage.isMatch(e.getMessage(), "Compiler javac does not support unusedDeclaredDependency=error, use compilerId=jdt");
+    }
+
+    MavenProject moduleA = mojos.readMavenProject(new File(parent, "module-a"));
+    addDependency(moduleA, "module-b", new File(moduleB, "target/classes"));
+
+    try {
+      mojos.compile(moduleA, unused);
+      Assert.fail();
+    } catch (MojoExecutionException e) {
+      mojos.assertMessage(parent, "module-a/pom.xml", expected);
+    } catch (IllegalArgumentException e) {
+      ErrorMessage.isMatch(e.getMessage(), "Compiler javac does not support unusedDeclaredDependency=error, use compilerId=jdt");
+    }
+  }
 }

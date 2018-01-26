@@ -26,6 +26,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -144,7 +145,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
   private final Map<File, ResourceMetadata<File>> sources = new LinkedHashMap<>();
 
-  private Set<String> referencedClasspathEntries = new LinkedHashSet<>();
+  private Set<Path> referencedClasspathEntries = new LinkedHashSet<>();
 
   /**
    * Set of ICompilationUnit to be compiled.
@@ -992,7 +993,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   }
 
   @Override
-  public Set<String> getReferencedClasspathEntries() {
-    return referencedClasspathEntries;
+  public Set<File> getReferencedClasspathEntries() {
+    return referencedClasspathEntries.stream().map(entry -> entry.toFile()).collect(Collectors.toSet());
   }
 }

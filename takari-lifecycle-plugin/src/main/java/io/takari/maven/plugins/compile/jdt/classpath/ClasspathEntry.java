@@ -7,6 +7,7 @@
  */
 package io.takari.maven.plugins.compile.jdt.classpath;
 
+import java.nio.file.Path;
 import java.util.Collection;
 
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
@@ -18,4 +19,6 @@ public interface ClasspathEntry {
   NameEnvironmentAnswer findType(String packageName, String typeName);
 
   String getEntryDescription();
+
+  Path getLocation();
 }

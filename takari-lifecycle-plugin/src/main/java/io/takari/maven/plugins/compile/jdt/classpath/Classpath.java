@@ -7,6 +7,7 @@
  */
 package io.takari.maven.plugins.compile.jdt.classpath;
 
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -28,7 +29,7 @@ public class Classpath implements INameEnvironment {
 
   private Multimap<String, ClasspathEntry> packages;
 
-  private Set<String> referencedentries;
+  private Set<Path> referencedentries;
 
   public Classpath(List<ClasspathEntry> entries, List<MutableClasspathEntry> localentries) {
     this.entries = entries;
@@ -63,17 +64,14 @@ public class Classpath implements INameEnvironment {
   }
 
   private NameEnvironmentAnswer findType(String packageName, String typeName) {
-    String used = "";
+    Path used = null;
     NameEnvironmentAnswer suggestedAnswer = null;
     Collection<ClasspathEntry> entries = !packageName.isEmpty() ? packages.get(packageName) : this.entries;
     if (entries != null) {
       for (ClasspathEntry entry : entries) {
         NameEnvironmentAnswer answer = entry.findType(packageName, typeName);
         if (answer != null) {
-          used = entry.getEntryDescription();
-          if (used.endsWith("[?**/*]")) {
-            used = used.substring(0, used.length() - 7);
-          }
+          used = entry.getLocation();
           if (!answer.ignoreIfBetter()) {
             if (answer.isBetter(suggestedAnswer)) {
               referencedentries.add(used);
@@ -86,7 +84,7 @@ public class Classpath implements INameEnvironment {
         }
       }
     }
-    if (!used.isEmpty()) {
+    if (used != null) {
       referencedentries.add(used);
     }
     return suggestedAnswer;
@@ -117,7 +115,7 @@ public class Classpath implements INameEnvironment {
     return entries;
   }
 
-  public Set<String> getReferencedEntries() {
+  public Set<Path> getReferencedEntries() {
     return referencedentries;
   }
 }

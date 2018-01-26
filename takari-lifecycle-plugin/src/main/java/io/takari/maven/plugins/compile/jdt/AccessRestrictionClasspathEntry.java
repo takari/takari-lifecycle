@@ -1,5 +1,6 @@
 package io.takari.maven.plugins.compile.jdt;
 
+import java.nio.file.Path;
 import java.util.Collection;
 
 import org.eclipse.jdt.core.compiler.IProblem;
@@ -37,6 +38,11 @@ class AccessRestrictionClasspathEntry implements ClasspathEntry {
       sb.append("[?**/*]");
     }
     return sb.toString();
+  }
+
+  @Override
+  public Path getLocation() {
+    return entry.getLocation();
   }
 
   public static AccessRestrictionClasspathEntry forbidAll(DependencyClasspathEntry entry) {
