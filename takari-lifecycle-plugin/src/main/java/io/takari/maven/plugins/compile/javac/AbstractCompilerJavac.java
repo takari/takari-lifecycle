@@ -244,14 +244,6 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
   }
 
   @Override
-  public void setUnusedDeclaredDependency(AccessRulesViolation unusedDeclaredDependency) {
-    if (unusedDeclaredDependency == AccessRulesViolation.error) {
-      String msg = String.format("Compiler %s does not support unusedDeclaredDependency=error, use compilerId=%s", getCompilerId(), CompilerJdt.ID);
-      throw new IllegalArgumentException(msg);
-    }
-  }
-
-  @Override
   public boolean setProcessorpath(List<File> processorpath) throws IOException {
     if (processorpath != null) {
       if (log.isDebugEnabled()) {
@@ -279,6 +271,12 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
     }
 
     return compile(files);
+  }
+
+  @Override
+  protected Set<File> getReferencedClasspathEntries() {
+    String msg = String.format("Compiler %s does not support unusedDeclaredDependency=error, use compilerId=%s", getCompilerId(), CompilerJdt.ID);
+    throw new UnsupportedOperationException(msg);
   }
 
   protected abstract int compile(Map<File, Resource<File>> sources) throws MojoExecutionException, IOException;

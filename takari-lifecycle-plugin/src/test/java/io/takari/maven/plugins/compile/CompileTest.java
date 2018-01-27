@@ -389,7 +389,7 @@ public class CompileTest extends AbstractCompileTest {
 
     try {
       mojos.compile(moduleB, unused);
-    } catch (IllegalArgumentException e) {
+    } catch (UnsupportedOperationException e) {
       ErrorMessage.isMatch(e.getMessage(), "Compiler javac does not support unusedDeclaredDependency=error, use compilerId=jdt");
     }
 
@@ -401,7 +401,7 @@ public class CompileTest extends AbstractCompileTest {
       Assert.fail();
     } catch (MojoExecutionException e) {
       mojos.assertMessage(parent, "module-a/pom.xml", expected);
-    } catch (IllegalArgumentException e) {
+    } catch (UnsupportedOperationException e) {
       ErrorMessage.isMatch(e.getMessage(), "Compiler javac does not support unusedDeclaredDependency=error, use compilerId=jdt");
     }
   }

@@ -389,7 +389,8 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
         mkdirs(getOutputDirectory());
       }
 
-      final List<File> classpath = new ArrayList<>(getClasspath().keySet());
+      final Map<File, Artifact> classpathMap = getClasspath();
+      final List<File> classpath = new ArrayList<>(classpathMap.keySet());
       final List<File> processorpath = getProcessorpath();
       Proc proc = getEffectiveProc(classpath, processorpath);
 
@@ -411,7 +412,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       compiler.setDebug(parseDebug(debug));
       compiler.setShowWarnings(showWarnings);
       compiler.setTransitiveDependencyReference(transitiveDependencyReference);
-      compiler.setUnusedDeclaredDependency(unusedDeclaredDependency);
       compiler.setPrivatePackageReference(privatePackageReference);
 
       if (compiler instanceof CompilerJavacLauncher) {
@@ -431,8 +431,8 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
         log.info("Compiling {} sources to {}", sources.size(), getOutputDirectory());
         int compiled = compiler.compile();
         log.info("Compiled {} out of {} sources ({} ms)", compiled, sources.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
-        if (unusedDeclaredDependency != AccessRulesViolation.ignore && compiler.getReferencedClasspathEntries() != null && !compiler.getReferencedClasspathEntries().isEmpty()) {
-          checkDependencyReferences(compiler.getReferencedClasspathEntries());
+        if (unusedDeclaredDependency != AccessRulesViolation.ignore) {
+          checkUnusedDependencies(compiler.getReferencedClasspathEntries(), classpathMap);
         }
       } else {
         compiler.skipCompile();
@@ -448,9 +448,8 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     }
   }
 
-  private void checkDependencyReferences(Set<File> referencedEntries) throws MojoExecutionException, IOException {
+  private void checkUnusedDependencies(Set<File> referencedEntries, Map<File, Artifact> classpathMap) throws MojoExecutionException, IOException {
     Set<Artifact> referencedArtifacts = new LinkedHashSet<>();
-    Set<Artifact> undeclaredArtifacts = new LinkedHashSet<>();
     Set<Artifact> unusedArtifacts = new LinkedHashSet<>();
     List<File> processorPath = getProcessorpath();
 
@@ -463,7 +462,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
     // Find the equivalent artifact equivalent for each referenced entry
     for (File entry : allReferencedEntries) {
-      Artifact artifact = getClasspath().get(entry);
+      Artifact artifact = classpathMap.get(entry);
       if (artifact != null) {
         referencedArtifacts.add(artifact);
       }
@@ -476,27 +475,11 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
           unusedArtifacts.add(dependency);
         }
       }
-
-      // Check all referenced artifacts to see if they're declared as a direct dependency
-      for (Artifact artifact : referencedArtifacts) {
-        if (!directDependencies.contains(artifact)) {
-          undeclaredArtifacts.add(artifact);
-        }
-      }
-    }
-
-    // Fail the build for any referenced artifacts that are not declared as a direct dependency
-    if (!undeclaredArtifacts.isEmpty()) {
-      if (unusedDeclaredDependency == AccessRulesViolation.error) {
-        context.addPomMessage("The following dependencies are in use but are undeclared: " + undeclaredArtifacts, MessageSeverity.ERROR, null);
-      }
     }
 
     // Fail the build for any direct dependencies that are never referenced
     if (!unusedArtifacts.isEmpty()) {
-      if (unusedDeclaredDependency == AccessRulesViolation.error) {
-        context.addPomMessage("The following dependencies are declared but are not used: " + unusedArtifacts, MessageSeverity.ERROR, null);
-      }
+      context.addPomMessage("The following dependencies are declared but are not used: " + unusedArtifacts, MessageSeverity.ERROR, null);
     }
   }
 
@@ -507,7 +490,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   }
 
   private Map<File, Artifact> getClasspath() {
-    Map<File, Artifact> classpath = new LinkedHashMap<File, Artifact>();
+    Map<File, Artifact> classpath = new LinkedHashMap<>();
     for (Artifact artifact : getClasspathArtifacts()) {
       File file = artifact.getFile();
       if (file != null) {

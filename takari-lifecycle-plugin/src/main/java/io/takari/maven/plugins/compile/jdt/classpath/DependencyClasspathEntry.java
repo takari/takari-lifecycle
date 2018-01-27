@@ -122,7 +122,7 @@ public abstract class DependencyClasspathEntry implements ClasspathEntry {
 
   @Override
   public Path getLocation() {
-    return file.toPath();
+    return file;
   }
 
   @Override

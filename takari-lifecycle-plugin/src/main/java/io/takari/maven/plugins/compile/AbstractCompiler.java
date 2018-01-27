@@ -22,8 +22,6 @@ import io.takari.incrementalbuild.ResourceMetadata;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.AccessRulesViolation;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Debug;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
-import io.takari.maven.plugins.compile.javac.CompilerJavac;
-import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 
 public abstract class AbstractCompiler {
 
@@ -60,8 +58,6 @@ public abstract class AbstractCompiler {
   private AccessRulesViolation transitiveDependencyReference;
 
   private AccessRulesViolation privatePackageReference;
-
-  private AccessRulesViolation unusedDeclaredDependency;
 
   protected AbstractCompiler(CompilerBuildContext context) {
     this.context = context;
@@ -155,22 +151,6 @@ public abstract class AbstractCompiler {
     this.transitiveDependencyReference = transitiveDependencyReference;
   }
 
-  protected AccessRulesViolation getUnusedDeclaredDependency() {
-    return unusedDeclaredDependency;
-  }
-
-  public void setUnusedDeclaredDependency(AccessRulesViolation unusedDeclaredDependency) {
-    this.unusedDeclaredDependency = unusedDeclaredDependency;
-  }
-
-  protected Set<File> getReferencedClasspathEntries() {
-    if (unusedDeclaredDependency == AccessRulesViolation.error) {
-      String msg = String.format("Compiler %s does not support unusedDeclaredDependency=error, use compilerId=%s", CompilerJavac.ID, CompilerJdt.ID);
-      throw new IllegalArgumentException(msg);
-    }
-    return null;
-  }
-
   protected boolean isVerbose() {
     return verbose;
   }
@@ -212,6 +192,8 @@ public abstract class AbstractCompiler {
   public abstract boolean setSources(List<ResourceMetadata<File>> sources) throws IOException;
 
   public abstract int compile() throws MojoExecutionException, IOException;
+
+  protected abstract Set<File> getReferencedClasspathEntries();
 
   public void skipCompile() {
     context.markUptodateExecution();
