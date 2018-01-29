@@ -1,0 +1,11 @@
+package a;
+
+public class A2 {
+  public A2() {
+
+  }
+
+  public void bar() {
+
+  }
+}

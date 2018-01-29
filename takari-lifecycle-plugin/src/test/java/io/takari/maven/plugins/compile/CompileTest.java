@@ -376,10 +376,49 @@ public class CompileTest extends AbstractCompileTest {
   }
 
   @Test
+  public void testReferencedEntries() throws Exception {
+    final String javacMessage = "Compiler javac does not support unusedDeclaredDependency=error, use compilerId=jdt";
+    File parent = resources.getBasedir("compile/referenced-entries");
+    Xpp3Dom unused = new Xpp3Dom("unusedDeclaredDependency");
+    unused.setValue("error");
+
+    mojos.flushClasspathCaches();
+
+    File b = new File(parent, "b");
+
+    try {
+      mojos.compile(b, unused);
+    } catch (UnsupportedOperationException e) {
+      ErrorMessage.isMatch(e.getMessage(), javacMessage);
+    }
+
+    MavenProject a = mojos.readMavenProject(new File(parent, "a"));
+    addDependency(a, "b", new File(b, "target/classes"));
+
+    try {
+      mojos.compile(a, unused);
+      mojos.assertBuildOutputs(parent, "a/target/classes/a/A1.class", "a/target/classes/a/A2.class");
+    } catch (UnsupportedOperationException e) {
+      ErrorMessage.isMatch(e.getMessage(), javacMessage);
+    }
+
+    cp(new File(parent, "a/src/main/java/a"), "A2.java-method", "A2.java");
+
+    try {
+      mojos.compile(a, unused);
+      // only A2 should have new output
+      mojos.assertBuildOutputs(parent, "a/target/classes/a/A2.class");
+    } catch (UnsupportedOperationException e) {
+      ErrorMessage.isMatch(e.getMessage(), javacMessage);
+    }
+  }
+
+  @Test
   public void testReactorUnused() throws Exception {
+    final String javacMessage = "Compiler javac does not support unusedDeclaredDependency=error, use compilerId=jdt";
     ErrorMessage expected = new ErrorMessage(compilerId);
     expected.setSnippets("jdt", "ERROR pom.xml [0:0] The following dependencies are declared but are not used: [test:module-b:jar:1.0:compile]");
-    File parent = resources.getBasedir("compile-jdt-classpath/reactor-unused");
+    File parent = resources.getBasedir("compile/reactor-unused");
     Xpp3Dom unused = new Xpp3Dom("unusedDeclaredDependency");
     unused.setValue("error");
 
@@ -390,7 +429,7 @@ public class CompileTest extends AbstractCompileTest {
     try {
       mojos.compile(moduleB, unused);
     } catch (UnsupportedOperationException e) {
-      ErrorMessage.isMatch(e.getMessage(), "Compiler javac does not support unusedDeclaredDependency=error, use compilerId=jdt");
+      ErrorMessage.isMatch(e.getMessage(), javacMessage);
     }
 
     MavenProject moduleA = mojos.readMavenProject(new File(parent, "module-a"));
@@ -402,7 +441,7 @@ public class CompileTest extends AbstractCompileTest {
     } catch (MojoExecutionException e) {
       mojos.assertMessage(parent, "module-a/pom.xml", expected);
     } catch (UnsupportedOperationException e) {
-      ErrorMessage.isMatch(e.getMessage(), "Compiler javac does not support unusedDeclaredDependency=error, use compilerId=jdt");
+      ErrorMessage.isMatch(e.getMessage(), javacMessage);
     }
   }
 }

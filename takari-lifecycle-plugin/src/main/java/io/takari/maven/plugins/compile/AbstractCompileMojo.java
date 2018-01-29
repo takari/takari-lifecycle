@@ -431,7 +431,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
         log.info("Compiling {} sources to {}", sources.size(), getOutputDirectory());
         int compiled = compiler.compile();
         log.info("Compiled {} out of {} sources ({} ms)", compiled, sources.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
-        if (unusedDeclaredDependency != AccessRulesViolation.ignore) {
+        if (unusedDeclaredDependency != AccessRulesViolation.ignore && context.isEscalated()) {
           checkUnusedDependencies(compiler.getReferencedClasspathEntries(), classpathMap);
         }
       } else {

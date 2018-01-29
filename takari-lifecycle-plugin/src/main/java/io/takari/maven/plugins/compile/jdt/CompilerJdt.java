@@ -994,6 +994,15 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
   @Override
   public Set<File> getReferencedClasspathEntries() {
-    return referencedClasspathEntries.stream().map(entry -> entry.toFile()).collect(Collectors.toSet());
+    return referencedClasspathEntries.stream().map(this::pathToFile).filter(file -> file != null).collect(Collectors.toSet());
+  }
+
+  private File pathToFile(Path path) {
+    try {
+      return path.toFile();
+    } catch (UnsupportedOperationException e) {
+      // Java 9 support
+      return null;
+    }
   }
 }
