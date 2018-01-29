@@ -26,6 +26,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -143,6 +144,8 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   private List<ClasspathEntry> dependencypath;
 
   private final Map<File, ResourceMetadata<File>> sources = new LinkedHashMap<>();
+
+  private Set<Path> referencedClasspathEntries = new LinkedHashSet<>();
 
   /**
    * Set of ICompilationUnit to be compiled.
@@ -719,6 +722,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         compiler.options.storeAnnotations = true;
       }
 
+      referencedClasspathEntries = namingEnvironment.getReferencedEntries();
       return strategy.compile(namingEnvironment, compiler);
     } finally {
       if (fileManager != null) {
@@ -986,5 +990,19 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   public void skipCompile() {
     strategy.skipCompile();
     super.skipCompile();
+  }
+
+  @Override
+  public Set<File> getReferencedClasspathEntries() {
+    return referencedClasspathEntries.stream().map(this::pathToFile).filter(file -> file != null).collect(Collectors.toSet());
+  }
+
+  private File pathToFile(Path path) {
+    try {
+      return path.toFile();
+    } catch (UnsupportedOperationException e) {
+      // Java 9 support
+      return null;
+    }
   }
 }

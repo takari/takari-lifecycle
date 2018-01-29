@@ -193,6 +193,8 @@ public abstract class AbstractCompiler {
 
   public abstract int compile() throws MojoExecutionException, IOException;
 
+  protected abstract Set<File> getReferencedClasspathEntries();
+
   public void skipCompile() {
     context.markUptodateExecution();
   }

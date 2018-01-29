@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +51,7 @@ import com.google.common.io.Files;
 
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
+import io.takari.incrementalbuild.MessageSeverity;
 import io.takari.incrementalbuild.ResourceMetadata;
 import io.takari.maven.plugins.compile.javac.CompilerJavacLauncher;
 import io.takari.maven.plugins.exportpackage.ExportPackageMojo;
@@ -223,6 +225,15 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   private AccessRulesViolation privatePackageReference;
 
   /**
+   * Sets "unused dependency declaration" policy violation action
+   * <p>
+   * If {@code error}, any dependencies declared in project pom.xml file must be referenced. A lack of reference to any declared dependency will result in compilation errors. If {@code ignore} (the
+   * default) declaring dependencies without referencing them is allowed.
+   */
+  @Parameter(defaultValue = "ignore")
+  private AccessRulesViolation unusedDeclaredDependency;
+
+  /**
    * Controls compilation sourcepath. If set to {@code disable}, compilation sourcepath will be empty. If set to {@code reactorProjects}, compilation sourcepath will be set to compile source roots (or
    * test compile source roots) of dependency projects of the same reactor build. The default is {@code reactorProjects} if {@code proc=only}, otherwise the default is {@code disable}.
    * 
@@ -378,7 +389,8 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
         mkdirs(getOutputDirectory());
       }
 
-      final List<File> classpath = getClasspath();
+      final Map<File, Artifact> classpathMap = getClasspath();
+      final List<File> classpath = new ArrayList<>(classpathMap.keySet());
       final List<File> processorpath = getProcessorpath();
       Proc proc = getEffectiveProc(classpath, processorpath);
 
@@ -419,6 +431,9 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
         log.info("Compiling {} sources to {}", sources.size(), getOutputDirectory());
         int compiled = compiler.compile();
         log.info("Compiled {} out of {} sources ({} ms)", compiled, sources.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
+        if (unusedDeclaredDependency != AccessRulesViolation.ignore && context.isEscalated()) {
+          checkUnusedDependencies(compiler.getReferencedClasspathEntries(), classpathMap);
+        }
       } else {
         compiler.skipCompile();
         log.info("Skipped compilation, all {} classes are up to date", sources.size());
@@ -433,18 +448,53 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     }
   }
 
+  private void checkUnusedDependencies(Set<File> referencedEntries, Map<File, Artifact> classpathMap) throws MojoExecutionException, IOException {
+    Set<Artifact> referencedArtifacts = new LinkedHashSet<>();
+    Set<Artifact> unusedArtifacts = new LinkedHashSet<>();
+    List<File> processorPath = getProcessorpath();
+
+    // Include processor path in referenced entries
+    Set<File> allReferencedEntries = new LinkedHashSet<>();
+    allReferencedEntries.addAll(referencedEntries);
+    if (processorPath != null) {
+      allReferencedEntries.addAll(processorPath);
+    }
+
+    // Find the equivalent artifact equivalent for each referenced entry
+    for (File entry : allReferencedEntries) {
+      Artifact artifact = classpathMap.get(entry);
+      if (artifact != null) {
+        referencedArtifacts.add(artifact);
+      }
+    }
+
+    if (directDependencies != null) {
+      // Check each direct dependency for existence in referenced artifacts
+      for (Artifact dependency : directDependencies) {
+        if (!referencedArtifacts.contains(dependency)) {
+          unusedArtifacts.add(dependency);
+        }
+      }
+    }
+
+    // Fail the build for any direct dependencies that are never referenced
+    if (!unusedArtifacts.isEmpty()) {
+      context.addPomMessage("The following dependencies are declared but are not used: " + unusedArtifacts, MessageSeverity.ERROR, null);
+    }
+  }
+
   private static Set<File> toFileSet(Set<String> paths) {
     Set<File> files = new LinkedHashSet<>();
     paths.forEach(path -> files.add(new File(path)));
     return files;
   }
 
-  private List<File> getClasspath() {
-    List<File> classpath = new ArrayList<File>();
+  private Map<File, Artifact> getClasspath() {
+    Map<File, Artifact> classpath = new LinkedHashMap<>();
     for (Artifact artifact : getClasspathArtifacts()) {
       File file = artifact.getFile();
       if (file != null) {
-        classpath.add(file);
+        classpath.put(file, artifact);
       }
     }
     return classpath;
