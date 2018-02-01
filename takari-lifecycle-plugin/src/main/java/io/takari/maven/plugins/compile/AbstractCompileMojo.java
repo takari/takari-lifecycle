@@ -271,7 +271,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
    *
    */
   @Parameter( property = "failOnError", defaultValue = "true" )
-  private boolean failOnError = true;
+  protected boolean failOnError = true;
 
   //
 
