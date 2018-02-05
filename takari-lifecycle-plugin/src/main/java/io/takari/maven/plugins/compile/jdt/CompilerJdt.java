@@ -899,7 +899,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     if (result.hasProblems()) {
       for (CategorizedProblem problem : result.getProblems()) {
         if (problem.isError() || isShowWarnings()) {
-          MessageSeverity severity = (problem.isError() && getFailOnError()) ? MessageSeverity.ERROR : MessageSeverity.WARNING;
+          MessageSeverity severity = problem.isError() ? MessageSeverity.ERROR : MessageSeverity.WARNING;
           input.addMessage(problem.getSourceLineNumber(), ((DefaultProblem) problem).column, problem.getMessage(), severity, null /* cause */);
         }
       }

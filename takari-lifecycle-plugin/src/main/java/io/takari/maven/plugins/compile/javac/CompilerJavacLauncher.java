@@ -131,7 +131,7 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
           }
           if (resource != null) {
             if (isShowWarnings() || kind != MessageSeverity.WARNING) {
-              resource.addMessage(line, column, message, getFailOnError() ? kind : MessageSeverity.WARNING, null);
+              resource.addMessage(line, column, message, kind, null);
             }
           } else {
             log.warn("Unexpected java resource {}", file);
