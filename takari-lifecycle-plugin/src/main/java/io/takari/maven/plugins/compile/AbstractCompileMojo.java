@@ -394,7 +394,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
         mkdirs(getGeneratedSourcesDirectory());
       }
 
-      compiler.setFailOnError(failOnError);
       compiler.setOutputDirectory(getOutputDirectory());
       compiler.setSource(source);
       compiler.setTarget(getTarget(target, source));
