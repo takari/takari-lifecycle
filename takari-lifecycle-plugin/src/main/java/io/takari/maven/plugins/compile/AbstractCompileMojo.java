@@ -27,7 +27,6 @@ import java.util.zip.ZipFile;
 
 import javax.tools.JavaFileObject.Kind;
 
-import io.takari.incrementalbuild.spi.FailOnErrorState;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.AbstractMojo;
@@ -367,7 +366,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   public void execute() throws MojoExecutionException, MojoFailureException {
 
     Stopwatch stopwatch = Stopwatch.createStarted();
-    setFailOnError();
+    context.setFailOnError(failOnError);
     if (isSkip()) {
       log.info("Skipping compilation");
       context.markSkipExecution();
@@ -393,6 +392,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       if (proc != Proc.none && !sources.isEmpty()) {
         mkdirs(getGeneratedSourcesDirectory());
       }
+
 
       compiler.setOutputDirectory(getOutputDirectory());
       compiler.setSource(source);
@@ -438,14 +438,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
     } catch (IOException e) {
       throw new MojoExecutionException("Could not compile project", e);
-    }
-  }
-
-  private void setFailOnError(){
-    if(failOnError) {
-      context.setFailOnErrorState(FailOnErrorState.TRUE);
-    }else {
-      context.setFailOnErrorState(FailOnErrorState.FALSE);
     }
   }
 
