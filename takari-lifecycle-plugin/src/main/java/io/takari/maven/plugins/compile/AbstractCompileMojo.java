@@ -266,6 +266,13 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Incremental(configuration = Configuration.ignore)
   protected RepositorySystemSession repositorySession;
 
+  /**
+   * Indicates whether the build will continue even if there are compilation errors.
+   *
+   */
+  @Parameter( property = "failOnError", defaultValue = "true" )
+  protected boolean failOnError = true;
+
   //
 
   @Component
@@ -359,7 +366,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   public void execute() throws MojoExecutionException, MojoFailureException {
 
     Stopwatch stopwatch = Stopwatch.createStarted();
-
+    context.setFailOnError(failOnError);
     if (isSkip()) {
       log.info("Skipping compilation");
       context.markSkipExecution();
@@ -385,6 +392,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       if (proc != Proc.none && !sources.isEmpty()) {
         mkdirs(getGeneratedSourcesDirectory());
       }
+
 
       compiler.setOutputDirectory(getOutputDirectory());
       compiler.setSource(source);

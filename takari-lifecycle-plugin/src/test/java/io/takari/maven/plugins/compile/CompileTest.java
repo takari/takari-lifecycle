@@ -17,6 +17,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
 
+import io.takari.maven.plugins.compile.javac.CompilerJavac;
+import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -373,5 +375,43 @@ public class CompileTest extends AbstractCompileTest {
 
     mojos.compile(project, newParameter("dependencySourceTypes", "prefer"));
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), "innertyperef/InnerTypeRef.class");
+  }
+
+  @Test
+  public void testFailOnErrorTrue() throws Exception {
+    ErrorMessage expected = new ErrorMessage(compilerId);
+    String msg ;
+    if(compilerId.equals(CompilerJdt.ID)){
+      msg = "ERROR Error.java [5:13] Strin cannot be resolved to a type";
+      expected.setSnippets(CompilerJdt.ID, msg);
+    }else {
+      //javac and forked-javac
+      msg = "ERROR Error.java [5:13] cannot find symbol\n" +
+              "  symbol:   class Strin\n" +
+              "  location: class basic.Error";
+      expected.setSnippets(CompilerJavac.ID, msg);
+    }
+
+    File basedir = resources.getBasedir("compile/failOnError");
+    try{
+      compile("compile/failOnError");
+      //Assert.fail();
+    } catch (MojoExecutionException e) {
+      //
+    }
+    mojos.assertMessage(basedir, "src/main/java/basic/Error.java", expected);
+  }
+
+  @Test
+  public void testFailOnErrorFalse() throws Exception {
+    try{
+      File basedir = resources.getBasedir("compile/failOnError");
+      compile("compile/failOnError", newParameter("failOnError", "false"));
+      if(compilerId.equals(CompilerJdt.ID)){
+        mojos.assertBuildOutputs(new File(basedir, "target/classes"), "basic/Basic.class");
+      }
+    } catch (MojoExecutionException e) {
+      Assert.fail();
+    }
   }
 }
