@@ -1,0 +1,14 @@
+language: java
+jdk:
+  - oraclejdk8
+cache:
+  directories:
+  - $HOME/.m2
+before_install:
+  - cp ./.travis/settings.xml ${HOME}/.m2/settings.xml
+install:
+  - mvn verify -DskipTests=true -Dmaven.javadoc.skip=true -V
+script:
+  - mvn verify
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
