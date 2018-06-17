@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project>
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>io.takari.lifecycle.its.pgp</groupId>
+  <artifactId>test</artifactId>
+  <version>1.0</version>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>io.takari.maven.plugins</groupId>
+        <artifactId>takari-lifecycle-plugin</artifactId>
+        <configuration>
+          <!-- Using a GNUPG setup created for this test -->
+          <keyRing>${basedir}/gnupg/secring.gpg</keyRing>
+          <!-- Passphrase in file for testing as there's no agent on CI machines normally -->
+          <passphraseFile>${basedir}/gnupg/passphrase.txt</passphraseFile>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

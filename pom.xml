@@ -35,6 +35,7 @@
     <incrementalbuild.version>0.20.7</incrementalbuild.version>
     <guava.version>18.0</guava.version>
     <mavenPluginPluginVersion>3.3</mavenPluginPluginVersion>
+    <jpgp.version>1.0.1-SNAPSHOT</jpgp.version>
     <m2eWorkspaceVersion>0.4.0</m2eWorkspaceVersion>
     <pluginTestingVersion>2.9.0</pluginTestingVersion>
     <takariLifecycleVersion>1.13.4</takariLifecycleVersion>

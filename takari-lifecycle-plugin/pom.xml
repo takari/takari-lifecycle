@@ -108,6 +108,18 @@
       <groupId>org.eclipse.aether</groupId>
       <artifactId>aether-util</artifactId>
       <version>${aetherVersion}</version>
+      <scope>compile</scope>      
+    </dependency>
+    <dependency>
+      <groupId>io.takari</groupId>
+      <artifactId>jpgp</artifactId>
+      <version>1.0.1-SNAPSHOT</version>
+      <scope>compile</scope>      
+    </dependency>
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcpg-jdk15on</artifactId>
+      <version>1.59</version>
       <scope>compile</scope>
     </dependency>
     
