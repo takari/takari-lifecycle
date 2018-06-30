@@ -142,6 +142,18 @@ public class CompileTest extends AbstractCompileTest {
   }
 
   @Test
+  public void testBasic_java7() throws Exception {
+    File basedir = compile("compile/basic", newParameter("source", "1.7"));
+    assertThat(new File(basedir, "target/classes/basic/Basic.class"), isVersion(51));
+  }
+
+  @Test
+  public void testBasic_java8() throws Exception {
+    File basedir = compile("compile/basic", newParameter("source", "1.8"));
+    assertThat(new File(basedir, "target/classes/basic/Basic.class"), isVersion(52));
+  }
+
+  @Test
   public void testBasic_java9() throws Exception {
     assumeTrue(isJava9orBetter);
     File basedir = compile("compile/basic", newParameter("source", "9"));
@@ -239,26 +251,6 @@ public class CompileTest extends AbstractCompileTest {
     compile(basedir, newParameter("showWarnings", "true"));
     mojos.assertBuildOutputs(new File(basedir, "target/classes"), "warn/Warn.class");
     mojos.assertMessage(basedir, "src/main/java/warn/Warn.java", expected);
-  }
-
-  @Test
-  public void testSourceTargetVersion() throws Exception {
-    ErrorMessage expected = new ErrorMessage(compilerId);
-    expected.setSnippets("jdt", "ERROR RequiresJava7.java [9:40] '<>' operator is not allowed for source level below 1.7");
-    expected.setSnippets("javac", "ERROR RequiresJava7.java [9:50] diamond operator is not supported in -source 1.6\n" + "  (use -source 7 or higher to enable diamond operator)");
-
-    File basedir = resources.getBasedir("compile/source-target-version");
-    try {
-      compile(basedir, newParameter("source", "1.6"));
-      Assert.fail();
-    } catch (MojoExecutionException e) {
-      // expected
-    }
-    mojos.assertMessage(basedir, "src/main/java/version/RequiresJava7.java", expected);
-    mojos.assertBuildOutputs(new File(basedir, "target/classes"), new String[0]);
-
-    compile(basedir, newParameter("source", "1.7"));
-    mojos.assertBuildOutputs(new File(basedir, "target/classes"), "version/RequiresJava7.class");
   }
 
   @Test
