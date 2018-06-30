@@ -19,16 +19,22 @@ public abstract class AbstractCompileTest {
 
   public static final boolean isJava8orBetter;
   public static final boolean isJava9orBetter;
+  public static final boolean isJava10orBetter;
 
   static {
     boolean _isJava8orBetter = false;
     boolean _isJava9orBetter = false;
+    boolean _isJava10orBetter = false;
 
     String version = System.getProperty("java.specification.version");
     if (version != null) {
       StringTokenizer st = new StringTokenizer(version, ".");
       int major = Integer.parseInt(st.nextToken());
-      if (major >= 9) {
+      if (major >= 10) {
+        _isJava8orBetter = true;
+        _isJava9orBetter = true;
+        _isJava10orBetter = true;
+      } else if (major >= 9) {
         _isJava8orBetter = true;
         _isJava9orBetter = true;
       } else {
@@ -39,6 +45,7 @@ public abstract class AbstractCompileTest {
 
     isJava8orBetter = _isJava8orBetter;
     isJava9orBetter = _isJava9orBetter;
+    isJava10orBetter = _isJava10orBetter;
   }
 
   @Rule
