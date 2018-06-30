@@ -46,8 +46,8 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
     this.buildContext = buildContext;
   }
 
-  public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes, Map<Object, Object> filterProperties, List<File> filters, String encoding, MissingPropertyAction mpa)
-      throws IOException {
+  public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes, Map<Object, Object> filterProperties, List<File> filters, String encoding,
+      MissingPropertyAction mpa) throws IOException {
     Map<Object, Object> effectiveProperties = new HashMap<>(filterProperties);
     for (File filter : filters) {
       readProperties(filter).forEach((key, value) -> {
@@ -150,13 +150,11 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
           String message = "Filtering: property '" + name + "' not found";
           if (resource == null) {
             throw new MustacheException(message);
-          }
-          else {
+          } else {
             // TODO: get line/col somehow
             resource.addMessage(1, 1, message, MessageSeverity.ERROR, null);
           }
-        }
-        else if (missingPropertyAction == MissingPropertyAction.leave) {
+        } else if (missingPropertyAction == MissingPropertyAction.leave) {
           result = new Wrapper() {
             @Override
             public Object call(Object[] scopes) throws GuardException {

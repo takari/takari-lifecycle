@@ -17,8 +17,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
 
-import io.takari.maven.plugins.compile.javac.CompilerJavac;
-import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -30,6 +28,9 @@ import org.junit.Test;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
+
+import io.takari.maven.plugins.compile.javac.CompilerJavac;
+import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 
 public class CompileTest extends AbstractCompileTest {
 
@@ -380,22 +381,22 @@ public class CompileTest extends AbstractCompileTest {
   @Test
   public void testFailOnErrorTrue() throws Exception {
     ErrorMessage expected = new ErrorMessage(compilerId);
-    String msg ;
-    if(compilerId.equals(CompilerJdt.ID)){
+    String msg;
+    if (compilerId.equals(CompilerJdt.ID)) {
       msg = "ERROR Error.java [5:13] Strin cannot be resolved to a type";
       expected.setSnippets(CompilerJdt.ID, msg);
-    }else {
-      //javac and forked-javac
-      msg = "ERROR Error.java [5:13] cannot find symbol\n" +
-              "  symbol:   class Strin\n" +
-              "  location: class basic.Error";
+    } else {
+      // javac and forked-javac
+      msg = "ERROR Error.java [5:13] cannot find symbol\n" + //
+          "  symbol:   class Strin\n" + //
+          "  location: class basic.Error";
       expected.setSnippets(CompilerJavac.ID, msg);
     }
 
     File basedir = resources.getBasedir("compile/failOnError");
-    try{
+    try {
       compile("compile/failOnError");
-      //Assert.fail();
+      // Assert.fail();
     } catch (MojoExecutionException e) {
       //
     }
@@ -404,10 +405,10 @@ public class CompileTest extends AbstractCompileTest {
 
   @Test
   public void testFailOnErrorFalse() throws Exception {
-    try{
+    try {
       File basedir = resources.getBasedir("compile/failOnError");
       compile("compile/failOnError", newParameter("failOnError", "false"));
-      if(compilerId.equals(CompilerJdt.ID)){
+      if (compilerId.equals(CompilerJdt.ID)) {
         mojos.assertBuildOutputs(new File(basedir, "target/classes"), "basic/Basic.class");
       }
     } catch (MojoExecutionException e) {

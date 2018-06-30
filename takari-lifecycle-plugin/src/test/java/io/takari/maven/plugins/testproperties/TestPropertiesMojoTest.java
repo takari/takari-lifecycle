@@ -182,8 +182,7 @@ public class TestPropertiesMojoTest {
     try {
       mojos.executeMojo(session, project, newMojoExecution(newParameter("missingPropertyAction", "fail")));
       Assert.fail("Should fail with missing property");
-    }
-    catch (MojoExecutionException e) {
+    } catch (MojoExecutionException e) {
       Assert.assertThat(e.getMessage(), containsString("Filtering: property 'missing' not found"));
     }
   }

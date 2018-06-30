@@ -270,7 +270,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
    * Indicates whether the build will continue even if there are compilation errors.
    *
    */
-  @Parameter( property = "failOnError", defaultValue = "true" )
+  @Parameter(property = "failOnError", defaultValue = "true")
   protected boolean failOnError = true;
 
   //

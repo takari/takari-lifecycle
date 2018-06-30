@@ -39,12 +39,13 @@ public class ResourcesProcessor {
     copyProcessor.process(sourceDirectory, targetDirectory, includes, excludes, encoding);
   }
 
-  public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes, Map<Object, Object> filterProperties, String encoding, MissingPropertyAction mpa) throws IOException {
+  public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes, Map<Object, Object> filterProperties, String encoding, MissingPropertyAction mpa)
+      throws IOException {
     filterProcessor.process(sourceDirectory, targetDirectory, includes, excludes, filterProperties, Collections.emptyList(), encoding, mpa);
   }
 
-  public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes, Map<Object, Object> filterProperties, List<File> filters, String encoding, MissingPropertyAction mpa)
-      throws IOException {
+  public void process(File sourceDirectory, File targetDirectory, List<String> includes, List<String> excludes, Map<Object, Object> filterProperties, List<File> filters, String encoding,
+      MissingPropertyAction mpa) throws IOException {
     filterProcessor.process(sourceDirectory, targetDirectory, includes, excludes, filterProperties, filters, encoding, mpa);
   }
 
