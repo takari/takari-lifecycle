@@ -4,12 +4,14 @@ import static io.takari.maven.testing.TestMavenRuntime.newParameter;
 import static io.takari.maven.testing.TestResources.assertFileContents;
 import static io.takari.maven.testing.TestResources.cp;
 import static io.takari.maven.testing.TestResources.rm;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.FileOutputStream;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.junit.Rule;
 import org.junit.Test;
@@ -40,6 +42,7 @@ public class PluginDescriptorMojoTest {
 
     mojos.assertBuildOutputs(basedir, "target/classes/META-INF/maven/plugin.xml", "target/classes/META-INF/m2e/lifecycle-mapping-metadata.xml");
     assertFileContents(basedir, "expected/plugin.xml", "target/classes/META-INF/maven/plugin.xml");
+    assertFileContents(basedir, "expected/lifecycle-mapping-metadata.xml", "target/classes/META-INF/m2e/lifecycle-mapping-metadata.xml");
   }
 
   private void generatePluginDescriptor(MavenProject project) throws Exception {
@@ -264,5 +267,39 @@ public class PluginDescriptorMojoTest {
     mojos.assertBuildOutputs(basedir, "target/classes/META-INF/maven/plugin.xml", "target/classes/META-INF/m2e/lifecycle-mapping-metadata.xml");
     assertFileContents(basedir, "expected/plugin.xml", "target/classes/META-INF/maven/plugin.xml");
     assertFileContents(basedir, "expected/lifecycle-mapping-metadata.xml", "target/classes/META-INF/m2e/lifecycle-mapping-metadata.xml");
+  }
+
+  @Test
+  public void testPluginEclipseMatadata() throws Exception {
+    // assert plugin hand-written m2e metadata is not mangled during the build
+
+    File basedir = resources.getBasedir("plugin-descriptor/m2e-metadata");
+    MavenProject project = mojos.readMavenProject(basedir);
+    addDependencies(project, "apache-plugin-annotations-jar", "maven-plugin-api-jar");
+
+    generatePluginDescriptor(project);
+
+    mojos.assertBuildOutputs(basedir, "target/classes/META-INF/maven/plugin.xml", "target/classes/META-INF/m2e/lifecycle-mapping-metadata.xml");
+    assertFileContents(basedir, "src/main/m2e/lifecycle-mapping-metadata.xml", "target/classes/META-INF/m2e/lifecycle-mapping-metadata.xml");
+  }
+
+  @Test
+  public void testPluginEclipseMatadataResource() throws Exception {
+    // assert plugin build fails if m2e metadata is present in one of resources directories
+
+    File basedir = resources.getBasedir("plugin-descriptor/m2e-metadata");
+    cp(basedir, "src/main/m2e/lifecycle-mapping-metadata.xml", "src/main/resources/META-INF/m2e/lifecycle-mapping-metadata.xml");
+    rm(basedir, "src/main/m2e/lifecycle-mapping-metadata.xml");
+
+    MavenProject project = mojos.readMavenProject(basedir);
+    addDependencies(project, "apache-plugin-annotations-jar", "maven-plugin-api-jar");
+
+    try {
+      generatePluginDescriptor(project);
+      fail();
+    } catch (MojoExecutionException expected) {
+      // TODO assert
+      System.out.println(expected.getMessage());
+    }
   }
 }

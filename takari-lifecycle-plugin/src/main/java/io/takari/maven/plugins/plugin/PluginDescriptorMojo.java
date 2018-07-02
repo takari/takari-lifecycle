@@ -1,5 +1,7 @@
 package io.takari.maven.plugins.plugin;
 
+import static io.takari.incrementalbuild.Incremental.Configuration.ignore;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -16,6 +18,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -26,8 +29,9 @@ import org.codehaus.plexus.util.xml.PrettyPrintXMLWriter;
 import org.codehaus.plexus.util.xml.XMLWriter;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
-import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 
+import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Output;
 import io.takari.incrementalbuild.aggregator.AggregatorBuildContext;
 import io.takari.incrementalbuild.aggregator.InputAggregator;
@@ -75,12 +79,16 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
   @Parameter(defaultValue = "${project.compileArtifacts}", readonly = true)
   private List<Artifact> dependencies;
 
-  // TODO must magically compile mojo configuration
-  @Parameter(defaultValue = "${project.build.directory}/generated-sources/annotations")
-  private File generatedSourcesDirectory;
+  /**
+   * Hand-written m2e lifecycle mapping xml file location.
+   */
+  @Parameter(defaultValue = "${project.basedir}/src/main/m2e/lifecycle-mapping-metadata.xml")
+  private File eclipseMetadataFile;
 
-  @Parameter(defaultValue = "${project.basedir}", readonly = true)
-  private File basedir;
+  // TODO introduce Resource digester in io.takari.incrementalbuild.maven.internal.digest.Digesters
+  @Parameter(defaultValue = "${project.build.resources}", readonly = true)
+  @Incremental(configuration = ignore)
+  private List<Resource> resources;
 
   @Component
   private AggregatorBuildContext context;
@@ -112,10 +120,17 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
       }
       inputSet.addInput(new File(outputDirectory, PATH_MOJOS_XML));
 
-      File existingM2eMetadata = new File(basedir, PATH_METADATA_XML);
+      if (eclipseMetadataFile.isFile()) {
+        inputSet.addInput(eclipseMetadataFile);
+      }
 
-      if (existingM2eMetadata.isFile()) {
-        inputSet.addInput(existingM2eMetadata);
+      // fail the build if m2e lifecycle mapping metadata is found among project <resources>
+      // the metadata will be overwritten by #createEclipseMetadataXml, which almost certainly not what the user expects
+      for (Resource resource : resources) {
+        File otherEclipseMetadataFile = new File(resource.getDirectory(), PATH_METADATA_XML);
+        if (otherEclipseMetadataFile.isFile()) {
+          throw new MojoExecutionException(String.format("Unexpected Eclipse m2e metadata found %s. Did you mean to move it to %s", otherEclipseMetadataFile, eclipseMetadataFile));
+        }
       }
 
       inputSet.aggregateIfNecessary(new File(outputDirectory, PATH_PLUGIN_XML), new InputAggregator() {
@@ -127,7 +142,7 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
       inputSet.aggregateIfNecessary(new File(outputDirectory, PATH_METADATA_XML), new InputAggregator() {
         @Override
         public void aggregate(Output<File> output, Iterable<File> inputs) throws IOException {
-          createM2eMetadataXml(output, mojosXml, existingM2eMetadata);
+          createEclipseMetadataXml(output, mojosXml, eclipseMetadataFile);
         }
       });
 
@@ -265,44 +280,44 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
     return pluginDescriptor;
   }
 
-  protected void createM2eMetadataXml(Output<File> output, File mojosXml, File existingM2eMetadata) throws IOException {
+  protected void createEclipseMetadataXml(Output<File> output, File mojosXml, File existingEclipseMetadataXml) throws IOException {
     try (OutputStream out = output.newOutputStream()) {
-      if (existingM2eMetadata.isFile()) {
-        try (InputStream in = new FileInputStream(existingM2eMetadata)) {
-          ByteStreams.copy(in, out);
-        }
+      if (existingEclipseMetadataXml.isFile()) {
+        Files.asByteSource(existingEclipseMetadataXml).copyTo(out);
       } else {
         Map<String, MojoDescriptor> mojos = loadMojos(mojosXml);
         List<String> goals = mojos.values().stream().filter(md -> md.isTakariBuilder()).map(md -> md.getGoal()).collect(Collectors.toList());
 
-        writeLifecycleMappingMetadata(out, goals);
+        writeEclipseMetadataXml(out, goals);
       }
     }
   }
 
-  private void writeLifecycleMappingMetadata(OutputStream out, List<String> goals) throws IOException {
+  private void writeEclipseMetadataXml(OutputStream out, List<String> goals) throws IOException {
     OutputStreamWriter writer = new OutputStreamWriter(out, "UTF-8");
     XMLWriter w = new PrettyPrintXMLWriter(writer, "UTF-8", null);
 
     w.writeMarkup("\n<!-- Generated by " + this.getClass().getSimpleName() + " -->\n\n");
 
     w.startElement("lifecycleMappingMetadata");
-    w.startElement("pluginExecutions");
-    w.startElement("pluginExecution");
-    w.startElement("pluginExecutionFilter");
-    w.startElement("goals");
-    goals.forEach(g -> writeGoalElement(w, g));
-    w.endElement(); // goals
-    w.endElement(); // pluginExecutionFilter
-    w.startElement("action");
-    w.startElement("configurator");
-    w.startElement("id");
-    w.writeText("io.takari.m2e.incrementalbuild.builderMojoExecutionConfigurator");
-    w.endElement(); // id
-    w.endElement(); // configurator
-    w.endElement(); // action
-    w.endElement(); // pluginExecution
-    w.endElement(); // pluginExecutions
+    if (!goals.isEmpty()) {
+      w.startElement("pluginExecutions");
+      w.startElement("pluginExecution");
+      w.startElement("pluginExecutionFilter");
+      w.startElement("goals");
+      goals.forEach(g -> writeGoalElement(w, g));
+      w.endElement(); // goals
+      w.endElement(); // pluginExecutionFilter
+      w.startElement("action");
+      w.startElement("configurator");
+      w.startElement("id");
+      w.writeText("io.takari.m2e.incrementalbuild.builderMojoExecutionConfigurator");
+      w.endElement(); // id
+      w.endElement(); // configurator
+      w.endElement(); // action
+      w.endElement(); // pluginExecution
+      w.endElement(); // pluginExecutions
+    }
     w.endElement(); // lifecycleMappingMetadata
 
     writer.close();

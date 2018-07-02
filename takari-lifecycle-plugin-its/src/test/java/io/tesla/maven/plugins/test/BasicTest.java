@@ -3,9 +3,16 @@ package io.tesla.maven.plugins.test;
 import static io.takari.maven.testing.TestResources.assertFilesPresent;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import org.junit.Assert;
 import org.junit.Test;
+
+import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 
 import io.takari.maven.testing.executor.MavenExecutionResult;
 import io.takari.maven.testing.executor.MavenRuntime.MavenRuntimeBuilder;
@@ -85,6 +92,21 @@ public class BasicTest extends AbstractIntegrationTest {
     Assert.assertTrue(new File(remoteGroup, "basic-plugin/1.0/basic-plugin-1.0.jar").canRead());
     Assert.assertTrue(new File(remoteGroup, "basic-plugin/1.0/basic-plugin-1.0-sources.jar").canRead());
     Assert.assertTrue(new File(remoteGroup, "basic-plugin/1.0/basic-plugin-1.0-tests.jar").canRead());
+
+    // assert m2e metadata
+    Assert.assertEquals(readFileUTF8(new File(basedir, "src/main/m2e/lifecycle-mapping-metadata.xml")), //
+        readZipFileEntryUTF8(new File(basedir, "target/basic-plugin-1.0.jar"), "META-INF/m2e/lifecycle-mapping-metadata.xml"));
+  }
+
+  private String readZipFileEntryUTF8(File zipFile, String entryPath) throws IOException {
+    try (ZipFile zip = new ZipFile(zipFile)) {
+      ZipEntry entry = zip.getEntry(entryPath);
+      return new String(ByteStreams.toByteArray(zip.getInputStream(entry)), StandardCharsets.UTF_8);
+    }
+  }
+
+  private String readFileUTF8(File file) throws IOException {
+    return Files.toString(file, StandardCharsets.UTF_8);
   }
 
   @Test
