@@ -10,6 +10,7 @@ package io.takari.maven.plugins.jar;
 import static com.google.common.collect.Iterables.size;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
+import static io.takari.maven.plugins.TakariLifecycles.isJarProducingTakariLifecycle;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -110,7 +111,16 @@ public class Jar extends TakariLifecycleMojo {
         if (!processingRequired) {
           logger.info("Main JAR is up-to-date");
         }
-        project.getArtifact().setFile(jar);
+
+        if (!isJarProducingTakariLifecycle(project.getPackaging()) && alternateLifecycleProvidingPrimaryArtifact()) {
+          // We have a non-Takari lifecycle and a property in the MavenSession has been explicity set to indicate the lifecycle
+          // executing will produce the primary artifact.
+          projectHelper.attachArtifact(project, "jar", jar);
+          logger.info("The '{}' lifecycle has indicated it will produce the primary artifact. Attaching JAR as a secondary artifact.", project.getPackaging());
+        } else {
+          // We have a standard Takari lifecycle so set the JAR created here as the primary artifact.
+          project.getArtifact().setFile(jar);
+        }
       } catch (IOException e) {
         throw new MojoExecutionException(e.getMessage(), e);
       }

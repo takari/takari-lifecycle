@@ -11,6 +11,7 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -50,6 +51,10 @@ public abstract class TakariLifecycleMojo extends AbstractMojo {
   @Parameter(defaultValue = "${project}", readonly = true)
   @Incremental(configuration = Configuration.ignore)
   protected MavenProject project;
+
+  @Parameter(defaultValue = "${session}")
+  @Incremental(configuration = Configuration.ignore)
+  private MavenSession session;
 
   @Parameter(defaultValue = "${reactorProjects}", readonly = true)
   @Incremental(configuration = Configuration.ignore)
@@ -97,5 +102,13 @@ public abstract class TakariLifecycleMojo extends AbstractMojo {
     }
 
     executeMojo();
+  }
+
+  protected boolean alternateLifecycleProvidingPrimaryArtifact() {
+    String alternateLifecycleProvidingPrimaryArtifact = session.getUserProperties().getProperty(TakariLifecycleFlags.ALTERNATE_LIFECYCLE_PROVIDING_PRIMARY_ARTIFACT);
+    if(alternateLifecycleProvidingPrimaryArtifact != null && alternateLifecycleProvidingPrimaryArtifact.equals("true")) {
+      return true;
+    }
+    return false;
   }
 }
