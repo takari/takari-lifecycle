@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -259,6 +260,24 @@ public class JarTest {
       // now check the manifest contents
       Manifest mf = jar.getManifest();
       Assert.assertEquals("custom-value", mf.getMainAttributes().getValue("Custom-Entry"));
+    }
+  }
+
+  @Test
+  public void testCustomManifestEntries() throws Exception {
+    File basedir = resources.getBasedir("jar/project-with-manifest-entries");
+    new File(basedir, "target/classes").mkdirs(); // TODO this shouldn't be necessary
+    mojos.executeMojo(basedir, "jar");
+    try (JarFile jar = new JarFile(new File(basedir, "target/test-1.0.jar"))) {
+      Manifest mf = jar.getManifest();
+      Attributes main = mf.getMainAttributes();
+      assertNotNull(main.getValue("Built-By"));
+      assertNotNull(main.getValue("Build-Jdk"));
+      assertEquals("1.0", main.getValue("Manifest-Version"));
+      assertEquals("test", main.getValue("Implementation-Title"));
+      assertEquals("1.0", main.getValue("Implementation-Version"));
+      assertEquals("io.takari.lifecycle.its", main.getValue("Implementation-Vendor-Id"));
+      assertEquals("custom-value", main.getValue("Custom-Entry"));
     }
   }
 

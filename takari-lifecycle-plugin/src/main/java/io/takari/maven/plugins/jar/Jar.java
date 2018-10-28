@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -237,6 +238,15 @@ public class Jar extends TakariLifecycleMojo {
     main.putValue("Implementation-Title", project.getArtifactId());
     main.putValue("Implementation-Version", project.getVersion());
     main.putValue("Implementation-Vendor-Id", project.getGroupId());
+
+    if (archive != null && archive.getManifestEntries() != null) {
+      for (Map.Entry<String, String> extra : archive.getManifestEntries().entrySet()) {
+        if (extra.getValue() != null) {
+          main.putValue(extra.getKey(), extra.getValue());
+        }
+      }
+    }
+
     File manifestFile = new File(project.getBuild().getDirectory(), "MANIFEST.MF");
     if (!manifestFile.getParentFile().exists()) {
       manifestFile.getParentFile().mkdirs();
