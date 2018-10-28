@@ -15,7 +15,7 @@
   <parent>
     <groupId>io.takari.maven.plugins</groupId>
     <artifactId>takari-lifecycle</artifactId>
-    <version>1.13.8-SNAPSHOT</version>
+    <version>1.13.8</version>
   </parent>
 
   <artifactId>takari-lifecycle-plugin-its</artifactId>
