@@ -7,64 +7,70 @@
  */
 package io.takari.maven.plugins.compile.jdt;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
+import java.io.File;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.inject.Named;
 
-import io.takari.maven.plugins.compile.jdt.classpath.ClasspathDirectory;
-import io.takari.maven.plugins.compile.jdt.classpath.ClasspathJar;
 import io.takari.maven.plugins.compile.jdt.classpath.DependencyClasspathEntry;
 import io.takari.maven.plugins.compile.jdt.classpath.PathNormalizer;
-import io.takari.maven.plugins.compile.jdt.classpath.SourcepathDirectory;
 
 @Named
 public class ClasspathEntryCache {
 
-  private static interface Factory {
-    DependencyClasspathEntry newClasspathEntry();
+  public static interface Factory {
+    DependencyClasspathEntry newClasspathEntry(Path location);
   }
 
-  private static final Map<Path, DependencyClasspathEntry> CACHE = new HashMap<>();
+  private static final Map<Path, CacheEntry> CACHE = new HashMap<>();
 
-  private static final Map<Path, DependencyClasspathEntry> SOURCEPATH_CACHE = new HashMap<>();
+  private static final Map<Path, CacheEntry> SOURCEPATH_CACHE = new HashMap<>();
 
-  public DependencyClasspathEntry get(Path location) {
-    return get(CACHE, location, () -> {
-      DependencyClasspathEntry entry = null;
-      if (Files.isDirectory(location)) {
-        entry = ClasspathDirectory.create(location);
-      } else if (Files.isRegularFile(location)) {
-        try {
-          entry = ClasspathJar.create(location);
-        } catch (IOException e) {
-          // not a zip/jar, ignore
-        }
-      }
-      return entry;
-    });
+  public DependencyClasspathEntry get(Path location, CacheMode cacheMode, Factory factory) {
+    return get(CACHE, location, cacheMode, factory);
   }
 
-  public DependencyClasspathEntry getSourcepathEntry(Path location, Charset encoding) {
-    return get(SOURCEPATH_CACHE, location, () -> SourcepathDirectory.create(location, encoding));
+  public DependencyClasspathEntry getSourcepathEntry(Path location, CacheMode cacheMode, Factory factory) {
+    return get(SOURCEPATH_CACHE, location, cacheMode, factory);
   }
 
-  private static DependencyClasspathEntry get(Map<Path, DependencyClasspathEntry> cache, Path location, Factory factory) {
+  private static DependencyClasspathEntry get(Map<Path, CacheEntry> cache, Path location, CacheMode cacheMode, Factory factory) {
     location = PathNormalizer.getCanonicalPath(location);
     synchronized (cache) {
-      DependencyClasspathEntry entry = null;
-      if (!cache.containsKey(location)) {
-        entry = factory.newClasspathEntry();
-        cache.put(location, entry);
-      } else {
-        entry = cache.get(location);
+      CacheEntry entry = cache.get(location);
+      CacheEntry newEntry = revalidate(location, entry, cacheMode, factory);
+      if (entry != newEntry) {
+        cache.put(location, entry = newEntry);
       }
-      return entry;
+      return entry.getCpe();
     }
+  }
+
+  private static CacheEntry revalidate(Path location, CacheEntry entry, CacheMode cacheMode, Factory factory) {
+    // don't reload by default
+    long length = -1;
+    long lastModified = -1;
+
+    if (cacheMode == CacheMode.PESSIMISTIC) {
+      File file = location.toFile();
+      if (file.isDirectory()) {
+        // always reload dir entries
+        length = 0;
+        lastModified = System.currentTimeMillis();
+      } else {
+        // check if file has changed
+        length = file.length();
+        lastModified = file.lastModified();
+      }
+    }
+
+    if (entry == null || entry.getSize() != length || entry.getTimestamp() != lastModified) {
+      entry = new CacheEntry(factory.newClasspathEntry(location), lastModified, length);
+    }
+
+    return entry;
   }
 
   /**
@@ -77,5 +83,33 @@ public class ClasspathEntryCache {
     synchronized (SOURCEPATH_CACHE) {
       SOURCEPATH_CACHE.clear();
     }
+  }
+
+  public static class CacheEntry {
+    private final DependencyClasspathEntry cpe;
+    private final long timestamp;
+    private final long size;
+
+    public CacheEntry(DependencyClasspathEntry cpe, long timestamp, long size) {
+      this.cpe = cpe;
+      this.timestamp = timestamp;
+      this.size = size;
+    }
+
+    public DependencyClasspathEntry getCpe() {
+      return cpe;
+    }
+
+    public long getSize() {
+      return size;
+    }
+
+    public long getTimestamp() {
+      return timestamp;
+    }
+  }
+
+  public enum CacheMode {
+    DEFAULT, PESSIMISTIC;
   }
 }
