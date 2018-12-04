@@ -52,6 +52,8 @@ import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
 import io.takari.incrementalbuild.ResourceMetadata;
 import io.takari.maven.plugins.compile.javac.CompilerJavacLauncher;
+import io.takari.maven.plugins.compile.jdt.ClasspathEntryCache.CacheMode;
+import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 import io.takari.maven.plugins.exportpackage.ExportPackageMojo;
 
 public abstract class AbstractCompileMojo extends AbstractMojo {
@@ -273,6 +275,12 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Parameter(property = "failOnError", defaultValue = "true")
   protected boolean failOnError = true;
 
+  /**
+   * Tells jdt compiler not to cache certain classpath/sourcepath elements which are subject to change in a dynamic environment (IDEs, for instance)
+   */
+  @Parameter
+  protected boolean pessimisticClasspathCache;
+
   //
 
   @Component
@@ -416,6 +424,12 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
         ((CompilerJavacLauncher) compiler).setBuildDirectory(buildDirectory);
         ((CompilerJavacLauncher) compiler).setMeminitial(meminitial);
         ((CompilerJavacLauncher) compiler).setMaxmem(maxmem);
+      }
+
+      if (compiler instanceof CompilerJdt) {
+        if (pessimisticClasspathCache) {
+          ((CompilerJdt) compiler).setClasspathCacheMode(CacheMode.PESSIMISTIC);
+        }
       }
 
       boolean sourcesChanged = compiler.setSources(sources);
