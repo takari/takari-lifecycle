@@ -19,6 +19,11 @@
   <artifactId>takari-lifecycle-plugin</artifactId>
   <packaging>takari-maven-plugin</packaging>
 
+  <properties>
+    <minimum-coverage.instruction>0.77</minimum-coverage.instruction>
+    <minimum-coverage.branch>0.68</minimum-coverage.branch>
+  </properties>
+
   <!-- not inherited, IIRC -->
   <prerequisites>
     <maven>[3.3.9,)</maven>

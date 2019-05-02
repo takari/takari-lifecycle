@@ -39,6 +39,12 @@
     <pluginTestingVersion>2.9.2</pluginTestingVersion>
     <takariLifecycleVersion>1.13.6</takariLifecycleVersion>
     <takari.javaSourceVersion>1.8</takari.javaSourceVersion>
+
+    <!-- Code Coverage -->
+    <jacoco-maven-plugin.version>0.8.3</jacoco-maven-plugin.version>
+    <!-- Modules can override this -->
+    <minimum-coverage.instruction>1.00</minimum-coverage.instruction>
+    <minimum-coverage.branch>1.00</minimum-coverage.branch>
   </properties>
 
   <scm>
@@ -76,6 +82,57 @@
         <filtering>true</filtering>
       </resource>
     </resources>
+    <plugins>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco-maven-plugin.version}</version>
+        <configuration>
+            <excludes>
+            </excludes>
+        </configuration>
+        <executions>
+            <execution>
+                <id>initialize</id>
+                <phase>initialize</phase>
+                <goals>
+                    <goal>prepare-agent</goal>
+                </goals>
+            </execution>
+            <execution>
+                <id>verify-report</id>
+                <phase>verify</phase>
+                <goals>
+                    <goal>report</goal>
+                </goals>
+            </execution>
+            <execution>
+                <id>check</id>
+                <goals>
+                    <goal>check</goal>
+                </goals>
+                <configuration>
+                    <rules>
+                        <rule>
+                            <limits>
+                                <limit>
+                                    <counter>INSTRUCTION</counter>
+                                    <value>COVEREDRATIO</value>
+                                    <minimum>${minimum-coverage.instruction}</minimum>
+                                </limit>
+                                <limit>
+                                    <counter>BRANCH</counter>
+                                    <value>COVEREDRATIO</value>
+                                    <minimum>${minimum-coverage.branch}</minimum>
+                                </limit>
+                            </limits>
+                        </rule>
+                    </rules>
+                </configuration>
+            </execution>
+        </executions>
+      </plugin>
+    </plugins>
     <pluginManagement>
       <plugins>
         <plugin>
