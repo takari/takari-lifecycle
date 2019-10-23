@@ -68,9 +68,6 @@
           <lifecycle>
             <id>default</id>
             <phases>
-              <validate>
-                io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:update-check
-              </validate>
               <process-resources>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:process-resources
               </process-resources>
@@ -127,9 +124,6 @@
           <lifecycle>
             <id>default</id>
             <phases>
-              <validate>
-                io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:update-check
-              </validate>
               <process-resources>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:process-resources
               </process-resources>
@@ -195,9 +189,6 @@
           <lifecycle>
             <id>default</id>
             <phases>
-              <validate>
-                io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:update-check
-              </validate>
               <process-resources>
                 io.takari.maven.plugins:takari-lifecycle-plugin:${project.version}:process-resources
               </process-resources>
