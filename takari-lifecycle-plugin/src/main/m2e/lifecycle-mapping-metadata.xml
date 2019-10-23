@@ -29,15 +29,5 @@
         </configurator>
       </action>
     </pluginExecution>
-    <pluginExecution>
-      <pluginExecutionFilter>
-        <goals>
-          <goal>update-check</goal>
-        </goals>
-      </pluginExecutionFilter>
-      <action>
-        <ignore/>
-      </action>
-    </pluginExecution>
   </pluginExecutions>
 </lifecycleMappingMetadata>
