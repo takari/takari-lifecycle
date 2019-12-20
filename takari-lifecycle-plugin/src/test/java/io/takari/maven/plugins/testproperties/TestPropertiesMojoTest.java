@@ -83,6 +83,11 @@ public class TestPropertiesMojoTest {
       public List<MavenProject> getDownstreamProjects(MavenProject project, boolean transitive) {
         return Collections.emptyList();
       }
+
+      @Override
+      public List<MavenProject> getAllProjects() {
+        return Collections.emptyList();
+      }
     });
 
     mojos.executeMojo(session, project, newMojoExecution());

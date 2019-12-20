@@ -15,7 +15,7 @@
   <parent>
     <groupId>io.takari</groupId>
     <artifactId>takari</artifactId>
-    <version>27</version>
+    <version>28</version>
   </parent>
 
   <groupId>io.takari.maven.plugins</groupId>
@@ -24,20 +24,21 @@
   <packaging>pom</packaging>
 
   <prerequisites>
-    <maven>[3.2.1,)</maven>
+    <maven>[3.6.3,)</maven>
   </prerequisites>
 
   <properties>
-    <mavenVersion>3.3.1</mavenVersion>
-    <sisuVersion>0.3.0</sisuVersion>
-    <sisuGuiceVersion>3.2.5</sisuGuiceVersion>
-    <aetherVersion>1.0.2.v20150114</aetherVersion>
-    <incrementalbuild.version>0.20.7</incrementalbuild.version>
-    <guava.version>18.0</guava.version>
-    <mavenPluginPluginVersion>3.3</mavenPluginPluginVersion>
+    <mavenVersion>3.6.3</mavenVersion>
+    <sisuVersion>0.3.4</sisuVersion>
+    <sisuGuiceVersion>4.2.0</sisuGuiceVersion>
+    <aetherVersion>1.4.1</aetherVersion>
+    <incrementalbuild.version>0.20.10</incrementalbuild.version>
+    <guava.version>28.2-jre</guava.version>
+    <mavenPluginPluginVersion>3.6.0</mavenPluginPluginVersion>
     <m2eWorkspaceVersion>0.4.0</m2eWorkspaceVersion>
-    <pluginTestingVersion>2.9.2</pluginTestingVersion>
-    <takariLifecycleVersion>1.13.6</takariLifecycleVersion>
+    <plexusVersion>3.3.0</plexusVersion>
+    <pluginTestingVersion>2.9.3</pluginTestingVersion>
+    <takariLifecycleVersion>1.13.9</takariLifecycleVersion>
     <takari.javaSourceVersion>1.8</takari.javaSourceVersion>
   </properties>
 
@@ -99,7 +100,7 @@
                 | Please note that license-plugin is quite dumb and processes the same sources multiple times
                 | once per each level of parent/module hierarchy. This means the same excludes has to be configured
                 | on each hierarchy level too. (or hope we remember to run "mvn -N license:format", which I am sure
-                | we'll forget) 
+                | we'll forget)
                -->
               <exclude>takari-lifecycle-plugin/src/main/java/io/takari/maven/plugins/compile/jdt/ReferenceCollection.java</exclude>
             </excludes>
