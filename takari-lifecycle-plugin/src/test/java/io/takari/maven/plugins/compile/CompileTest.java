@@ -168,6 +168,13 @@ public class CompileTest extends AbstractCompileTest {
   }
 
   @Test
+  public void testBasic_java11() throws Exception {
+    assumeTrue(isJava10orBetter);
+    File basedir = compile("compile/basic", newParameter("source", "11"));
+    assertThat(new File(basedir, "target/classes/basic/Basic.class"), isVersion(55));
+  }
+
+  @Test
   public void testIncludes() throws Exception {
     Xpp3Dom includes = new Xpp3Dom("includes");
     includes.addChild(newParameter("include", "basic/Basic.java"));
