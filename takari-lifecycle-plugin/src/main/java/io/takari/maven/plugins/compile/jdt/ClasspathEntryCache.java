@@ -54,15 +54,19 @@ public class ClasspathEntryCache {
     long lastModified = -1;
 
     if (cacheMode == CacheMode.PESSIMISTIC) {
-      File file = location.toFile();
-      if (file.isDirectory()) {
-        // always reload dir entries
-        length = 0;
-        lastModified = System.currentTimeMillis();
-      } else {
-        // check if file has changed
-        length = file.length();
-        lastModified = file.lastModified();
+      try {
+        File file = location.toFile();
+        if (file.isDirectory()) {
+          // always reload dir entries
+          length = 0;
+          lastModified = System.currentTimeMillis();
+        } else {
+          // check if file has changed
+          length = file.length();
+          lastModified = file.lastModified();
+        }
+      } catch (UnsupportedOperationException e) {
+        // JRT Path doesn't support toFile --> JDK not expected change so don't reload
       }
     }
 
