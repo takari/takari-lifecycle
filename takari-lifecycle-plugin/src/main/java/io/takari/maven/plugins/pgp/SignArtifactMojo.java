@@ -1,11 +1,13 @@
 package io.takari.maven.plugins.pgp;
 
+import static java.nio.file.Files.*;
 import static java.nio.file.Files.copy;
 
 import io.takari.jpgp.PgpArtifactSigner;
 import io.takari.maven.plugins.TakariLifecycleMojo;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,6 +56,7 @@ public class SignArtifactMojo extends TakariLifecycleMojo {
     //
     File pomToSign = new File(project.getBuild().getDirectory(), project.getBuild().getFinalName() + ".pom");
     try {
+      createDirectories(pomToSign.getParentFile().toPath());
       copy(project.getFile().toPath(), pomToSign.toPath(), StandardCopyOption.REPLACE_EXISTING);
     } catch (IOException e) {
       throw new MojoExecutionException("Error copying POM for signing.", e);
