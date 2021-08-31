@@ -86,7 +86,11 @@ public class SignArtifactMojo extends TakariLifecycleMojo {
   private File sign(File file) throws MojoExecutionException {
     try {
       PgpArtifactSigner signer = new PgpArtifactSigner();
-      return signer.sign(file);
+      if(passphrase != null) {
+        return signer.sign(file, passphrase);
+      } else {
+        return signer.sign(file);
+      }
     } catch (Exception e) {
       throw new MojoExecutionException("Error signing artifact " + file + ".", e);
     }
