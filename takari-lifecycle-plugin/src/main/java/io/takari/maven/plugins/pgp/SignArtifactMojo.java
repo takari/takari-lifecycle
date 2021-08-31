@@ -1,13 +1,12 @@
 package io.takari.maven.plugins.pgp;
 
-import static java.nio.file.Files.*;
 import static java.nio.file.Files.copy;
+import static java.nio.file.Files.createDirectories;
 
 import io.takari.jpgp.PgpArtifactSigner;
 import io.takari.maven.plugins.TakariLifecycleMojo;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +17,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Mojo(name = "signArtifact", defaultPhase = LifecyclePhase.PACKAGE, threadSafe = true)
+@Mojo(name = "signArtifact", defaultPhase = LifecyclePhase.VERIFY, threadSafe = true)
 public class SignArtifactMojo extends TakariLifecycleMojo {
 
   public static final String SIGNATURE_EXTENSION = ".asc";
@@ -86,7 +85,7 @@ public class SignArtifactMojo extends TakariLifecycleMojo {
   private File sign(File file) throws MojoExecutionException {
     try {
       PgpArtifactSigner signer = new PgpArtifactSigner();
-      if(passphrase != null) {
+      if (passphrase != null) {
         return signer.sign(file, passphrase);
       } else {
         return signer.sign(file);
