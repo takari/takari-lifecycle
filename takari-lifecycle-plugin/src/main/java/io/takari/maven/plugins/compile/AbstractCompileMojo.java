@@ -114,6 +114,13 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   private String target;
 
   /**
+   * The --release argument for the Java compiler.
+   * @see https://docs.oracle.com/javase/9/tools/javac.htm#JSWOR627
+   */
+	@Parameter(property = "maven.compiler.release")
+  private String release;
+
+  /**
    * The compiler id of the compiler to use, one of {@code javac}, {@code forked-javac} or {@code jdt}.
    */
   @Parameter(property = "maven.compiler.compilerId", defaultValue = "javac")
@@ -405,6 +412,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       compiler.setOutputDirectory(getOutputDirectory());
       compiler.setSource(source);
       compiler.setTarget(getTarget(target, source));
+      compiler.setRelease(release);
       compiler.setProc(proc);
       compiler.setGeneratedSourcesDirectory(getGeneratedSourcesDirectory());
       compiler.setAnnotationProcessors(annotationProcessors);

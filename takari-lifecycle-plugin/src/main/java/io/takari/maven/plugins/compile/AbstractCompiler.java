@@ -35,6 +35,8 @@ public abstract class AbstractCompiler {
 
   private String target;
 
+  private String release;
+
   private Proc proc;
 
   private File generatedSourcesDirectory;
@@ -85,6 +87,14 @@ public abstract class AbstractCompiler {
 
   protected String getTarget() {
     return target;
+  }
+
+  public String getRelease() {
+    return release;
+  }
+
+  public void setRelease(String release) {
+    this.release = release;
   }
 
   public void setProc(Proc proc) {

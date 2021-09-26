@@ -66,13 +66,19 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
     options.add("-d");
     options.add(getOutputDirectory().getAbsolutePath());
 
-    options.add("-source");
-    options.add(getSource());
+    // The --source and --target option cannot be used with --release
+    if (getRelease() != null) {
+      options.add("--release");
+      options.add(getRelease());
+	  } else {
+      options.add("-source");
+      options.add(getSource());
 
-    if (getTarget() != null) {
-      options.add("-target");
-      options.add(getTarget());
-    }
+      if (getTarget() != null) {
+        options.add("-target");
+        options.add(getTarget());
+      }
+	  }
 
     options.add("-classpath");
     options.add(classpath);
