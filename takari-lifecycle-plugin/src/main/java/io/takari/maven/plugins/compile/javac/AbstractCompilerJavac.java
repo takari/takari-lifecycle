@@ -7,20 +7,8 @@
  */
 package io.takari.maven.plugins.compile.javac;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.apache.maven.plugin.MojoExecutionException;
-
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
-
 import io.takari.incrementalbuild.Resource;
 import io.takari.incrementalbuild.ResourceMetadata;
 import io.takari.incrementalbuild.ResourceStatus;
@@ -31,6 +19,12 @@ import io.takari.maven.plugins.compile.AbstractCompiler;
 import io.takari.maven.plugins.compile.CompilerBuildContext;
 import io.takari.maven.plugins.compile.ProjectClasspathDigester;
 import io.takari.maven.plugins.compile.jdt.CompilerJdt;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.codehaus.plexus.languages.java.version.JavaVersion;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
 public abstract class AbstractCompilerJavac extends AbstractCompiler {
 
@@ -67,10 +61,10 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
     options.add(getOutputDirectory().getAbsolutePath());
 
     // The --source and --target option cannot be used with --release
-    if (getRelease() != null) {
+    if (getRelease() != null && JavaVersion.JAVA_VERSION.isAtLeast("9")) {
       options.add("--release");
       options.add(getRelease());
-	  } else {
+    } else {
       options.add("-source");
       options.add(getSource());
 
