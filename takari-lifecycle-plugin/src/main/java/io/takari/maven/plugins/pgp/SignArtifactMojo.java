@@ -17,7 +17,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Mojo(name = "signArtifact", defaultPhase = LifecyclePhase.VERIFY, threadSafe = true)
+@Mojo(name = "signArtifact",  configurator = "takari", defaultPhase = LifecyclePhase.VERIFY, threadSafe = true)
 public class SignArtifactMojo extends TakariLifecycleMojo {
 
   public static final String SIGNATURE_EXTENSION = ".asc";
@@ -31,6 +31,11 @@ public class SignArtifactMojo extends TakariLifecycleMojo {
 
   @Override
   protected void executeMojo() throws MojoExecutionException {
+
+    if (skip) {
+      logger.info("Skipping PGP signature generation as per configuration.");
+      return;
+    }
 
     List<SigningBundle> signingBundles = new ArrayList<>();
 
