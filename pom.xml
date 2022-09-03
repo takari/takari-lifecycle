@@ -49,18 +49,6 @@
     <tag>HEAD</tag>
   </scm>
 
-  <!--
-  <repositories>
-    <repository>
-      <id>takari-snapshots</id>
-      <url>https://otto.takari.io/content/repositories/snapshots/</url>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-  </repositories>
-  -->
-
   <modules>
     <module>takari-lifecycle-plugin</module>
     <!-- TODO consider moving integration tests to the main module -->
