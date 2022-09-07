@@ -196,7 +196,7 @@
     <dependency>
       <groupId>io.takari</groupId>
       <artifactId>jpgp</artifactId>
-      <version>1.0.6</version>
+      <version>1.0.9</version>
     </dependency>
     <!-- test-properties -->
     <dependency>
@@ -312,10 +312,6 @@
 
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>animal-sniffer-maven-plugin</artifactId>
-      </plugin>
       <plugin>
         <groupId>com.mycila</groupId>
         <artifactId>license-maven-plugin</artifactId>
