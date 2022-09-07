@@ -38,7 +38,7 @@
     <m2eWorkspaceVersion>0.4.0</m2eWorkspaceVersion>
     <plexusVersion>3.3.0</plexusVersion>
     <pluginTestingVersion>3.0.0</pluginTestingVersion>
-    <takariLifecycleVersion>1.13.9</takariLifecycleVersion>
+    <takari.lifecycleVersion>2.0.8</takari.lifecycleVersion>
     <takari.javaSourceVersion>11</takari.javaSourceVersion>
   </properties>
 
