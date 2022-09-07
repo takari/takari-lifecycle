@@ -3,10 +3,12 @@ package io.takari.maven.plugins.pgp;
 import static java.nio.file.Files.copy;
 import static java.nio.file.Files.createDirectories;
 
-import io.takari.jpgp.PgpArtifactSigner;
+import io.takari.jpgp.ImmutablePgpSigningRequest;
+import io.takari.jpgp.PgpSigner;
 import io.takari.maven.plugins.TakariLifecycleMojo;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,10 +19,10 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Mojo(name = "signArtifact",  configurator = "takari", defaultPhase = LifecyclePhase.VERIFY, threadSafe = true)
+@Mojo(name = "signArtifact", configurator = "takari", defaultPhase = LifecyclePhase.VERIFY, threadSafe = true)
 public class SignArtifactMojo extends TakariLifecycleMojo {
 
-  public static final String SIGNATURE_EXTENSION = ".asc";
+  public static final String PGP_SIGNATURE_EXTENSION = ".asc";
   private final Logger logger = LoggerFactory.getLogger(SignArtifactMojo.class);
 
   @Parameter(property = "gpg.skip", defaultValue = "false")
@@ -37,11 +39,10 @@ public class SignArtifactMojo extends TakariLifecycleMojo {
       return;
     }
 
-    List<SigningBundle> signingBundles = new ArrayList<>();
-
+    List<SignedFile> mavenFilesToSign = new ArrayList<>();
     if (!"pom".equals(project.getPackaging())) {
       //
-      // Artifact
+      // Primary artifact
       //
       org.apache.maven.artifact.Artifact artifact = project.getArtifact();
       File file = artifact.getFile();
@@ -49,10 +50,7 @@ public class SignArtifactMojo extends TakariLifecycleMojo {
         logger.info("There is no artifact present. Make sure you run this after the package phase.");
         return;
       }
-      File projectArtifactSignature = sign(file);
-      if (projectArtifactSignature != null) {
-        signingBundles.add(new SigningBundle(artifact.getArtifactHandler().getExtension(), projectArtifactSignature));
-      }
+      mavenFilesToSign.add(new SignedFile(file.toPath(), artifact.getArtifactHandler().getExtension()));
     }
 
     //
@@ -62,41 +60,29 @@ public class SignArtifactMojo extends TakariLifecycleMojo {
     try {
       createDirectories(pomToSign.getParentFile().toPath());
       copy(project.getFile().toPath(), pomToSign.toPath(), StandardCopyOption.REPLACE_EXISTING);
+      mavenFilesToSign.add(new SignedFile(pomToSign.toPath(), "pom"));
     } catch (IOException e) {
       throw new MojoExecutionException("Error copying POM for signing.", e);
     }
-    File pomSignature = sign(pomToSign);
-    if (pomSignature != null) {
-      signingBundles.add(new SigningBundle("pom", pomSignature));
-    }
 
     //
-    // Attached artifact signatures
+    // Attached artifacts
     //
     for (org.apache.maven.artifact.Artifact a : project.getAttachedArtifacts()) {
-      File signatureFile = sign(a.getFile());
-      if (signatureFile != null) {
-        signingBundles.add(new SigningBundle(a.getArtifactHandler().getExtension(),
-            a.getClassifier(), signatureFile));
-      }
+      mavenFilesToSign.add(new SignedFile(a.getFile().toPath(), a.getArtifactHandler().getExtension(), a.getClassifier()));
     }
 
-    for (SigningBundle bundle : signingBundles) {
-      projectHelper.attachArtifact(project, bundle.getExtension() + SIGNATURE_EXTENSION,
-          bundle.getClassifier(), bundle.getSignature());
-    }
-  }
-
-  private File sign(File file) throws MojoExecutionException {
-    try {
-      PgpArtifactSigner signer = new PgpArtifactSigner();
-      if (passphrase != null) {
-        return signer.sign(file, passphrase);
-      } else {
-        return signer.sign(file);
+    logger.debug("Signing the following files with PGP:");
+    mavenFilesToSign.forEach(s -> logger.debug(s.toString()));
+    PgpSigner pgpArtifactSigner = new PgpSigner(ImmutablePgpSigningRequest.builder().build());
+    for (SignedFile pgpSignedFile : mavenFilesToSign) {
+      Path file = pgpSignedFile.file();
+      try {
+        File pgpSignature = pgpArtifactSigner.sign(file.toFile());
+        projectHelper.attachArtifact(project, pgpSignedFile.extension() + PGP_SIGNATURE_EXTENSION, pgpSignedFile.classifier(), pgpSignature);
+      } catch (Exception e) {
+        throw new MojoExecutionException("Error signing artifact " + file + ".", e);
       }
-    } catch (Exception e) {
-      throw new MojoExecutionException("Error signing artifact " + file + ".", e);
     }
   }
 }
