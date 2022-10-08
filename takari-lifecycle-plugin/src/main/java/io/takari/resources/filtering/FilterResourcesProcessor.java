@@ -129,13 +129,13 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
     }
 
     @Override
-    public Wrapper find(final String name, Object[] scopes) {
+    public Wrapper find(final String name, List<Object> scopes) {
       Wrapper result = null;
       for (final Object scope : scopes) {
         if (scope instanceof Map && ((Map) scope).containsKey(name)) {
           result = new Wrapper() {
             @Override
-            public Object call(Object[] scopes) throws GuardException {
+            public Object call(List<Object> scopes) throws GuardException {
               return ((Map) scope).get(name);
             }
           };
@@ -157,7 +157,7 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
         } else if (missingPropertyAction == MissingPropertyAction.leave) {
           result = new Wrapper() {
             @Override
-            public Object call(Object[] scopes) throws GuardException {
+            public Object call(List<Object> scopes) throws GuardException {
               return M_START + name + M_END;
             }
           };

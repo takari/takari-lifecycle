@@ -39,9 +39,9 @@ import io.takari.incrementalbuild.aggregator.InputAggregator;
 import io.takari.incrementalbuild.aggregator.InputSet;
 import io.takari.maven.plugins.TakariLifecycleMojo;
 import io.takari.maven.plugins.util.PropertiesWriter;
-import io.tesla.proviso.archive.Archiver;
-import io.tesla.proviso.archive.Entry;
-import io.tesla.proviso.archive.source.FileEntry;
+import ca.vanzyl.provisio.archive.Archiver;
+import ca.vanzyl.provisio.archive.ExtendedArchiveEntry;
+import ca.vanzyl.provisio.archive.source.FileEntry;
 
 @Mojo(name = "jar", defaultPhase = LifecyclePhase.PACKAGE, configurator = "takari", threadSafe = true)
 public class Jar extends TakariLifecycleMojo {
@@ -99,7 +99,7 @@ public class Jar extends TakariLifecycleMojo {
           public void aggregate(Output<File> output, Iterable<File> inputs) throws IOException {
             logger.info("Building main JAR.");
 
-            List<Iterable<Entry>> sources = new ArrayList<>();
+            List<Iterable<ExtendedArchiveEntry>> sources = new ArrayList<>();
             if (archive != null && archive.getManifestFile() != null) {
               sources.add(jarManifestSource(archive.getManifestFile()));
             }
@@ -185,7 +185,7 @@ public class Jar extends TakariLifecycleMojo {
     }
   }
 
-  private void archive(File jar, List<Iterable<Entry>> sources) throws IOException {
+  private void archive(File jar, List<Iterable<ExtendedArchiveEntry>> sources) throws IOException {
     Archiver archiver = Archiver.builder() //
         .useRoot(false) //
         .normalize(true) //
@@ -204,16 +204,16 @@ public class Jar extends TakariLifecycleMojo {
     return basedir.toPath().relativize(resource.toPath()).toString().replace('\\', '/'); // always use forward slash for path separator
   }
 
-  private List<Entry> inputsSource(Multimap<File, File> inputs) {
-    final List<Entry> entries = new ArrayList<>();
+  private List<ExtendedArchiveEntry> inputsSource(Multimap<File, File> inputs) {
+    final List<ExtendedArchiveEntry> entries = new ArrayList<>();
     for (File basedir : inputs.keySet()) {
       entries.addAll(inputsSource(basedir, inputs.get(basedir)));
     }
     return entries;
   }
 
-  private List<Entry> inputsSource(File basedir, Iterable<File> inputs) {
-    final List<Entry> entries = new ArrayList<>();
+  private List<ExtendedArchiveEntry> inputsSource(File basedir, Iterable<File> inputs) {
+    final List<ExtendedArchiveEntry> entries = new ArrayList<>();
     for (File input : inputs) {
       String entryName = getRelativePath(basedir, input);
       entries.add(new FileEntry(entryName, input));
@@ -221,11 +221,11 @@ public class Jar extends TakariLifecycleMojo {
     return entries;
   }
 
-  public static Iterable<Entry> jarManifestSource(File file) {
-    return singleton((Entry) new FileEntry(MANIFEST_PATH, file));
+  public static Iterable<ExtendedArchiveEntry> jarManifestSource(File file) {
+    return singleton((ExtendedArchiveEntry) new FileEntry(MANIFEST_PATH, file));
   }
 
-  private Iterable<Entry> jarManifestSource(MavenProject project) throws IOException {
+  private Iterable<ExtendedArchiveEntry> jarManifestSource(MavenProject project) throws IOException {
     Manifest manifest = new Manifest();
     Attributes main = manifest.getMainAttributes();
     main.putValue("Manifest-Version", "1.0");
@@ -255,10 +255,10 @@ public class Jar extends TakariLifecycleMojo {
     ByteArrayOutputStream buf = new ByteArrayOutputStream();
     manifest.write(buf);
 
-    return singleton((Entry) new BytesEntry(MANIFEST_PATH, buf.toByteArray()));
+    return singleton((ExtendedArchiveEntry) new BytesEntry(MANIFEST_PATH, buf.toByteArray()));
   }
 
-  protected Entry pomPropertiesSource(MavenProject project) throws IOException {
+  protected ExtendedArchiveEntry pomPropertiesSource(MavenProject project) throws IOException {
     String entryName = String.format("META-INF/maven/%s/%s/pom.properties", project.getGroupId(), project.getArtifactId());
 
     ByteArrayOutputStream buf = new ByteArrayOutputStream();
