@@ -11,10 +11,11 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Date;
 
-import io.tesla.proviso.archive.Entry;
+import ca.vanzyl.provisio.archive.ExtendedArchiveEntry;
 
-class BytesEntry implements Entry {
+class BytesEntry implements ExtendedArchiveEntry {
   private final String entryName;
   private final byte[] contents;
 
@@ -61,5 +62,52 @@ class BytesEntry implements Entry {
   @Override
   public long getTime() {
     return -1;
+  }
+
+  @Override
+  public void setFileMode( int i )
+  {
+  }
+
+  @Override
+  public void setSize( long l )
+  {
+
+  }
+
+  @Override
+  public void setTime( long l )
+  {
+
+  }
+
+  @Override
+  public boolean isSymbolicLink()
+  {
+    return false;
+  }
+
+  @Override
+  public String getSymbolicLinkPath()
+  {
+    return null;
+  }
+
+  @Override
+  public boolean isHardLink()
+  {
+    return false;
+  }
+
+  @Override
+  public String getHardLinkPath()
+  {
+    return null;
+  }
+
+  @Override
+  public Date getLastModifiedDate()
+  {
+    return null;
   }
 }

@@ -41,7 +41,7 @@ import org.junit.Test;
 
 import com.google.common.io.Files;
 
-import io.takari.hash.FingerprintSha1Streaming;
+import io.takari.hash.Sha1Fingerprint;
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 import io.takari.maven.testing.TestResources;
 
@@ -70,7 +70,7 @@ public class JarTest {
     mojos.executeMojo(basedir, "jar");
     File jar0 = new File(basedir, "target/test-1.0.jar");
     assertTrue(jar0.exists());
-    String fingerprint0 = new FingerprintSha1Streaming().fingerprint(jar0);
+    String fingerprint0 = new Sha1Fingerprint().fingerprint(jar0);
     //
     // Generate the JAR a second time and ensure that the fingerprint is still the same when
     // the JAR content is the same. The outer SHA1 of a JAR built at two points in time will
@@ -79,7 +79,7 @@ public class JarTest {
     mojos.executeMojo(basedir, "jar");
     File jar1 = new File(basedir, "target/test-1.0.jar");
     Assert.assertTrue(jar1.exists());
-    String fingerprint1 = new FingerprintSha1Streaming().fingerprint(jar1);
+    String fingerprint1 = new Sha1Fingerprint().fingerprint(jar1);
     assertEquals("We expect the JAR to have the same fingerprint after repeated builds.", fingerprint0, fingerprint1);
 
     // Make sure our maven properties file is written correctly

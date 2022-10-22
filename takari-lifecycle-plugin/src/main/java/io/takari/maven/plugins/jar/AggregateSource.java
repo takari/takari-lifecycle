@@ -9,8 +9,8 @@ package io.takari.maven.plugins.jar;
 
 import static com.google.common.collect.Iterables.concat;
 import static com.google.common.collect.Iterables.filter;
-import io.tesla.proviso.archive.Entry;
-import io.tesla.proviso.archive.Source;
+import ca.vanzyl.provisio.archive.ExtendedArchiveEntry;
+import ca.vanzyl.provisio.archive.Source;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -28,19 +28,19 @@ import com.google.common.base.Predicate;
  */
 class AggregateSource implements Source {
 
-  private final List<Iterable<Entry>> sources;
+  private final List<Iterable<ExtendedArchiveEntry>> sources;
 
-  public AggregateSource(List<Iterable<Entry>> sources) {
+  public AggregateSource(List<Iterable<ExtendedArchiveEntry>> sources) {
     this.sources = sources;
   }
 
   @Override
-  public Iterable<Entry> entries() {
-    final Predicate<Entry> uniquePathFilter = new Predicate<Entry>() {
+  public Iterable<ExtendedArchiveEntry> entries() {
+    final Predicate<ExtendedArchiveEntry> uniquePathFilter = new Predicate<ExtendedArchiveEntry>() {
       private final Set<String> entryNames = new HashSet<>();
 
       @Override
-      public boolean apply(Entry input) {
+      public boolean apply(ExtendedArchiveEntry input) {
         return entryNames.add(input.getName());
       }
     };
