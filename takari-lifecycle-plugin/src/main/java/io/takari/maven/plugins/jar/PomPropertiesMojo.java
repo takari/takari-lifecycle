@@ -16,7 +16,7 @@ import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Mojo;
 
 import io.takari.incrementalbuild.BasicBuildContext;
-import io.tesla.proviso.archive.Entry;
+import ca.vanzyl.provisio.archive.ExtendedArchiveEntry;
 
 /**
  * Creates standard maven pom.properties file on filesystem.
@@ -32,7 +32,7 @@ public class PomPropertiesMojo extends Jar {
   @Override
   public void executeMojo() throws MojoExecutionException {
     try {
-      Entry entry = pomPropertiesSource(project);
+      ExtendedArchiveEntry entry = pomPropertiesSource(project);
       try (OutputStream os = context.processOutput(new File(classesDirectory, entry.getName())).newOutputStream()) {
         entry.writeEntry(os);
       }
