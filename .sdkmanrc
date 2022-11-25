@@ -1,0 +1,5 @@
+# https://sdkman.io/usage#env
+# Enable auto-env through the sdkman_auto_env config
+# Add key=value pairs of SDKs to use below
+java=11.0.12-open
+maven=3.8.6
