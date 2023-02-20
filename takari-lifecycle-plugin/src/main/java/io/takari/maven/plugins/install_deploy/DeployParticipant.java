@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 
@@ -20,6 +21,7 @@ import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.deployment.DeployRequest;
 import org.eclipse.aether.deployment.DeploymentException;
+import org.eclipse.aether.repository.RemoteRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +32,7 @@ public class DeployParticipant extends AbstractMavenLifecycleParticipant {
   private static final Logger log = LoggerFactory.getLogger(AbstractMavenLifecycleParticipant.class);
 
   protected RepositorySystem repoSystem;
-  private List<DeployRequest> deployAtEndRequests = Collections.synchronizedList(new ArrayList<DeployRequest>());
+  private final List<DeployRequest> deployAtEndRequests = Collections.synchronizedList(new ArrayList<>());
 
   @Inject
   public DeployParticipant(RepositorySystem repoSystem) {
@@ -53,13 +55,23 @@ public class DeployParticipant extends AbstractMavenLifecycleParticipant {
         log.info("------------------------------------------------------------------------");
 
         synchronized (deployAtEndRequests) {
+          HashMap<RemoteRepository, DeployRequest> batched = new HashMap<>();
           for (DeployRequest deployRequest : deployAtEndRequests) {
-            try {
-              deploy(session.getRepositorySession(), deployRequest);
-            } catch (DeploymentException e) {
-              log.error(e.getMessage(), e);
-              throw new MavenExecutionException(e.getMessage(), e);
+            if (!batched.containsKey(deployRequest.getRepository())) {
+              batched.put(deployRequest.getRepository(), deployRequest);
+            } else {
+              DeployRequest dr = batched.get(deployRequest.getRepository());
+              deployRequest.getArtifacts().forEach(dr::addArtifact);
+              deployRequest.getMetadata().forEach(dr::addMetadata);
             }
+          }
+          try {
+            for (DeployRequest dr : batched.values()) {
+              deploy(session.getRepositorySession(), dr);
+            }
+          } catch (DeploymentException e) {
+            log.error(e.getMessage(), e);
+            throw new MavenExecutionException(e.getMessage(), e);
           }
           deployAtEndRequests.clear();
         }
