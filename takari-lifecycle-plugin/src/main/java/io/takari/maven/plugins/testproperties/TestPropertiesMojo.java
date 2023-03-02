@@ -34,6 +34,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.m2e.workspace.MutableWorkspaceState;
 
 import com.google.common.collect.ImmutableSet;
@@ -67,9 +68,6 @@ public class TestPropertiesMojo extends AbstractMojo {
 
   @Parameter(defaultValue = "${project.version}", readonly = true)
   private String version;
-
-  @Parameter(defaultValue = "${localRepository}", readonly = true)
-  private ArtifactRepository localRepository;
 
   @Parameter(defaultValue = "${session.request.userSettingsFile}", readonly = true)
   private File userSettingsFile;
@@ -105,6 +103,10 @@ public class TestPropertiesMojo extends AbstractMojo {
   @Parameter(defaultValue = "${session.projectDependencyGraph}", readonly = true)
   @Incremental(configuration = Configuration.ignore)
   private ProjectDependencyGraph reactorDependencies;
+
+  @Parameter(defaultValue = "${repositorySystemSession}", readonly = true)
+  @Incremental(configuration = Configuration.ignore)
+  private RepositorySystemSession repositorySystemSession;
 
   /**
    * Sets what should be the outcome when filtering hits a missing property.
@@ -143,7 +145,7 @@ public class TestPropertiesMojo extends AbstractMojo {
       }
 
       // well-known properties, TODO introduce named constants
-      putIfAbsent(properties, "localRepository", localRepository.getBasedir());
+      putIfAbsent(properties, "localRepository", repositorySystemSession.getLocalRepository().getBasedir().getAbsolutePath());
       if (isAccessible(userSettingsFile)) {
         putIfAbsent(properties, "userSettingsFile", userSettingsFile.getAbsolutePath());
       } else {
@@ -270,7 +272,7 @@ public class TestPropertiesMojo extends AbstractMojo {
     substitutes.putAll(projectProperties);
     substitutes.putAll(sessionProperties);
     substitutes.put("project", project);
-    substitutes.put("localRepository", localRepository);
+    substitutes.put("localRepository", repositorySystemSession.getLocalRepository().getBasedir().getAbsolutePath());
     substitutes.put("userSettingsFile", userSettingsFile);
 
     for (String key : custom.stringPropertyNames()) {
