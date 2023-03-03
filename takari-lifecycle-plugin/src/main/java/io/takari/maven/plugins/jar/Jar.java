@@ -7,6 +7,7 @@
  */
 package io.takari.maven.plugins.jar;
 
+import static io.takari.maven.plugins.util.Utilities.size;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static io.takari.maven.plugins.TakariLifecycles.isJarProducingTakariLifecycle;
@@ -15,6 +16,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -124,7 +126,7 @@ public class Jar extends TakariLifecycleMojo {
     }
 
     if (sourceJar) {
-      final Multimap<File, File> sources = HashMultimap.create();
+      final Map<File, List<File>> sources = new LinkedHashMap<>();
       File sourceJar = new File(outputDirectory, String.format("%s-%s.jar", finalName, "sources"));
       InputSet registeredOutput = buildContext.newInputSet();
       try {
@@ -134,7 +136,8 @@ public class Jar extends TakariLifecycleMojo {
             dir = dir.getCanonicalFile();
             Iterable<File> inputs = registeredOutput.addInputs(dir, null, null);
             logger.debug("Analyzing sources directory {} with {} entries", dir, size(inputs));
-            sources.putAll(dir, inputs);
+            List<File> files = sources.computeIfAbsent(dir, k -> new ArrayList<>());
+            inputs.forEach(files::add);
           } else {
             logger.debug("Sources directory {} does not exist", dir);
           }
@@ -200,7 +203,7 @@ public class Jar extends TakariLifecycleMojo {
     return basedir.toPath().relativize(resource.toPath()).toString().replace('\\', '/'); // always use forward slash for path separator
   }
 
-  private List<ExtendedArchiveEntry> inputsSource(Multimap<File, File> inputs) {
+  private List<ExtendedArchiveEntry> inputsSource(Map<File, List<File>> inputs) {
     final List<ExtendedArchiveEntry> entries = new ArrayList<>();
     for (File basedir : inputs.keySet()) {
       entries.addAll(inputsSource(basedir, inputs.get(basedir)));

@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
 
 /**
  * Various utilities.
@@ -23,6 +24,17 @@ public final class Utilities
   private static final int BUFFER_SIZE = 8192;
 
   private Utilities() {
+  }
+
+  public static int size(Iterable<?> iterable) {
+    if (iterable instanceof Collection ) {
+      return ( (Collection<?>) iterable ).size();
+    }
+    int size = 0;
+    for (Object o : iterable) {
+      size++;
+    }
+    return size;
   }
 
   /**

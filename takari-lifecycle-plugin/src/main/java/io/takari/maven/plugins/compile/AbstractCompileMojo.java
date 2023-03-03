@@ -27,13 +27,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.tools.JavaFileObject.Kind;
+
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -89,14 +92,14 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   /**
    * The -target argument for the Java compiler. The default depends on the value of {@code source} as defined in javac documentation.
    * 
-   * @see https://docs.oracle.com/javase/6/docs/technotes/tools/solaris/javac.html
+   * @see <a href="https://docs.oracle.com/javase/6/docs/technotes/tools/solaris/javac.html>javac</a>
    */
   @Parameter(property = "maven.compiler.target")
   private String target;
 
   /**
    * The --release argument for the Java compiler.
-   * @see https://docs.oracle.com/javase/9/tools/javac.htm#JSWOR627
+   * @see <a href="https://docs.oracle.com/javase/9/tools/javac.htm#JSWOR627">release argument for compiler</a>
    */
   @Parameter(property = "maven.compiler.release")
   private String release;
@@ -108,13 +111,13 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   protected String compilerId;
 
   /**
-   * Initial size, in megabytes, of the memory allocation pool, ex. "64", "64m" if {@link #fork} is set to <code>true</code>.
+   * Initial size, in megabytes, of the memory allocation pool, ex. "64", "64m" if {{@code forked-javac} is used.
    */
   @Parameter(property = "maven.compiler.meminitial")
   private String meminitial;
 
   /**
-   * Sets the maximum size, in megabytes, of the memory allocation pool, ex. "128", "128m" if {@link #fork} is set to <code>true</code>.
+   * Sets the maximum size, in megabytes, of the memory allocation pool, ex. "128", "128m" if {{@code forked-javac} is used..
    */
   @Parameter(property = "maven.compiler.maxmem")
   private String maxmem;
@@ -220,7 +223,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
    * The main usecase is {@code proc:only} annotation processing bound to generate-sources build phase. During {@code mvn clean generate-sources} execution, the reactor dependencies classes are not
    * available and referenced types can only be resolved from java sources.
    * 
-   * @see http://docs.oracle.com/javase/8/docs/technotes/tools/unix/javac.html#BHCJJJAJ
+   * @see <a href="http://docs.oracle.com/javase/8/docs/technotes/tools/unix/javac.html#BHCJJJAJ">documentation</a>
    * @since 1.12
    */
   @Parameter
@@ -361,7 +364,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
 
-    Stopwatch stopwatch = Stopwatch.createStarted();
+    long started = System.currentTimeMillis();
     context.setFailOnError(failOnError);
     if (isSkip()) {
       log.info("Skipping compilation");
@@ -429,7 +432,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       if (sourcesChanged || classpathChanged || sourcepathChanged || processorpathChanged) {
         log.info("Compiling {} sources to {}", sources.size(), getOutputDirectory());
         int compiled = compiler.compile();
-        log.info("Compiled {} out of {} sources ({} ms)", compiled, sources.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
+        log.info("Compiled {} out of {} sources ({} ms)", compiled, sources.size(), System.currentTimeMillis() - started);
       } else {
         compiler.skipCompile();
         log.info("Skipped compilation, all {} classes are up to date", sources.size());
@@ -475,7 +478,10 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     }
 
     Set<File> sourcepath = new LinkedHashSet<>();
-    for (String sourceRoot : Iterables.concat(getSourceRoots(), getMainSourceRoots())) {
+    for (String sourceRoot : getSourceRoots()) {
+      addIfExists(sourcepath, sourceRoot);
+    }
+    for (String sourceRoot : getMainSourceRoots()) {
       addIfExists(sourcepath, sourceRoot);
     }
     List<Artifact> unsupportedDependencies = new ArrayList<>();
@@ -530,14 +536,17 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   private Proc getEffectiveProc(List<File> classpath, List<File> processorpath) {
     Proc proc = this.proc;
     if (proc == null) {
-      Multimap<File, String> processors = TreeMultimap.create();
+      Map<File, List<String>> processors = new TreeMap<>();
       for (File jar : processorpath != null ? processorpath : classpath) {
         if (jar.isFile()) {
           try (ZipFile zip = new ZipFile(jar)) {
             ZipEntry entry = zip.getEntry("META-INF/services/javax.annotation.processing.Processor");
             if (entry != null) {
-              try (Reader r = new InputStreamReader(zip.getInputStream(entry), Charsets.UTF_8)) {
-                processors.putAll(jar, CharStreams.readLines(r));
+              try (BufferedReader r = new BufferedReader(new InputStreamReader(zip.getInputStream(entry), StandardCharsets.UTF_8))) {
+                List<String> lines = r.lines().collect(Collectors.toList());
+                if (!lines.isEmpty()) {
+                  processors.computeIfAbsent( jar, k -> new ArrayList<>() ).addAll(lines);
+                }
               }
             }
           } catch (IOException e) {
@@ -545,7 +554,11 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
           }
         } else if (jar.isDirectory()) {
           try {
-            processors.putAll(jar, Files.readLines(new File(jar, "META-INF/services/javax.annotation.processing.Processor"), Charsets.UTF_8));
+            List<String> lines = Files.readAllLines(
+                    new File( jar, "META-INF/services/javax.annotation.processing.Processor" ).toPath(), StandardCharsets.UTF_8);
+            if (!lines.isEmpty()) {
+              processors.computeIfAbsent( jar, k -> new ArrayList<>() ).addAll(lines);
+            }
           } catch (IOException e) {
             // ignore, compiler won't be able to use this jar either
           }
