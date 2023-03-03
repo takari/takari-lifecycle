@@ -37,11 +37,11 @@ public class Classpath implements INameEnvironment {
     Map<String, List<ClasspathEntry>> classpath = new LinkedHashMap<>(); // preserves order
     for (ClasspathEntry entry : entries) {
       for (String packageName : entry.getPackageNames()) {
-        classpath.computeIfAbsent( packageName, k -> new ArrayList<>()).add(entry);
+        classpath.computeIfAbsent(packageName, k -> new ArrayList<>()).add(entry);
       }
     }
     return classpath.entrySet().stream().collect(Collectors.toUnmodifiableMap(
-            Map.Entry::getKey, e -> Collections.unmodifiableList( e.getValue() ) ) );
+            Map.Entry::getKey, e -> Collections.unmodifiableList( e.getValue())));
   }
 
   @Override

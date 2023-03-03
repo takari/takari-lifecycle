@@ -26,7 +26,10 @@ public final class Utilities
   private Utilities() {
   }
 
-  public static int size(Iterable<?> iterable) {
+  /**
+   * Counts the elements in iterable.
+   */
+  public static int size(final Iterable<?> iterable) {
     if (iterable instanceof Collection ) {
       return ( (Collection<?>) iterable ).size();
     }

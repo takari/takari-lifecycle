@@ -22,6 +22,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 
@@ -134,10 +136,11 @@ public class Jar extends TakariLifecycleMojo {
           File dir = new File(sourceRoot);
           if (dir.isDirectory()) {
             dir = dir.getCanonicalFile();
-            Iterable<File> inputs = registeredOutput.addInputs(dir, null, null);
-            logger.debug("Analyzing sources directory {} with {} entries", dir, size(inputs));
-            List<File> files = sources.computeIfAbsent(dir, k -> new ArrayList<>());
-            inputs.forEach(files::add);
+            List<File> inputs = StreamSupport
+                    .stream( registeredOutput.addInputs(dir, null, null).spliterator(), false)
+                    .collect(Collectors.toList());
+            logger.debug("Analyzing sources directory {} with {} entries", dir, inputs.size());
+            sources.computeIfAbsent(dir, k -> new ArrayList<>()).addAll(inputs);
           } else {
             logger.debug("Sources directory {} does not exist", dir);
           }
