@@ -57,10 +57,10 @@ public class Deploy extends TakariLifecycleMojo {
 
   @Override
   public void executeMojo() throws MojoExecutionException {
-    installProject(project);
+    deployProject(project);
   }
 
-  private void installProject(MavenProject project) throws MojoExecutionException {
+  private void deployProject(MavenProject project) throws MojoExecutionException {
 
     DeployRequest deployRequest = new DeployRequest();
 
