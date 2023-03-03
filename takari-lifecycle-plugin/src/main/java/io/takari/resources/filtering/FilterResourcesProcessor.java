@@ -28,7 +28,6 @@ import com.github.mustachejava.reflect.MissingWrapper;
 import com.github.mustachejava.reflect.ReflectionObjectHandler;
 import com.github.mustachejava.util.GuardException;
 import com.github.mustachejava.util.Wrapper;
-import com.google.common.collect.Maps;
 import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.MessageSeverity;
 import io.takari.incrementalbuild.Output;

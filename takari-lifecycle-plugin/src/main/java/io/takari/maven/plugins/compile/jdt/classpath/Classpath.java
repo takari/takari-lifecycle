@@ -9,14 +9,11 @@ package io.takari.maven.plugins.compile.jdt.classpath;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.env.INameEnvironment;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
-
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.LinkedHashMultimap;
-import com.google.common.collect.Multimap;
 
 public class Classpath implements INameEnvironment {
 
@@ -24,7 +21,7 @@ public class Classpath implements INameEnvironment {
 
   private final List<MutableClasspathEntry> mutableentries;
 
-  private Multimap<String, ClasspathEntry> packages;
+  private Map<String, List<ClasspathEntry>> packages;
 
   public Classpath(List<ClasspathEntry> entries, List<MutableClasspathEntry> localentries) {
     this.entries = entries;
@@ -32,7 +29,7 @@ public class Classpath implements INameEnvironment {
     this.packages = newPackageIndex(entries);
   }
 
-  private static Multimap<String, ClasspathEntry> newPackageIndex(List<ClasspathEntry> entries) {
+  private static Map<String, List<ClasspathEntry>> newPackageIndex(List<ClasspathEntry> entries) {
     Multimap<String, ClasspathEntry> classpath = LinkedHashMultimap.create();
     for (ClasspathEntry entry : entries) {
       for (String packageName : entry.getPackageNames()) {

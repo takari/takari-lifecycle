@@ -29,8 +29,6 @@ import org.codehaus.plexus.util.xml.PrettyPrintXMLWriter;
 import org.codehaus.plexus.util.xml.XMLWriter;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
-import com.google.common.io.Files;
-
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Output;
 import io.takari.incrementalbuild.aggregator.AggregatorBuildContext;
@@ -286,7 +284,10 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
         Files.asByteSource(existingEclipseMetadataXml).copyTo(out);
       } else {
         Map<String, MojoDescriptor> mojos = loadMojos(mojosXml);
-        List<String> goals = mojos.values().stream().filter(md -> md.isTakariBuilder()).map(md -> md.getGoal()).collect(Collectors.toList());
+        List<String> goals = mojos.values().stream()
+                .filter( MojoDescriptor::isTakariBuilder )
+                .map( MojoDescriptor::getGoal )
+                .collect(Collectors.toList());
 
         writeEclipseMetadataXml(out, goals);
       }

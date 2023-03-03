@@ -80,10 +80,10 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.sonatype.sisu</groupId>
-      <artifactId>sisu-guice</artifactId>
+      <groupId>com.google.inject</groupId>
+      <artifactId>guice</artifactId>
       <classifier>no_aop</classifier>
-      <version>${sisuGuiceVersion}</version>
+      <version>4.2.3</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -162,11 +162,6 @@
       <groupId>com.github.spullara.mustache.java</groupId>
       <artifactId>compiler</artifactId>
       <version>0.9.10</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>${guava.version}</version>
     </dependency>
     <!-- JAR -->
     <dependency>

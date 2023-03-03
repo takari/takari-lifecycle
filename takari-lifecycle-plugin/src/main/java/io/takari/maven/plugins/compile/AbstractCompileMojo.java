@@ -7,14 +7,6 @@
  */
 package io.takari.maven.plugins.compile;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Stopwatch;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.TreeMultimap;
-import com.google.common.io.CharStreams;
-import com.google.common.io.Files;
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
 import io.takari.incrementalbuild.ResourceMetadata;
@@ -97,7 +89,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
   /**
    * The -target argument for the Java compiler. The default depends on the value of {@code source} as defined in javac documentation.
    * 
-   * @see http://docs.oracle.com/javase/6/docs/technotes/tools/solaris/javac.html
+   * @see https://docs.oracle.com/javase/6/docs/technotes/tools/solaris/javac.html
    */
   @Parameter(property = "maven.compiler.target")
   private String target;
@@ -514,7 +506,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
       log.debug("Compile sourcepath: {} entries{}", sourcepath.size(), msg.toString());
     }
 
-    return ImmutableList.copyOf(sourcepath);
+    return Collections.unmodifiableList(new ArrayList<>(sourcepath));
   }
 
   private static void addIfExists(Set<File> sourcepath, String path) {

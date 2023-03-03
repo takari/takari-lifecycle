@@ -34,13 +34,6 @@ import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Stopwatch;
-import com.google.common.hash.Funnels;
-import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
-
 @Named
 @MojoExecutionScoped
 public class ClasspathDigester {

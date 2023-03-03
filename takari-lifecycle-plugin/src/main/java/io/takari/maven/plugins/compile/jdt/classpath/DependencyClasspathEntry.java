@@ -7,7 +7,9 @@ import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -20,11 +22,6 @@ import org.eclipse.osgi.framework.util.CaseInsensitiveDictionaryMap;
 import org.eclipse.osgi.util.ManifestElement;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
-
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.io.CharStreams;
-import com.google.common.io.LineProcessor;
 
 import io.takari.maven.plugins.exportpackage.ExportPackageMojo;
 
@@ -42,8 +39,8 @@ public abstract class DependencyClasspathEntry implements ClasspathEntry {
 
   protected DependencyClasspathEntry(Path file, Collection<String> packageNames, Collection<String> exportedPackages) {
     this.file = PathNormalizer.getCanonicalPath(file);
-    this.packageNames = ImmutableSet.copyOf(packageNames);
-    this.exportedPackages = exportedPackages != null ? ImmutableSet.<String>copyOf(exportedPackages) : null;
+    this.packageNames = Collections.unmodifiableSet(new LinkedHashSet<>(packageNames));
+    this.exportedPackages = exportedPackages != null ? Collections.unmodifiableSet(new LinkedHashSet<>(exportedPackages)) : null;
   }
 
   protected AccessRestriction getAccessRestriction(String packageName) {
@@ -84,7 +81,7 @@ public abstract class DependencyClasspathEntry implements ClasspathEntry {
     }
     String exportPackageHeader = headers.get(Constants.EXPORT_PACKAGE);
     if (exportPackageHeader == null) {
-      return ImmutableSet.of(); // nothing is exported
+      return Collections.emptySet(); // nothing is exported
     }
     Set<String> packages = new HashSet<>();
     for (ManifestElement element : ManifestElement.parseHeader(Constants.EXPORT_PACKAGE, exportPackageHeader)) {

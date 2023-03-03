@@ -12,21 +12,17 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-
-import com.google.common.base.Charsets;
-import com.google.common.io.ByteSource;
-import com.google.common.io.CharSource;
-import com.google.common.io.CharStreams;
 
 /**
  * Helper to strip idiotic timestamp comment from properties files
  */
 public class PropertiesWriter {
   // properties files are documented to use ISO_8859_1 encoding
-  private static final Charset ENCODING = Charsets.ISO_8859_1;
+  private static final Charset ENCODING = StandardCharsets.ISO_8859_1;
 
   public static void write(Properties properties, String comment, OutputStream out) throws IOException {
     StringBuilder sb = new StringBuilder();

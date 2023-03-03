@@ -7,7 +7,6 @@
  */
 package io.takari.maven.plugins.jar;
 
-import static com.google.common.collect.Iterables.size;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static io.takari.maven.plugins.TakariLifecycles.isJarProducingTakariLifecycle;
@@ -29,9 +28,6 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
-
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 
 import io.takari.incrementalbuild.Output;
 import io.takari.incrementalbuild.aggregator.AggregatorBuildContext;

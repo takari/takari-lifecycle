@@ -54,11 +54,6 @@ import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.eclipse.jdt.internal.compiler.util.SuffixConstants;
 import org.eclipse.jdt.internal.core.builder.ProblemFactory;
 
-import com.google.common.base.Stopwatch;
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Multiset;
-
 import io.takari.incrementalbuild.MessageSeverity;
 import io.takari.incrementalbuild.Output;
 import io.takari.incrementalbuild.Resource;

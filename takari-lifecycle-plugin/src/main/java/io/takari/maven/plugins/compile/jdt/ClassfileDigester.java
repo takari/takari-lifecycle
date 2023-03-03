@@ -7,6 +7,7 @@
  */
 package io.takari.maven.plugins.compile.jdt;
 
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -24,8 +25,6 @@ import org.eclipse.jdt.internal.compiler.env.IBinaryTypeAnnotation;
 import org.eclipse.jdt.internal.compiler.impl.Constant;
 import org.eclipse.jdt.internal.compiler.lookup.TagBits;
 import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
-
-import com.google.common.base.Charsets;
 
 /**
  * Adopted from {@link ClassFileReader#hasStructuralChanges(byte[], boolean, boolean)}
@@ -71,33 +70,33 @@ public class ClassfileDigester {
     // interfaces
     char[][] interfacesNames = classFile.getInterfaceNames();
     if (interfacesNames != null) {
-      for (int i = 0; i < interfacesNames.length; i++) {
-        updateChars(interfacesNames[i]);
+      for ( char[] interfacesName : interfacesNames ) {
+        updateChars( interfacesName );
       }
     }
 
     // member types
     IBinaryNestedType[] memberTypes = classFile.getMemberTypes();
     if (memberTypes != null) {
-      for (int i = 0; i < memberTypes.length; i++) {
-        updateChars(memberTypes[i].getName());
-        updateInt(memberTypes[i].getModifiers());
+      for ( IBinaryNestedType memberType : memberTypes ) {
+        updateChars( memberType.getName() );
+        updateInt( memberType.getModifiers() );
       }
     }
 
     // fields
     FieldInfo[] fieldInfos = (FieldInfo[]) classFile.getFields();
     if (fieldInfos != null) {
-      for (int i = 0; i < fieldInfos.length; i++) {
-        updateField(fieldInfos[i]);
+      for ( FieldInfo fieldInfo : fieldInfos ) {
+        updateField( fieldInfo );
       }
     }
 
     // methods
     MethodInfo[] methodInfos = (MethodInfo[]) classFile.getMethods();
     if (methodInfos != null) {
-      for (int i = 0; i < methodInfos.length; i++) {
-        updateMethod(classFile, methodInfos[i]);
+      for ( MethodInfo methodInfo : methodInfos ) {
+        updateMethod( classFile, methodInfo );
       }
     }
 
@@ -134,8 +133,8 @@ public class ClassfileDigester {
     updateChars(methodInfo.getGenericSignature());
 
     char[][] thrownExceptions = methodInfo.getExceptionTypeNames();
-    for (int i = 0; i < thrownExceptions.length; i++) {
-      updateChars(thrownExceptions[i]);
+    for ( char[] thrownException : thrownExceptions ) {
+      updateChars( thrownException );
     }
   }
 
@@ -192,8 +191,8 @@ public class ClassfileDigester {
 
   private void updateAnnotations(IBinaryAnnotation[] annotations) {
     if (annotations != null) {
-      for (int i = 0; i < annotations.length; i++) {
-        updateAnnotation(annotations[i]);
+      for ( IBinaryAnnotation annotation : annotations ) {
+        updateAnnotation( annotation );
       }
     }
   }
@@ -286,14 +285,14 @@ public class ClassfileDigester {
 
   private void updateChars(char[] value) {
     if (value != null) {
-      for (int i = 0; i < value.length; i++) {
-        updateChar(value[i]);
+      for ( char c : value ) {
+        updateChar( c );
       }
     }
   }
 
   private void updateString(String value) {
-    digester.update(value.getBytes(Charsets.UTF_8));
+    digester.update(value.getBytes(StandardCharsets.UTF_8));
   }
 
   private void updateDouble(double value) {

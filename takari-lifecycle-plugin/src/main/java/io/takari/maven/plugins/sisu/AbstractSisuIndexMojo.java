@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -14,8 +15,6 @@ import org.apache.maven.plugins.annotations.Component;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.IBinaryAnnotation;
-
-import com.google.common.base.Charsets;
 
 import io.takari.incrementalbuild.Output;
 import io.takari.incrementalbuild.aggregator.AggregatorBuildContext;
@@ -51,7 +50,7 @@ abstract class AbstractSisuIndexMojo extends TakariLifecycleMojo {
 
   void writeIndex(Output<File> output, Set<String> types) throws IOException {
     TreeSet<String> sorted = new TreeSet<>(types);
-    try (BufferedWriter w = new BufferedWriter(new OutputStreamWriter(output.newOutputStream(), Charsets.UTF_8))) {
+    try (BufferedWriter w = new BufferedWriter(new OutputStreamWriter(output.newOutputStream(), StandardCharsets.UTF_8))) {
       for (String type : sorted) {
         w.write(type);
         w.newLine();

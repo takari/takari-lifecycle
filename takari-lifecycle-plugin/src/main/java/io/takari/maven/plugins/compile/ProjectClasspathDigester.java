@@ -27,8 +27,6 @@ import org.codehaus.plexus.util.DirectoryScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Stopwatch;
-
 @Named
 @MojoExecutionScoped
 public class ProjectClasspathDigester {

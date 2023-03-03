@@ -2,6 +2,7 @@ package io.takari.maven.plugins.compile.jdt;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.ServiceLoader;
@@ -27,8 +28,6 @@ import org.eclipse.jdt.internal.compiler.lookup.Binding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.eclipse.jdt.internal.compiler.problem.AbortCompilation;
-
-import com.google.common.collect.ImmutableSet;
 
 import io.takari.incrementalbuild.MessageSeverity;
 import io.takari.maven.plugins.compile.CompilerBuildContext;
@@ -85,7 +84,7 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
   private static class DiscoveredProcessors implements Iterator<Processor> {
 
     private final ServiceLoader<Processor> loader;
-    private Iterator<Processor> iterator;
+    private final Iterator<Processor> iterator;
 
     public DiscoveredProcessors(ClassLoader procLoader) {
       this.loader = ServiceLoader.load(Processor.class, procLoader);
@@ -179,7 +178,7 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
 
     @Override
     public Set<? extends Element> getRootElements() {
-      return recordProcessedSources(() -> super.getRootElements());
+      return recordProcessedSources( super::getRootElements );
     }
 
     private Set<? extends Element> recordProcessedSources(Supplier<Set<? extends Element>> elementsSupplier) {
@@ -264,7 +263,7 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
   }
 
   public Set<File> getProcessedSources() {
-    return ImmutableSet.copyOf(processedSources);
+    return Collections.unmodifiableSet(new LinkedHashSet<>(processedSources));
   }
 
   public ReferenceCollection getReferencedTypes() {

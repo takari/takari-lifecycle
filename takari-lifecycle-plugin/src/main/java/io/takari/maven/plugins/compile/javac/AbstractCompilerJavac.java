@@ -7,8 +7,6 @@
  */
 package io.takari.maven.plugins.compile.javac;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
 import io.takari.incrementalbuild.Resource;
 import io.takari.incrementalbuild.ResourceMetadata;
 import io.takari.incrementalbuild.ResourceStatus;
@@ -24,7 +22,14 @@ import org.codehaus.plexus.languages.java.version.JavaVersion;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public abstract class AbstractCompilerJavac extends AbstractCompiler {
 
@@ -42,7 +47,7 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
 
   private final ProjectClasspathDigester digester;
 
-  private final List<ResourceMetadata<File>> sources = new ArrayList<ResourceMetadata<File>>();
+  private final List<ResourceMetadata<File>> sources = new ArrayList<>();
 
   private String classpath;
   private String sourcepath = "";
@@ -54,7 +59,7 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
   }
 
   protected List<String> getCompilerOptions() {
-    List<String> options = new ArrayList<String>();
+    List<String> options = new ArrayList<>();
 
     // output directory
     options.add("-d");
@@ -146,7 +151,7 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
         }
         keywords.append(keyword.name());
       }
-      options.add("-g:" + keywords.toString());
+      options.add("-g:" + keywords);
     }
 
     if (isShowWarnings()) {
@@ -171,7 +176,7 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
       for (File element : classpath) {
         msg.append("\n   ").append(element);
       }
-      log.debug("Compile classpath: {} entries{}", classpath.size(), msg.toString());
+      log.debug("Compile classpath: {} entries{}", classpath.size(), msg);
     }
 
     StringBuilder cp = new StringBuilder();
@@ -203,8 +208,8 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
   public boolean setSources(List<ResourceMetadata<File>> sources) {
     this.sources.addAll(sources);
 
-    List<ResourceMetadata<File>> modifiedSources = new ArrayList<ResourceMetadata<File>>();
-    List<ResourceMetadata<File>> inputs = new ArrayList<ResourceMetadata<File>>();
+    List<ResourceMetadata<File>> modifiedSources = new ArrayList<>();
+    List<ResourceMetadata<File>> inputs = new ArrayList<>();
     for (ResourceMetadata<File> input : sources) {
       inputs.add(input);
       if (input.getStatus() != ResourceStatus.UNMODIFIED) {
@@ -251,11 +256,11 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
         for (File element : processorpath) {
           msg.append("\n   ").append(element);
         }
-        log.debug("Processorpath: {} entries{}", processorpath.size(), msg.toString());
+        log.debug("Processorpath: {} entries{}", processorpath.size(), msg);
       }
-      this.processorpath = Joiner.on(File.pathSeparatorChar).join(processorpath);
+      this.processorpath =  processorpath.stream().map(File::toString).collect(Collectors.joining(File.pathSeparator));
     }
-    return digester.digestProcessorpath(processorpath != null ? processorpath : ImmutableList.<File>of());
+    return digester.digestProcessorpath(processorpath != null ? processorpath : Collections.emptyList());
   }
 
   @Override
