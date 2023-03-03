@@ -1,7 +1,6 @@
 package io.takari.maven.plugins.plugin;
 
 import static io.takari.incrementalbuild.Incremental.Configuration.ignore;
-import static io.takari.maven.plugins.util.Utilities.copy;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -284,7 +283,7 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
     try (OutputStream out = output.newOutputStream()) {
       if (existingEclipseMetadataXml.isFile()) {
         try (InputStream in = Files.newInputStream(existingEclipseMetadataXml.toPath())) {
-          copy(in, out);
+          in.transferTo(out);
         }
       } else {
         Map<String, MojoDescriptor> mojos = loadMojos(mojosXml);

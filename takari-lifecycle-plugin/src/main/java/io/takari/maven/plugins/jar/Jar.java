@@ -7,7 +7,6 @@
  */
 package io.takari.maven.plugins.jar;
 
-import static io.takari.maven.plugins.util.Utilities.size;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static io.takari.maven.plugins.TakariLifecycles.isJarProducingTakariLifecycle;
@@ -16,6 +15,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -271,6 +271,17 @@ public class Jar extends TakariLifecycleMojo {
     PropertiesWriter.write(properties, null, buf);
 
     return new BytesEntry(entryName, buf.toByteArray());
+  }
+
+  private static int size(final Iterable<?> iterable) {
+    if (iterable instanceof Collection ) {
+      return ( (Collection<?>) iterable ).size();
+    }
+    int size = 0;
+    for (Object o : iterable) {
+      size++;
+    }
+    return size;
   }
 
 }

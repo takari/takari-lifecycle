@@ -7,7 +7,6 @@
  */
 package io.takari.maven.plugins.compile.jdt;
 
-import static io.takari.maven.plugins.util.Utilities.sha1bytes;
 import static org.eclipse.jdt.internal.compiler.util.SuffixConstants.SUFFIX_STRING_class;
 import static org.eclipse.jdt.internal.compiler.util.SuffixConstants.SUFFIX_STRING_java;
 
@@ -15,6 +14,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -162,4 +163,19 @@ public class ClasspathDigester {
   public static void flush() {
     CACHE.clear();
   }
+
+  private static byte[] sha1bytes(final InputStream inputStream) throws IOException {
+    try {
+      MessageDigest md = MessageDigest.getInstance("SHA-1");
+      byte[] buffer = new byte[8192];
+      int read;
+      while ((read = inputStream.read(buffer)) != -1) {
+        md.update(buffer, 0, read);
+      }
+      return md.digest();
+    } catch ( NoSuchAlgorithmException e) {
+      throw new IllegalStateException("Unsupported JVM: sha1 MessageDigest algorithm unsupported", e);
+    }
+  }
+
 }
