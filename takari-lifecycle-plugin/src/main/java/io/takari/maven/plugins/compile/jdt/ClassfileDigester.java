@@ -33,7 +33,6 @@ import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
  */
 public class ClassfileDigester {
 
-  // TODO use Guava Hasher
   private final MessageDigest digester;
 
   public ClassfileDigester() {

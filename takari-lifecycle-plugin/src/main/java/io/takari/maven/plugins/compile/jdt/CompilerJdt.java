@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -861,9 +860,9 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       log.debug("Compile classpath: {} entries{}", dependencies.size(), msg.toString());
     }
 
-    this.dependencypath = ImmutableList.copyOf(dependencypath);
+    this.dependencypath = Collections.unmodifiableList(new ArrayList<>(dependencypath));
 
-    Stopwatch stopwatch = Stopwatch.createStarted();
+    long started = System.currentTimeMillis();
     long typecount = 0, packagecount = 0;
 
     HashMap<String, byte[]> digest = classpathDigester.digestDependencies(files);
@@ -871,7 +870,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     @SuppressWarnings("unchecked")
     Map<String, byte[]> oldDigest = (Map<String, byte[]>) context.setAttribute(ATTR_CLASSPATH_DIGEST, digest);
 
-    log.debug("Digested {} types and {} packages in {} ms", typecount, packagecount, stopwatch.elapsed(TimeUnit.MILLISECONDS));
+    log.debug("Digested {} types and {} packages in {} ms", typecount, packagecount, System.currentTimeMillis() - started);
 
     strategy.enqueueAffectedSources(digest, oldDigest);
 
@@ -896,7 +895,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       }
     }
 
-    this.sourcepath = ImmutableList.copyOf(sourcepath);
+    this.sourcepath = Collections.unmodifiableList(new ArrayList<>(sourcepath));
 
     return processorpathDigester.digestSourcepath(dependencies);
   }
@@ -906,7 +905,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     if (processorpath == null) {
       this.processorpath = dependencies;
     } else {
-      this.processorpath = ImmutableList.copyOf(processorpath);
+      this.processorpath = Collections.unmodifiableList(new ArrayList<>(processorpath));
     }
     if (!isProcNone() && processorpathDigester.digestProcessorpath(this.processorpath)) {
       log.debug("Annotation processor path changed, recompiling all sources");

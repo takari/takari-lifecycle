@@ -17,7 +17,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -61,7 +60,7 @@ public class ProjectClasspathDigester {
   }
 
   private boolean digest(String key, List<File> dependencies) {
-    Stopwatch stopwatch = Stopwatch.createStarted();
+    long started = System.currentTimeMillis();
 
     Map<File, ArtifactFile> previousArtifacts = getPreviousDependencies(key);
     LinkedHashMap<File, ArtifactFile> digest = new LinkedHashMap<>();
@@ -101,7 +100,7 @@ public class ProjectClasspathDigester {
 
     context.setAttribute(key, new ArrayList<>(digest.values()));
 
-    log.debug("Analyzed {} classpath dependencies ({} ms)", dependencies.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
+    log.debug("Analyzed {} classpath dependencies ({} ms)", dependencies != null ? dependencies.size() : 0, System.currentTimeMillis() - started);
 
     return changed;
   }

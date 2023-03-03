@@ -67,7 +67,7 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
     } catch (IOException e) {
       // too bad
     }
-    return Maps.fromProperties(properties);
+    return new HashMap<String, String>( (Map)properties );
   }
 
   private void filterResource(Resource<File> input, File sourceDirectory, File targetDirectory, Map<Object, Object> filterProperties, String encoding, MissingPropertyAction mpa) throws IOException {

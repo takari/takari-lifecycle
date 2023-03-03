@@ -220,9 +220,7 @@ public class TestPropertiesMojo extends AbstractMojo {
       }
     }
     try (OutputStream os = context.processOutput(workspaceState).newOutputStream()) {
-      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-      state.store(buffer);
-      PropertiesWriter.write(buffer.toByteArray(), os);
+      PropertiesWriter.write(state.asProperties(), null, os);
     } catch (IOException e) {
       throw new MojoExecutionException("Could not create reactor state file " + workspaceState, e);
     }

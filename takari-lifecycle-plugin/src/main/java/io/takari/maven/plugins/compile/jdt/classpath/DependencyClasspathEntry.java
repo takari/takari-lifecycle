@@ -1,18 +1,19 @@
 package io.takari.maven.plugins.compile.jdt.classpath;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.env.AccessRestriction;
@@ -57,21 +58,9 @@ public abstract class DependencyClasspathEntry implements ClasspathEntry {
   }
 
   protected static Collection<String> parseExportPackage(InputStream is) throws IOException {
-    LineProcessor<List<String>> processor = new LineProcessor<List<String>>() {
-      final List<String> result = new ArrayList<String>();
-
-      @Override
-      public boolean processLine(String line) throws IOException {
-        result.add(line.replace('.', '/'));
-        return true; // keep reading
-      }
-
-      @Override
-      public List<String> getResult() {
-        return result;
-      }
-    };
-    return CharStreams.readLines(new InputStreamReader(is, Charsets.UTF_8), processor);
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+      return reader.lines().map(l -> l.replace( '.', '/')).collect(Collectors.toList());
+    }
   }
 
   protected static Collection<String> parseBundleManifest(InputStream is) throws IOException, BundleException {

@@ -19,6 +19,8 @@ import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.Output;
 import io.takari.incrementalbuild.Resource;
 
+import static io.takari.maven.plugins.util.Utilities.copy;
+
 class CopyResourcesProcessor extends AbstractResourceProcessor {
 
   private final BuildContext buildContext;
@@ -37,7 +39,7 @@ class CopyResourcesProcessor extends AbstractResourceProcessor {
     File outputFile = relativize(sourceDirectory, targetDirectory, input.getResource());
     Output<File> output = input.associateOutput(outputFile);
     try (InputStream is = new FileInputStream(input.getResource()); OutputStream os = output.newOutputStream()) {
-      ByteStreams.copy(is, os);
+      copy(is, os);
     }
   }
 

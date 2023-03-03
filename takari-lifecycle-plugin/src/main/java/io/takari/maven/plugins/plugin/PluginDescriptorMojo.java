@@ -1,6 +1,7 @@
 package io.takari.maven.plugins.plugin;
 
 import static io.takari.incrementalbuild.Incremental.Configuration.ignore;
+import static io.takari.maven.plugins.util.Utilities.copy;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -8,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -281,7 +283,9 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
   protected void createEclipseMetadataXml(Output<File> output, File mojosXml, File existingEclipseMetadataXml) throws IOException {
     try (OutputStream out = output.newOutputStream()) {
       if (existingEclipseMetadataXml.isFile()) {
-        Files.asByteSource(existingEclipseMetadataXml).copyTo(out);
+        try (InputStream in = Files.newInputStream(existingEclipseMetadataXml.toPath())) {
+          copy(in, out);
+        }
       } else {
         Map<String, MojoDescriptor> mojos = loadMojos(mojosXml);
         List<String> goals = mojos.values().stream()

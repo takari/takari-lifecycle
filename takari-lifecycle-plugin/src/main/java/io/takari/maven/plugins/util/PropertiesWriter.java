@@ -11,9 +11,10 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -25,24 +26,16 @@ public class PropertiesWriter {
   private static final Charset ENCODING = StandardCharsets.ISO_8859_1;
 
   public static void write(Properties properties, String comment, OutputStream out) throws IOException {
-    StringBuilder sb = new StringBuilder();
-    properties.store(CharStreams.asWriter(sb), comment);
-    write(CharSource.wrap(sb.toString()), comment, out);
-  }
-
-  public static void write(byte[] properties, OutputStream out) throws IOException {
-    // properties files are documented to use ISO_8859_1 encoding
-    write(ByteSource.wrap(properties).asCharSource(ENCODING), null, out);
-  }
-
-  private static void write(CharSource charSource, String comment, OutputStream out) throws IOException {
-    List<String> lines = new ArrayList<>(charSource.readLines());
+    StringWriter sw = new StringWriter();
+    properties.store(sw, comment);
+    List<String> lines = Arrays.asList(sw.toString().split("\\R"));
     lines.remove(comment != null ? 1 : 0);
-    BufferedWriter w = new BufferedWriter(new OutputStreamWriter(out, ENCODING));
-    for (String line : lines) {
-      w.write(line);
-      w.newLine();
+    try (BufferedWriter w = new BufferedWriter(new OutputStreamWriter(out, ENCODING))) {
+      for (String line : lines) {
+        w.write(line);
+        w.newLine();
+      }
+      w.flush();
     }
-    w.flush();
   }
 }

@@ -173,6 +173,6 @@ class FilerImpl implements Filer {
   }
 
   public Set<File> getWrittenFiles() {
-    return Collections.unmodifiableSet(new LinkedHashSet<>(writtenFiles);
+    return Collections.unmodifiableSet(new LinkedHashSet<>(writtenFiles));
   }
 }

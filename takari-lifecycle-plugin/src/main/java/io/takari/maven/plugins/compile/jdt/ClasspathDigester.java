@@ -7,18 +7,19 @@
  */
 package io.takari.maven.plugins.compile.jdt;
 
+import static io.takari.maven.plugins.util.Utilities.sha1bytes;
 import static org.eclipse.jdt.internal.compiler.util.SuffixConstants.SUFFIX_STRING_class;
 import static org.eclipse.jdt.internal.compiler.util.SuffixConstants.SUFFIX_STRING_java;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -40,7 +41,7 @@ public class ClasspathDigester {
 
   private final Logger log = LoggerFactory.getLogger(getClass());
 
-  private static final Map<File, Map<String, byte[]>> CACHE = new ConcurrentHashMap<File, Map<String, byte[]>>();
+  private static final Map<File, Map<String, byte[]>> CACHE = new ConcurrentHashMap<>();
 
   private final ClassfileDigester digester;
 
@@ -54,9 +55,9 @@ public class ClasspathDigester {
   }
 
   public HashMap<String, byte[]> digestDependencies(List<File> dependencies) throws IOException {
-    Stopwatch stopwatch = Stopwatch.createStarted();
+    long started = System.currentTimeMillis();
 
-    HashMap<String, byte[]> digest = new HashMap<String, byte[]>();
+    HashMap<String, byte[]> digest = new HashMap<>();
 
     // scan dependencies backwards to properly deal with duplicate type definitions
     for (int i = dependencies.size() - 1; i >= 0; i--) {
@@ -71,7 +72,7 @@ public class ClasspathDigester {
       }
     }
 
-    log.debug("Analyzed {} classpath dependencies ({} ms)", dependencies.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
+    log.debug("Analyzed {} classpath dependencies ({} ms)", dependencies.size(), System.currentTimeMillis() - started);
 
     return digest;
   }
@@ -79,10 +80,9 @@ public class ClasspathDigester {
   private Map<String, byte[]> digestJar(final File file) throws IOException {
     Map<String, byte[]> digest = CACHE.get(file);
     if (digest == null) {
-      digest = new HashMap<String, byte[]>();
-      Map<String, byte[]> sourcesDigest = new HashMap<String, byte[]>();
-      JarFile jar = new JarFile(file);
-      try {
+      digest = new HashMap<>();
+      Map<String, byte[]> sourcesDigest = new HashMap<>();
+      try (JarFile jar = new JarFile(file)) {
         for (Enumeration<JarEntry> entries = jar.entries(); entries.hasMoreElements();) {
           JarEntry entry = entries.nextElement();
           String path = entry.getName();
@@ -95,15 +95,11 @@ public class ClasspathDigester {
             }
           } else if (path.endsWith(SUFFIX_STRING_java)) {
             String type = toJavaType(path, SUFFIX_STRING_java);
-            Hasher hasher = Hashing.sha1().newHasher();
             try (InputStream in = jar.getInputStream(entry)) {
-              ByteStreams.copy(in, Funnels.asOutputStream(hasher));
+              sourcesDigest.put(type, sha1bytes(in));
             }
-            sourcesDigest.put(type, hasher.hash().asBytes());
           }
         }
-      } finally {
-        jar.close();
       }
       mergeAll(digest, sourcesDigest);
       CACHE.put(file, digest);
@@ -115,8 +111,8 @@ public class ClasspathDigester {
   private Map<String, byte[]> digestDirectory(final File directory) throws IOException {
     Map<String, byte[]> digest = CACHE.get(directory);
     if (digest == null) {
-      digest = new HashMap<String, byte[]>();
-      Map<String, byte[]> sourcesDigest = new HashMap<String, byte[]>();
+      digest = new HashMap<>();
+      Map<String, byte[]> sourcesDigest = new HashMap<>();
       DirectoryScanner scanner = new DirectoryScanner();
       scanner.setBasedir(directory);
       scanner.setIncludes(new String[] {"**/*" + SUFFIX_STRING_class, "**/*" + SUFFIX_STRING_java});
@@ -131,7 +127,9 @@ public class ClasspathDigester {
           }
         } else {
           String type = toJavaType(path, SUFFIX_STRING_java);
-          sourcesDigest.put(type, Files.hash(new File(directory, path), Hashing.sha1()).asBytes());
+          try (InputStream inputStream = Files.newInputStream(directory.toPath().resolve(path))) {
+            sourcesDigest.put(type, sha1bytes(inputStream));
+          }
         }
       }
       mergeAll(digest, sourcesDigest);
