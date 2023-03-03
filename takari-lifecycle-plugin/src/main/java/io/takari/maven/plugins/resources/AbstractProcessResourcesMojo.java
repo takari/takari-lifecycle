@@ -58,11 +58,6 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
   // this way resources will be properly reprocessed whenever the properties change
   //
 
-  // oddly, ${localRepository} did not work
-  @Parameter(defaultValue = "${settings.localRepository}")
-  @Incremental(configuration = Configuration.ignore)
-  private File localRepository;
-
   @Parameter(defaultValue = "${session.request.userSettingsFile}")
   @Incremental(configuration = Configuration.ignore)
   private File userSettingsFile;
@@ -96,7 +91,7 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
           Map<Object, Object> properties = new HashMap<Object, Object>(this.properties);
           properties.putAll(sessionProperties); // command line parameters win over project properties
           properties.put("project", project);
-          properties.put("localRepository", localRepository);
+          properties.put("localRepository", repositorySystemSession.getLocalRepository().getBasedir().getAbsolutePath());
           properties.put("userSettingsFile", userSettingsFile);
           List<File> filters = project.getFilters().stream().map(File::new).collect(Collectors.toList());
           processor.process(sourceDirectory, targetDirectory, resource.getIncludes(), resource.getExcludes(), properties, filters, encoding, missingPropertyAction);
