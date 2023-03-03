@@ -70,7 +70,7 @@
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-java</artifactId>
-      <version>1.1.1</version>
+      <version>1.1.2</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -89,7 +89,7 @@
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-classworlds</artifactId>
-      <version>2.6.0</version>
+      <version>2.7.0</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -127,7 +127,7 @@
     <dependency>
       <groupId>org.eclipse.jdt</groupId>
       <artifactId>org.eclipse.jdt.core</artifactId>
-      <version>3.31.0</version>
+      <version>3.32.0</version>
       <exclusions>
         <exclusion>
           <groupId>*</groupId>
@@ -138,7 +138,7 @@
     <dependency>
       <groupId>org.eclipse.jdt</groupId>
       <artifactId>org.eclipse.jdt.compiler.apt</artifactId>
-      <version>1.4.200</version>
+      <version>1.4.300</version>
       <exclusions>
         <exclusion>
           <groupId>*</groupId>
@@ -149,7 +149,7 @@
     <dependency>
       <groupId>org.eclipse.platform</groupId>
       <artifactId>org.eclipse.osgi</artifactId>
-      <version>3.18.100</version>
+      <version>3.18.200</version>
       <exclusions>
         <exclusion>
           <groupId>*</groupId>
@@ -183,7 +183,7 @@
     <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
-      <version>2.10</version>
+      <version>2.10.1</version>
     </dependency>
     <!-- Logging -->
     <dependency>
@@ -212,21 +212,27 @@
 
     <!-- test dependencies -->
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.13.2</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.hamcrest</groupId>
       <artifactId>hamcrest</artifactId>
       <version>2.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-core</artifactId>
+      <version>2.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.13.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.assertj</groupId>
       <artifactId>assertj-core</artifactId>
-      <version>3.23.1</version>
+      <version>3.24.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -298,7 +304,7 @@
     <dependency>
       <groupId>org.apache.maven.wagon</groupId>
       <artifactId>wagon-file</artifactId>
-      <version>3.5.2</version>
+      <version>3.5.3</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -331,7 +337,7 @@
       <plugin>
         <groupId>org.codehaus.modello</groupId>
         <artifactId>modello-maven-plugin</artifactId>
-        <version>2.0.0</version>
+        <version>2.1.1</version>
         <executions>
           <execution>
             <id>standard</id>
