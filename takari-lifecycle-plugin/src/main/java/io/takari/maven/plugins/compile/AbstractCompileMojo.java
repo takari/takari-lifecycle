@@ -42,7 +42,7 @@ import java.util.zip.ZipFile;
 
 public abstract class AbstractCompileMojo extends AbstractMojo {
 
-  private static final String DEFAULT_COMPILER_LEVEL = "1.7";
+  private static final String DEFAULT_COMPILER_LEVEL = "8";
 
   // I much prefer slf4j over plexus logger api
   private final Logger log = LoggerFactory.getLogger(getClass());
@@ -162,7 +162,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
    * Set to <code>true</code> to store formal parameter names of constructors and methods in the generated class file so that the method java.lang.reflect.Executable.getParameters from the Reflection
    * API can retrieve them.
    */
-  @Parameter(defaultValue = "false")
+  @Parameter(property = "maven.compiler.parameters", defaultValue = "false")
   private boolean parameters;
 
   /**
