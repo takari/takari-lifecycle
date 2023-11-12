@@ -39,7 +39,7 @@
             | igorf: source/target names maybe confusing 
             |        not everyone will guess this is about java compiler 
            -->
-          <release>7</release>
+          <release>8</release>
         </configuration>
       </plugin>
     </plugins>

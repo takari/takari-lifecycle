@@ -47,7 +47,7 @@ import java.util.zip.ZipFile;
 
 public abstract class AbstractCompileMojo extends AbstractMojo {
 
-  private static final String DEFAULT_COMPILER_LEVEL = "1.7";
+  private static final String DEFAULT_COMPILER_LEVEL = "8";
 
   // I much prefer slf4j over plexus logger api
   private final Logger log = LoggerFactory.getLogger(getClass());
