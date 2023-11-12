@@ -28,7 +28,7 @@ abstract class AbstractClasspathDirectory extends DependencyClasspathEntry imple
 
   protected static void scanDirectory(Path basedir, String suffix, Set<String> packages, Map<String, Path> files) {
     try {
-      Files.walkFileTree(basedir, new SimpleFileVisitor<>() {
+      Files.walkFileTree(basedir, new SimpleFileVisitor<Path>() {
         @Override
         public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
           String relpath = basedir.relativize(dir).toString();
