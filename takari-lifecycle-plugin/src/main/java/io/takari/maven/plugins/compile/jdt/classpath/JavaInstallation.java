@@ -15,12 +15,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.ProviderNotFoundException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 
 import org.eclipse.jdt.internal.compiler.util.Util;
-
-import com.google.common.collect.ImmutableList;
 
 public class JavaInstallation {
   private static final Predicate<Path> POTENTIAL_ZIP_FILTER = p -> Util.isPotentialZipArchive(p.getFileName().toString());
@@ -28,7 +27,7 @@ public class JavaInstallation {
   private final List<Path> classpath;
 
   private JavaInstallation(List<Path> classpath) {
-    this.classpath = ImmutableList.copyOf(classpath);
+    this.classpath = Collections.unmodifiableList(new ArrayList<>(classpath));
   }
 
   /**

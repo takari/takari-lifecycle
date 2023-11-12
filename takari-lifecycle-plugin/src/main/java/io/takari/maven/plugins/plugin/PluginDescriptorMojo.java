@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -28,8 +29,6 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.codehaus.plexus.util.xml.PrettyPrintXMLWriter;
 import org.codehaus.plexus.util.xml.XMLWriter;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
-
-import com.google.common.io.Files;
 
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Output;
@@ -283,10 +282,15 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
   protected void createEclipseMetadataXml(Output<File> output, File mojosXml, File existingEclipseMetadataXml) throws IOException {
     try (OutputStream out = output.newOutputStream()) {
       if (existingEclipseMetadataXml.isFile()) {
-        Files.asByteSource(existingEclipseMetadataXml).copyTo(out);
+        try (InputStream in = Files.newInputStream(existingEclipseMetadataXml.toPath())) {
+          in.transferTo(out);
+        }
       } else {
         Map<String, MojoDescriptor> mojos = loadMojos(mojosXml);
-        List<String> goals = mojos.values().stream().filter(md -> md.isTakariBuilder()).map(md -> md.getGoal()).collect(Collectors.toList());
+        List<String> goals = mojos.values().stream()
+                .filter( MojoDescriptor::isTakariBuilder )
+                .map( MojoDescriptor::getGoal )
+                .collect(Collectors.toList());
 
         writeEclipseMetadataXml(out, goals);
       }

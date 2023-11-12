@@ -14,8 +14,6 @@ import org.codehaus.plexus.configuration.PlexusConfigurationException;
 import org.codehaus.plexus.util.ReaderFactory;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
-import com.google.common.base.Throwables;
-
 import io.takari.maven.plugins.plugin.model.MojoDescriptor;
 import io.takari.maven.plugins.plugin.model.MojoParameter;
 import io.takari.maven.plugins.plugin.model.MojoRequirement;
@@ -28,8 +26,14 @@ class LegacyPluginDescriptors {
     try {
       pluginDescriptor = new PluginDescriptorBuilder().build(reader);
     } catch (PlexusConfigurationException e) {
-      Throwables.propagateIfPossible(e.getCause(), IOException.class, XmlPullParserException.class);
-      throw Throwables.propagate(e);
+      Throwable cause = e.getCause();
+      if ( cause instanceof IOException ) {
+        throw (IOException) cause;
+      }
+      if ( cause instanceof XmlPullParserException ) {
+        throw (XmlPullParserException) cause;
+      }
+      throw new RuntimeException(e);
     }
     List<MojoDescriptor> result = new ArrayList<>();
     for (org.apache.maven.plugin.descriptor.MojoDescriptor mojo : pluginDescriptor.getMojos()) {

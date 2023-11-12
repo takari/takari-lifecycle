@@ -15,14 +15,15 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import io.takari.incrementalbuild.Output;
-import io.takari.incrementalbuild.Resource;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.execution.ProjectDependencyGraph;
@@ -37,9 +38,9 @@ import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.m2e.workspace.MutableWorkspaceState;
 
-import com.google.common.collect.ImmutableSet;
-
 import io.takari.incrementalbuild.BasicBuildContext;
+import io.takari.incrementalbuild.Output;
+import io.takari.incrementalbuild.Resource;
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
 import io.takari.incrementalbuild.ResourceMetadata;
@@ -194,7 +195,7 @@ public class TestPropertiesMojo extends AbstractMojo {
   }
 
   private String getClasspathString() {
-    Set<String> scopes = ImmutableSet.of(Artifact.SCOPE_COMPILE, Artifact.SCOPE_RUNTIME);
+    Set<String> scopes = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(Artifact.SCOPE_COMPILE, Artifact.SCOPE_RUNTIME)));
     StringBuilder sb = new StringBuilder();
     sb.append(outputDirectory.getAbsolutePath());
     for (Artifact dependency : dependencies) {
@@ -219,9 +220,7 @@ public class TestPropertiesMojo extends AbstractMojo {
       }
     }
     try (OutputStream os = context.processOutput(workspaceState).newOutputStream()) {
-      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-      state.store(buffer);
-      PropertiesWriter.write(buffer.toByteArray(), os);
+      PropertiesWriter.write(state.asProperties(), null, os);
     } catch (IOException e) {
       throw new MojoExecutionException("Could not create reactor state file " + workspaceState, e);
     }
@@ -257,7 +256,7 @@ public class TestPropertiesMojo extends AbstractMojo {
   private void mergeCustomTestProperties(Resource resource, Properties properties, Properties custom) {
     // resource filtering configuration should match AbstractProcessResourcesMojo
     // TODO figure out how to move this to a common component
-    Map<Object, Object> substitutes = new HashMap<Object, Object>();
+    Map<Object, Object> substitutes = new HashMap<>();
 
     for (Artifact dependency : dependencies) {
       StringBuilder key = new StringBuilder();

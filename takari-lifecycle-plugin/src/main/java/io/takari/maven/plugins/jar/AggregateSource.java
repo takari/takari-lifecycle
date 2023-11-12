@@ -7,8 +7,6 @@
  */
 package io.takari.maven.plugins.jar;
 
-import static com.google.common.collect.Iterables.concat;
-import static com.google.common.collect.Iterables.filter;
 import ca.vanzyl.provisio.archive.ExtendedArchiveEntry;
 import ca.vanzyl.provisio.archive.Source;
 
@@ -16,9 +14,9 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import com.google.common.base.Predicate;
-
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 
 /**
@@ -40,11 +38,14 @@ class AggregateSource implements Source {
       private final Set<String> entryNames = new HashSet<>();
 
       @Override
-      public boolean apply(ExtendedArchiveEntry input) {
+      public boolean test(ExtendedArchiveEntry input) {
         return entryNames.add(input.getName());
       }
     };
-    return filter(concat(sources), uniquePathFilter);
+    return sources.stream()
+            .flatMap(e -> StreamSupport.stream(e.spliterator(), false))
+            .filter(uniquePathFilter)
+            .collect(Collectors.toList());
   }
 
   @Override

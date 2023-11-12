@@ -28,7 +28,6 @@ import com.github.mustachejava.reflect.MissingWrapper;
 import com.github.mustachejava.reflect.ReflectionObjectHandler;
 import com.github.mustachejava.util.GuardException;
 import com.github.mustachejava.util.Wrapper;
-import com.google.common.collect.Maps;
 import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.MessageSeverity;
 import io.takari.incrementalbuild.Output;
@@ -68,7 +67,7 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
     } catch (IOException e) {
       // too bad
     }
-    return Maps.fromProperties(properties);
+    return new HashMap<String, String>( (Map)properties );
   }
 
   private void filterResource(Resource<File> input, File sourceDirectory, File targetDirectory, Map<Object, Object> filterProperties, String encoding, MissingPropertyAction mpa) throws IOException {

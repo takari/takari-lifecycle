@@ -14,6 +14,7 @@ package io.takari.maven.plugins.compile.jdt;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -23,8 +24,6 @@ import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.lookup.TypeConstants;
 import org.eclipse.jdt.internal.core.builder.NameSet;
 import org.eclipse.jdt.internal.core.builder.QualifiedNameSet;
-
-import com.google.common.collect.ImmutableSet;
 
 
 // adopted from org.eclipse.jdt.internal.core.builder.ReferenceCollection because we need Serializable
@@ -36,9 +35,9 @@ class ReferenceCollection implements Serializable {
   final Set<String> rootReferences;
 
   public ReferenceCollection(char[][] rootReferences, char[][][] qualifiedNameReferences, char[][] simpleNameReferences) {
-    this.qualifiedNameReferences = ImmutableSet.copyOf(toStringSet(qualifiedNameReferences));
-    this.simpleNameReferences = ImmutableSet.copyOf(toStringSet(simpleNameReferences));
-    this.rootReferences = ImmutableSet.copyOf(toStringSet(rootReferences));
+    this.qualifiedNameReferences = Collections.unmodifiableSet(toStringSet(qualifiedNameReferences));
+    this.simpleNameReferences = Collections.unmodifiableSet(toStringSet(simpleNameReferences));
+    this.rootReferences = Collections.unmodifiableSet(toStringSet(rootReferences));
   }
 
   public ReferenceCollection() {
@@ -48,7 +47,7 @@ class ReferenceCollection implements Serializable {
   }
 
   private Set<String> toStringSet(char[][] strings) {
-    Set<String> set = new LinkedHashSet<String>();
+    Set<String> set = new LinkedHashSet<>();
     for (char[] string : strings) {
       set.add(new String(string));
     }
@@ -56,7 +55,7 @@ class ReferenceCollection implements Serializable {
   }
 
   private Set<String> toStringSet(char[][][] arrays) {
-    Set<String> set = new LinkedHashSet<String>();
+    Set<String> set = new LinkedHashSet<>();
     for (char[][] array : arrays) {
       set.add(CharOperation.toString(array));
     }
@@ -234,7 +233,7 @@ class ReferenceCollection implements Serializable {
 
   // each array contains qualified char[][], one for size 2, 3, 4, 5, 6, 7 & the rest
   private static final int MaxQualifiedNames = 7;
-  private static QualifiedNameSet[] InternedQualifiedNames = new QualifiedNameSet[MaxQualifiedNames];
+  private static final QualifiedNameSet[] InternedQualifiedNames = new QualifiedNameSet[MaxQualifiedNames];
 
   // each array contains simple char[], one for size 1 to 29 & the rest
   static final int MaxSimpleNames = 30;

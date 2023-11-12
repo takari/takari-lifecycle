@@ -15,8 +15,6 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.io.ByteStreams;
-
 import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.Output;
 import io.takari.incrementalbuild.Resource;
@@ -39,7 +37,7 @@ class CopyResourcesProcessor extends AbstractResourceProcessor {
     File outputFile = relativize(sourceDirectory, targetDirectory, input.getResource());
     Output<File> output = input.associateOutput(outputFile);
     try (InputStream is = new FileInputStream(input.getResource()); OutputStream os = output.newOutputStream()) {
-      ByteStreams.copy(is, os);
+      is.transferTo(os);
     }
   }
 

@@ -13,12 +13,14 @@ import static org.eclipse.jdt.internal.compiler.util.SuffixConstants.SUFFIX_STRI
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -34,20 +36,13 @@ import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Stopwatch;
-import com.google.common.hash.Funnels;
-import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
-
 @Named
 @MojoExecutionScoped
 public class ClasspathDigester {
 
   private final Logger log = LoggerFactory.getLogger(getClass());
 
-  private static final Map<File, Map<String, byte[]>> CACHE = new ConcurrentHashMap<File, Map<String, byte[]>>();
+  private static final Map<File, Map<String, byte[]>> CACHE = new ConcurrentHashMap<>();
 
   private final ClassfileDigester digester;
 
@@ -61,9 +56,9 @@ public class ClasspathDigester {
   }
 
   public HashMap<String, byte[]> digestDependencies(List<File> dependencies) throws IOException {
-    Stopwatch stopwatch = Stopwatch.createStarted();
+    long started = System.currentTimeMillis();
 
-    HashMap<String, byte[]> digest = new HashMap<String, byte[]>();
+    HashMap<String, byte[]> digest = new HashMap<>();
 
     // scan dependencies backwards to properly deal with duplicate type definitions
     for (int i = dependencies.size() - 1; i >= 0; i--) {
@@ -78,7 +73,7 @@ public class ClasspathDigester {
       }
     }
 
-    log.debug("Analyzed {} classpath dependencies ({} ms)", dependencies.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS));
+    log.debug("Analyzed {} classpath dependencies ({} ms)", dependencies.size(), System.currentTimeMillis() - started);
 
     return digest;
   }
@@ -86,10 +81,9 @@ public class ClasspathDigester {
   private Map<String, byte[]> digestJar(final File file) throws IOException {
     Map<String, byte[]> digest = CACHE.get(file);
     if (digest == null) {
-      digest = new HashMap<String, byte[]>();
-      Map<String, byte[]> sourcesDigest = new HashMap<String, byte[]>();
-      JarFile jar = new JarFile(file);
-      try {
+      digest = new HashMap<>();
+      Map<String, byte[]> sourcesDigest = new HashMap<>();
+      try (JarFile jar = new JarFile(file)) {
         for (Enumeration<JarEntry> entries = jar.entries(); entries.hasMoreElements();) {
           JarEntry entry = entries.nextElement();
           String path = entry.getName();
@@ -102,15 +96,11 @@ public class ClasspathDigester {
             }
           } else if (path.endsWith(SUFFIX_STRING_java)) {
             String type = toJavaType(path, SUFFIX_STRING_java);
-            Hasher hasher = Hashing.sha1().newHasher();
             try (InputStream in = jar.getInputStream(entry)) {
-              ByteStreams.copy(in, Funnels.asOutputStream(hasher));
+              sourcesDigest.put(type, sha1bytes(in));
             }
-            sourcesDigest.put(type, hasher.hash().asBytes());
           }
         }
-      } finally {
-        jar.close();
       }
       mergeAll(digest, sourcesDigest);
       CACHE.put(file, digest);
@@ -122,8 +112,8 @@ public class ClasspathDigester {
   private Map<String, byte[]> digestDirectory(final File directory) throws IOException {
     Map<String, byte[]> digest = CACHE.get(directory);
     if (digest == null) {
-      digest = new HashMap<String, byte[]>();
-      Map<String, byte[]> sourcesDigest = new HashMap<String, byte[]>();
+      digest = new HashMap<>();
+      Map<String, byte[]> sourcesDigest = new HashMap<>();
       DirectoryScanner scanner = new DirectoryScanner();
       scanner.setBasedir(directory);
       scanner.setIncludes(new String[] {"**/*" + SUFFIX_STRING_class, "**/*" + SUFFIX_STRING_java});
@@ -138,7 +128,9 @@ public class ClasspathDigester {
           }
         } else {
           String type = toJavaType(path, SUFFIX_STRING_java);
-          sourcesDigest.put(type, Files.hash(new File(directory, path), Hashing.sha1()).asBytes());
+          try (InputStream inputStream = Files.newInputStream(directory.toPath().resolve(path))) {
+            sourcesDigest.put(type, sha1bytes(inputStream));
+          }
         }
       }
       mergeAll(digest, sourcesDigest);
@@ -171,4 +163,19 @@ public class ClasspathDigester {
   public static void flush() {
     CACHE.clear();
   }
+
+  private static byte[] sha1bytes(final InputStream inputStream) throws IOException {
+    try {
+      MessageDigest md = MessageDigest.getInstance("SHA-1");
+      byte[] buffer = new byte[8192];
+      int read;
+      while ((read = inputStream.read(buffer)) != -1) {
+        md.update(buffer, 0, read);
+      }
+      return md.digest();
+    } catch ( NoSuchAlgorithmException e) {
+      throw new IllegalStateException("Unsupported JVM: sha1 MessageDigest algorithm unsupported", e);
+    }
+  }
+
 }

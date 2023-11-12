@@ -10,12 +10,12 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
 import org.osgi.framework.BundleException;
-
-import com.google.common.collect.ImmutableMap;
 
 abstract class AbstractClasspathDirectory extends DependencyClasspathEntry implements ClasspathEntry {
 
@@ -23,14 +23,14 @@ abstract class AbstractClasspathDirectory extends DependencyClasspathEntry imple
 
   protected AbstractClasspathDirectory(Path directory, Set<String> packages, Map<String, Path> files) {
     super(directory, packages, getExportedPackages(directory));
-    this.files = ImmutableMap.copyOf(files);
+    this.files = Collections.unmodifiableMap(new LinkedHashMap<>(files));
   }
 
   protected static void scanDirectory(Path basedir, String suffix, Set<String> packages, Map<String, Path> files) {
     try {
       Files.walkFileTree(basedir, new SimpleFileVisitor<Path>() {
         @Override
-        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
           String relpath = basedir.relativize(dir).toString();
           if (!relpath.isEmpty()) {
             packages.add(relpath.replace('\\', '/'));
@@ -39,7 +39,7 @@ abstract class AbstractClasspathDirectory extends DependencyClasspathEntry imple
         }
 
         @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
           String relpath = basedir.relativize(file).toString();
           if (relpath.endsWith(suffix)) {
             files.put(relpath.substring(0, relpath.length() - suffix.length()).replace('\\', '/'), file);

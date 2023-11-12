@@ -36,8 +36,6 @@ import org.eclipse.aether.resolution.DependencyResolutionException;
 import org.eclipse.aether.util.filter.AndDependencyFilter;
 import org.eclipse.aether.util.filter.ScopeDependencyFilter;
 
-import com.google.common.base.Strings;
-
 @Named
 class ProcessorpathResolver {
 
@@ -61,7 +59,8 @@ class ProcessorpathResolver {
 
     Map<String, Artifact> artifacts = project.getArtifactMap();
     for (Dependency dependency : dependencies) {
-      if (Strings.isNullOrEmpty(dependency.getVersion())) {
+      String version = dependency.getVersion();
+      if (version == null || version.isEmpty()) {
         Artifact artifact = artifacts.get(ArtifactUtils.versionlessKey(dependency.getGroupId(), dependency.getArtifactId()));
         if (artifact != null) {
           dependency = dependency.clone();

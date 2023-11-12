@@ -1,16 +1,19 @@
 package io.takari.maven.plugins.compile.jdt.classpath;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.env.AccessRestriction;
@@ -20,11 +23,6 @@ import org.eclipse.osgi.framework.util.CaseInsensitiveDictionaryMap;
 import org.eclipse.osgi.util.ManifestElement;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
-
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.io.CharStreams;
-import com.google.common.io.LineProcessor;
 
 import io.takari.maven.plugins.exportpackage.ExportPackageMojo;
 
@@ -42,8 +40,8 @@ public abstract class DependencyClasspathEntry implements ClasspathEntry {
 
   protected DependencyClasspathEntry(Path file, Collection<String> packageNames, Collection<String> exportedPackages) {
     this.file = PathNormalizer.getCanonicalPath(file);
-    this.packageNames = ImmutableSet.copyOf(packageNames);
-    this.exportedPackages = exportedPackages != null ? ImmutableSet.<String>copyOf(exportedPackages) : null;
+    this.packageNames = Collections.unmodifiableSet(new LinkedHashSet<>(packageNames));
+    this.exportedPackages = exportedPackages != null ? Collections.unmodifiableSet(new LinkedHashSet<>(exportedPackages)) : null;
   }
 
   protected AccessRestriction getAccessRestriction(String packageName) {
@@ -60,21 +58,9 @@ public abstract class DependencyClasspathEntry implements ClasspathEntry {
   }
 
   protected static Collection<String> parseExportPackage(InputStream is) throws IOException {
-    LineProcessor<List<String>> processor = new LineProcessor<List<String>>() {
-      final List<String> result = new ArrayList<String>();
-
-      @Override
-      public boolean processLine(String line) throws IOException {
-        result.add(line.replace('.', '/'));
-        return true; // keep reading
-      }
-
-      @Override
-      public List<String> getResult() {
-        return result;
-      }
-    };
-    return CharStreams.readLines(new InputStreamReader(is, Charsets.UTF_8), processor);
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+      return reader.lines().map(l -> l.replace( '.', '/')).collect(Collectors.toList());
+    }
   }
 
   protected static Collection<String> parseBundleManifest(InputStream is) throws IOException, BundleException {
@@ -84,7 +70,7 @@ public abstract class DependencyClasspathEntry implements ClasspathEntry {
     }
     String exportPackageHeader = headers.get(Constants.EXPORT_PACKAGE);
     if (exportPackageHeader == null) {
-      return ImmutableSet.of(); // nothing is exported
+      return Collections.emptySet(); // nothing is exported
     }
     Set<String> packages = new HashSet<>();
     for (ManifestElement element : ManifestElement.parseHeader(Constants.EXPORT_PACKAGE, exportPackageHeader)) {

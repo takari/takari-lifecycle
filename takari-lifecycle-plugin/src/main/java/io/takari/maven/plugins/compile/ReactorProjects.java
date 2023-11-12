@@ -1,6 +1,8 @@
 package io.takari.maven.plugins.compile;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -10,8 +12,6 @@ import org.apache.maven.SessionScoped;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.project.MavenProject;
-
-import com.google.common.collect.ImmutableMap;
 
 @Named
 @SessionScoped
@@ -25,7 +25,7 @@ class ReactorProjects {
     for (MavenProject project : session.getProjects()) {
       projects.put(key(project.getGroupId(), project.getArtifactId(), project.getVersion()), project);
     }
-    this.projects = ImmutableMap.copyOf(projects);
+    this.projects = Collections.unmodifiableMap(new LinkedHashMap<>(projects));
   }
 
   public MavenProject get(Artifact artifact) {

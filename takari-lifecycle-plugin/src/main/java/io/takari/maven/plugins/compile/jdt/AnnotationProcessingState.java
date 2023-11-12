@@ -9,9 +9,9 @@ package io.takari.maven.plugins.compile.jdt;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Set;
-
-import com.google.common.collect.ImmutableSet;
 
 /**
  * State necessary to implement all-or-nothing annotation processing behaviour.
@@ -23,9 +23,9 @@ class AnnotationProcessingState implements Serializable {
   public final Set<File> writtenOutputs;
 
   public AnnotationProcessingState(Set<File> processedSources, ReferenceCollection referencedTypes, Set<File> writtenOutputs) {
-    this.processedSources = ImmutableSet.copyOf(processedSources);
+    this.processedSources = Collections.unmodifiableSet(new LinkedHashSet<>(processedSources));
     this.referencedTypes = referencedTypes;
-    this.writtenOutputs = ImmutableSet.copyOf(writtenOutputs);
+    this.writtenOutputs = Collections.unmodifiableSet(new LinkedHashSet<>(writtenOutputs));
   }
 
 }

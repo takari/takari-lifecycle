@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -53,11 +52,6 @@ import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
 import org.eclipse.jdt.internal.compiler.util.SuffixConstants;
 import org.eclipse.jdt.internal.core.builder.ProblemFactory;
-
-import com.google.common.base.Stopwatch;
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Multiset;
 
 import io.takari.incrementalbuild.MessageSeverity;
 import io.takari.incrementalbuild.Output;
@@ -270,9 +264,10 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     private final Set<File> processedQueue = new HashSet<>();
 
     /**
-     * Set of File that have already been added to the compile queue.
+     * Set of File that have already been added to the compile queue (modeled as map of file -> list(file) where key
+     * file is always being added to list as well).
      */
-    private final Multiset<File> processedSources = HashMultiset.create();
+    private final Map<File, List<File>> processedSources = new LinkedHashMap<>();
 
 
     private final Set<String> rootNames = new LinkedHashSet<>();
@@ -337,7 +332,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         processSources();
 
         // invoke the compiler
-        ICompilationUnit[] compilationUnits = compileQueue.values().toArray(new ICompilationUnit[compileQueue.size()]);
+        ICompilationUnit[] compilationUnits = compileQueue.values().toArray(new ICompilationUnit[0]);
         compileQueue.clear();
         compiler.compile(compilationUnits);
         namingEnvironment.reset();
@@ -366,10 +361,8 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         }
       }
 
-      boolean compilationRequired = false;
-
       // delete orphaned outputs and rebuild all sources that reference them
-      compilationRequired = deleteOrphanedOutputs() || compilationRequired;
+      boolean compilationRequired = deleteOrphanedOutputs();
 
       enqueueAffectedSources();
 
@@ -424,7 +417,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     }
 
     @Override
-    public void enqueueAllSources() throws IOException {
+    public void enqueueAllSources() {
       for (ResourceMetadata<File> input : sources.values()) {
         final File resource = input.getResource();
         if (!processedQueue.contains(resource) && resource.canRead()) {
@@ -460,7 +453,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     }
 
     private void enqueue(File sourceFile) {
-      if (processedSources.count(sourceFile) > 15) {
+      if (processedSources.computeIfAbsent(sourceFile, k -> new ArrayList<>()).size() > 15) {
         // this is meant to prevent endless recompiles and exact number of recompiles is not important
         // note that processedSources can be incremented multiple times for the same source during compilation bootstrap
         // - the source has changed
@@ -472,16 +465,16 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       if (aptstate != null && aptstate.processedSources.contains(sourceFile)) {
         enqueueAllAnnotatedSources();
       } else {
-        processedSources.add(sourceFile);
+        processedSources.computeIfAbsent(sourceFile, k -> new ArrayList<>()).add(sourceFile);
         compileQueue.put(sourceFile, newSourceFile(sourceFile));
       }
     }
 
 
     @Override
-    public void enqueueAffectedSources(HashMap<String, byte[]> digest, Map<String, byte[]> oldDigest) throws IOException {
+    public void enqueueAffectedSources(HashMap<String, byte[]> digest, Map<String, byte[]> oldDigest) {
       if (oldDigest != null) {
-        Set<String> changedPackages = new HashSet<String>();
+        Set<String> changedPackages = new HashSet<>();
 
         for (Map.Entry<String, byte[]> entry : digest.entrySet()) {
           String type = entry.getKey();
@@ -552,12 +545,12 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     }
 
     @Override
-    public void enqueueAffectedSources(HashMap<String, byte[]> digest, Map<String, byte[]> oldDigest) throws IOException {
+    public void enqueueAffectedSources(HashMap<String, byte[]> digest, Map<String, byte[]> oldDigest) {
       // full strategy compiles all sources in one pass
     }
 
     @Override
-    public void enqueueAllSources() throws IOException {
+    public void enqueueAllSources() {
       // full strategy compiles all sources in one pass
     }
 
@@ -581,7 +574,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       }
 
       if (!compileQueue.isEmpty()) {
-        ICompilationUnit[] compilationUnits = compileQueue.values().toArray(new ICompilationUnit[compileQueue.size()]);
+        ICompilationUnit[] compilationUnits = compileQueue.values().toArray(new ICompilationUnit[0]);
         compiler.compile(compilationUnits);
       }
 
@@ -623,7 +616,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
   @Override
   public int compile() throws IOException {
-    Map<String, String> args = new HashMap<String, String>();
+    Map<String, String> args = new HashMap<>();
     // XXX figure out how to reuse source/target check from jdt
     // org.eclipse.jdt.internal.compiler.batch.Main.validateOptions(boolean)
     args.put(CompilerOptions.OPTION_TargetPlatform, getTarget()); // support 5/6/7 aliases
@@ -768,8 +761,8 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
    * @param staleOutputs is a <strong>live</strong> collection of output files to ignore.
    */
   private Classpath createClasspath(Collection<File> staleOutputs) throws IOException {
-    final List<ClasspathEntry> entries = new ArrayList<ClasspathEntry>();
-    final List<MutableClasspathEntry> mutableentries = new ArrayList<MutableClasspathEntry>();
+    final List<ClasspathEntry> entries = new ArrayList<>();
+    final List<MutableClasspathEntry> mutableentries = new ArrayList<>();
 
     // XXX detect change!
     for (Path file : JavaInstallation.getDefault().getClasspath()) {
@@ -825,15 +818,13 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
   public boolean setClasspath(List<File> dependencies, File mainClasses, Set<File> directDependencies) throws IOException {
     this.dependencies = dependencies;
 
-    final List<ClasspathEntry> dependencypath = new ArrayList<ClasspathEntry>();
-    final List<File> files = new ArrayList<File>();
+    final List<ClasspathEntry> dependencypath = new ArrayList<>();
+    final List<File> files = new ArrayList<>();
 
     if (isProcOnly()) {
       DependencyClasspathEntry entry = ClasspathDirectory.create(getOutputDirectory().toPath());
-      if (entry != null) {
-        dependencypath.add(AccessRestrictionClasspathEntry.allowAll(entry));
-        files.add(getOutputDirectory());
-      }
+      dependencypath.add( AccessRestrictionClasspathEntry.allowAll( entry ) );
+      files.add(getOutputDirectory());
     }
 
     if (mainClasses != null) {
@@ -863,12 +854,12 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       for (ClasspathEntry element : dependencypath) {
         msg.append("\n   ").append(element.getEntryDescription());
       }
-      log.debug("Compile classpath: {} entries{}", dependencies.size(), msg.toString());
+      log.debug("Compile classpath: {} entries{}", dependencies.size(), msg);
     }
 
-    this.dependencypath = ImmutableList.copyOf(dependencypath);
+    this.dependencypath = Collections.unmodifiableList(new ArrayList<>(dependencypath));
 
-    Stopwatch stopwatch = Stopwatch.createStarted();
+    long started = System.currentTimeMillis();
     long typecount = 0, packagecount = 0;
 
     HashMap<String, byte[]> digest = classpathDigester.digestDependencies(files);
@@ -876,7 +867,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     @SuppressWarnings("unchecked")
     Map<String, byte[]> oldDigest = (Map<String, byte[]>) context.setAttribute(ATTR_CLASSPATH_DIGEST, digest);
 
-    log.debug("Digested {} types and {} packages in {} ms", typecount, packagecount, stopwatch.elapsed(TimeUnit.MILLISECONDS));
+    log.debug("Digested {} types and {} packages in {} ms", typecount, packagecount, System.currentTimeMillis() - started);
 
     strategy.enqueueAffectedSources(digest, oldDigest);
 
@@ -901,7 +892,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
       }
     }
 
-    this.sourcepath = ImmutableList.copyOf(sourcepath);
+    this.sourcepath = Collections.unmodifiableList(new ArrayList<>(sourcepath));
 
     return processorpathDigester.digestSourcepath(dependencies);
   }
@@ -911,7 +902,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     if (processorpath == null) {
       this.processorpath = dependencies;
     } else {
-      this.processorpath = ImmutableList.copyOf(processorpath);
+      this.processorpath = Collections.unmodifiableList(new ArrayList<>(processorpath));
     }
     if (!isProcNone() && processorpathDigester.digestProcessorpath(this.processorpath)) {
       log.debug("Annotation processor path changed, recompiling all sources");

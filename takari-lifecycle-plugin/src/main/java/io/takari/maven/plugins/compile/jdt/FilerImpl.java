@@ -8,7 +8,9 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.URI;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import javax.annotation.processing.Filer;
@@ -23,8 +25,6 @@ import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
 
 import org.eclipse.jdt.internal.compiler.batch.CompilationUnit;
-
-import com.google.common.collect.ImmutableSet;
 
 import io.takari.incrementalbuild.Output;
 import io.takari.maven.plugins.compile.CompilerBuildContext;
@@ -173,6 +173,6 @@ class FilerImpl implements Filer {
   }
 
   public Set<File> getWrittenFiles() {
-    return ImmutableSet.copyOf(writtenFiles);
+    return Collections.unmodifiableSet(new LinkedHashSet<>(writtenFiles));
   }
 }

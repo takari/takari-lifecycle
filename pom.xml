@@ -27,10 +27,9 @@
     <takari.javaSourceVersion>8</takari.javaSourceVersion>
     <mavenVersion>3.8.6</mavenVersion>
     <sisuVersion>0.3.5</sisuVersion>
-    <sisuGuiceVersion>4.2.0</sisuGuiceVersion>
     <aetherVersion>1.8.2</aetherVersion>
     <incrementalbuild.version>1.0.0</incrementalbuild.version>
-    <guava.version>31.1-jre</guava.version>
+    <guava.version>32.1.2-jre</guava.version>
     <mavenPluginPluginVersion>3.6.4</mavenPluginPluginVersion>
     <m2eWorkspaceVersion>0.4.0</m2eWorkspaceVersion>
     <plexusVersion>3.5.1</plexusVersion>

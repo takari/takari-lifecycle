@@ -7,7 +7,6 @@
  */
 package io.takari.maven.plugins.jar;
 
-import static com.google.common.collect.Iterables.size;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static io.takari.maven.plugins.TakariLifecycles.isJarProducingTakariLifecycle;
@@ -16,11 +15,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import javax.inject.Inject;
 
@@ -29,9 +32,6 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
-
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 
 import io.takari.incrementalbuild.Output;
 import io.takari.incrementalbuild.aggregator.AggregatorBuildContext;
@@ -128,7 +128,7 @@ public class Jar extends TakariLifecycleMojo {
     }
 
     if (sourceJar) {
-      final Multimap<File, File> sources = HashMultimap.create();
+      final Map<File, List<File>> sources = new LinkedHashMap<>();
       File sourceJar = new File(outputDirectory, String.format("%s-%s.jar", finalName, "sources"));
       InputSet registeredOutput = buildContext.newInputSet();
       try {
@@ -136,9 +136,11 @@ public class Jar extends TakariLifecycleMojo {
           File dir = new File(sourceRoot);
           if (dir.isDirectory()) {
             dir = dir.getCanonicalFile();
-            Iterable<File> inputs = registeredOutput.addInputs(dir, null, null);
-            logger.debug("Analyzing sources directory {} with {} entries", dir, size(inputs));
-            sources.putAll(dir, inputs);
+            List<File> inputs = StreamSupport
+                    .stream( registeredOutput.addInputs(dir, null, null).spliterator(), false)
+                    .collect(Collectors.toList());
+            logger.debug("Analyzing sources directory {} with {} entries", dir, inputs.size());
+            sources.computeIfAbsent(dir, k -> new ArrayList<>()).addAll(inputs);
           } else {
             logger.debug("Sources directory {} does not exist", dir);
           }
@@ -204,7 +206,7 @@ public class Jar extends TakariLifecycleMojo {
     return basedir.toPath().relativize(resource.toPath()).toString().replace('\\', '/'); // always use forward slash for path separator
   }
 
-  private List<ExtendedArchiveEntry> inputsSource(Multimap<File, File> inputs) {
+  private List<ExtendedArchiveEntry> inputsSource(Map<File, List<File>> inputs) {
     final List<ExtendedArchiveEntry> entries = new ArrayList<>();
     for (File basedir : inputs.keySet()) {
       entries.addAll(inputsSource(basedir, inputs.get(basedir)));
@@ -269,6 +271,17 @@ public class Jar extends TakariLifecycleMojo {
     PropertiesWriter.write(properties, null, buf);
 
     return new BytesEntry(entryName, buf.toByteArray());
+  }
+
+  private static int size(final Iterable<?> iterable) {
+    if (iterable instanceof Collection ) {
+      return ( (Collection<?>) iterable ).size();
+    }
+    int size = 0;
+    for (Object o : iterable) {
+      size++;
+    }
+    return size;
   }
 
 }
