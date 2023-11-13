@@ -126,7 +126,7 @@
     <dependency>
       <groupId>org.eclipse.jdt</groupId>
       <artifactId>org.eclipse.jdt.core</artifactId>
-      <version>3.32.0</version>
+      <version>3.35.0</version>
       <exclusions>
         <exclusion>
           <groupId>*</groupId>
@@ -136,8 +136,8 @@
     </dependency>
     <dependency>
       <groupId>org.eclipse.jdt</groupId>
-      <artifactId>org.eclipse.jdt.compiler.apt</artifactId>
-      <version>1.4.300</version>
+      <artifactId>ecj</artifactId>
+      <version>3.35.0</version>
       <exclusions>
         <exclusion>
           <groupId>*</groupId>
@@ -148,7 +148,7 @@
     <dependency>
       <groupId>org.eclipse.platform</groupId>
       <artifactId>org.eclipse.osgi</artifactId>
-      <version>3.18.200</version>
+      <version>3.18.500</version>
       <exclusions>
         <exclusion>
           <groupId>*</groupId>
