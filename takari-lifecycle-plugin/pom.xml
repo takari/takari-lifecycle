@@ -126,7 +126,7 @@
     <dependency>
       <groupId>org.eclipse.jdt</groupId>
       <artifactId>org.eclipse.jdt.core</artifactId>
-      <version>3.35.0</version>
+      <version>3.33.0</version>
       <exclusions>
         <exclusion>
           <groupId>*</groupId>
@@ -137,7 +137,7 @@
     <dependency>
       <groupId>org.eclipse.jdt</groupId>
       <artifactId>ecj</artifactId>
-      <version>3.35.0</version>
+      <version>3.33.0</version>
       <exclusions>
         <exclusion>
           <groupId>*</groupId>
