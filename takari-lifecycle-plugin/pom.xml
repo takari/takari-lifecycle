@@ -70,12 +70,18 @@
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-java</artifactId>
-      <version>1.1.2</version>
+      <version>1.2.0</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>org.eclipse.sisu</groupId>
       <artifactId>org.eclipse.sisu.plexus</artifactId>
+      <version>${sisuVersion}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.sisu</groupId>
+      <artifactId>org.eclipse.sisu.inject</artifactId>
       <version>${sisuVersion}</version>
       <scope>provided</scope>
     </dependency>
@@ -160,7 +166,7 @@
     <dependency>
       <groupId>com.github.spullara.mustache.java</groupId>
       <artifactId>compiler</artifactId>
-      <version>0.9.10</version>
+      <version>0.9.11</version>
     </dependency>
     <!-- JAR -->
     <dependency>
@@ -273,7 +279,7 @@
     <dependency>
       <groupId>org.ow2.asm</groupId>
       <artifactId>asm</artifactId>
-      <version>9.4</version>
+      <version>9.6</version>
       <scope>test</scope>
     </dependency>
     <!-- testing deploy -->
