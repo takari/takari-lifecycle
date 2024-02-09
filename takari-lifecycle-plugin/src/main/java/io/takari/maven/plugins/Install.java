@@ -7,13 +7,11 @@
  */
 package io.takari.maven.plugins;
 
-import io.takari.incrementalbuild.Incremental;
 import io.takari.maven.plugins.util.AetherUtils;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.installation.InstallRequest;
@@ -27,15 +25,8 @@ import org.eclipse.aether.util.artifact.SubArtifact;
 @Mojo(name = "install", defaultPhase = LifecyclePhase.INSTALL, configurator = "takari", threadSafe = true)
 public class Install extends TakariLifecycleMojo {
 
-  @Parameter(defaultValue = "false", property = "maven.install.skip")
-  @Incremental(configuration = Incremental.Configuration.ignore)
-  protected boolean mavenInstallSkip;
-
   @Override
   public void executeMojo() throws MojoExecutionException {
-    if (mavenInstallSkip) {
-      logger.info("Skipping install: maven.install.skip=true");
-    }
     installProject(project);
   }
 

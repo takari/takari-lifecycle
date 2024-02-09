@@ -53,18 +53,11 @@ public class Deploy extends TakariLifecycleMojo {
   @Incremental(configuration = Configuration.ignore)
   protected boolean deployAtEnd;
 
-  @Parameter(defaultValue = "false", property = "maven.deploy.skip")
-  @Incremental(configuration = Configuration.ignore)
-  protected boolean mavenDeploySkip;
-
   @Inject
   private DeployParticipant deployParticipant;
 
   @Override
   public void executeMojo() throws MojoExecutionException {
-    if (mavenDeploySkip) {
-      logger.info("Skipping deploy: maven.deploy.skip=true");
-    }
     deployProject(project);
   }
 
