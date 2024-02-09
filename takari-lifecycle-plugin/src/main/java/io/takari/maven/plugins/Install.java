@@ -16,12 +16,13 @@ import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.installation.InstallRequest;
 import org.eclipse.aether.installation.InstallationException;
+import org.eclipse.aether.util.artifact.ArtifactIdUtils;
 import org.eclipse.aether.util.artifact.SubArtifact;
 
 /**
  * @author Jason van Zyl
  */
-@Mojo(name = "install", defaultPhase = LifecyclePhase.INSTALL, configurator = "takari")
+@Mojo(name = "install", defaultPhase = LifecyclePhase.INSTALL, configurator = "takari", threadSafe = true)
 public class Install extends TakariLifecycleMojo {
 
   @Override
@@ -30,30 +31,22 @@ public class Install extends TakariLifecycleMojo {
   }
 
   private void installProject(MavenProject project) throws MojoExecutionException {
-
     InstallRequest installRequest = new InstallRequest();
 
-    if ("pom".equals(project.getPackaging())) {
-      //
-      // POM-project primary artifact
-      //
-      Artifact artifact = AetherUtils.toArtifact(project.getArtifact());
-      artifact = artifact.setFile(project.getFile());
-      installRequest.addArtifact(artifact);
+    Artifact projectArtifact = AetherUtils.toArtifact(project.getArtifact());
+    Artifact pomArtifact = new SubArtifact(projectArtifact, "", "pom");
+    pomArtifact = pomArtifact.setFile(project.getFile());
 
-    } else {
-      //
-      // Primary artifact
-      //
-      Artifact artifact = AetherUtils.toArtifact(project.getArtifact());
-      installRequest.addArtifact(artifact);
+    if (ArtifactIdUtils.equalsId(pomArtifact, projectArtifact)) {
+      if (isFile(projectArtifact.getFile())) {
+        pomArtifact = projectArtifact;
+      }
+      projectArtifact = null;
+    }
 
-      //
-      // POM
-      //
-      Artifact pomArtifact = new SubArtifact(artifact, "", "pom");
-      pomArtifact = pomArtifact.setFile(project.getFile());
-      installRequest.addArtifact(pomArtifact);
+    installRequest.addArtifact(pomArtifact);
+    if (projectArtifact != null) {
+      installRequest.addArtifact(projectArtifact);
     }
 
     //

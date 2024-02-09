@@ -7,6 +7,7 @@
  */
 package io.takari.maven.plugins;
 
+import java.io.File;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -110,5 +111,9 @@ public abstract class TakariLifecycleMojo extends AbstractMojo {
       return true;
     }
     return false;
+  }
+
+  protected boolean isFile(File file) {
+    return file != null && file.isFile();
   }
 }
