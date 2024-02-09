@@ -23,17 +23,18 @@ import org.eclipse.aether.deployment.DeploymentException;
 import org.eclipse.aether.repository.Authentication;
 import org.eclipse.aether.repository.AuthenticationSelector;
 import org.eclipse.aether.repository.RemoteRepository;
-import org.eclipse.aether.util.artifact.SubArtifact;
+import org.eclipse.aether.util.artifact.ArtifactIdUtils;
 
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
 import io.takari.maven.plugins.install_deploy.DeployParticipant;
 import io.takari.maven.plugins.util.AetherUtils;
+import org.eclipse.aether.util.artifact.SubArtifact;
 
 /**
  * @author Jason van Zyl
  */
-@Mojo(name = "deploy", defaultPhase = LifecyclePhase.DEPLOY, configurator = "takari")
+@Mojo(name = "deploy", defaultPhase = LifecyclePhase.DEPLOY, configurator = "takari", threadSafe = true)
 public class Deploy extends TakariLifecycleMojo {
 
   // TODO deploy at the end to prevent corruption
@@ -52,39 +53,38 @@ public class Deploy extends TakariLifecycleMojo {
   @Incremental(configuration = Configuration.ignore)
   protected boolean deployAtEnd;
 
+  @Parameter(defaultValue = "false", property = "maven.deploy.skip")
+  @Incremental(configuration = Configuration.ignore)
+  protected boolean mavenDeploySkip;
+
   @Inject
   private DeployParticipant deployParticipant;
 
   @Override
   public void executeMojo() throws MojoExecutionException {
+    if (mavenDeploySkip) {
+      logger.info("Skipping deploy: maven.deploy.skip=true");
+    }
     deployProject(project);
   }
 
   private void deployProject(MavenProject project) throws MojoExecutionException {
-
     DeployRequest deployRequest = new DeployRequest();
 
-    if ("pom".equals(project.getPackaging())) {
-      //
-      // POM-project primary artifact
-      //
-      Artifact artifact = AetherUtils.toArtifact(project.getArtifact());
-      artifact = artifact.setFile(project.getFile());
-      deployRequest.addArtifact(artifact);
+    Artifact projectArtifact = AetherUtils.toArtifact(project.getArtifact());
+    Artifact pomArtifact = new SubArtifact(projectArtifact, "", "pom");
+    pomArtifact = pomArtifact.setFile(project.getFile());
 
-    } else {
-      //
-      // Primary artifact
-      //
-      Artifact artifact = AetherUtils.toArtifact(project.getArtifact());
-      deployRequest.addArtifact(artifact);
+    if (ArtifactIdUtils.equalsId(pomArtifact, projectArtifact)) {
+      if (isFile(projectArtifact.getFile())) {
+        pomArtifact = projectArtifact;
+      }
+      projectArtifact = null;
+    }
 
-      //
-      // POM
-      //
-      Artifact pomArtifact = new SubArtifact(artifact, "", "pom");
-      pomArtifact = pomArtifact.setFile(project.getFile());
-      deployRequest.addArtifact(pomArtifact);
+    deployRequest.addArtifact(pomArtifact);
+    if (projectArtifact != null) {
+      deployRequest.addArtifact(projectArtifact);
     }
 
     //
