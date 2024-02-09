@@ -11,7 +11,7 @@ import io.takari.maven.testing.executor.MavenVersions;
 import io.takari.maven.testing.executor.junit.MavenJUnitTestRunner;
 
 @RunWith(MavenJUnitTestRunner.class)
-@MavenVersions({"3.6.3"})
+@MavenVersions({"3.6.3", "3.8.8", "3.9.6"})
 public abstract class AbstractIntegrationTest {
 
   @Rule

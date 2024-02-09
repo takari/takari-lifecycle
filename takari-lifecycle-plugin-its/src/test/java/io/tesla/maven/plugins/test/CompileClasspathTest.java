@@ -19,7 +19,10 @@ public class CompileClasspathTest extends AbstractIntegrationTest {
 
     MavenExecutionResult result = verifier.forProject(basedir).execute("compile");
     result.assertErrorFreeLog();
-    result.assertLogText("takari-lifecycle-plugin:" + properties.getPluginVersion() + ":compile");
+    // Logging change in 3.9 "takari-lifecycle-plugin" vs "takari-lifecycle"
+    // Maven 3.9 shows prefix, vs artifactId in previous versions
+    result.assertLogText("takari-lifecycle");
+    result.assertLogText(":" + properties.getPluginVersion() + ":compile");
     // TODO assert the class file(s) were actually created
   }
 }
