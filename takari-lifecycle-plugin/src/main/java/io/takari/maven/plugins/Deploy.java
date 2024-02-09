@@ -24,12 +24,12 @@ import org.eclipse.aether.repository.Authentication;
 import org.eclipse.aether.repository.AuthenticationSelector;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.util.artifact.ArtifactIdUtils;
+import org.eclipse.aether.util.artifact.SubArtifact;
 
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
 import io.takari.maven.plugins.install_deploy.DeployParticipant;
 import io.takari.maven.plugins.util.AetherUtils;
-import org.eclipse.aether.util.artifact.SubArtifact;
 
 /**
  * @author Jason van Zyl
