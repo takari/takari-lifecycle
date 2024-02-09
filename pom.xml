@@ -24,8 +24,8 @@
   <packaging>pom</packaging>
 
   <properties>
-    <mavenVersion>3.9.5</mavenVersion>
-    <aetherVersion>1.9.16</aetherVersion>
+    <mavenVersion>3.9.6</mavenVersion>
+    <aetherVersion>1.9.18</aetherVersion>
     <sisuVersion>0.9.0.M2</sisuVersion>
     <incrementalbuild.version>1.0.0</incrementalbuild.version>
     <guava.version>32.1.3-jre</guava.version>
