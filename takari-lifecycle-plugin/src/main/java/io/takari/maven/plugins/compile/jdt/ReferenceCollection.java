@@ -1,10 +1,15 @@
-/*
- * Copyright (c) 2014-2024 Takari, Inc.
+/*******************************************************************************
+ * Copyright (c) 2000, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
- * https://www.eclipse.org/legal/epl-v10.html
- */
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *     Tim Hanson <thanson@bea.com> - fix for https://bugs.eclipse.org/bugs/show_bug.cgi?id=137634
+ *     Takari, Inc - adopted for use in takari-lifecycle-plugin
+ *******************************************************************************/
 package io.takari.maven.plugins.compile.jdt;
 
 import java.io.Serializable;

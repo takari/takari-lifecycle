@@ -330,20 +330,9 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>com.mycila</groupId>
-        <artifactId>license-maven-plugin</artifactId>
-        <configuration>
-          <excludes combine.children="append">
-            <!-- see similar configuration in parent pom.xml -->
-            <exclude>src/main/java/io/takari/maven/plugins/compile/jdt/ReferenceCollection.java</exclude>
-          </excludes>
-        </configuration>
-      </plugin>
-
-      <plugin>
         <groupId>org.codehaus.modello</groupId>
         <artifactId>modello-maven-plugin</artifactId>
-        <version>2.1.1</version>
+        <version>2.3.0</version>
         <executions>
           <execution>
             <id>standard</id>

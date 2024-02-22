@@ -74,16 +74,20 @@
           <groupId>com.mycila</groupId>
           <artifactId>license-maven-plugin</artifactId>
           <configuration>
-            <excludes combine.children="append">
-              <!-- don't override copyright of code copied from other projects -->
-              <!--
-                | Please note that license-plugin is quite dumb and processes the same sources multiple times
-                | once per each level of parent/module hierarchy. This means the same excludes has to be configured
-                | on each hierarchy level too. (or hope we remember to run "mvn -N license:format", which I am sure
-                | we'll forget)
-               -->
-              <exclude>takari-lifecycle-plugin/src/main/java/io/takari/maven/plugins/compile/jdt/ReferenceCollection.java</exclude>
-            </excludes>
+            <licenseSets>
+              <licenseSet id="takari">
+                <excludes combine.children="append">
+                  <!-- don't override copyright of code copied from other projects -->
+                  <!--
+                    | Please note that license-plugin is quite dumb and processes the same sources multiple times
+                    | once per each level of parent/module hierarchy. This means the same excludes has to be configured
+                    | on each hierarchy level too. (or hope we remember to run "mvn -N license:format", which I am sure
+                    | we'll forget)
+                   -->
+                  <exclude>**/src/main/java/io/takari/maven/plugins/compile/jdt/ReferenceCollection.java</exclude>
+                </excludes>
+              </licenseSet>
+            </licenseSets>
           </configuration>
         </plugin>
       </plugins>
