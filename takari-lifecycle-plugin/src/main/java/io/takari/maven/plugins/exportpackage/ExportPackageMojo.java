@@ -1,5 +1,17 @@
+/*
+ * Copyright (c) 2014-2024 Takari, Inc.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v10.html
+ */
 package io.takari.maven.plugins.exportpackage;
 
+import io.takari.incrementalbuild.Output;
+import io.takari.incrementalbuild.aggregator.AggregatorBuildContext;
+import io.takari.incrementalbuild.aggregator.InputSet;
+import io.takari.incrementalbuild.aggregator.MetadataAggregator;
+import io.takari.maven.plugins.TakariLifecycleMojo;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -13,92 +25,86 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-
 import javax.inject.Inject;
-
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
-import io.takari.incrementalbuild.Output;
-import io.takari.incrementalbuild.aggregator.AggregatorBuildContext;
-import io.takari.incrementalbuild.aggregator.InputSet;
-import io.takari.incrementalbuild.aggregator.MetadataAggregator;
-import io.takari.maven.plugins.TakariLifecycleMojo;
-
 @Mojo(name = "export-package", defaultPhase = LifecyclePhase.PROCESS_CLASSES, threadSafe = true)
 public class ExportPackageMojo extends TakariLifecycleMojo {
 
-  public static final String PATH_EXPORT_PACKAGE = "META-INF/takari/export-package";
+    public static final String PATH_EXPORT_PACKAGE = "META-INF/takari/export-package";
 
-  public static final char EOL = '\n';
+    public static final char EOL = '\n';
 
-  @Parameter(defaultValue = "${project.build.outputDirectory}/" + PATH_EXPORT_PACKAGE)
-  private File outputFile;
+    @Parameter(defaultValue = "${project.build.outputDirectory}/" + PATH_EXPORT_PACKAGE)
+    private File outputFile;
 
-  @Parameter(defaultValue = "${project.build.outputDirectory}")
-  private File classesDirectory;
+    @Parameter(defaultValue = "${project.build.outputDirectory}")
+    private File classesDirectory;
 
-  @Parameter
-  private Set<String> exportIncludes = Collections.emptySet();
+    @Parameter
+    private Set<String> exportIncludes = Collections.emptySet();
 
-  @Parameter
-  private Set<String> exportExcludes = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList("**/internal/**", "**/impl/**")));
+    @Parameter
+    private Set<String> exportExcludes =
+            Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList("**/internal/**", "**/impl/**")));
 
-  @Inject
-  private AggregatorBuildContext buildContext;
+    @Inject
+    private AggregatorBuildContext buildContext;
 
-  @Override
-  protected void executeMojo() throws MojoExecutionException {
-    try {
-      classesDirectory = classesDirectory.getCanonicalFile();
-      generateOutput();
-    } catch (IOException e) {
-      throw new MojoExecutionException("Could not generate export-package file", e);
-    }
-  }
-
-  private void generateOutput() throws IOException {
-    InputSet output = buildContext.newInputSet();
-    output.addInputs(classesDirectory, getIncludes(), exportExcludes);
-    output.aggregateIfNecessary(outputFile, new MetadataAggregator<String>() {
-      @Override
-      public Map<String, String> glean(File input) {
-        return Collections.singletonMap(getPackageName(classesDirectory, input), null);
-      }
-
-      @Override
-      public void aggregate(Output<File> output, Map<String, String> metadata) throws IOException {
-        Set<String> exportedPackages = new TreeSet<>(metadata.keySet());
-        try (BufferedWriter w = new BufferedWriter(new OutputStreamWriter(output.newOutputStream(), StandardCharsets.UTF_8))) {
-          for (String exportedPackage : exportedPackages) {
-            w.write(exportedPackage);
-            w.write(EOL);
-          }
+    @Override
+    protected void executeMojo() throws MojoExecutionException {
+        try {
+            classesDirectory = classesDirectory.getCanonicalFile();
+            generateOutput();
+        } catch (IOException e) {
+            throw new MojoExecutionException("Could not generate export-package file", e);
         }
-      }
-    });
-  }
-
-  private Collection<String> getIncludes() {
-    if (exportIncludes.isEmpty()) {
-      return Collections.singleton("**/*.class");
     }
-    Set<String> includes = new HashSet<>();
-    for (String include : this.exportIncludes) {
-      include = include.replace('\\', '/');
-      if (!include.endsWith("/")) {
-        include = include + "/";
-      }
-      include = include + "*.class";
+
+    private void generateOutput() throws IOException {
+        InputSet output = buildContext.newInputSet();
+        output.addInputs(classesDirectory, getIncludes(), exportExcludes);
+        output.aggregateIfNecessary(outputFile, new MetadataAggregator<String>() {
+            @Override
+            public Map<String, String> glean(File input) {
+                return Collections.singletonMap(getPackageName(classesDirectory, input), null);
+            }
+
+            @Override
+            public void aggregate(Output<File> output, Map<String, String> metadata) throws IOException {
+                Set<String> exportedPackages = new TreeSet<>(metadata.keySet());
+                try (BufferedWriter w =
+                        new BufferedWriter(new OutputStreamWriter(output.newOutputStream(), StandardCharsets.UTF_8))) {
+                    for (String exportedPackage : exportedPackages) {
+                        w.write(exportedPackage);
+                        w.write(EOL);
+                    }
+                }
+            }
+        });
     }
-    return includes;
-  }
 
-  static String getPackageName(File basedir, File file) {
-    String relpath = basedir.toPath().relativize(file.getParentFile().toPath()).toString();
-    return relpath.replace('\\', '/').replace('/', '.');
-  }
+    private Collection<String> getIncludes() {
+        if (exportIncludes.isEmpty()) {
+            return Collections.singleton("**/*.class");
+        }
+        Set<String> includes = new HashSet<>();
+        for (String include : this.exportIncludes) {
+            include = include.replace('\\', '/');
+            if (!include.endsWith("/")) {
+                include = include + "/";
+            }
+            include = include + "*.class";
+        }
+        return includes;
+    }
 
+    static String getPackageName(File basedir, File file) {
+        String relpath =
+                basedir.toPath().relativize(file.getParentFile().toPath()).toString();
+        return relpath.replace('\\', '/').replace('/', '.');
+    }
 }

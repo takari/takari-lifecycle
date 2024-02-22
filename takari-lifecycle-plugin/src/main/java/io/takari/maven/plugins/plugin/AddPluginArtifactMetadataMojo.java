@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2014-2024 Takari, Inc.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v10.html
+ */
 package io.takari.maven.plugins.plugin;
 
 /*
@@ -19,6 +26,7 @@ package io.takari.maven.plugins.plugin;
  * under the License.
  */
 
+import io.takari.maven.plugins.TakariLifecycleMojo;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.repository.metadata.ArtifactRepositoryMetadata;
 import org.apache.maven.artifact.repository.metadata.Versioning;
@@ -27,8 +35,6 @@ import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-
-import io.takari.maven.plugins.TakariLifecycleMojo;
 
 /**
  * Inject any plugin-specific <a href="/ref/current/maven-repository-metadata/repository-metadata.html">artifact metadata</a> to the project's artifact, for subsequent installation and deployment. It
@@ -47,36 +53,36 @@ import io.takari.maven.plugins.TakariLifecycleMojo;
 @Mojo(name = "addPluginArtifactMetadata", defaultPhase = LifecyclePhase.PACKAGE, threadSafe = true)
 public class AddPluginArtifactMetadataMojo extends TakariLifecycleMojo {
 
-  /**
-   * The prefix for the plugin goal.
-   */
-  @Parameter
-  private String goalPrefix;
+    /**
+     * The prefix for the plugin goal.
+     */
+    @Parameter
+    private String goalPrefix;
 
-  @Override
-  protected void executeMojo() throws MojoExecutionException {
-    Artifact projectArtifact = project.getArtifact();
+    @Override
+    protected void executeMojo() throws MojoExecutionException {
+        Artifact projectArtifact = project.getArtifact();
 
-    Versioning versioning = new Versioning();
-    versioning.setLatest(projectArtifact.getVersion());
-    versioning.updateTimestamp();
-    ArtifactRepositoryMetadata metadata = new ArtifactRepositoryMetadata(projectArtifact, versioning);
-    projectArtifact.addMetadata(metadata);
+        Versioning versioning = new Versioning();
+        versioning.setLatest(projectArtifact.getVersion());
+        versioning.updateTimestamp();
+        ArtifactRepositoryMetadata metadata = new ArtifactRepositoryMetadata(projectArtifact, versioning);
+        projectArtifact.addMetadata(metadata);
 
-    GroupRepositoryMetadata groupMetadata = new GroupRepositoryMetadata(project.getGroupId());
-    groupMetadata.addPluginMapping(getGoalPrefix(), project.getArtifactId(), project.getName());
+        GroupRepositoryMetadata groupMetadata = new GroupRepositoryMetadata(project.getGroupId());
+        groupMetadata.addPluginMapping(getGoalPrefix(), project.getArtifactId(), project.getName());
 
-    projectArtifact.addMetadata(groupMetadata);
-  }
-
-  /**
-   * @return the goal prefix parameter or the goal prefix from the Plugin artifactId.
-   */
-  private String getGoalPrefix() {
-    if (goalPrefix == null) {
-      goalPrefix = PluginDescriptor.getGoalPrefixFromArtifactId(project.getArtifactId());
+        projectArtifact.addMetadata(groupMetadata);
     }
 
-    return goalPrefix;
-  }
+    /**
+     * @return the goal prefix parameter or the goal prefix from the Plugin artifactId.
+     */
+    private String getGoalPrefix() {
+        if (goalPrefix == null) {
+            goalPrefix = PluginDescriptor.getGoalPrefixFromArtifactId(project.getArtifactId());
+        }
+
+        return goalPrefix;
+    }
 }

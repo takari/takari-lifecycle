@@ -1,27 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2014-2022 Takari, Inc.
+    Copyright (c) 2014-2024 Takari, Inc.
     All rights reserved. This program and the accompanying materials
     are made available under the terms of the Eclipse Public License v1.0
     which accompanies this distribution, and is available at
-    http://www.eclipse.org/legal/epl-v10.html
+    https://www.eclipse.org/legal/epl-v10.html
 
 -->
-
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>io.takari</groupId>
     <artifactId>takari</artifactId>
-    <version>52</version>
+    <version>53-SNAPSHOT</version>
   </parent>
 
   <groupId>io.takari.maven.plugins</groupId>
   <artifactId>takari-lifecycle</artifactId>
   <version>2.1.4-SNAPSHOT</version>
   <packaging>pom</packaging>
+
+  <modules>
+    <module>takari-lifecycle-plugin</module>
+    <!-- TODO consider moving integration tests to the main module -->
+    <module>takari-lifecycle-plugin-its</module>
+  </modules>
+
+  <scm>
+    <connection>scm:git:git@github.com/takari/takari-lifecycle-plugin.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/takari/takari-lifecycle-plugin.git</developerConnection>
+    <tag>takari-lifecycle-2.1.2</tag>
+    <url>http://github.com/takari/takari-lifecycle-plugin</url>
+  </scm>
 
   <properties>
     <mavenVersion>3.9.6</mavenVersion>
@@ -35,27 +47,14 @@
     <pluginTestingVersion>3.0.1</pluginTestingVersion>
   </properties>
 
-  <scm>
-    <connection>scm:git:git@github.com/takari/takari-lifecycle-plugin.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/takari/takari-lifecycle-plugin.git</developerConnection>
-    <url>http://github.com/takari/takari-lifecycle-plugin</url>
-    <tag>takari-lifecycle-2.1.2</tag>
-  </scm>
-
-  <modules>
-    <module>takari-lifecycle-plugin</module>
-    <!-- TODO consider moving integration tests to the main module -->
-    <module>takari-lifecycle-plugin-its</module>
-  </modules>
-
   <build>
     <resources>
       <resource>
         <directory>src/main/resources</directory>
       </resource>
       <resource>
-        <directory>src/main/resources-filtered</directory>
         <filtering>true</filtering>
+        <directory>src/main/resources-filtered</directory>
       </resource>
     </resources>
     <pluginManagement>
