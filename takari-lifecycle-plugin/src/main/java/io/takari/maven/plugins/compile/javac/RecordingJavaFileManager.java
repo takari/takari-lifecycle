@@ -1,9 +1,9 @@
-/**
- * Copyright (c) 2014 Takari, Inc.
+/*
+ * Copyright (c) 2014-2024 Takari, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * https://www.eclipse.org/legal/epl-v10.html
  */
 package io.takari.maven.plugins.compile.javac;
 
@@ -13,7 +13,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
-
 import javax.tools.FileObject;
 import javax.tools.ForwardingFileObject;
 import javax.tools.ForwardingJavaFileManager;
@@ -23,54 +22,61 @@ import javax.tools.StandardJavaFileManager;
 
 abstract class RecordingJavaFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> {
 
-  private final Charset encoding;
+    private final Charset encoding;
 
-  protected RecordingJavaFileManager(StandardJavaFileManager fileManager, Charset encoding) {
-    super(fileManager);
-    this.encoding = encoding;
-  }
+    protected RecordingJavaFileManager(StandardJavaFileManager fileManager, Charset encoding) {
+        super(fileManager);
+        this.encoding = encoding;
+    }
 
-  @Override
-  public FileObject getFileForOutput(Location location, String packageName, String relativeName, final FileObject sibling) throws IOException {
-    FileObject fileObject = super.getFileForOutput(location, packageName, relativeName, sibling);
-    return new ForwardingFileObject<FileObject>(fileObject) {
-      @Override
-      public OutputStream openOutputStream() throws IOException {
-        record(sibling != null ? FileObjects.toFile(sibling) : null, FileObjects.toFile(fileObject));
-        return new IncrementalFileOutputStream(FileObjects.toFile(this));
-      }
+    @Override
+    public FileObject getFileForOutput(
+            Location location, String packageName, String relativeName, final FileObject sibling) throws IOException {
+        FileObject fileObject = super.getFileForOutput(location, packageName, relativeName, sibling);
+        return new ForwardingFileObject<FileObject>(fileObject) {
+            @Override
+            public OutputStream openOutputStream() throws IOException {
+                record(sibling != null ? FileObjects.toFile(sibling) : null, FileObjects.toFile(fileObject));
+                return new IncrementalFileOutputStream(FileObjects.toFile(this));
+            }
 
-      @Override
-      public Writer openWriter() throws IOException {
-        return encoding != null ? new OutputStreamWriter(openOutputStream(), encoding) : new OutputStreamWriter(openOutputStream());
-      }
-    };
-  }
+            @Override
+            public Writer openWriter() throws IOException {
+                return encoding != null
+                        ? new OutputStreamWriter(openOutputStream(), encoding)
+                        : new OutputStreamWriter(openOutputStream());
+            }
+        };
+    }
 
-  @Override
-  public JavaFileObject getJavaFileForOutput(Location location, String className, javax.tools.JavaFileObject.Kind kind, final FileObject sibling) throws IOException {
-    JavaFileObject fileObject = super.getJavaFileForOutput(location, className, kind, sibling);
-    return new ForwardingJavaFileObject<JavaFileObject>(fileObject) {
-      @Override
-      public OutputStream openOutputStream() throws IOException {
-        record(sibling != null ? FileObjects.toFile(sibling) : null, FileObjects.toFile(fileObject));
-        return new IncrementalFileOutputStream(FileObjects.toFile(this));
-      }
+    @Override
+    public JavaFileObject getJavaFileForOutput(
+            Location location, String className, javax.tools.JavaFileObject.Kind kind, final FileObject sibling)
+            throws IOException {
+        JavaFileObject fileObject = super.getJavaFileForOutput(location, className, kind, sibling);
+        return new ForwardingJavaFileObject<JavaFileObject>(fileObject) {
+            @Override
+            public OutputStream openOutputStream() throws IOException {
+                record(sibling != null ? FileObjects.toFile(sibling) : null, FileObjects.toFile(fileObject));
+                return new IncrementalFileOutputStream(FileObjects.toFile(this));
+            }
 
-      @Override
-      public Writer openWriter() throws IOException {
-        return encoding != null ? new OutputStreamWriter(openOutputStream(), encoding) : new OutputStreamWriter(openOutputStream());
-      }
-    };
-  }
+            @Override
+            public Writer openWriter() throws IOException {
+                return encoding != null
+                        ? new OutputStreamWriter(openOutputStream(), encoding)
+                        : new OutputStreamWriter(openOutputStream());
+            }
+        };
+    }
 
-  // although JavaFileManager is rather vague about this,
-  // javac provides input .java file as 'sibling' of output .class file
-  // javac does not provide sources of files generated by annotation processors
-  protected abstract void record(File inputFile, File outputFile);
+    // although JavaFileManager is rather vague about this,
+    // javac provides input .java file as 'sibling' of output .class file
+    // javac does not provide sources of files generated by annotation processors
+    protected abstract void record(File inputFile, File outputFile);
 
-  @Override
-  public boolean isSameFile(FileObject a, FileObject b) {
-    return a.toUri().equals(b.toUri());
-  }
+    @Override
+    public boolean isSameFile(FileObject a, FileObject b) {
+        return a.toUri().equals(b.toUri());
+    }
 }

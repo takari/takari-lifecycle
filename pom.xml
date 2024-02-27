@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2014-2022 Takari, Inc.
+    Copyright (c) 2014-2024 Takari, Inc.
     All rights reserved. This program and the accompanying materials
     are made available under the terms of the Eclipse Public License v1.0
     which accompanies this distribution, and is available at
-    http://www.eclipse.org/legal/epl-v10.html
+    https://www.eclipse.org/legal/epl-v10.html
 
 -->
-
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>io.takari</groupId>
     <artifactId>takari</artifactId>
-    <version>52</version>
+    <version>53</version>
   </parent>
 
   <groupId>io.takari.maven.plugins</groupId>
@@ -23,30 +22,30 @@
   <version>2.1.4-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <properties>
-    <mavenVersion>3.9.6</mavenVersion>
-    <aetherVersion>1.9.18</aetherVersion>
-    <sisuVersion>0.9.0.M2</sisuVersion>
-    <incrementalbuild.version>1.0.0</incrementalbuild.version>
-    <guava.version>32.1.3-jre</guava.version>
-    <mavenPluginPluginVersion>3.10.2</mavenPluginPluginVersion>
-    <m2eWorkspaceVersion>0.4.0</m2eWorkspaceVersion>
-    <plexusVersion>3.5.1</plexusVersion>
-    <pluginTestingVersion>3.0.1</pluginTestingVersion>
-  </properties>
-
-  <scm>
-    <connection>scm:git:git@github.com/takari/takari-lifecycle-plugin.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/takari/takari-lifecycle-plugin.git</developerConnection>
-    <url>http://github.com/takari/takari-lifecycle-plugin</url>
-    <tag>takari-lifecycle-2.1.2</tag>
-  </scm>
-
   <modules>
     <module>takari-lifecycle-plugin</module>
     <!-- TODO consider moving integration tests to the main module -->
     <module>takari-lifecycle-plugin-its</module>
   </modules>
+
+  <scm>
+    <connection>scm:git:git@github.com:takari/takari-lifecycle.git</connection>
+    <developerConnection>scm:git:git@github.com:takari/takari-lifecycle.git</developerConnection>
+    <tag>HEAD</tag>
+    <url>https://github.com/takari/takari-lifecycle</url>
+  </scm>
+
+  <properties>
+    <mavenVersion>3.9.6</mavenVersion>
+    <aetherVersion>1.9.18</aetherVersion>
+    <sisuVersion>0.9.0.M2</sisuVersion>
+    <incrementalbuild.version>1.0.1</incrementalbuild.version>
+    <guava.version>32.1.3-jre</guava.version>
+    <mavenPluginPluginVersion>3.10.2</mavenPluginPluginVersion>
+    <m2eWorkspaceVersion>0.4.0</m2eWorkspaceVersion>
+    <plexusVersion>3.5.1</plexusVersion>
+    <pluginTestingVersion>3.0.2</pluginTestingVersion>
+  </properties>
 
   <build>
     <resources>
@@ -54,8 +53,8 @@
         <directory>src/main/resources</directory>
       </resource>
       <resource>
-        <directory>src/main/resources-filtered</directory>
         <filtering>true</filtering>
+        <directory>src/main/resources-filtered</directory>
       </resource>
     </resources>
     <pluginManagement>
@@ -75,16 +74,20 @@
           <groupId>com.mycila</groupId>
           <artifactId>license-maven-plugin</artifactId>
           <configuration>
-            <excludes combine.children="append">
-              <!-- don't override copyright of code copied from other projects -->
-              <!--
-                | Please note that license-plugin is quite dumb and processes the same sources multiple times
-                | once per each level of parent/module hierarchy. This means the same excludes has to be configured
-                | on each hierarchy level too. (or hope we remember to run "mvn -N license:format", which I am sure
-                | we'll forget)
-               -->
-              <exclude>takari-lifecycle-plugin/src/main/java/io/takari/maven/plugins/compile/jdt/ReferenceCollection.java</exclude>
-            </excludes>
+            <licenseSets>
+              <licenseSet>
+                <excludes combine.children="append">
+                  <!-- don't override copyright of code copied from other projects -->
+                  <!--
+                    | Please note that license-plugin is quite dumb and processes the same sources multiple times
+                    | once per each level of parent/module hierarchy. This means the same excludes has to be configured
+                    | on each hierarchy level too. (or hope we remember to run "mvn -N license:format", which I am sure
+                    | we'll forget)
+                   -->
+                  <exclude>**/src/main/java/io/takari/maven/plugins/compile/jdt/ReferenceCollection.java</exclude>
+                </excludes>
+              </licenseSet>
+            </licenseSets>
           </configuration>
         </plugin>
       </plugins>

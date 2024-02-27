@@ -1,9 +1,9 @@
-/**
- * Copyright (c) 2017 Salesforce.com, Inc.
+/*
+ * Copyright (c) 2014-2024 Takari, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * https://www.eclipse.org/legal/epl-v10.html
  */
 package io.takari.maven.plugins.compile.jdt;
 
@@ -18,14 +18,14 @@ import java.util.Set;
  */
 class AnnotationProcessingState implements Serializable {
 
-  public final Set<File> processedSources;
-  public final ReferenceCollection referencedTypes;
-  public final Set<File> writtenOutputs;
+    public final Set<File> processedSources;
+    public final ReferenceCollection referencedTypes;
+    public final Set<File> writtenOutputs;
 
-  public AnnotationProcessingState(Set<File> processedSources, ReferenceCollection referencedTypes, Set<File> writtenOutputs) {
-    this.processedSources = Collections.unmodifiableSet(new LinkedHashSet<>(processedSources));
-    this.referencedTypes = referencedTypes;
-    this.writtenOutputs = Collections.unmodifiableSet(new LinkedHashSet<>(writtenOutputs));
-  }
-
+    public AnnotationProcessingState(
+            Set<File> processedSources, ReferenceCollection referencedTypes, Set<File> writtenOutputs) {
+        this.processedSources = Collections.unmodifiableSet(new LinkedHashSet<>(processedSources));
+        this.referencedTypes = referencedTypes;
+        this.writtenOutputs = Collections.unmodifiableSet(new LinkedHashSet<>(writtenOutputs));
+    }
 }

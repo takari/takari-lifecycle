@@ -1,3 +1,10 @@
+/*
+ * Copyright (c) 2014-2024 Takari, Inc.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/legal/epl-v10.html
+ */
 package io.takari.maven.plugins.plugin;
 
 /*
@@ -21,7 +28,6 @@ package io.takari.maven.plugins.plugin;
 
 import java.util.Iterator;
 import java.util.List;
-
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.metadata.AbstractRepositoryMetadata;
 import org.apache.maven.artifact.repository.metadata.Metadata;
@@ -34,79 +40,78 @@ import org.apache.maven.artifact.repository.metadata.Plugin;
  */
 // originally copied from org.apache.maven.artifact.repository.metadata.GroupRepositoryMetadata
 class GroupRepositoryMetadata extends AbstractRepositoryMetadata {
-  private final String groupId;
+    private final String groupId;
 
-  public GroupRepositoryMetadata(String groupId) {
-    super(new Metadata());
-    this.groupId = groupId;
-  }
-
-  @Override
-  public boolean storedInGroupDirectory() {
-    return true;
-  }
-
-  @Override
-  public boolean storedInArtifactVersionDirectory() {
-    return false;
-  }
-
-  @Override
-  public String getGroupId() {
-    return groupId;
-  }
-
-  @Override
-  public String getArtifactId() {
-    return null;
-  }
-
-  @Override
-  public String getBaseVersion() {
-    return null;
-  }
-
-  public void addPluginMapping(String goalPrefix, String artifactId) {
-    addPluginMapping(goalPrefix, artifactId, artifactId);
-  }
-
-  public void addPluginMapping(String goalPrefix, String artifactId, String name) {
-    List plugins = getMetadata().getPlugins();
-    boolean found = false;
-    for (Iterator i = plugins.iterator(); i.hasNext() && !found;) {
-      Plugin plugin = (Plugin) i.next();
-      if (plugin.getPrefix().equals(goalPrefix)) {
-        found = true;
-      }
+    public GroupRepositoryMetadata(String groupId) {
+        super(new Metadata());
+        this.groupId = groupId;
     }
-    if (!found) {
-      Plugin plugin = new Plugin();
-      plugin.setPrefix(goalPrefix);
-      plugin.setArtifactId(artifactId);
-      plugin.setName(name);
 
-
-      getMetadata().addPlugin(plugin);
+    @Override
+    public boolean storedInGroupDirectory() {
+        return true;
     }
-  }
 
-  @Override
-  public Object getKey() {
-    return groupId;
-  }
+    @Override
+    public boolean storedInArtifactVersionDirectory() {
+        return false;
+    }
 
-  @Override
-  public boolean isSnapshot() {
-    return false;
-  }
+    @Override
+    public String getGroupId() {
+        return groupId;
+    }
 
-  @Override
-  public ArtifactRepository getRepository() {
-    return null;
-  }
+    @Override
+    public String getArtifactId() {
+        return null;
+    }
 
-  @Override
-  public void setRepository(ArtifactRepository remoteRepository) {
-    // intentionally blank
-  }
+    @Override
+    public String getBaseVersion() {
+        return null;
+    }
+
+    public void addPluginMapping(String goalPrefix, String artifactId) {
+        addPluginMapping(goalPrefix, artifactId, artifactId);
+    }
+
+    public void addPluginMapping(String goalPrefix, String artifactId, String name) {
+        List plugins = getMetadata().getPlugins();
+        boolean found = false;
+        for (Iterator i = plugins.iterator(); i.hasNext() && !found; ) {
+            Plugin plugin = (Plugin) i.next();
+            if (plugin.getPrefix().equals(goalPrefix)) {
+                found = true;
+            }
+        }
+        if (!found) {
+            Plugin plugin = new Plugin();
+            plugin.setPrefix(goalPrefix);
+            plugin.setArtifactId(artifactId);
+            plugin.setName(name);
+
+            getMetadata().addPlugin(plugin);
+        }
+    }
+
+    @Override
+    public Object getKey() {
+        return groupId;
+    }
+
+    @Override
+    public boolean isSnapshot() {
+        return false;
+    }
+
+    @Override
+    public ArtifactRepository getRepository() {
+        return null;
+    }
+
+    @Override
+    public void setRepository(ArtifactRepository remoteRepository) {
+        // intentionally blank
+    }
 }

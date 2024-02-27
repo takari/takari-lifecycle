@@ -9,6 +9,6 @@ on:
 jobs:
   build:
     name: Verify
-    uses: takari/takari-gh-actions/.github/workflows/ci.yml@v2
+    uses: takari/takari-gh-actions/.github/workflows/ci.yml@v3
     with:
-      jdk-matrix: '[ 11,17,21 ]' # leave out 8 (we moved past it)
+      jdk-matrix: '[ 11,17,21 ]'

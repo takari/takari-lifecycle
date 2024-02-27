@@ -1,17 +1,17 @@
-/**
- * Copyright (c) 2014 Takari, Inc.
+/*
+ * Copyright (c) 2014-2024 Takari, Inc.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * https://www.eclipse.org/legal/epl-v10.html
  */
 package io.takari.maven.plugins;
 
+import io.takari.incrementalbuild.Incremental;
+import io.takari.incrementalbuild.Incremental.Configuration;
 import java.io.File;
 import java.util.List;
-
 import javax.inject.Inject;
-
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecution;
@@ -27,9 +27,6 @@ import org.eclipse.aether.repository.RemoteRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.takari.incrementalbuild.Incremental;
-import io.takari.incrementalbuild.Incremental.Configuration;
-
 // integrate buildinfo: really this can't be packaged up in the JAR as it will prevent being
 // idempotent
 // how can we skip whole phases or at least be consistent
@@ -41,79 +38,81 @@ import io.takari.incrementalbuild.Incremental.Configuration;
 //
 public abstract class TakariLifecycleMojo extends AbstractMojo {
 
-  protected final Logger logger = LoggerFactory.getLogger(getClass());
+    protected final Logger logger = LoggerFactory.getLogger(getClass());
 
-  @Inject
-  protected RepositorySystem repositorySystem;
+    @Inject
+    protected RepositorySystem repositorySystem;
 
-  @Inject
-  protected MavenProjectHelper projectHelper;
+    @Inject
+    protected MavenProjectHelper projectHelper;
 
-  @Parameter(defaultValue = "${project}", readonly = true)
-  @Incremental(configuration = Configuration.ignore)
-  protected MavenProject project;
+    @Parameter(defaultValue = "${project}", readonly = true)
+    @Incremental(configuration = Configuration.ignore)
+    protected MavenProject project;
 
-  @Parameter(defaultValue = "${session}")
-  @Incremental(configuration = Configuration.ignore)
-  private MavenSession session;
+    @Parameter(defaultValue = "${session}")
+    @Incremental(configuration = Configuration.ignore)
+    private MavenSession session;
 
-  @Parameter(defaultValue = "${reactorProjects}", readonly = true)
-  @Incremental(configuration = Configuration.ignore)
-  protected List<MavenProject> reactorProjects;
+    @Parameter(defaultValue = "${reactorProjects}", readonly = true)
+    @Incremental(configuration = Configuration.ignore)
+    protected List<MavenProject> reactorProjects;
 
-  @Parameter(defaultValue = "${repositorySystemSession}", readonly = true)
-  @Incremental(configuration = Configuration.ignore)
-  protected RepositorySystemSession repositorySystemSession;
+    @Parameter(defaultValue = "${repositorySystemSession}", readonly = true)
+    @Incremental(configuration = Configuration.ignore)
+    protected RepositorySystemSession repositorySystemSession;
 
-  @Parameter(defaultValue = "${project.remoteRepositories}", readonly = true)
-  @Incremental(configuration = Configuration.ignore)
-  protected List<RemoteRepository> remoteRepositories;
+    @Parameter(defaultValue = "${project.remoteRepositories}", readonly = true)
+    @Incremental(configuration = Configuration.ignore)
+    protected List<RemoteRepository> remoteRepositories;
 
-  @Parameter(defaultValue = "${mojoExecution}", readonly = true)
-  @Incremental(configuration = Configuration.ignore)
-  protected MojoExecution mojoExecution;
+    @Parameter(defaultValue = "${mojoExecution}", readonly = true)
+    @Incremental(configuration = Configuration.ignore)
+    protected MojoExecution mojoExecution;
 
-  @Parameter(defaultValue = "${mojoExecution.mojoDescriptor}", readonly = true)
-  @Incremental(configuration = Configuration.ignore)
-  protected MojoDescriptor mojoDescriptor;
+    @Parameter(defaultValue = "${mojoExecution.mojoDescriptor}", readonly = true)
+    @Incremental(configuration = Configuration.ignore)
+    protected MojoDescriptor mojoDescriptor;
 
-  @Parameter(defaultValue = "${settings}", readonly = true)
-  @Incremental(configuration = Configuration.ignore)
-  protected Settings settings;
+    @Parameter(defaultValue = "${settings}", readonly = true)
+    @Incremental(configuration = Configuration.ignore)
+    protected Settings settings;
 
-  @Parameter(defaultValue = "false", property = "skip")
-  @Incremental(configuration = Configuration.ignore)
-  protected boolean skip;
+    @Parameter(defaultValue = "false", property = "skip")
+    @Incremental(configuration = Configuration.ignore)
+    protected boolean skip;
 
-  protected abstract void executeMojo() throws MojoExecutionException;
+    protected abstract void executeMojo() throws MojoExecutionException;
 
-  protected void skipMojo() throws MojoExecutionException {
-    // do nothing by default
-  }
-
-  @Override
-  public final void execute() throws MojoExecutionException {
-
-    // skip actually doesn't work here because it's on a per mojo basis
-
-    if (skip) {
-      logger.info(String.format("Skipping %s goal", mojoDescriptor.getGoal()));
-      skipMojo();
-      return;
+    protected void skipMojo() throws MojoExecutionException {
+        // do nothing by default
     }
 
-    executeMojo();
-  }
+    @Override
+    public final void execute() throws MojoExecutionException {
 
-  protected boolean alternateLifecycleProvidingPrimaryArtifact() {
-    String alternateLifecycleProvidingPrimaryArtifact = session.getUserProperties().getProperty(TakariLifecycleFlags.ALTERNATE_LIFECYCLE_PROVIDING_PRIMARY_ARTIFACT);
-    if(alternateLifecycleProvidingPrimaryArtifact != null && alternateLifecycleProvidingPrimaryArtifact.equals("true")) {
-      return true;
+        // skip actually doesn't work here because it's on a per mojo basis
+
+        if (skip) {
+            logger.info(String.format("Skipping %s goal", mojoDescriptor.getGoal()));
+            skipMojo();
+            return;
+        }
+
+        executeMojo();
     }
-    return false;
-  }
 
-  protected boolean isFile(File file) {
-    return file != null && file.isFile();
-  }
+    protected boolean alternateLifecycleProvidingPrimaryArtifact() {
+        String alternateLifecycleProvidingPrimaryArtifact = session.getUserProperties()
+                .getProperty(TakariLifecycleFlags.ALTERNATE_LIFECYCLE_PROVIDING_PRIMARY_ARTIFACT);
+        if (alternateLifecycleProvidingPrimaryArtifact != null
+                && alternateLifecycleProvidingPrimaryArtifact.equals("true")) {
+            return true;
+        }
+        return false;
+    }
+
+    protected boolean isFile(File file) {
+        return file != null && file.isFile();
+    }
 }
