@@ -154,7 +154,7 @@
     <dependency>
       <groupId>org.eclipse.platform</groupId>
       <artifactId>org.eclipse.osgi</artifactId>
-      <version>3.18.500</version>
+      <version>3.18.600</version>
       <exclusions>
         <exclusion>
           <groupId>*</groupId>
@@ -172,12 +172,12 @@
     <dependency>
       <groupId>io.takari</groupId>
       <artifactId>takari-archiver</artifactId>
-      <version>0.1.29</version>
+      <version>0.1.30</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-compress</artifactId>
-      <version>1.25.0</version>
+      <version>1.26.0</version>
     </dependency>
     <!-- Dependency -->
     <dependency>
@@ -201,7 +201,7 @@
     <dependency>
       <groupId>io.takari</groupId>
       <artifactId>jpgp</artifactId>
-      <version>1.0.9</version>
+      <version>1.0.10</version>
     </dependency>
     <!-- test-properties -->
     <dependency>
@@ -268,12 +268,6 @@
       <groupId>io.takari.maven.plugins</groupId>
       <artifactId>takari-plugin-testing</artifactId>
       <version>${pluginTestingVersion}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.takari</groupId>
-      <artifactId>takari-hash</artifactId>
-      <version>0.0.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
