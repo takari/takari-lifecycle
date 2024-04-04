@@ -41,7 +41,7 @@
     <sisuVersion>0.9.0.M2</sisuVersion>
     <incrementalbuild.version>1.0.1</incrementalbuild.version>
     <guava.version>32.1.3-jre</guava.version>
-    <mavenPluginPluginVersion>3.10.2</mavenPluginPluginVersion>
+    <mavenPluginPluginVersion>3.12.0</mavenPluginPluginVersion>
     <m2eWorkspaceVersion>0.4.0</m2eWorkspaceVersion>
     <plexusVersion>3.5.1</plexusVersion>
     <pluginTestingVersion>3.0.2</pluginTestingVersion>
