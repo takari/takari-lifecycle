@@ -5,7 +5,6 @@ import static io.takari.maven.testing.TestResources.cp;
 import static io.takari.maven.testing.TestResources.create;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -105,8 +104,6 @@ public class JarTest {
             if (manifestEntry != null) {
                 InputStream is = zip1.getInputStream(manifestEntry);
                 Manifest p = new Manifest(is);
-                assertNotNull(p.getMainAttributes().getValue("Built-By"));
-                assertNotNull(p.getMainAttributes().getValue("Build-Jdk"));
                 assertEquals("1.0", p.getMainAttributes().getValue("Manifest-Version"));
                 assertEquals("test", p.getMainAttributes().getValue("Implementation-Title"));
                 assertEquals("1.0", p.getMainAttributes().getValue("Implementation-Version"));
@@ -286,8 +283,6 @@ public class JarTest {
         try (JarFile jar = new JarFile(new File(basedir, "target/test-1.0.jar"))) {
             Manifest mf = jar.getManifest();
             Attributes main = mf.getMainAttributes();
-            assertNotNull(main.getValue("Built-By"));
-            assertNotNull(main.getValue("Build-Jdk"));
             assertEquals("1.0", main.getValue("Manifest-Version"));
             assertEquals("test", main.getValue("Implementation-Title"));
             assertEquals("1.0", main.getValue("Implementation-Version"));

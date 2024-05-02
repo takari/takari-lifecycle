@@ -242,8 +242,6 @@ public class Jar extends TakariLifecycleMojo {
         main.putValue("Manifest-Version", "1.0");
         main.putValue("Archiver-Version", "Provisio Archiver");
         main.putValue("Created-By", "Takari Inc.");
-        main.putValue("Built-By", System.getProperty("user.name"));
-        main.putValue("Build-Jdk", System.getProperty("java.version"));
         main.putValue("Specification-Title", project.getArtifactId());
         main.putValue("Specification-Version", project.getVersion());
         main.putValue("Implementation-Title", project.getArtifactId());
