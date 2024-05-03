@@ -166,18 +166,18 @@
     <dependency>
       <groupId>com.github.spullara.mustache.java</groupId>
       <artifactId>compiler</artifactId>
-      <version>0.9.11</version>
+      <version>0.9.13</version>
     </dependency>
     <!-- JAR -->
     <dependency>
       <groupId>io.takari</groupId>
       <artifactId>takari-archiver</artifactId>
-      <version>0.1.30</version>
+      <version>0.1.31</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-compress</artifactId>
-      <version>1.26.0</version>
+      <version>1.26.1</version>
     </dependency>
     <!-- Dependency -->
     <dependency>
@@ -201,7 +201,7 @@
     <dependency>
       <groupId>io.takari</groupId>
       <artifactId>jpgp</artifactId>
-      <version>1.0.10</version>
+      <version>1.0.11</version>
     </dependency>
     <!-- test-properties -->
     <dependency>
@@ -273,7 +273,7 @@
     <dependency>
       <groupId>org.ow2.asm</groupId>
       <artifactId>asm</artifactId>
-      <version>9.6</version>
+      <version>9.7</version>
       <scope>test</scope>
     </dependency>
     <!-- testing deploy -->
