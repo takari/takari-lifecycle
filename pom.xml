@@ -37,7 +37,7 @@
 
   <properties>
     <mavenVersion>3.9.6</mavenVersion>
-    <aetherVersion>1.9.18</aetherVersion>
+    <aetherVersion>1.9.20</aetherVersion>
     <sisuVersion>0.9.0.M2</sisuVersion>
     <incrementalbuild.version>1.0.2</incrementalbuild.version>
     <guava.version>33.2.0-jre</guava.version>
