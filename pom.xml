@@ -43,7 +43,7 @@
     <guava.version>33.2.0-jre</guava.version>
     <mavenPluginPluginVersion>3.13.0</mavenPluginPluginVersion>
     <m2eWorkspaceVersion>0.4.0</m2eWorkspaceVersion>
-    <plexusVersion>3.5.1</plexusVersion>
+    <plexusVersion>4.0.1</plexusVersion>
     <pluginTestingVersion>3.0.2</pluginTestingVersion>
 
     <takari.lifecycleVersion>2.1.5</takari.lifecycleVersion>
