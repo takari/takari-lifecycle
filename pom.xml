@@ -36,7 +36,7 @@
   </scm>
 
   <properties>
-    <mavenVersion>3.9.6</mavenVersion>
+    <mavenVersion>3.9.7</mavenVersion>
     <aetherVersion>1.9.18</aetherVersion>
     <sisuVersion>0.9.0.M2</sisuVersion>
     <incrementalbuild.version>1.0.2</incrementalbuild.version>
