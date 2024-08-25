@@ -19,7 +19,7 @@
 
   <groupId>io.takari.maven.plugins</groupId>
   <artifactId>takari-lifecycle</artifactId>
-  <version>2.1.7-SNAPSHOT</version>
+  <version>2.1.7</version>
   <packaging>pom</packaging>
 
   <modules>
@@ -31,7 +31,7 @@
   <scm>
     <connection>scm:git:git@github.com:takari/takari-lifecycle.git</connection>
     <developerConnection>scm:git:git@github.com:takari/takari-lifecycle.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>takari-lifecycle-2.1.7</tag>
     <url>https://github.com/takari/takari-lifecycle</url>
   </scm>
 
