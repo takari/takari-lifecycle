@@ -14,7 +14,7 @@
   <parent>
     <groupId>io.takari</groupId>
     <artifactId>takari</artifactId>
-    <version>55</version>
+    <version>56</version>
   </parent>
 
   <groupId>io.takari.maven.plugins</groupId>
@@ -36,17 +36,17 @@
   </scm>
 
   <properties>
-    <mavenVersion>3.9.8</mavenVersion>
-    <aetherVersion>1.9.20</aetherVersion>
+    <mavenVersion>3.9.9</mavenVersion>
+    <aetherVersion>1.9.22</aetherVersion>
     <sisuVersion>0.9.0.M3</sisuVersion>
     <incrementalbuild.version>1.0.2</incrementalbuild.version>
-    <guava.version>33.2.1-jre</guava.version>
+    <guava.version>33.3.0-jre</guava.version>
     <mavenPluginPluginVersion>3.13.1</mavenPluginPluginVersion>
     <m2eWorkspaceVersion>0.4.0</m2eWorkspaceVersion>
     <plexusVersion>3.5.1</plexusVersion>
-    <pluginTestingVersion>3.0.2</pluginTestingVersion>
+    <pluginTestingVersion>3.0.3</pluginTestingVersion>
 
-    <takari.lifecycleVersion>2.1.5</takari.lifecycleVersion>
+    <takari.lifecycleVersion>2.1.6</takari.lifecycleVersion>
   </properties>
 
   <build>
