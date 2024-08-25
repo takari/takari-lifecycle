@@ -35,6 +35,7 @@ public class PropertiesWriter {
         properties.store(sw, comment);
         List<String> lines = new ArrayList<>(Arrays.asList(sw.toString().split("\\R")));
         lines.remove(comment != null ? 1 : 0);
+        lines.sort(String::compareTo); // make lines ordering stable
         BufferedWriter w = new BufferedWriter(new OutputStreamWriter(out, ENCODING));
         for (String line : lines) {
             w.write(line);
