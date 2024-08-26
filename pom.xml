@@ -39,7 +39,7 @@
     <mavenVersion>3.9.9</mavenVersion>
     <aetherVersion>1.9.22</aetherVersion>
     <sisuVersion>0.9.0.M3</sisuVersion>
-    <incrementalbuild.version>1.0.2</incrementalbuild.version>
+    <incrementalbuild.version>1.0.3</incrementalbuild.version>
     <guava.version>33.3.0-jre</guava.version>
     <mavenPluginPluginVersion>3.13.1</mavenPluginPluginVersion>
     <m2eWorkspaceVersion>0.4.0</m2eWorkspaceVersion>
