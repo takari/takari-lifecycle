@@ -46,7 +46,7 @@
     <plexusVersion>3.5.1</plexusVersion>
     <pluginTestingVersion>3.0.4</pluginTestingVersion>
 
-    <takari.lifecycleVersion>2.1.6</takari.lifecycleVersion>
+    <takari.lifecycleVersion>2.1.7</takari.lifecycleVersion>
   </properties>
 
   <build>
