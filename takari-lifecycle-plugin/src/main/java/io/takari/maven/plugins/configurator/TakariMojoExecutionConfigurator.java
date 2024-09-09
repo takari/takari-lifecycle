@@ -8,6 +8,8 @@
 package io.takari.maven.plugins.configurator;
 
 import java.util.Collection;
+import javax.inject.Named;
+import javax.inject.Singleton;
 import org.apache.maven.lifecycle.MojoExecutionConfigurator;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;
@@ -16,6 +18,8 @@ import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.StringUtils;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 
+@Singleton
+@Named("takari")
 public class TakariMojoExecutionConfigurator implements MojoExecutionConfigurator {
 
     @Override
