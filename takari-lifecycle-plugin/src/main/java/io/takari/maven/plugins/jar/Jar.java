@@ -247,6 +247,7 @@ public class Jar extends TakariLifecycleMojo {
         main.putValue("Implementation-Title", project.getArtifactId());
         main.putValue("Implementation-Version", project.getVersion());
         main.putValue("Implementation-Vendor-Id", project.getGroupId());
+        main.putValue("Build-Jdk-Spec", System.getProperty("java.specification.version", "unknown"));
 
         if (archive != null && archive.getManifestEntries() != null) {
             for (Map.Entry<String, String> extra : archive.getManifestEntries().entrySet()) {
