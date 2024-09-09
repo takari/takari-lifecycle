@@ -265,7 +265,7 @@ public class Jar extends TakariLifecycleMojo {
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         manifest.write(buf);
 
-        return singleton((ExtendedArchiveEntry) new BytesEntry(MANIFEST_PATH, buf.toByteArray()));
+        return singleton(new BytesEntry(MANIFEST_PATH, buf.toByteArray()));
     }
 
     protected ExtendedArchiveEntry pomPropertiesSource(MavenProject project) throws IOException {

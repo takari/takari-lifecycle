@@ -32,7 +32,7 @@ class AggregateSource implements Source {
 
     @Override
     public Iterable<ExtendedArchiveEntry> entries() {
-        final Predicate<ExtendedArchiveEntry> uniquePathFilter = new Predicate<ExtendedArchiveEntry>() {
+        final Predicate<ExtendedArchiveEntry> uniquePathFilter = new Predicate<>() {
             private final Set<String> entryNames = new HashSet<>();
 
             @Override
