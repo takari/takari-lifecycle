@@ -23,12 +23,15 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TimeZone;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -204,7 +207,7 @@ public class JarTest {
                 actualSb.append(entry.isDirectory() ? "D " : "F ")
                         .append(entry.getName())
                         .append(' ')
-                        .append(entry.getTime())
+                        .append(dosToJavaTime(entry.getTime()))
                         .append('\n');
             }
 
@@ -215,6 +218,18 @@ public class JarTest {
 
             Assert.assertEquals(expectedSb.toString(), actualSb.toString());
         }
+    }
+
+    /**
+     * The method {@link ZipEntry#getTime()} "adjusts" the DOS timestamp ("local time") to Java time ("UTC") by using
+     * "default timezone" of the user. This means, that the method returns different timestamps in different Timezones.
+     * while the value to assert against is Java UTC time. Meaning, test would pass in some TZ but fail in others.
+     * Same applies to DST as well. This method merely "undoes" the adjustment, making it into UTC.
+     */
+    private static long dosToJavaTime(long time) {
+        Calendar cal = Calendar.getInstance(TimeZone.getDefault(), Locale.ROOT);
+        cal.setTimeInMillis(time);
+        return time + ((cal.get(Calendar.ZONE_OFFSET) + (cal.get(Calendar.DST_OFFSET))));
     }
 
     private static <T> List<T> toList(Enumeration<T> e) {
