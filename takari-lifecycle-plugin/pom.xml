@@ -201,12 +201,6 @@
       <artifactId>commons-exec</artifactId>
       <version>1.4.0</version>
     </dependency>
-    <!-- pgp signing -->
-    <dependency>
-      <groupId>io.takari</groupId>
-      <artifactId>jpgp</artifactId>
-      <version>1.0.13</version>
-    </dependency>
     <!-- test-properties -->
     <dependency>
       <groupId>io.takari.m2e.workspace</groupId>
