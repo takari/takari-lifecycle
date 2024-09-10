@@ -63,8 +63,12 @@
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-utils</artifactId>
-      <version>${plexusVersion}</version>
-      <scope>compile</scope>
+      <version>${plexusUtilsVersion}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.plexus</groupId>
+      <artifactId>plexus-xml</artifactId>
+      <version>${plexusXmlVersion}</version>
     </dependency>
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
