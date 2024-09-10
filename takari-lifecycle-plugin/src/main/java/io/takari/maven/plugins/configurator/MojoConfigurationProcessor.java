@@ -10,6 +10,7 @@ package io.takari.maven.plugins.configurator;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.apache.maven.plugin.descriptor.MojoDescriptor;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
@@ -30,19 +31,17 @@ import org.codehaus.plexus.util.xml.Xpp3DomBuilder;
 //
 public class MojoConfigurationProcessor {
 
-    private static PluginDescriptorBuilder pluginDescriptorBuilder = new PluginDescriptorBuilder();
+    private static final PluginDescriptorBuilder pluginDescriptorBuilder = new PluginDescriptorBuilder();
 
     public PlexusConfiguration mojoConfigurationFor(
             Object mojoInstance, PlexusConfiguration pluginConfigurationFromMaven)
             throws ComponentConfigurationException {
         try (InputStream is = mojoInstance.getClass().getResourceAsStream("/META-INF/maven/plugin.xml")) {
-            PluginDescriptor pd =
-                    pluginDescriptorBuilder.build(new InputStreamReader(is, "UTF-8")); // closes input stream too
+            PluginDescriptor pd = pluginDescriptorBuilder.build(
+                    new InputStreamReader(is, StandardCharsets.UTF_8)); // closes input stream too
             String goal = determineGoal(mojoInstance.getClass().getName(), pd);
             PlexusConfiguration defaultMojoConfiguration = pd.getMojo(goal).getMojoConfiguration();
-            PlexusConfiguration mojoConfiguration =
-                    extractAndMerge(goal, pluginConfigurationFromMaven, defaultMojoConfiguration);
-            return mojoConfiguration;
+            return extractAndMerge(goal, pluginConfigurationFromMaven, defaultMojoConfiguration);
         } catch (Exception e) {
             throw new ComponentConfigurationException(e);
         }

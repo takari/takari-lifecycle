@@ -78,7 +78,7 @@ class GeneratorUtils {
             return "";
         }
 
-        StringBuffer decoded = new StringBuffer(description.length() + 1024);
+        StringBuilder decoded = new StringBuilder(description.length() + 1024);
 
         Matcher matcher = Pattern.compile("\\{@(\\w+)\\s*([^\\}]*)\\}").matcher(description);
         while (matcher.find()) {

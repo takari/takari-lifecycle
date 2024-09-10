@@ -183,7 +183,7 @@ public class FilerImplTest {
     }
 
     private Classpath createClasspath() throws IOException {
-        final List<ClasspathEntry> entries = new ArrayList<ClasspathEntry>();
+        final List<ClasspathEntry> entries = new ArrayList<>();
         final List<MutableClasspathEntry> mutableentries = new ArrayList<MutableClasspathEntry>();
         for (Path file : JavaInstallation.getDefault().getClasspath()) {
             if (Files.isRegularFile(file)) {
