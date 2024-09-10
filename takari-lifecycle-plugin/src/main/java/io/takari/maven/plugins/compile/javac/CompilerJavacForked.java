@@ -21,6 +21,7 @@ import java.io.Writer;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -35,8 +36,6 @@ import javax.tools.ToolProvider;
 public class CompilerJavacForked {
 
     private static final String EOL = "\n";
-
-    private static final String ENCODING = "UTF-8";
 
     public static class CompilerConfiguration {
 
@@ -65,8 +64,7 @@ public class CompilerJavacForked {
         }
 
         public void write(File file) throws IOException {
-            Writer writer = newWriter(file);
-            try {
+            try (Writer writer = newWriter(file)) {
                 // encoding
                 if (encoding != null) {
                     writer.write('C');
@@ -87,18 +85,15 @@ public class CompilerJavacForked {
                     writer.write(source.getCanonicalPath());
                     writer.write(EOL);
                 }
-            } finally {
-                writer.close();
             }
         }
 
         public static CompilerConfiguration read(File file) throws IOException {
             Charset encoding = null;
-            List<String> options = new ArrayList<String>();
-            List<File> sources = new ArrayList<File>();
+            List<String> options = new ArrayList<>();
+            List<File> sources = new ArrayList<>();
 
-            BufferedReader reader = newBufferedReader(file);
-            try {
+            try (BufferedReader reader = newBufferedReader(file)) {
                 String str;
                 while ((str = reader.readLine()) != null) {
                     String value = str.substring(1);
@@ -114,8 +109,6 @@ public class CompilerJavacForked {
                             break;
                     }
                 }
-            } finally {
-                reader.close();
             }
 
             return new CompilerConfiguration(encoding, options, sources);
@@ -133,9 +126,12 @@ public class CompilerJavacForked {
         public void processOutput(File inputFile, File outputFile) {
             try {
                 writer.write('O');
-                writer.write(inputFile != null ? URLEncoder.encode(inputFile.getCanonicalPath(), ENCODING) : ".");
+                writer.write(
+                        inputFile != null
+                                ? URLEncoder.encode(inputFile.getCanonicalPath(), StandardCharsets.UTF_8)
+                                : ".");
                 writer.write(' ');
-                writer.write(URLEncoder.encode(outputFile.getCanonicalPath(), ENCODING));
+                writer.write(URLEncoder.encode(outputFile.getCanonicalPath(), StandardCharsets.UTF_8));
                 writer.write(EOL);
             } catch (IOException e) {
                 handleException(e);
@@ -145,7 +141,7 @@ public class CompilerJavacForked {
         public void addMessage(String path, int line, int column, String message, Kind kind) {
             try {
                 writer.write('M');
-                writer.write(URLEncoder.encode(path, ENCODING));
+                writer.write(URLEncoder.encode(path, StandardCharsets.UTF_8));
                 writer.write(' ');
                 writer.write(Integer.toString(line));
                 writer.write(' ');
@@ -163,7 +159,7 @@ public class CompilerJavacForked {
                         break;
                 }
                 writer.write(' ');
-                writer.write(URLEncoder.encode(message, ENCODING));
+                writer.write(URLEncoder.encode(message, StandardCharsets.UTF_8));
                 writer.write(EOL);
             } catch (IOException e) {
                 handleException(e);
@@ -190,27 +186,26 @@ public class CompilerJavacForked {
         }
 
         public static void process(File file, CompilerOutputProcessor callback) throws IOException {
-            BufferedReader reader = newBufferedReader(file);
-            try {
+            try (BufferedReader reader = newBufferedReader(file)) {
                 String str;
                 while ((str = reader.readLine()) != null) {
                     String value = str.substring(1);
                     switch (str.charAt(0)) {
                         case 'O': {
                             StringTokenizer st = new StringTokenizer(value, " ");
-                            String inputPath = URLDecoder.decode(st.nextToken(), ENCODING);
-                            String outputPath = URLDecoder.decode(st.nextToken(), ENCODING);
+                            String inputPath = URLDecoder.decode(st.nextToken(), StandardCharsets.UTF_8);
+                            String outputPath = URLDecoder.decode(st.nextToken(), StandardCharsets.UTF_8);
                             callback.processOutput(
                                     !".".equals(inputPath) ? new File(inputPath) : null, new File(outputPath));
                             break;
                         }
                         case 'M': {
                             StringTokenizer st = new StringTokenizer(value, " ");
-                            String path = URLDecoder.decode(st.nextToken(), ENCODING);
+                            String path = URLDecoder.decode(st.nextToken(), StandardCharsets.UTF_8);
                             int line = Integer.parseInt(st.nextToken());
                             int column = Integer.parseInt(st.nextToken());
                             MessageSeverity severity = toSeverity(st.nextToken());
-                            String message = URLDecoder.decode(st.nextToken(), ENCODING);
+                            String message = URLDecoder.decode(st.nextToken(), StandardCharsets.UTF_8);
                             callback.addMessage(path, line, column, message, severity);
                             break;
                         }
@@ -222,8 +217,6 @@ public class CompilerJavacForked {
                             throw new IllegalArgumentException();
                     }
                 }
-            } finally {
-                reader.close();
             }
         }
 
@@ -239,20 +232,20 @@ public class CompilerJavacForked {
         }
     }
 
-    public static interface CompilerOutputProcessor {
-        public void processOutput(File inputFile, File outputFile);
+    public interface CompilerOutputProcessor {
+        void processOutput(File inputFile, File outputFile);
 
-        public void addMessage(String path, int line, int column, String message, MessageSeverity kind);
+        void addMessage(String path, int line, int column, String message, MessageSeverity kind);
 
-        public void addLogMessage(String message);
+        void addLogMessage(String message);
     }
 
     static Writer newWriter(File file) throws IOException {
-        return new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), ENCODING));
+        return new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8));
     }
 
     static BufferedReader newBufferedReader(File file) throws IOException {
-        return new BufferedReader(new InputStreamReader(new FileInputStream(file), ENCODING));
+        return new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
     }
 
     public static void main(String[] args) throws IOException {
@@ -280,7 +273,7 @@ public class CompilerJavacForked {
         }
 
         final Charset sourceEncoding = config.getSourceEncoding();
-        final DiagnosticCollector<JavaFileObject> diagnosticCollector = new DiagnosticCollector<JavaFileObject>();
+        final DiagnosticCollector<JavaFileObject> diagnosticCollector = new DiagnosticCollector<>();
         final StandardJavaFileManager standardFileManager =
                 compiler.getStandardFileManager(diagnosticCollector, null, sourceEncoding);
         final Iterable<? extends JavaFileObject> fileObjects =
