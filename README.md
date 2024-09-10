@@ -15,7 +15,7 @@ To use it, declare the plugin as extension in your POM:
       <plugin>
         <groupId>io.takari.maven.plugins</groupId>
         <artifactId>takari-lifecycle-plugin</artifactId>
-        <version>2.1.5</version>
+        <version>2.2.0</version>
         <extensions>true</extensions>
       </plugin>
 ```
