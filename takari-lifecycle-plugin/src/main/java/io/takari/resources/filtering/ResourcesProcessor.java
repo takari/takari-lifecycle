@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +46,7 @@ public class ResourcesProcessor {
             List<String> includes,
             List<String> excludes,
             Map<Object, Object> filterProperties,
-            String encoding,
+            Charset encoding,
             MissingPropertyAction mpa)
             throws IOException {
         filterProcessor.process(
@@ -66,7 +67,7 @@ public class ResourcesProcessor {
             List<String> excludes,
             Map<Object, Object> filterProperties,
             List<File> filters,
-            String encoding,
+            Charset encoding,
             MissingPropertyAction mpa)
             throws IOException {
         filterProcessor.process(

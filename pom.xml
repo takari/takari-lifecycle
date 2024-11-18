@@ -14,7 +14,7 @@
   <parent>
     <groupId>io.takari</groupId>
     <artifactId>takari</artifactId>
-    <version>60</version>
+    <version>63</version>
   </parent>
 
   <groupId>io.takari.maven.plugins</groupId>
@@ -36,16 +36,27 @@
   </scm>
 
   <properties>
+    <!--
+    Note: actual runtime requirement is Java 17+ due Eclipse JDT/ECJ!
+    But, to support Maven 3.6/3.8 that use ancient Eclipse Sisu, we cannot
+    create components having bytecode newer than Java 14.
+    So we cheat here: we create components having bytecode Java 11 to make them
+    discoverable, but takari-lifecycle due dependencies is in fact Java 17+
+    -->
+    <takari.javaSourceVersion>11</takari.javaSourceVersion>
+
     <mavenVersion>3.9.9</mavenVersion>
     <aetherVersion>1.9.22</aetherVersion>
     <sisuVersion>0.9.0.M3</sisuVersion>
     <incrementalbuild.version>1.0.3</incrementalbuild.version>
-    <guava.version>33.3.0-jre</guava.version>
-    <mavenPluginPluginVersion>3.15.0</mavenPluginPluginVersion>
+    <mavenPluginPluginVersion>3.15.1</mavenPluginPluginVersion>
     <m2eWorkspaceVersion>0.4.0</m2eWorkspaceVersion>
-    <plexusUtilsVersion>4.0.1</plexusUtilsVersion>
+    <plexusUtilsVersion>4.0.2</plexusUtilsVersion>
     <plexusXmlVersion>3.0.1</plexusXmlVersion>
     <pluginTestingVersion>3.0.5</pluginTestingVersion>
+
+    <!-- UT and IT only! -->
+    <guava.version>33.3.1-jre</guava.version>
   </properties>
 
   <build>

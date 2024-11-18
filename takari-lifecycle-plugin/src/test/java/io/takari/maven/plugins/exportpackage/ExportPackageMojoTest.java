@@ -4,12 +4,12 @@ import static io.takari.maven.testing.TestResources.create;
 import static io.takari.maven.testing.TestResources.rm;
 import static io.takari.maven.testing.TestResources.touch;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 import io.takari.maven.testing.TestResources;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -100,8 +100,9 @@ public class ExportPackageMojoTest {
     }
 
     private void assertExportedPackages(File basedir, String... exportedPackages) throws IOException {
-        List<String> actual = Files.readLines(
-                new File(basedir, "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE), Charsets.UTF_8);
+        List<String> actual = Files.readAllLines(
+                new File(basedir, "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE).toPath(),
+                StandardCharsets.UTF_8);
         Assert.assertEquals(toString(Arrays.asList(exportedPackages)), toString(actual));
     }
 

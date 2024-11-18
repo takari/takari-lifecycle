@@ -6,11 +6,11 @@ import static io.takari.maven.testing.TestResources.cp;
 import static io.takari.maven.testing.TestResources.rm;
 import static org.hamcrest.CoreMatchers.containsString;
 
-import com.google.common.io.Files;
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 import io.takari.maven.testing.TestResources;
 import java.io.File;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -33,7 +33,7 @@ public class ResourcesTest {
         mojos.executeMojo(basedir, "process-resources");
         File resource = new File(basedir, "target/classes/resource.txt");
         Assert.assertTrue(resource.exists());
-        String line = Files.readFirstLine(resource, Charset.defaultCharset());
+        String line = Files.readString(resource.toPath(), Charset.defaultCharset());
         Assert.assertTrue(line.contains("resource.txt"));
     }
 
@@ -65,7 +65,8 @@ public class ResourcesTest {
         mojos.executeMojo(basedir, "process-resources");
         File resource = new File(basedir, "target/classes/resources/targetPath/resource.txt");
         Assert.assertTrue(resource.exists());
-        String line = Files.readFirstLine(resource, Charset.defaultCharset());
+        String line =
+                Files.readAllLines(resource.toPath(), Charset.defaultCharset()).get(0);
         Assert.assertTrue(line.contains("resource.txt"));
     }
 
@@ -189,8 +190,8 @@ public class ResourcesTest {
         mojos.executeMojo(basedir, "process-resources");
         mojos.assertBuildOutputs(basedir, "target/classes/resource.data");
 
-        byte[] expected = Files.toByteArray(new File(basedir, "src/main/resources/resource.data"));
-        byte[] actual = Files.toByteArray(new File(basedir, "target/classes/resource.data"));
+        byte[] expected = Files.readAllBytes(new File(basedir, "src/main/resources/resource.data").toPath());
+        byte[] actual = Files.readAllBytes(new File(basedir, "target/classes/resource.data").toPath());
         Assert.assertArrayEquals(expected, actual);
     }
 }

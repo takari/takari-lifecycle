@@ -6,7 +6,8 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Stack;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
 import org.apache.maven.plugin.descriptor.MojoDescriptor;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.plugin.descriptor.PluginDescriptorBuilder;
@@ -17,14 +18,15 @@ import org.junit.Test;
 
 public class MojoConfigurationMergerTest {
 
-    private static MojoConfigurationProcessor merger = new MojoConfigurationProcessor();
-    private static PluginDescriptorBuilder pluginDescriptorBuilder = new PluginDescriptorBuilder();
+    private static final MojoConfigurationProcessor merger = new MojoConfigurationProcessor();
+    private static final PluginDescriptorBuilder pluginDescriptorBuilder = new PluginDescriptorBuilder();
 
     @Test
     public void determineGoalFromMojoImplementation() throws Exception {
         InputStream is = getClass().getResourceAsStream("/META-INF/maven/plugin.xml");
         assertNotNull(is);
-        PluginDescriptor pluginDescriptor = pluginDescriptorBuilder.build(new InputStreamReader(is, "UTF-8"));
+        PluginDescriptor pluginDescriptor =
+                pluginDescriptorBuilder.build(new InputStreamReader(is, StandardCharsets.UTF_8));
         String goal = merger.determineGoal("io.takari.maven.plugins.jar.Jar", pluginDescriptor);
         assertEquals("We expect the goal name to be 'jar'", "jar", goal);
     }
@@ -33,7 +35,8 @@ public class MojoConfigurationMergerTest {
     public void extractionOfMojoSpecificConfigurationAndMergingwithDefaultMojoConfiguration() throws Exception {
         InputStream is = getClass().getResourceAsStream("/META-INF/maven/plugin.xml");
         assertNotNull(is);
-        PluginDescriptor pluginDescriptor = pluginDescriptorBuilder.build(new InputStreamReader(is, "UTF-8"));
+        PluginDescriptor pluginDescriptor =
+                pluginDescriptorBuilder.build(new InputStreamReader(is, StandardCharsets.UTF_8));
         String goal = merger.determineGoal("io.takari.maven.plugins.jar.Jar", pluginDescriptor);
         assertEquals("We expect the goal name to be 'jar'", "jar", goal);
         MojoDescriptor mojoDescriptor = pluginDescriptor.getMojo(goal);
@@ -92,11 +95,11 @@ public class MojoConfigurationMergerTest {
     }
 
     public class Builder {
-        private Stack<Xpp3Dom> stack;
+        private ArrayDeque<Xpp3Dom> stack;
         private Xpp3Dom configuration;
 
         public Builder(String name) {
-            stack = new Stack<Xpp3Dom>();
+            stack = new ArrayDeque<>();
             configuration = new Xpp3Dom(name);
         }
 
@@ -138,14 +141,14 @@ public class MojoConfigurationMergerTest {
         }
 
         public Xpp3Dom buildXpp3Dom() {
-            if (!stack.empty()) {
+            if (!stack.isEmpty()) {
                 throw new IllegalStateException("You have unclosed elements.");
             }
             return configuration;
         }
 
         public PlexusConfiguration buildPlexusConfiguration() {
-            if (!stack.empty()) {
+            if (!stack.isEmpty()) {
                 throw new IllegalStateException("You have unclosed elements.");
             }
             return new XmlPlexusConfiguration(configuration);

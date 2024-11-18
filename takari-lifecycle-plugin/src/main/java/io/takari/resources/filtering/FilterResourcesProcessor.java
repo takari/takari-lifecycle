@@ -28,6 +28,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +53,7 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
             List<String> excludes,
             Map<Object, Object> filterProperties,
             List<File> filters,
-            String encoding,
+            Charset encoding,
             MissingPropertyAction mpa)
             throws IOException {
         Map<Object, Object> effectiveProperties = new HashMap<>(filterProperties);
@@ -82,7 +84,7 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
             File sourceDirectory,
             File targetDirectory,
             Map<Object, Object> filterProperties,
-            String encoding,
+            Charset encoding,
             MissingPropertyAction mpa)
             throws IOException {
         File outputFile = relativize(sourceDirectory, targetDirectory, input.getResource());
@@ -102,17 +104,17 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
         mustache.execute(writer, properties).close();
     }
 
-    private Reader newReader(Resource<File> resource, String encoding) throws IOException {
+    private Reader newReader(Resource<File> resource, Charset encoding) throws IOException {
         if (encoding == null) {
-            return new FileReader(resource.getResource());
+            return new FileReader(resource.getResource(), StandardCharsets.UTF_8);
         } else {
             return new InputStreamReader(new FileInputStream(resource.getResource()), encoding);
         }
     }
 
-    private Writer newWriter(Output<File> output, String encoding) throws IOException {
+    private Writer newWriter(Output<File> output, Charset encoding) throws IOException {
         if (encoding == null) {
-            return new OutputStreamWriter(output.newOutputStream());
+            return new OutputStreamWriter(output.newOutputStream(), StandardCharsets.UTF_8);
         } else {
             return new OutputStreamWriter(output.newOutputStream(), encoding);
         }

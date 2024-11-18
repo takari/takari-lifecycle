@@ -3,12 +3,12 @@ package io.tesla.maven.plugins.test;
 import static io.takari.maven.testing.TestResources.assertFilesPresent;
 
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import io.takari.maven.testing.executor.MavenExecutionResult;
 import io.takari.maven.testing.executor.MavenRuntime.MavenRuntimeBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.junit.Assert;
@@ -106,7 +106,7 @@ public class BasicTest extends AbstractIntegrationTest {
     }
 
     private String readFileUTF8(File file) throws IOException {
-        return Files.toString(file, StandardCharsets.UTF_8);
+        return Files.readString(file.toPath(), StandardCharsets.UTF_8);
     }
 
     @Test
