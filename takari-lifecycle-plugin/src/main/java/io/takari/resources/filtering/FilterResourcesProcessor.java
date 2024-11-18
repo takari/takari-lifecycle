@@ -21,7 +21,6 @@ import io.takari.incrementalbuild.Resource;
 import io.takari.incrementalbuild.ResourceMetadata;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -29,7 +28,6 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -105,19 +103,11 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
     }
 
     private Reader newReader(Resource<File> resource, Charset encoding) throws IOException {
-        if (encoding == null) {
-            return new FileReader(resource.getResource(), StandardCharsets.UTF_8);
-        } else {
-            return new InputStreamReader(new FileInputStream(resource.getResource()), encoding);
-        }
+        return new InputStreamReader(new FileInputStream(resource.getResource()), encoding);
     }
 
     private Writer newWriter(Output<File> output, Charset encoding) throws IOException {
-        if (encoding == null) {
-            return new OutputStreamWriter(output.newOutputStream(), StandardCharsets.UTF_8);
-        } else {
-            return new OutputStreamWriter(output.newOutputStream(), encoding);
-        }
+        return new OutputStreamWriter(output.newOutputStream(), encoding);
     }
 
     private static class NoEncodingMustacheFactory extends DefaultMustacheFactory {
