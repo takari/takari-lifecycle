@@ -133,7 +133,7 @@ public class TestCompileMojo extends AbstractCompileMojo {
         List<String> roots = project.getTestCompileSourceRoots();
         String root = generatedTestSourcesDirectory.getAbsolutePath();
         if (!roots.contains(root)) {
-            roots.add(root);
+            project.addTestCompileSourceRoot(root);
         }
     }
 

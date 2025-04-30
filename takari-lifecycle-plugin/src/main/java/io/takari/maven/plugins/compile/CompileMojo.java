@@ -145,7 +145,7 @@ public class CompileMojo extends AbstractCompileMojo {
         List<String> roots = project.getCompileSourceRoots();
         String root = generatedSourcesDirectory.getAbsolutePath();
         if (!roots.contains(root)) {
-            roots.add(root);
+            project.addCompileSourceRoot(root);
         }
     }
 

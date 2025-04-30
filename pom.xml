@@ -14,7 +14,7 @@
   <parent>
     <groupId>io.takari</groupId>
     <artifactId>takari</artifactId>
-    <version>63</version>
+    <version>64</version>
   </parent>
 
   <groupId>io.takari.maven.plugins</groupId>
@@ -24,7 +24,6 @@
 
   <modules>
     <module>takari-lifecycle-plugin</module>
-    <!-- TODO consider moving integration tests to the main module -->
     <module>takari-lifecycle-plugin-its</module>
   </modules>
 
@@ -56,7 +55,7 @@
     <pluginTestingVersion>3.0.5</pluginTestingVersion>
 
     <!-- UT and IT only! -->
-    <guava.version>33.3.1-jre</guava.version>
+    <guava.version>33.4.8-jre</guava.version>
   </properties>
 
   <build>
@@ -100,6 +99,14 @@
                 </excludes>
               </licenseSet>
             </licenseSets>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.gaul</groupId>
+          <artifactId>modernizer-maven-plugin</artifactId>
+          <configuration>
+            <!-- TODO: fix MANY violations we have -->
+            <failOnViolations>false</failOnViolations>
           </configuration>
         </plugin>
       </plugins>
