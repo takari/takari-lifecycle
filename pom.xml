@@ -51,7 +51,7 @@
     <mavenPluginPluginVersion>3.15.1</mavenPluginPluginVersion>
     <m2eWorkspaceVersion>0.4.0</m2eWorkspaceVersion>
     <plexusUtilsVersion>4.0.2</plexusUtilsVersion>
-    <plexusXmlVersion>3.0.1</plexusXmlVersion>
+    <plexusXmlVersion>3.0.2</plexusXmlVersion>
     <pluginTestingVersion>3.0.5</pluginTestingVersion>
 
     <!-- UT and IT only! -->
