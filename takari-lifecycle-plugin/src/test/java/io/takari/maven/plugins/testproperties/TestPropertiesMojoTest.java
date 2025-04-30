@@ -3,7 +3,6 @@ package io.takari.maven.plugins.testproperties;
 import static io.takari.maven.testing.TestMavenRuntime.newParameter;
 import static org.hamcrest.CoreMatchers.containsString;
 
-import com.google.common.base.Charsets;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
 import com.google.common.io.Files;
@@ -15,6 +14,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -241,7 +241,7 @@ public class TestPropertiesMojoTest {
         Assert.assertTrue(new File(basedir, "src/test").mkdirs());
 
         try (OutputStream os = new FileOutputStream(new File(basedir, "src/test/test.properties"))) {
-            BufferedWriter w = new BufferedWriter(new OutputStreamWriter(os, Charsets.UTF_8));
+            BufferedWriter w = new BufferedWriter(new OutputStreamWriter(os, StandardCharsets.UTF_8));
             w.write("ga=${g:a}");
             w.newLine();
             w.write("ga_tests=${g:a:tests}");

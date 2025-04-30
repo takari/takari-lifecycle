@@ -93,7 +93,7 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
                 options.add("-proc:only");
                 break;
             case proc:
-                // this is the javac default
+                options.add("-proc:full");
                 break;
             case none:
                 options.add("-proc:none");

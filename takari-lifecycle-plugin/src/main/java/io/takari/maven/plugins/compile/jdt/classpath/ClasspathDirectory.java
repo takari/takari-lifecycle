@@ -35,7 +35,7 @@ public class ClasspathDirectory extends AbstractClasspathDirectory implements Cl
             if (classFile != null) {
                 try (InputStream is = Files.newInputStream(classFile)) {
                     return new NameEnvironmentAnswer(
-                            ClassFileReader.read(is, classFile.getFileName().toString(), false), accessRestriction);
+                            ClassFileReader.read(is, classFile.getFileName().toString()), accessRestriction);
                 }
             }
         } catch (ClassFormatException | IOException e) {

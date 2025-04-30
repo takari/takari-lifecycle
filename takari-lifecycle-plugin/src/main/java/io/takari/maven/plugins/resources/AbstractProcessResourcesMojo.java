@@ -15,6 +15,7 @@ import io.takari.resources.filtering.MissingPropertyAction;
 import io.takari.resources.filtering.ResourcesProcessor;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +71,10 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
     private BuildContext context;
 
     protected void process(List<Resource> resources, File outputDirectory) throws MojoExecutionException {
+        if (encoding == null) {
+            getLog().warn("Using platform encoding to process resources, i.e. build is platform dependent!");
+        }
+        Charset charset = encoding == null ? Charset.defaultCharset() : Charset.forName(encoding);
         for (Resource resource : resources) {
             boolean filter = Boolean.parseBoolean(resource.getFiltering());
             try {
@@ -86,7 +91,7 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
                     targetDirectory = outputDirectory;
                 }
                 if (filter) {
-                    Map<Object, Object> properties = new HashMap<Object, Object>(this.properties);
+                    Map<Object, Object> properties = new HashMap<>(this.properties);
                     properties.putAll(sessionProperties); // command line parameters win over project properties
                     properties.put("project", project);
                     properties.put(
@@ -105,7 +110,7 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
                             resource.getExcludes(),
                             properties,
                             filters,
-                            encoding,
+                            charset,
                             missingPropertyAction);
                 } else {
                     processor.process(

@@ -21,13 +21,13 @@ import io.takari.incrementalbuild.Resource;
 import io.takari.incrementalbuild.ResourceMetadata;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +51,7 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
             List<String> excludes,
             Map<Object, Object> filterProperties,
             List<File> filters,
-            String encoding,
+            Charset encoding,
             MissingPropertyAction mpa)
             throws IOException {
         Map<Object, Object> effectiveProperties = new HashMap<>(filterProperties);
@@ -82,7 +82,7 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
             File sourceDirectory,
             File targetDirectory,
             Map<Object, Object> filterProperties,
-            String encoding,
+            Charset encoding,
             MissingPropertyAction mpa)
             throws IOException {
         File outputFile = relativize(sourceDirectory, targetDirectory, input.getResource());
@@ -102,20 +102,12 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
         mustache.execute(writer, properties).close();
     }
 
-    private Reader newReader(Resource<File> resource, String encoding) throws IOException {
-        if (encoding == null) {
-            return new FileReader(resource.getResource());
-        } else {
-            return new InputStreamReader(new FileInputStream(resource.getResource()), encoding);
-        }
+    private Reader newReader(Resource<File> resource, Charset encoding) throws IOException {
+        return new InputStreamReader(new FileInputStream(resource.getResource()), encoding);
     }
 
-    private Writer newWriter(Output<File> output, String encoding) throws IOException {
-        if (encoding == null) {
-            return new OutputStreamWriter(output.newOutputStream());
-        } else {
-            return new OutputStreamWriter(output.newOutputStream(), encoding);
-        }
+    private Writer newWriter(Output<File> output, Charset encoding) throws IOException {
+        return new OutputStreamWriter(output.newOutputStream(), encoding);
     }
 
     private static class NoEncodingMustacheFactory extends DefaultMustacheFactory {

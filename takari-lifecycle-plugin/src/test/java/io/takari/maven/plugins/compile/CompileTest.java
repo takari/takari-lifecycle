@@ -13,13 +13,13 @@ import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assume.assumeTrue;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
 import io.takari.maven.plugins.compile.javac.CompilerJavac;
 import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -228,7 +228,8 @@ public class CompileTest extends AbstractCompileTest {
         // assert the compiler uses .class file when dependencySourceTypes=ignore
 
         File dependency = compile("compile/basic");
-        Files.write("corrupted", new File(dependency, "target/classes/basic/Basic.java"), Charsets.UTF_8);
+        Files.writeString(
+                new File(dependency, "target/classes/basic/Basic.java").toPath(), "corrupted", StandardCharsets.UTF_8);
         touch(new File(dependency, "target/classes/basic/Basic.java")); // javac will pick newer file by default
 
         File basedir = resources.getBasedir("compile/classpath");

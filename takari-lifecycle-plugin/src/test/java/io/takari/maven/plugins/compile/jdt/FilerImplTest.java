@@ -2,7 +2,6 @@ package io.takari.maven.plugins.compile.jdt;
 
 import static io.takari.maven.testing.TestResources.create;
 
-import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
 import io.takari.maven.plugins.compile.CompilerBuildContext;
 import io.takari.maven.plugins.compile.jdt.classpath.Classpath;
@@ -14,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -45,7 +45,7 @@ public class FilerImplTest {
 
     @Test
     public void testGetResource_unsupportedLocation() throws Exception {
-        EclipseFileManager fileManager = new EclipseFileManager(null, Charsets.UTF_8);
+        EclipseFileManager fileManager = new EclipseFileManager(null, StandardCharsets.UTF_8);
 
         FilerImpl filer = new FilerImpl(null /* context */, fileManager, null /* compiler */, null /* env */);
 
@@ -59,7 +59,7 @@ public class FilerImplTest {
 
     @Test
     public void testGetResource_location_classpath() throws Exception {
-        EclipseFileManager fileManager = new EclipseFileManager(null, Charsets.UTF_8);
+        EclipseFileManager fileManager = new EclipseFileManager(null, StandardCharsets.UTF_8);
 
         List<File> classpath = new ArrayList<>();
         classpath.add(new File("src/test/projects/compile-jdt-proc/getresource-location-classpath/classes"));
@@ -78,13 +78,13 @@ public class FilerImplTest {
 
     private static String toString(FileObject file) throws IOException {
         try (InputStream is = file.openInputStream()) {
-            return CharStreams.toString(new InputStreamReader(is, Charsets.UTF_8));
+            return CharStreams.toString(new InputStreamReader(is, StandardCharsets.UTF_8));
         }
     }
 
     @Test
     public void testRecreateSourceFile() throws Exception {
-        EclipseFileManager fileManager = new EclipseFileManager(null, Charsets.UTF_8);
+        EclipseFileManager fileManager = new EclipseFileManager(null, StandardCharsets.UTF_8);
 
         File outputDir = temp.newFolder();
         fileManager.setLocation(StandardLocation.SOURCE_OUTPUT, Collections.singleton(outputDir));
@@ -105,7 +105,7 @@ public class FilerImplTest {
 
     @Test
     public void testRecreateResource() throws Exception {
-        EclipseFileManager fileManager = new EclipseFileManager(null, Charsets.UTF_8);
+        EclipseFileManager fileManager = new EclipseFileManager(null, StandardCharsets.UTF_8);
 
         File outputDir = temp.newFolder();
         fileManager.setLocation(StandardLocation.SOURCE_OUTPUT, Collections.singleton(outputDir));
@@ -149,7 +149,7 @@ public class FilerImplTest {
         Compiler compiler =
                 new Compiler(namingEnvironment, errorHandlingPolicy, compilerOptions, requestor, problemFactory);
 
-        EclipseFileManager fileManager = new EclipseFileManager(null, Charsets.UTF_8);
+        EclipseFileManager fileManager = new EclipseFileManager(null, StandardCharsets.UTF_8);
         File outputDir = temp.newFolder();
         fileManager.setLocation(StandardLocation.SOURCE_OUTPUT, Collections.singleton(outputDir));
 
@@ -167,7 +167,7 @@ public class FilerImplTest {
 
     @Test
     public void testResourceDoesNotExist() throws Exception {
-        EclipseFileManager fileManager = new EclipseFileManager(null, Charsets.UTF_8);
+        EclipseFileManager fileManager = new EclipseFileManager(null, StandardCharsets.UTF_8);
 
         File outputDir = temp.newFolder();
         fileManager.setLocation(StandardLocation.SOURCE_OUTPUT, Collections.singleton(outputDir));
