@@ -10,7 +10,7 @@ import org.junit.Rule;
 import org.junit.runner.RunWith;
 
 @RunWith(MavenJUnitTestRunner.class)
-@MavenVersions({"3.6.3", "3.8.8", "3.9.9"})
+@MavenVersions({"3.6.3", "3.8.8", "3.9.9", "4.0.0-rc-3"})
 public abstract class AbstractIntegrationTest {
 
     @Rule
