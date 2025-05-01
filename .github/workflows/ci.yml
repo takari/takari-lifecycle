@@ -52,5 +52,5 @@ jobs:
         with:
           path: ~/.m2/repository
           key: maven-${{ hashFiles('**/pom.xml') }}
-      - run: ./mvnw install -e -B -V -f takari-lifecycle-plugin-its
+      - run: ./mvnw verify -e -B -V -f takari-lifecycle-plugin-its
 
