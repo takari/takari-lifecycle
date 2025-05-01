@@ -25,7 +25,10 @@ public class FilteringResourcesTest extends AbstractIntegrationTest {
 
     public FilteringResourcesTest(MavenRuntimeBuilder verifierBuilder) throws Exception {
         super(verifierBuilder);
-        this.verifierForkedBuilder = verifierBuilder.forkedBuilder();
+        this.verifierForkedBuilder = verifierBuilder
+                .forkedBuilder()
+                // TODO: a hack for MavenRuntime; IT framework should support Maven4
+                .withJvmOption("-Dmaven.mainClass=org.apache.maven.cling.MavenCling");
     }
 
     private Properties filter(String project) throws Exception {
