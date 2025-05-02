@@ -52,7 +52,7 @@
     <m2eWorkspaceVersion>0.4.0</m2eWorkspaceVersion>
     <plexusUtilsVersion>4.0.2</plexusUtilsVersion>
     <plexusXmlVersion>3.0.2</plexusXmlVersion>
-    <pluginTestingVersion>3.0.5</pluginTestingVersion>
+    <pluginTestingVersion>3.1.0</pluginTestingVersion>
 
     <!-- UT and IT only! -->
     <guava.version>33.4.8-jre</guava.version>
