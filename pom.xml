@@ -21,6 +21,7 @@
   <artifactId>takari-lifecycle</artifactId>
   <version>2.3.1-SNAPSHOT</version>
   <packaging>pom</packaging>
+  <name>${project.groupId}:${project.artifactId}</name>
 
   <modules>
     <module>takari-lifecycle-plugin</module>
