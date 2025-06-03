@@ -50,12 +50,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.codehaus.plexus</groupId>
-      <artifactId>plexus-xml</artifactId>
-      <version>${plexusXmlVersion}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>io.takari.maven.plugins</groupId>
       <artifactId>takari-plugin-testing</artifactId>
       <version>${pluginTestingVersion}</version>

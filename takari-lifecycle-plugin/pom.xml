@@ -67,11 +67,6 @@
     </dependency>
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
-      <artifactId>plexus-xml</artifactId>
-      <version>${plexusXmlVersion}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-java</artifactId>
       <version>1.5.0</version>
       <scope>compile</scope>
@@ -177,7 +172,7 @@
     <dependency>
       <groupId>io.takari</groupId>
       <artifactId>takari-archiver</artifactId>
-      <version>1.0.3</version>
+      <version>1.0.4</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
