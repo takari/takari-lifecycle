@@ -128,6 +128,43 @@ public class InstallDeployTest {
                 project,
                 "deploy",
                 newParameter(
+                        "altDeploymentRepository", "default::file://" + altDeploymentRepository.getAbsolutePath()));
+        Assert.assertTrue(new File(altDeploymentRepository, "io/takari/lifecycle/its/test/1.0/test-1.0.jar").canRead());
+        Assert.assertTrue(new File(altDeploymentRepository, "io/takari/lifecycle/its/test/1.0/test-1.0.pom").canRead());
+        Assert.assertTrue(
+                new File(altDeploymentRepository, "io/takari/lifecycle/its/test/1.0/test-1.0-sources.jar").canRead());
+        Assert.assertTrue(
+                new File(altDeploymentRepository, "io/takari/lifecycle/its/test/1.0/test-1.0-tests.jar").canRead());
+    }
+
+    @Test
+    public void testAltDeployRepositoryLegacy() throws Exception {
+        File basedir = resources.getBasedir("install-deploy/basic");
+        create(basedir, "target/classes/resource.txt", "target/test-classes/resource.txt");
+
+        File localrepo = new File(basedir, "target/localrepo");
+        Assert.assertTrue(localrepo.mkdirs());
+
+        File remoterepo = new File(basedir, "target/remoterepo");
+        Assert.assertTrue(remoterepo.mkdirs());
+
+        Properties properties = new Properties();
+        properties.put("version", "1.0");
+        properties.put("repopath", remoterepo.getCanonicalPath());
+        MavenProject project = readMavenProject(basedir, properties);
+
+        MavenSession session = newSession(project, localrepo, null);
+
+        mojos.executeMojo(session, project, "jar", newParameter("sourceJar", "true"), newParameter("testJar", "true"));
+        Assert.assertEquals(2, project.getAttachedArtifacts().size());
+
+        File altDeploymentRepository = new File(basedir, "target/altremoterepo");
+
+        mojos.executeMojo(
+                session,
+                project,
+                "deploy",
+                newParameter(
                         "altDeploymentRepository",
                         "default::default::file://" + altDeploymentRepository.getAbsolutePath()));
         Assert.assertTrue(new File(altDeploymentRepository, "io/takari/lifecycle/its/test/1.0/test-1.0.jar").canRead());

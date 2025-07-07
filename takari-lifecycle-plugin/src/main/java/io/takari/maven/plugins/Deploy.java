@@ -99,24 +99,37 @@ public class Deploy extends TakariLifecycleMojo {
         }
     }
 
+    private static final Pattern MODERN_REPOSITORY_PATTERN = Pattern.compile("(.+)::(.+)");
+    private static final Pattern LEGACY_REPOSITORY_PATTERN = Pattern.compile("(.+)::(.+)::(.+)");
+
     //
     // All this logic about finding the right repository needs to be standardized
     //
     public RemoteRepository remoteRepository(MavenProject project) throws MojoExecutionException {
         if (altDeploymentRepository != null) {
-            Matcher matcher = Pattern.compile("(.+)::(.+)::(.+)").matcher(altDeploymentRepository);
-            if (!matcher.matches()) {
+            String id = null;
+            String url = null;
+            Matcher matcher = MODERN_REPOSITORY_PATTERN.matcher(altDeploymentRepository);
+            if (matcher.matches()) {
+                id = matcher.group(1).trim();
+                url = matcher.group(2).trim();
+            } else {
+                matcher = LEGACY_REPOSITORY_PATTERN.matcher(altDeploymentRepository);
+                if (matcher.matches()) {
+                    id = matcher.group(1).trim();
+                    url = matcher.group(3).trim();
+                    logger.warn("Using legacy syntax for repository:  use \"id::url\".");
+                }
+            }
+
+            if (id == null || id.isEmpty() || url == null || url.isEmpty()) {
                 throw new MojoExecutionException(
                         altDeploymentRepository,
                         "Invalid syntax for repository.",
-                        "Invalid syntax for alternative repository. Use \"id::layout::url\".");
+                        "Invalid syntax for alternative repository. Use \"id::url\".");
             }
 
-            String id = matcher.group(1).trim();
-            String layout = matcher.group(2).trim();
-            String url = matcher.group(3).trim();
-
-            RemoteRepository.Builder builder = new RemoteRepository.Builder(id, layout, url);
+            RemoteRepository.Builder builder = new RemoteRepository.Builder(id, "default", url);
 
             // Retrieve the appropriate authentication
             final AuthenticationSelector authenticationSelector = repositorySystemSession.getAuthenticationSelector();
