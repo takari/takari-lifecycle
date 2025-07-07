@@ -108,6 +108,7 @@ public class Deploy extends TakariLifecycleMojo {
     public RemoteRepository remoteRepository(MavenProject project) throws MojoExecutionException {
         if (altDeploymentRepository != null) {
             String id = null;
+            String layout = "default";
             String url = null;
             Matcher matcher = MODERN_REPOSITORY_PATTERN.matcher(altDeploymentRepository);
             if (matcher.matches()) {
@@ -117,8 +118,8 @@ public class Deploy extends TakariLifecycleMojo {
                 matcher = LEGACY_REPOSITORY_PATTERN.matcher(altDeploymentRepository);
                 if (matcher.matches()) {
                     id = matcher.group(1).trim();
+                    layout = matcher.group(2).trim();
                     url = matcher.group(3).trim();
-                    logger.warn("Using legacy syntax for repository:  use \"id::url\".");
                 }
             }
 
@@ -126,10 +127,10 @@ public class Deploy extends TakariLifecycleMojo {
                 throw new MojoExecutionException(
                         altDeploymentRepository,
                         "Invalid syntax for repository.",
-                        "Invalid syntax for alternative repository. Use \"id::url\".");
+                        "Invalid syntax for alternative repository. Use \"id::url\" or \"id::layout::url\".");
             }
 
-            RemoteRepository.Builder builder = new RemoteRepository.Builder(id, "default", url);
+            RemoteRepository.Builder builder = new RemoteRepository.Builder(id, layout, url);
 
             // Retrieve the appropriate authentication
             final AuthenticationSelector authenticationSelector = repositorySystemSession.getAuthenticationSelector();
