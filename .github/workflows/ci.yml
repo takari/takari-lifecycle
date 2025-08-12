@@ -18,7 +18,7 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - uses: actions/setup-java@v4
@@ -41,7 +41,7 @@ jobs:
         os: [ "ubuntu-latest", "windows-latest", "macos-latest" ]
         jdk: [ "17", "21", "24" ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
       - uses: actions/setup-java@v4
