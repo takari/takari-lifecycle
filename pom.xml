@@ -45,7 +45,7 @@
     -->
     <takari.javaSourceVersion>11</takari.javaSourceVersion>
 
-    <mavenVersion>3.9.9</mavenVersion>
+    <mavenVersion>3.9.12</mavenVersion>
     <aetherVersion>1.9.23</aetherVersion>
     <sisuVersion>0.9.0.M4</sisuVersion>
     <incrementalbuild.version>1.0.4</incrementalbuild.version>
