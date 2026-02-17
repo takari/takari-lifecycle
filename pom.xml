@@ -19,7 +19,7 @@
 
   <groupId>io.takari.maven.plugins</groupId>
   <artifactId>takari-lifecycle</artifactId>
-  <version>2.3.2-SNAPSHOT</version>
+  <version>2.3.3-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>${project.groupId}:${project.artifactId}</name>
 
@@ -45,17 +45,17 @@
     -->
     <takari.javaSourceVersion>11</takari.javaSourceVersion>
 
-    <mavenVersion>3.9.9</mavenVersion>
-    <aetherVersion>1.9.23</aetherVersion>
-    <sisuVersion>0.9.0.M4</sisuVersion>
+    <mavenVersion>3.9.12</mavenVersion>
+    <aetherVersion>1.9.25</aetherVersion>
+    <sisuVersion>1.0.0</sisuVersion>
     <incrementalbuild.version>1.0.4</incrementalbuild.version>
-    <mavenPluginPluginVersion>3.15.1</mavenPluginPluginVersion>
+    <mavenPluginPluginVersion>3.15.2</mavenPluginPluginVersion>
     <m2eWorkspaceVersion>0.4.0</m2eWorkspaceVersion>
     <plexusUtilsVersion>3.6.0</plexusUtilsVersion>
     <pluginTestingVersion>3.1.1</pluginTestingVersion>
 
     <!-- UT and IT only! -->
-    <guava.version>33.4.8-jre</guava.version>
+    <guava.version>33.5.0-jre</guava.version>
   </properties>
 
   <build>
