@@ -46,7 +46,7 @@
     <takari.javaSourceVersion>11</takari.javaSourceVersion>
 
     <mavenVersion>3.9.12</mavenVersion>
-    <aetherVersion>1.9.25</aetherVersion>
+    <aetherVersion>1.9.27</aetherVersion>
     <sisuVersion>1.0.0</sisuVersion>
     <incrementalbuild.version>1.0.4</incrementalbuild.version>
     <mavenPluginPluginVersion>3.15.2</mavenPluginPluginVersion>
