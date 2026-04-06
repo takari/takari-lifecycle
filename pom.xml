@@ -14,7 +14,7 @@
   <parent>
     <groupId>io.takari</groupId>
     <artifactId>takari</artifactId>
-    <version>71</version>
+    <version>72</version>
   </parent>
 
   <groupId>io.takari.maven.plugins</groupId>
@@ -45,13 +45,13 @@
     -->
     <takari.javaSourceVersion>11</takari.javaSourceVersion>
 
-    <mavenVersion>3.9.12</mavenVersion>
-    <aetherVersion>1.9.25</aetherVersion>
+    <mavenVersion>3.9.14</mavenVersion>
+    <aetherVersion>1.9.27</aetherVersion>
     <sisuVersion>1.0.0</sisuVersion>
     <incrementalbuild.version>1.0.4</incrementalbuild.version>
     <mavenPluginPluginVersion>3.15.2</mavenPluginPluginVersion>
     <m2eWorkspaceVersion>0.4.0</m2eWorkspaceVersion>
-    <plexusUtilsVersion>3.6.0</plexusUtilsVersion>
+    <plexusUtilsVersion>3.6.1</plexusUtilsVersion>
     <pluginTestingVersion>3.1.1</pluginTestingVersion>
 
     <!-- UT and IT only! -->
