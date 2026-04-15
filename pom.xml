@@ -55,7 +55,7 @@
     <pluginTestingVersion>3.1.1</pluginTestingVersion>
 
     <!-- UT and IT only! -->
-    <guava.version>33.5.0-jre</guava.version>
+    <guava.version>33.6.0-jre</guava.version>
   </properties>
 
   <build>
