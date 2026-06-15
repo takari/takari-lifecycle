@@ -39,7 +39,7 @@ public class CompileJdtClasspathVisibilityTest extends AbstractCompileJdtTest {
         compile(project);
         mojos.assertMessage(
                 new File(basedir, "src/main/java/reference/Reference.java"),
-                "The type 'DependencyClass' is not API",
+                "The type 'DependencyClass' is not accessible",
                 "test-dependency-0.1.jar");
     }
 
@@ -131,7 +131,7 @@ public class CompileJdtClasspathVisibilityTest extends AbstractCompileJdtTest {
         compile(project);
         mojos.assertMessage(
                 new File(basedir, "src/main/java/reference/Reference.java"),
-                "The type 'DependencyInternalClass' is not API",
+                "The type 'DependencyInternalClass' is not accessible",
                 "test-dependency-0.1.jar");
     }
 
@@ -161,7 +161,7 @@ public class CompileJdtClasspathVisibilityTest extends AbstractCompileJdtTest {
 
         mojos.assertMessage(
                 new File(basedir, "src/test/java/reference/ReferenceTest.java"),
-                "The type 'DependencyInternalClass' is not API",
+                "The type 'DependencyInternalClass' is not accessible",
                 "test-dependency-0.1.jar");
     }
 
@@ -181,7 +181,7 @@ public class CompileJdtClasspathVisibilityTest extends AbstractCompileJdtTest {
         compile(project);
         mojos.assertMessage(
                 new File(basedir, "src/main/java/reference/Reference.java"),
-                "The type 'DependencyInternalClass' is not API",
+                "The type 'DependencyInternalClass' is not accessible",
                 "test-dependency-bundle-0.1.jar");
     }
 
