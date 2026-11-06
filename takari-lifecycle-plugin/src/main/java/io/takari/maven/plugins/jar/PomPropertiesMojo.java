@@ -7,9 +7,10 @@
  */
 package io.takari.maven.plugins.jar;
 
-import ca.vanzyl.provisio.archive.ExtendedArchiveEntry;
+import ca.vanzyl.provisio.archive.SourceEntry;
 import io.takari.incrementalbuild.BasicBuildContext;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Component;
@@ -29,11 +30,13 @@ public class PomPropertiesMojo extends Jar {
     @Override
     public void executeMojo() throws MojoExecutionException {
         try {
-            ExtendedArchiveEntry entry = pomPropertiesSource(project);
+            SourceEntry entry = pomPropertiesSource(project);
             try (OutputStream os = context.processOutput(
                             classesDirectory.toPath().resolve(entry.getName()).toFile())
                     .newOutputStream()) {
-                entry.writeEntry(os);
+                try (InputStream is = entry.getContent().open()) {
+                    is.transferTo(os);
+                }
             }
         } catch (IOException e) {
             throw new MojoExecutionException("Could not create Maven pom.properties file", e);

@@ -7,15 +7,12 @@
  */
 package io.takari.maven.plugins.jar;
 
-import ca.vanzyl.provisio.archive.ExtendedArchiveEntry;
 import ca.vanzyl.provisio.archive.Source;
+import ca.vanzyl.provisio.archive.SourceEntry;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 /**
  * Archive source that wraps provided archive entries.
@@ -24,26 +21,22 @@ import java.util.stream.StreamSupport;
  */
 class AggregateSource implements Source {
 
-    private final List<Iterable<ExtendedArchiveEntry>> sources;
+    private final List<Iterable<SourceEntry>> sources;
 
-    public AggregateSource(List<Iterable<ExtendedArchiveEntry>> sources) {
+    public AggregateSource(List<Iterable<SourceEntry>> sources) {
         this.sources = sources;
     }
 
     @Override
-    public Iterable<ExtendedArchiveEntry> entries() {
-        final Predicate<ExtendedArchiveEntry> uniquePathFilter = new Predicate<>() {
-            private final Set<String> entryNames = new HashSet<>();
-
-            @Override
-            public boolean test(ExtendedArchiveEntry input) {
-                return entryNames.add(input.getName());
+    public void forEachEntry(EntryConsumer consumer) throws IOException {
+        Set<String> entryNames = new HashSet<>();
+        for (Iterable<SourceEntry> source : sources) {
+            for (SourceEntry entry : source) {
+                if (entryNames.add(entry.getName())) {
+                    consumer.accept(entry);
+                }
             }
-        };
-        return sources.stream()
-                .flatMap(e -> StreamSupport.stream(e.spliterator(), false))
-                .filter(uniquePathFilter)
-                .collect(Collectors.toList());
+        }
     }
 
     @Override
