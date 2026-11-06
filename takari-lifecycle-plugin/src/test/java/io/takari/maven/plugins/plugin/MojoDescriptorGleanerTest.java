@@ -11,10 +11,10 @@ import io.takari.maven.plugins.plugin.model.PluginDescriptor;
 import io.takari.maven.plugins.plugin.model.io.xpp3.PluginDescriptorXpp3Reader;
 import io.takari.maven.testing.TestProperties;
 import io.takari.maven.testing.TestResources;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.junit.Assert;
@@ -32,8 +32,8 @@ public class MojoDescriptorGleanerTest {
 
     @Test
     public void testGleaner() throws Exception {
-        File basedir = resources.getBasedir("plugin-descriptor/gleaner");
-        MavenProject project = mojos.readMavenProject(basedir);
+        Path basedir = resources.getBasedir("plugin-descriptor/gleaner").toPath();
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
         addDependency(project, "apache-plugin-annotations-jar");
         mojos.executeMojo(project, "compile", newParameter("compilerId", "jdt"));
         mojos.executeMojo(project, "mojo-annotation-processor");
@@ -53,8 +53,8 @@ public class MojoDescriptorGleanerTest {
 
     @Test
     public void testGleanerForBuilder() throws Exception {
-        File basedir = resources.getBasedir("plugin-descriptor/basic-builder");
-        MavenProject project = mojos.readMavenProject(basedir);
+        Path basedir = resources.getBasedir("plugin-descriptor/basic-builder").toPath();
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
         addDependency(project, "apache-plugin-annotations-jar");
         addDependency(project, "maven-plugin-api-jar");
         addDependency(project, "takari-builder-jar");
@@ -84,8 +84,8 @@ public class MojoDescriptorGleanerTest {
         throw new AssertionError("No such requirement " + fieldName);
     }
 
-    private MojoDescriptor readDescriptor(File basedir, String classname) throws IOException, XmlPullParserException {
-        try (InputStream is = new FileInputStream(new File(basedir, "target/classes/" + PATH_MOJOS_XML))) {
+    private MojoDescriptor readDescriptor(Path basedir, String classname) throws IOException, XmlPullParserException {
+        try (InputStream is = Files.newInputStream(basedir.resolve("target/classes/" + PATH_MOJOS_XML))) {
             PluginDescriptor descriptor = new PluginDescriptorXpp3Reader().read(is);
             Assert.assertEquals(1, descriptor.getMojos().size());
             return descriptor.getMojos().get(0);
@@ -93,6 +93,6 @@ public class MojoDescriptorGleanerTest {
     }
 
     private void addDependency(MavenProject project, String property) throws Exception {
-        mojos.newDependency(new File(properties.get(property))).addTo(project);
+        mojos.newDependency(Path.of(properties.get(property)).toFile()).addTo(project);
     }
 }

@@ -10,7 +10,6 @@ package io.takari.maven.plugins.plugin;
 import io.takari.maven.plugins.compile.CompileMojo;
 import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 import java.io.File;
-import java.util.Collections;
 import java.util.List;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -38,6 +37,6 @@ public class MojoAnnotationProcessorMojo extends CompileMojo {
 
     @Override
     protected List<File> getProcessorpath() {
-        return Collections.emptyList();
+        return List.of();
     }
 }

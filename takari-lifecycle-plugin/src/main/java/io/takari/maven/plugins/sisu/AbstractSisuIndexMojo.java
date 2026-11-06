@@ -17,7 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -36,7 +36,7 @@ abstract class AbstractSisuIndexMojo extends TakariLifecycleMojo {
 
         try {
             InputSet inputs = context.newInputSet();
-            inputs.addInputs(getOutputDirectory(), Collections.singleton("**/*.class"), null);
+            inputs.addInputs(getOutputDirectory(), Set.of("**/*.class"), null);
             inputs.aggregateIfNecessary(getOutputFile(), new MetadataAggregator<String>() {
                 @Override
                 public Map<String, String> glean(File input) throws IOException {
@@ -73,7 +73,9 @@ abstract class AbstractSisuIndexMojo extends TakariLifecycleMojo {
             if (annotations != null) {
                 for (IBinaryAnnotation annotation : annotations) {
                     if ("Ljavax/inject/Named;".equals(new String(annotation.getTypeName()))) {
-                        return Collections.singletonMap(new String(type.getName()).replace('/', '.'), null);
+                        Map<String, String> result = new HashMap<>();
+                        result.put(new String(type.getName()).replace('/', '.'), null);
+                        return result;
                     }
                 }
             }

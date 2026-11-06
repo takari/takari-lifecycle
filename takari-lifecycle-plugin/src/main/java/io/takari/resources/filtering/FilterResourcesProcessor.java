@@ -20,7 +20,6 @@ import io.takari.incrementalbuild.Output;
 import io.takari.incrementalbuild.Resource;
 import io.takari.incrementalbuild.ResourceMetadata;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -28,6 +27,7 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +69,7 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
 
     private static Map<String, String> readProperties(File file) {
         Properties properties = new Properties();
-        try (InputStream is = new FileInputStream(file)) {
+        try (InputStream is = Files.newInputStream(file.toPath())) {
             properties.load(is);
         } catch (IOException e) {
             // too bad
@@ -103,7 +103,7 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
     }
 
     private Reader newReader(Resource<File> resource, Charset encoding) throws IOException {
-        return new InputStreamReader(new FileInputStream(resource.getResource()), encoding);
+        return new InputStreamReader(Files.newInputStream(resource.getResource().toPath()), encoding);
     }
 
     private Writer newWriter(Output<File> output, Charset encoding) throws IOException {

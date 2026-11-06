@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Enumeration;
@@ -40,7 +41,7 @@ public class ClasspathDigester {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
-    private static final Map<File, Map<String, byte[]>> CACHE = new ConcurrentHashMap<>();
+    private static final Map<Path, Map<String, byte[]>> CACHE = new ConcurrentHashMap<>();
 
     private final ClassfileDigester digester;
 
@@ -49,8 +50,8 @@ public class ClasspathDigester {
         this.digester = digester;
 
         // this is only needed for unit tests, but won't hurt in general
-        CACHE.remove(new File(project.getBuild().getOutputDirectory()));
-        CACHE.remove(new File(project.getBuild().getTestOutputDirectory()));
+        CACHE.remove(Path.of(project.getBuild().getOutputDirectory()));
+        CACHE.remove(Path.of(project.getBuild().getTestOutputDirectory()));
     }
 
     public HashMap<String, byte[]> digestDependencies(List<File> dependencies) throws IOException {
@@ -60,10 +61,10 @@ public class ClasspathDigester {
 
         // scan dependencies backwards to properly deal with duplicate type definitions
         for (int i = dependencies.size() - 1; i >= 0; i--) {
-            File file = dependencies.get(i);
-            if (file.isFile()) {
+            Path file = dependencies.get(i).toPath();
+            if (Files.isRegularFile(file)) {
                 digest.putAll(digestJar(file));
-            } else if (file.isDirectory()) {
+            } else if (Files.isDirectory(file)) {
                 digest.putAll(digestDirectory(file));
             } else {
                 // happens with reactor dependencies with empty source folders
@@ -79,12 +80,12 @@ public class ClasspathDigester {
         return digest;
     }
 
-    private Map<String, byte[]> digestJar(final File file) throws IOException {
+    private Map<String, byte[]> digestJar(final Path file) throws IOException {
         Map<String, byte[]> digest = CACHE.get(file);
         if (digest == null) {
             digest = new HashMap<>();
             Map<String, byte[]> sourcesDigest = new HashMap<>();
-            try (JarFile jar = new JarFile(file)) {
+            try (JarFile jar = new JarFile(file.toFile())) {
                 for (Enumeration<JarEntry> entries = jar.entries(); entries.hasMoreElements(); ) {
                     JarEntry entry = entries.nextElement();
                     String path = entry.getName();
@@ -110,27 +111,29 @@ public class ClasspathDigester {
         return digest;
     }
 
-    private Map<String, byte[]> digestDirectory(final File directory) throws IOException {
+    private Map<String, byte[]> digestDirectory(final Path directory) throws IOException {
         Map<String, byte[]> digest = CACHE.get(directory);
         if (digest == null) {
             digest = new HashMap<>();
             Map<String, byte[]> sourcesDigest = new HashMap<>();
             DirectoryScanner scanner = new DirectoryScanner();
-            scanner.setBasedir(directory);
+            scanner.setBasedir(directory.toFile());
             scanner.setIncludes(new String[] {"**/*" + SUFFIX_STRING_class, "**/*" + SUFFIX_STRING_java});
             scanner.scan();
             for (String path : scanner.getIncludedFiles()) {
                 if (path.endsWith(SUFFIX_STRING_class)) {
                     String type = toJavaType(path, SUFFIX_STRING_class);
                     try {
-                        digest.put(type, digester.digest(ClassFileReader.read(new File(directory, path))));
+                        digest.put(
+                                type,
+                                digester.digest(ClassFileReader.read(
+                                        directory.resolve(path).toFile())));
                     } catch (ClassFormatException e) {
                         // as far as jdt is concerned, the type does not exist
                     }
                 } else {
                     String type = toJavaType(path, SUFFIX_STRING_java);
-                    try (InputStream inputStream =
-                            Files.newInputStream(directory.toPath().resolve(path))) {
+                    try (InputStream inputStream = Files.newInputStream(directory.resolve(path))) {
                         sourcesDigest.put(type, sha1bytes(inputStream));
                     }
                 }

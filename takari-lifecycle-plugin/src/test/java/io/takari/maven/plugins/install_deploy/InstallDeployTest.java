@@ -5,7 +5,8 @@ import static io.takari.maven.testing.TestResources.create;
 
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 import io.takari.maven.testing.TestResources;
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -34,18 +35,18 @@ public class InstallDeployTest {
 
     @Test
     public void testBasic_release() throws Exception {
-        File basedir = resources.getBasedir("install-deploy/basic");
-        create(basedir, "target/classes/resource.txt", "target/test-classes/resource.txt");
+        Path basedir = resources.getBasedir("install-deploy/basic").toPath();
+        create(basedir.toFile(), "target/classes/resource.txt", "target/test-classes/resource.txt");
 
-        File localrepo = new File(basedir, "target/localrepo");
-        Assert.assertTrue(localrepo.mkdirs());
+        Path localrepo = basedir.resolve("target/localrepo");
+        Files.createDirectories(localrepo);
 
-        File remoterepo = new File(basedir, "target/remoterepo");
-        Assert.assertTrue(remoterepo.mkdirs());
+        Path remoterepo = basedir.resolve("target/remoterepo");
+        Files.createDirectories(remoterepo);
 
         Properties properties = new Properties();
         properties.put("version", "1.0");
-        properties.put("repopath", remoterepo.getCanonicalPath());
+        properties.put("repopath", remoterepo.toRealPath().toString());
         MavenProject project = readMavenProject(basedir, properties);
 
         MavenSession session = newSession(project, localrepo, null);
@@ -54,23 +55,24 @@ public class InstallDeployTest {
         Assert.assertEquals(2, project.getAttachedArtifacts().size());
 
         mojos.executeMojo(session, project, "install");
-        Assert.assertTrue(new File(localrepo, "io/takari/lifecycle/its/test/1.0/test-1.0.jar").canRead());
-        Assert.assertTrue(new File(localrepo, "io/takari/lifecycle/its/test/1.0/test-1.0.pom").canRead());
-        Assert.assertTrue(new File(localrepo, "io/takari/lifecycle/its/test/1.0/test-1.0-sources.jar").canRead());
-        Assert.assertTrue(new File(localrepo, "io/takari/lifecycle/its/test/1.0/test-1.0-tests.jar").canRead());
+        Assert.assertTrue(Files.isReadable(localrepo.resolve("io/takari/lifecycle/its/test/1.0/test-1.0.jar")));
+        Assert.assertTrue(Files.isReadable(localrepo.resolve("io/takari/lifecycle/its/test/1.0/test-1.0.pom")));
+        Assert.assertTrue(Files.isReadable(localrepo.resolve("io/takari/lifecycle/its/test/1.0/test-1.0-sources.jar")));
+        Assert.assertTrue(Files.isReadable(localrepo.resolve("io/takari/lifecycle/its/test/1.0/test-1.0-tests.jar")));
 
         mojos.executeMojo(session, project, "deploy");
-        Assert.assertTrue(new File(remoterepo, "io/takari/lifecycle/its/test/1.0/test-1.0.jar").canRead());
-        Assert.assertTrue(new File(remoterepo, "io/takari/lifecycle/its/test/1.0/test-1.0.pom").canRead());
-        Assert.assertTrue(new File(remoterepo, "io/takari/lifecycle/its/test/1.0/test-1.0-sources.jar").canRead());
-        Assert.assertTrue(new File(remoterepo, "io/takari/lifecycle/its/test/1.0/test-1.0-tests.jar").canRead());
+        Assert.assertTrue(Files.isReadable(remoterepo.resolve("io/takari/lifecycle/its/test/1.0/test-1.0.jar")));
+        Assert.assertTrue(Files.isReadable(remoterepo.resolve("io/takari/lifecycle/its/test/1.0/test-1.0.pom")));
+        Assert.assertTrue(
+                Files.isReadable(remoterepo.resolve("io/takari/lifecycle/its/test/1.0/test-1.0-sources.jar")));
+        Assert.assertTrue(Files.isReadable(remoterepo.resolve("io/takari/lifecycle/its/test/1.0/test-1.0-tests.jar")));
     }
 
-    private MavenSession newSession(MavenProject project, File localrepo, Properties properties) throws Exception {
+    private MavenSession newSession(MavenProject project, Path localrepo, Properties properties) throws Exception {
         MavenExecutionRequest request = new DefaultMavenExecutionRequest();
         MavenExecutionResult result = new DefaultMavenExecutionResult();
         DefaultRepositorySystemSession repoSession = MavenRepositorySystemUtils.newSession();
-        LocalRepository localRepo = new LocalRepository(localrepo);
+        LocalRepository localRepo = new LocalRepository(localrepo.toFile());
         repoSession.setLocalRepositoryManager(mojos.getContainer()
                 .lookup(LocalRepositoryManagerFactory.class, "simple")
                 .newInstance(repoSession, localRepo));
@@ -78,7 +80,8 @@ public class InstallDeployTest {
         List<MavenProject> projects = new ArrayList<>();
         projects.add(project);
         for (String module : project.getModules()) {
-            MavenProject moduleProject = readMavenProject(new File(project.getBasedir(), module), properties);
+            MavenProject moduleProject =
+                    readMavenProject(project.getBasedir().toPath().resolve(module), properties);
             moduleProject.setParent(project);
             projects.add(moduleProject);
         }
@@ -87,33 +90,34 @@ public class InstallDeployTest {
         return session;
     }
 
-    private MavenProject readMavenProject(File basedir, Properties properties) throws Exception {
-        File pom = new File(basedir, "pom.xml");
+    private MavenProject readMavenProject(Path basedir, Properties properties) throws Exception {
+        Path pom = basedir.resolve("pom.xml");
         MavenExecutionRequest request = new DefaultMavenExecutionRequest();
         request.setUserProperties(properties);
-        request.setBaseDirectory(basedir);
+        request.setBaseDirectory(basedir.toFile());
         ProjectBuildingRequest configuration = request.getProjectBuildingRequest();
         configuration.setRepositorySession(new DefaultRepositorySystemSession());
-        MavenProject project =
-                mojos.lookup(ProjectBuilder.class).build(pom, configuration).getProject();
+        MavenProject project = mojos.lookup(ProjectBuilder.class)
+                .build(pom.toFile(), configuration)
+                .getProject();
         Assert.assertNotNull(project);
         return project;
     }
 
     @Test
     public void testAltDeployRepository() throws Exception {
-        File basedir = resources.getBasedir("install-deploy/basic");
-        create(basedir, "target/classes/resource.txt", "target/test-classes/resource.txt");
+        Path basedir = resources.getBasedir("install-deploy/basic").toPath();
+        create(basedir.toFile(), "target/classes/resource.txt", "target/test-classes/resource.txt");
 
-        File localrepo = new File(basedir, "target/localrepo");
-        Assert.assertTrue(localrepo.mkdirs());
+        Path localrepo = basedir.resolve("target/localrepo");
+        Files.createDirectories(localrepo);
 
-        File remoterepo = new File(basedir, "target/remoterepo");
-        Assert.assertTrue(remoterepo.mkdirs());
+        Path remoterepo = basedir.resolve("target/remoterepo");
+        Files.createDirectories(remoterepo);
 
         Properties properties = new Properties();
         properties.put("version", "1.0");
-        properties.put("repopath", remoterepo.getCanonicalPath());
+        properties.put("repopath", remoterepo.toRealPath().toString());
         MavenProject project = readMavenProject(basedir, properties);
 
         MavenSession session = newSession(project, localrepo, null);
@@ -121,36 +125,37 @@ public class InstallDeployTest {
         mojos.executeMojo(session, project, "jar", newParameter("sourceJar", "true"), newParameter("testJar", "true"));
         Assert.assertEquals(2, project.getAttachedArtifacts().size());
 
-        File altDeploymentRepository = new File(basedir, "target/altremoterepo");
+        Path altDeploymentRepository = basedir.resolve("target/altremoterepo");
 
         mojos.executeMojo(
                 session,
                 project,
                 "deploy",
-                newParameter(
-                        "altDeploymentRepository", "default::file://" + altDeploymentRepository.getAbsolutePath()));
-        Assert.assertTrue(new File(altDeploymentRepository, "io/takari/lifecycle/its/test/1.0/test-1.0.jar").canRead());
-        Assert.assertTrue(new File(altDeploymentRepository, "io/takari/lifecycle/its/test/1.0/test-1.0.pom").canRead());
+                newParameter("altDeploymentRepository", "default::file://" + altDeploymentRepository.toAbsolutePath()));
         Assert.assertTrue(
-                new File(altDeploymentRepository, "io/takari/lifecycle/its/test/1.0/test-1.0-sources.jar").canRead());
+                Files.isReadable(altDeploymentRepository.resolve("io/takari/lifecycle/its/test/1.0/test-1.0.jar")));
         Assert.assertTrue(
-                new File(altDeploymentRepository, "io/takari/lifecycle/its/test/1.0/test-1.0-tests.jar").canRead());
+                Files.isReadable(altDeploymentRepository.resolve("io/takari/lifecycle/its/test/1.0/test-1.0.pom")));
+        Assert.assertTrue(Files.isReadable(
+                altDeploymentRepository.resolve("io/takari/lifecycle/its/test/1.0/test-1.0-sources.jar")));
+        Assert.assertTrue(Files.isReadable(
+                altDeploymentRepository.resolve("io/takari/lifecycle/its/test/1.0/test-1.0-tests.jar")));
     }
 
     @Test
     public void testAltDeployRepositoryLegacy() throws Exception {
-        File basedir = resources.getBasedir("install-deploy/basic");
-        create(basedir, "target/classes/resource.txt", "target/test-classes/resource.txt");
+        Path basedir = resources.getBasedir("install-deploy/basic").toPath();
+        create(basedir.toFile(), "target/classes/resource.txt", "target/test-classes/resource.txt");
 
-        File localrepo = new File(basedir, "target/localrepo");
-        Assert.assertTrue(localrepo.mkdirs());
+        Path localrepo = basedir.resolve("target/localrepo");
+        Files.createDirectories(localrepo);
 
-        File remoterepo = new File(basedir, "target/remoterepo");
-        Assert.assertTrue(remoterepo.mkdirs());
+        Path remoterepo = basedir.resolve("target/remoterepo");
+        Files.createDirectories(remoterepo);
 
         Properties properties = new Properties();
         properties.put("version", "1.0");
-        properties.put("repopath", remoterepo.getCanonicalPath());
+        properties.put("repopath", remoterepo.toRealPath().toString());
         MavenProject project = readMavenProject(basedir, properties);
 
         MavenSession session = newSession(project, localrepo, null);
@@ -158,7 +163,7 @@ public class InstallDeployTest {
         mojos.executeMojo(session, project, "jar", newParameter("sourceJar", "true"), newParameter("testJar", "true"));
         Assert.assertEquals(2, project.getAttachedArtifacts().size());
 
-        File altDeploymentRepository = new File(basedir, "target/altremoterepo");
+        Path altDeploymentRepository = basedir.resolve("target/altremoterepo");
 
         mojos.executeMojo(
                 session,
@@ -166,28 +171,30 @@ public class InstallDeployTest {
                 "deploy",
                 newParameter(
                         "altDeploymentRepository",
-                        "default::default::file://" + altDeploymentRepository.getAbsolutePath()));
-        Assert.assertTrue(new File(altDeploymentRepository, "io/takari/lifecycle/its/test/1.0/test-1.0.jar").canRead());
-        Assert.assertTrue(new File(altDeploymentRepository, "io/takari/lifecycle/its/test/1.0/test-1.0.pom").canRead());
+                        "default::default::file://" + altDeploymentRepository.toAbsolutePath()));
         Assert.assertTrue(
-                new File(altDeploymentRepository, "io/takari/lifecycle/its/test/1.0/test-1.0-sources.jar").canRead());
+                Files.isReadable(altDeploymentRepository.resolve("io/takari/lifecycle/its/test/1.0/test-1.0.jar")));
         Assert.assertTrue(
-                new File(altDeploymentRepository, "io/takari/lifecycle/its/test/1.0/test-1.0-tests.jar").canRead());
+                Files.isReadable(altDeploymentRepository.resolve("io/takari/lifecycle/its/test/1.0/test-1.0.pom")));
+        Assert.assertTrue(Files.isReadable(
+                altDeploymentRepository.resolve("io/takari/lifecycle/its/test/1.0/test-1.0-sources.jar")));
+        Assert.assertTrue(Files.isReadable(
+                altDeploymentRepository.resolve("io/takari/lifecycle/its/test/1.0/test-1.0-tests.jar")));
     }
 
     @Test
     public void testDeployAtEnd() throws Exception {
-        File basedir = resources.getBasedir("install-deploy/deploy-at-end");
+        Path basedir = resources.getBasedir("install-deploy/deploy-at-end").toPath();
 
-        File localrepo = new File(basedir, "target/localrepo");
-        Assert.assertTrue(localrepo.mkdirs());
+        Path localrepo = basedir.resolve("target/localrepo");
+        Files.createDirectories(localrepo);
 
-        File remoterepo = new File(basedir, "target/remoterepo");
-        Assert.assertTrue(remoterepo.mkdirs());
+        Path remoterepo = basedir.resolve("target/remoterepo");
+        Files.createDirectories(remoterepo);
 
         Properties properties = new Properties();
         properties.put("version", "1.0");
-        properties.put("repopath", remoterepo.getCanonicalPath());
+        properties.put("repopath", remoterepo.toRealPath().toString());
         MavenProject project = readMavenProject(basedir, properties);
 
         MavenSession session = newSession(project, localrepo, properties);
@@ -205,15 +212,15 @@ public class InstallDeployTest {
             mojos.executeMojo(session, reactorProject, "deploy");
         }
 
-        Assert.assertFalse(new File(remoterepo, "io/takari/lifecycle/its/test/1.0/test-1.0.pom").canRead());
+        Assert.assertFalse(Files.isReadable(remoterepo.resolve("io/takari/lifecycle/its/test/1.0/test-1.0.pom")));
         Assert.assertFalse(
-                new File(remoterepo, "io/takari/lifecycle/its/test-modulea/1.0/test-modulea-1.0.jar").canRead());
+                Files.isReadable(remoterepo.resolve("io/takari/lifecycle/its/test-modulea/1.0/test-modulea-1.0.jar")));
         Assert.assertFalse(
-                new File(remoterepo, "io/takari/lifecycle/its/test-modulea/1.0/test-modulea-1.0.pom").canRead());
+                Files.isReadable(remoterepo.resolve("io/takari/lifecycle/its/test-modulea/1.0/test-modulea-1.0.pom")));
         Assert.assertFalse(
-                new File(remoterepo, "io/takari/lifecycle/its/test-moduleb/1.0/test-moduleb-1.0.jar").canRead());
+                Files.isReadable(remoterepo.resolve("io/takari/lifecycle/its/test-moduleb/1.0/test-moduleb-1.0.jar")));
         Assert.assertFalse(
-                new File(remoterepo, "io/takari/lifecycle/its/test-moduleb/1.0/test-moduleb-1.0.pom").canRead());
+                Files.isReadable(remoterepo.resolve("io/takari/lifecycle/its/test-moduleb/1.0/test-moduleb-1.0.pom")));
 
         Assert.assertEquals(3, deployParticipant.getDeployAtEndRequests().size());
     }

@@ -21,13 +21,13 @@ import io.takari.maven.plugins.plugin.model.MojoRequirement;
 import io.takari.maven.plugins.plugin.model.PluginDescriptor;
 import io.takari.maven.plugins.plugin.model.io.xpp3.PluginDescriptorXpp3Reader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -106,8 +106,8 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
     protected void executeMojo() throws MojoExecutionException {
 
         try {
-            File mojosXml = new File(outputDirectory, PATH_MOJOS_XML);
-            if (!mojosXml.isFile()) {
+            File mojosXml = outputDirectory.toPath().resolve(PATH_MOJOS_XML).toFile();
+            if (!Files.isRegularFile(mojosXml.toPath())) {
                 // the project does not have any mojos, don't create empty plugin.xml
                 return;
             }
@@ -120,13 +120,13 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
                 if (artifact.getFile().isFile()) {
                     classpathJars.add(inputSet.addInput(artifact.getFile()));
                 } else if (artifact.getFile().isDirectory()) {
-                    File file = new File(artifact.getFile(), PATH_MOJOS_XML);
-                    if (file.canRead()) {
-                        classpathFiles.add(inputSet.addInput(file));
+                    Path file = artifact.getFile().toPath().resolve(PATH_MOJOS_XML);
+                    if (Files.isReadable(file)) {
+                        classpathFiles.add(inputSet.addInput(file.toFile()));
                     }
                 }
             }
-            inputSet.addInput(new File(outputDirectory, PATH_MOJOS_XML));
+            inputSet.addInput(mojosXml);
 
             if (eclipseMetadataFile.isFile()) {
                 inputSet.addInput(eclipseMetadataFile);
@@ -136,21 +136,27 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
             // the metadata will be overwritten by #createEclipseMetadataXml, which almost certainly not what the user
             // expects
             for (Resource resource : resources) {
-                File otherEclipseMetadataFile = new File(resource.getDirectory(), PATH_METADATA_XML);
-                if (otherEclipseMetadataFile.isFile()) {
+                if (resource.getDirectory() == null) {
+                    continue;
+                }
+                Path otherEclipseMetadataFile = Path.of(resource.getDirectory(), PATH_METADATA_XML);
+                if (Files.isRegularFile(otherEclipseMetadataFile)) {
                     throw new MojoExecutionException(String.format(
                             "Unexpected Eclipse m2e metadata found %s. Did you mean to move it to %s",
                             otherEclipseMetadataFile, eclipseMetadataFile));
                 }
             }
 
-            inputSet.aggregateIfNecessary(new File(outputDirectory, PATH_PLUGIN_XML), new InputAggregator() {
+            File pluginXml = outputDirectory.toPath().resolve(PATH_PLUGIN_XML).toFile();
+            inputSet.aggregateIfNecessary(pluginXml, new InputAggregator() {
                 @Override
                 public void aggregate(Output<File> output, Iterable<File> inputs) throws IOException {
                     createPluginXml(output, mojosXml, classpathFiles, classpathJars);
                 }
             });
-            inputSet.aggregateIfNecessary(new File(outputDirectory, PATH_METADATA_XML), new InputAggregator() {
+            File metadataXml =
+                    outputDirectory.toPath().resolve(PATH_METADATA_XML).toFile();
+            inputSet.aggregateIfNecessary(metadataXml, new InputAggregator() {
                 @Override
                 public void aggregate(Output<File> output, Iterable<File> inputs) throws IOException {
                     createEclipseMetadataXml(output, mojosXml, eclipseMetadataFile);
@@ -218,7 +224,7 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
 
     private Map<String, MojoDescriptor> loadMojos(File mojosXml) throws IOException {
         Map<String, MojoDescriptor> mojos = new HashMap<>();
-        try (InputStream is = new FileInputStream(mojosXml)) {
+        try (InputStream is = Files.newInputStream(mojosXml.toPath())) {
             readMojosXml(mojos, is);
         } catch (XmlPullParserException e) {
             throw new IOException(e);
@@ -249,7 +255,7 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
             }
         }
         for (File mojosXmlFile : files) {
-            try (InputStream is = new FileInputStream(mojosXmlFile)) {
+            try (InputStream is = Files.newInputStream(mojosXmlFile.toPath())) {
                 readMojosXml(mojos, is);
             } catch (XmlPullParserException | IOException e) {
                 logger.warn("Could not read dependency mojos.xml " + mojosXmlFile, e);

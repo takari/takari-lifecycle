@@ -24,7 +24,6 @@ package io.takari.maven.plugins.util;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.apache.maven.artifact.handler.ArtifactHandler;
@@ -118,7 +117,7 @@ public class AetherUtils {
             nodeTrail.addAll(trail);
             nodeTrail.add(artifact.getId());
 
-            if (filter == null || filter.accept(node, Collections.<DependencyNode>emptyList())) {
+            if (filter == null || filter.accept(node, List.of())) {
                 artifact.setDependencyTrail(nodeTrail);
                 artifacts.add(artifact);
             }
@@ -140,7 +139,7 @@ public class AetherUtils {
         Map<String, String> props = null;
         if (org.apache.maven.artifact.Artifact.SCOPE_SYSTEM.equals(artifact.getScope())) {
             String localPath = (artifact.getFile() != null) ? artifact.getFile().getPath() : "";
-            props = Collections.singletonMap(ArtifactProperties.LOCAL_PATH, localPath);
+            props = Map.of(ArtifactProperties.LOCAL_PATH, localPath);
         }
 
         Artifact result = new DefaultArtifact(
@@ -284,7 +283,7 @@ public class AetherUtils {
 
         Map<String, String> props = null;
         if (system) {
-            props = Collections.singletonMap(ArtifactProperties.LOCAL_PATH, dependency.getSystemPath());
+            props = Map.of(ArtifactProperties.LOCAL_PATH, dependency.getSystemPath());
         }
 
         Artifact artifact = new DefaultArtifact(

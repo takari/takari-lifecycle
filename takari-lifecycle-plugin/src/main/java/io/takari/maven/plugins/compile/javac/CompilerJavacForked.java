@@ -9,22 +9,18 @@ package io.takari.maven.plugins.compile.javac;
 
 import io.takari.incrementalbuild.MessageSeverity;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringTokenizer;
 import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
 import javax.tools.DiagnosticCollector;
@@ -63,7 +59,7 @@ public class CompilerJavacForked {
             return sources;
         }
 
-        public void write(File file) throws IOException {
+        public void write(Path file) throws IOException {
             try (Writer writer = newWriter(file)) {
                 // encoding
                 if (encoding != null) {
@@ -88,7 +84,7 @@ public class CompilerJavacForked {
             }
         }
 
-        public static CompilerConfiguration read(File file) throws IOException {
+        public static CompilerConfiguration read(Path file) throws IOException {
             Charset encoding = null;
             List<String> options = new ArrayList<>();
             List<File> sources = new ArrayList<>();
@@ -105,7 +101,7 @@ public class CompilerJavacForked {
                             options.add(value);
                             break;
                         case 'S':
-                            sources.add(new File(value));
+                            sources.add(Path.of(value).toFile());
                             break;
                     }
                 }
@@ -119,7 +115,7 @@ public class CompilerJavacForked {
 
         private final Writer writer;
 
-        public CompilerOutput(File file) throws IOException {
+        public CompilerOutput(Path file) throws IOException {
             this.writer = newWriter(file);
         }
 
@@ -185,27 +181,29 @@ public class CompilerJavacForked {
             System.exit(1); // this will trigger ExecutionException in Maven plugin
         }
 
-        public static void process(File file, CompilerOutputProcessor callback) throws IOException {
+        public static void process(Path file, CompilerOutputProcessor callback) throws IOException {
             try (BufferedReader reader = newBufferedReader(file)) {
                 String str;
                 while ((str = reader.readLine()) != null) {
                     String value = str.substring(1);
                     switch (str.charAt(0)) {
                         case 'O': {
-                            StringTokenizer st = new StringTokenizer(value, " ");
-                            String inputPath = URLDecoder.decode(st.nextToken(), StandardCharsets.UTF_8);
-                            String outputPath = URLDecoder.decode(st.nextToken(), StandardCharsets.UTF_8);
+                            // tokens are URL-encoded, hence never contain spaces
+                            String[] st = value.split(" ");
+                            String inputPath = URLDecoder.decode(st[0], StandardCharsets.UTF_8);
+                            String outputPath = URLDecoder.decode(st[1], StandardCharsets.UTF_8);
                             callback.processOutput(
-                                    !".".equals(inputPath) ? new File(inputPath) : null, new File(outputPath));
+                                    !".".equals(inputPath) ? Path.of(inputPath).toFile() : null,
+                                    Path.of(outputPath).toFile());
                             break;
                         }
                         case 'M': {
-                            StringTokenizer st = new StringTokenizer(value, " ");
-                            String path = URLDecoder.decode(st.nextToken(), StandardCharsets.UTF_8);
-                            int line = Integer.parseInt(st.nextToken());
-                            int column = Integer.parseInt(st.nextToken());
-                            MessageSeverity severity = toSeverity(st.nextToken());
-                            String message = URLDecoder.decode(st.nextToken(), StandardCharsets.UTF_8);
+                            String[] st = value.split(" ");
+                            String path = URLDecoder.decode(st[0], StandardCharsets.UTF_8);
+                            int line = Integer.parseInt(st[1]);
+                            int column = Integer.parseInt(st[2]);
+                            MessageSeverity severity = toSeverity(st[3]);
+                            String message = URLDecoder.decode(st[4], StandardCharsets.UTF_8);
                             callback.addMessage(path, line, column, message, severity);
                             break;
                         }
@@ -240,17 +238,17 @@ public class CompilerJavacForked {
         void addLogMessage(String message);
     }
 
-    static Writer newWriter(File file) throws IOException {
-        return new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8));
+    static Writer newWriter(Path file) throws IOException {
+        return Files.newBufferedWriter(file);
     }
 
-    static BufferedReader newBufferedReader(File file) throws IOException {
-        return new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8));
+    static BufferedReader newBufferedReader(Path file) throws IOException {
+        return Files.newBufferedReader(file);
     }
 
     public static void main(String[] args) throws IOException {
-        final CompilerConfiguration config = CompilerConfiguration.read(new File(args[0]));
-        final CompilerOutput output = new CompilerOutput(new File(args[1]));
+        final CompilerConfiguration config = CompilerConfiguration.read(Path.of(args[0]));
+        final CompilerOutput output = new CompilerOutput(Path.of(args[1]));
         try {
             compile(config, output);
         } finally {

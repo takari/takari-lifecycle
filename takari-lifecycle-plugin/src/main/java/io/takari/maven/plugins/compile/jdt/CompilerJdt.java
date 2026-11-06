@@ -132,7 +132,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
 
     private List<File> processorpath;
 
-    private List<ClasspathEntry> sourcepath = Collections.emptyList();
+    private List<ClasspathEntry> sourcepath = List.of();
 
     private List<ClasspathEntry> dependencypath;
 
@@ -724,9 +724,8 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
             if (!isProcNone()) {
                 fileManager = new EclipseFileManager(null, getSourceEncoding());
                 fileManager.setLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH, processorpath);
-                fileManager.setLocation(StandardLocation.CLASS_OUTPUT, Collections.singleton(getOutputDirectory()));
-                fileManager.setLocation(
-                        StandardLocation.SOURCE_OUTPUT, Collections.singleton(getGeneratedSourcesDirectory()));
+                fileManager.setLocation(StandardLocation.CLASS_OUTPUT, Set.of(getOutputDirectory()));
+                fileManager.setLocation(StandardLocation.SOURCE_OUTPUT, Set.of(getGeneratedSourcesDirectory()));
 
                 ProcessingEnvImpl processingEnv =
                         new ProcessingEnvImpl(context, fileManager, getAnnotationProcessorOptions(), compiler, this);
@@ -949,7 +948,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
         }
 
         final String sourceName = new String(result.getFileName());
-        final File sourceFile = new File(sourceName);
+        final File sourceFile = Path.of(sourceName).toFile();
 
         Resource<File> input = context.getProcessedSource(sourceFile);
 
@@ -1009,7 +1008,8 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
     private void writeClassFile(Resource<File> input, String relativeStringName, ClassFile classFile)
             throws IOException {
         final byte[] bytes = classFile.getBytes();
-        final File outputFile = new File(getOutputDirectory(), relativeStringName);
+        final File outputFile =
+                getOutputDirectory().toPath().resolve(relativeStringName).toFile();
 
         // context.associatedOutput resets output attributes set during earlier iterations of this incremental compile
         // so deal with classfile digest before context.associatedOutput

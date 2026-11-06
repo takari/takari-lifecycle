@@ -11,6 +11,7 @@ import io.takari.maven.testing.TestResources;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -29,44 +30,45 @@ public class ResourcesTest {
 
     @Test
     public void resources() throws Exception {
-        File basedir = resources.getBasedir("resources/project-with-resources");
-        mojos.executeMojo(basedir, "process-resources");
-        File resource = new File(basedir, "target/classes/resource.txt");
-        Assert.assertTrue(resource.exists());
-        String line = Files.readString(resource.toPath(), Charset.defaultCharset());
+        Path basedir = resources.getBasedir("resources/project-with-resources").toPath();
+        mojos.executeMojo(basedir.toFile(), "process-resources");
+        Path resource = basedir.resolve("target/classes/resource.txt");
+        Assert.assertTrue(Files.exists(resource));
+        String line = Files.readString(resource, Charset.defaultCharset());
         Assert.assertTrue(line.contains("resource.txt"));
     }
 
     @Test
     public void resources_skip() throws Exception {
-        File basedir = resources.getBasedir("resources/project-with-resources");
-        File resource = new File(basedir, "target/classes/resource.txt");
+        Path basedir = resources.getBasedir("resources/project-with-resources").toPath();
+        Path resource = basedir.resolve("target/classes/resource.txt");
 
-        MavenProject project = mojos.readMavenProject(basedir);
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
         MavenSession session = mojos.newMavenSession(project);
 
         MojoExecution execution = mojos.newMojoExecution("process-resources");
         execution.getConfiguration().addChild(newParameter("skip", "true"));
         mojos.executeMojo(session, project, execution);
-        Assert.assertFalse(resource.exists());
+        Assert.assertFalse(Files.exists(resource));
 
-        mojos.executeMojo(basedir, "process-resources");
-        Assert.assertTrue(resource.exists());
+        mojos.executeMojo(basedir.toFile(), "process-resources");
+        Assert.assertTrue(Files.exists(resource));
 
         execution = mojos.newMojoExecution("process-resources");
         execution.getConfiguration().addChild(newParameter("skip", "true"));
         mojos.executeMojo(session, project, execution);
-        Assert.assertTrue(resource.exists());
+        Assert.assertTrue(Files.exists(resource));
     }
 
     @Test
     public void resourcesWithTargetPath() throws Exception {
-        File basedir = resources.getBasedir("resources/project-with-resources-with-target-path");
-        mojos.executeMojo(basedir, "process-resources");
-        File resource = new File(basedir, "target/classes/resources/targetPath/resource.txt");
-        Assert.assertTrue(resource.exists());
-        String line =
-                Files.readAllLines(resource.toPath(), Charset.defaultCharset()).get(0);
+        Path basedir = resources
+                .getBasedir("resources/project-with-resources-with-target-path")
+                .toPath();
+        mojos.executeMojo(basedir.toFile(), "process-resources");
+        Path resource = basedir.resolve("target/classes/resources/targetPath/resource.txt");
+        Assert.assertTrue(Files.exists(resource));
+        String line = Files.readAllLines(resource, Charset.defaultCharset()).get(0);
         Assert.assertTrue(line.contains("resource.txt"));
     }
 
@@ -185,13 +187,14 @@ public class ResourcesTest {
 
     @Test
     public void testBinaryResource() throws Exception {
-        File basedir = resources.getBasedir("resources/project-with-binary-resources");
+        Path basedir =
+                resources.getBasedir("resources/project-with-binary-resources").toPath();
 
-        mojos.executeMojo(basedir, "process-resources");
-        mojos.assertBuildOutputs(basedir, "target/classes/resource.data");
+        mojos.executeMojo(basedir.toFile(), "process-resources");
+        mojos.assertBuildOutputs(basedir.toFile(), "target/classes/resource.data");
 
-        byte[] expected = Files.readAllBytes(new File(basedir, "src/main/resources/resource.data").toPath());
-        byte[] actual = Files.readAllBytes(new File(basedir, "target/classes/resource.data").toPath());
+        byte[] expected = Files.readAllBytes(basedir.resolve("src/main/resources/resource.data"));
+        byte[] actual = Files.readAllBytes(basedir.resolve("target/classes/resource.data"));
         Assert.assertArrayEquals(expected, actual);
     }
 }

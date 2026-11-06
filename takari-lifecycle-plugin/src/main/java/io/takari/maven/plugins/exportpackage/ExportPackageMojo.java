@@ -20,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -45,7 +46,7 @@ public class ExportPackageMojo extends TakariLifecycleMojo {
     private File classesDirectory;
 
     @Parameter
-    private Set<String> exportIncludes = Collections.emptySet();
+    private Set<String> exportIncludes = Set.of();
 
     @Parameter
     private Set<String> exportExcludes =
@@ -70,7 +71,9 @@ public class ExportPackageMojo extends TakariLifecycleMojo {
         output.aggregateIfNecessary(outputFile, new MetadataAggregator<String>() {
             @Override
             public Map<String, String> glean(File input) {
-                return Collections.singletonMap(getPackageName(classesDirectory, input), null);
+                Map<String, String> result = new HashMap<>();
+                result.put(getPackageName(classesDirectory, input), null);
+                return result;
             }
 
             @Override
@@ -89,7 +92,7 @@ public class ExportPackageMojo extends TakariLifecycleMojo {
 
     private Collection<String> getIncludes() {
         if (exportIncludes.isEmpty()) {
-            return Collections.singleton("**/*.class");
+            return Set.of("**/*.class");
         }
         Set<String> includes = new HashSet<>();
         for (String include : this.exportIncludes) {

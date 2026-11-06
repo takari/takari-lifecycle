@@ -12,16 +12,16 @@ import static org.junit.Assert.fail;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.google.common.io.BaseEncoding;
-import com.google.common.io.Files;
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 import io.takari.maven.testing.TestResources;
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Enumeration;
@@ -60,33 +60,33 @@ public class JarTest {
         //
         // Generate some resources to JAR
         //
-        File basedir = resources.getBasedir("jar/project-with-resources");
-        mojos.executeMojo(basedir, "process-resources");
-        File resource = new File(basedir, "target/classes/resource.txt");
-        assertTrue(resource.exists());
-        String line = Files.readFirstLine(resource, Charset.defaultCharset());
+        Path basedir = resources.getBasedir("jar/project-with-resources").toPath();
+        mojos.executeMojo(basedir.toFile(), "process-resources");
+        Path resource = basedir.resolve("target/classes/resource.txt");
+        assertTrue(Files.exists(resource));
+        String line = Files.readAllLines(resource, Charset.defaultCharset()).get(0);
         assertTrue(line.contains("resource.txt"));
         //
         // Generate the JAR a first time and capture the fingerprint
         //
-        mojos.executeMojo(basedir, "jar");
-        File jar0 = new File(basedir, "target/test-1.0.jar");
-        assertTrue(jar0.exists());
+        mojos.executeMojo(basedir.toFile(), "jar");
+        Path jar0 = basedir.resolve("target/test-1.0.jar");
+        assertTrue(Files.exists(jar0));
         String fingerprint0 = fingerprint(jar0);
         //
         // Generate the JAR a second time and ensure that the fingerprint is still the same when
         // the JAR content is the same. The outer SHA1 of a JAR built at two points in time will
         // be different even though the content has not changed.
         //
-        mojos.executeMojo(basedir, "jar");
-        File jar1 = new File(basedir, "target/test-1.0.jar");
-        Assert.assertTrue(jar1.exists());
+        mojos.executeMojo(basedir.toFile(), "jar");
+        Path jar1 = basedir.resolve("target/test-1.0.jar");
+        Assert.assertTrue(Files.exists(jar1));
         String fingerprint1 = fingerprint(jar1);
         assertEquals(
                 "We expect the JAR to have the same fingerprint after repeated builds.", fingerprint0, fingerprint1);
 
         // Make sure our maven properties file is written correctly
-        try (ZipFile zip0 = new ZipFile(jar1)) {
+        try (ZipFile zip0 = new ZipFile(jar1.toFile())) {
             String pomProperties = "META-INF/maven/io.takari.lifecycle.its/test/pom.properties";
             ZipEntry entry = zip0.getEntry(pomProperties);
             if (entry != null) {
@@ -101,7 +101,7 @@ public class JarTest {
             }
         }
 
-        try (ZipFile zip1 = new ZipFile(jar1)) {
+        try (ZipFile zip1 = new ZipFile(jar1.toFile())) {
             String manifestEntryName = "META-INF/MANIFEST.MF";
             ZipEntry manifestEntry = zip1.getEntry(manifestEntryName);
             if (manifestEntry != null) {
@@ -119,11 +119,11 @@ public class JarTest {
 
     @Test
     public void testBasic_attachedArtifacts() throws Exception {
-        File basedir = resources.getBasedir("jar/basic");
-        cp(basedir, "src/main/resources/resource.txt", "target/classes/resource.txt");
-        cp(basedir, "src/test/resources/test-resource.txt", "target/test-classes/resource.txt");
+        Path basedir = resources.getBasedir("jar/basic").toPath();
+        cp(basedir.toFile(), "src/main/resources/resource.txt", "target/classes/resource.txt");
+        cp(basedir.toFile(), "src/test/resources/test-resource.txt", "target/test-classes/resource.txt");
 
-        MavenProject project = mojos.readMavenProject(basedir);
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
         mojos.executeMojo(project, "jar", newParameter("sourceJar", "true"), newParameter("testJar", "true"));
 
         Map<String, Artifact> attachedArtifacts = new HashMap<String, Artifact>();
@@ -132,31 +132,31 @@ public class JarTest {
         }
 
         // main artifact (test-1.0.jar)
-        File jar = new File(basedir, "target/test-1.0.jar");
-        assertTrue(jar.exists());
-        assertEquals(jar, project.getArtifact().getFile());
+        Path jar = basedir.resolve("target/test-1.0.jar");
+        assertTrue(Files.exists(jar));
+        assertEquals(jar, project.getArtifact().getFile().toPath());
         assertEquals("jar", project.getArtifact().getType());
 
         // sources (test-1.0-sources.jar)
-        File sourceJar = new File(basedir, "target/test-1.0-sources.jar");
-        assertTrue(sourceJar.exists());
-        assertEquals(sourceJar, attachedArtifacts.get("sources").getFile());
+        Path sourceJar = basedir.resolve("target/test-1.0-sources.jar");
+        assertTrue(Files.exists(sourceJar));
+        assertEquals(sourceJar, attachedArtifacts.get("sources").getFile().toPath());
         assertEquals("jar", attachedArtifacts.get("sources").getType());
 
         // tests (test-1.0-tests.jar)
-        File testJar = new File(basedir, "target/test-1.0-tests.jar");
-        assertTrue(testJar.exists());
-        assertEquals(testJar, attachedArtifacts.get("tests").getFile());
+        Path testJar = basedir.resolve("target/test-1.0-tests.jar");
+        assertTrue(Files.exists(testJar));
+        assertEquals(testJar, attachedArtifacts.get("tests").getFile().toPath());
         assertEquals("jar", attachedArtifacts.get("tests").getType());
     }
 
     @Test
     public void testClassloader_getResources() throws Exception {
-        File basedir = resources.getBasedir("jar/project-with-resources");
-        mojos.executeMojo(basedir, "process-resources");
-        mojos.executeMojo(basedir, "jar");
-        File jar = new File(basedir, "target/test-1.0.jar");
-        try (URLClassLoader cl = new URLClassLoader(new URL[] {jar.toURI().toURL()}, null)) {
+        Path basedir = resources.getBasedir("jar/project-with-resources").toPath();
+        mojos.executeMojo(basedir.toFile(), "process-resources");
+        mojos.executeMojo(basedir.toFile(), "jar");
+        Path jar = basedir.resolve("target/test-1.0.jar");
+        try (URLClassLoader cl = new URLClassLoader(new URL[] {jar.toUri().toURL()}, null)) {
             List<URL> list = toList(cl.getResources("subdir"));
             Assert.assertEquals(1, list.size());
             Assert.assertTrue(list.get(0).toString(), list.get(0).toString().endsWith("test-1.0.jar!/subdir"));
@@ -165,10 +165,10 @@ public class JarTest {
 
     @Test
     public void testJarEntries() throws Exception {
-        File basedir = resources.getBasedir("jar/project-with-resources");
-        mojos.executeMojo(basedir, "process-resources");
-        mojos.executeMojo(basedir, "jar");
-        File jar = new File(basedir, "target/test-1.0.jar");
+        Path basedir = resources.getBasedir("jar/project-with-resources").toPath();
+        mojos.executeMojo(basedir.toFile(), "process-resources");
+        mojos.executeMojo(basedir.toFile(), "jar");
+        Path jar = basedir.resolve("target/test-1.0.jar");
         assertZipEntries(
                 jar //
                 ,
@@ -192,8 +192,8 @@ public class JarTest {
                 );
     }
 
-    private static void assertZipEntries(File zipFile, String... expected) throws IOException {
-        try (ZipFile zip = new ZipFile(zipFile)) {
+    private static void assertZipEntries(Path zipFile, String... expected) throws IOException {
+        try (ZipFile zip = new ZipFile(zipFile.toFile())) {
             Map<String, ZipEntry> sorted = new LinkedHashMap<>();
 
             Enumeration<? extends ZipEntry> entries = zip.entries();
@@ -242,10 +242,10 @@ public class JarTest {
 
     @Test
     public void testCustomManifest() throws Exception {
-        File basedir = resources.getBasedir("jar/project-with-manifest");
-        new File(basedir, "target/classes").mkdirs(); // TODO this shouldn't be necessary
-        mojos.executeMojo(basedir, "jar");
-        try (JarFile jar = new JarFile(new File(basedir, "target/test-1.0.jar"))) {
+        Path basedir = resources.getBasedir("jar/project-with-manifest").toPath();
+        Files.createDirectories(basedir.resolve("target/classes")); // TODO this shouldn't be necessary
+        mojos.executeMojo(basedir.toFile(), "jar");
+        try (JarFile jar = new JarFile(basedir.resolve("target/test-1.0.jar").toFile())) {
             Manifest mf = jar.getManifest();
             Assert.assertEquals("custom-value", mf.getMainAttributes().getValue("Custom-Entry"));
         }
@@ -254,17 +254,17 @@ public class JarTest {
     @Test
     @Ignore("this is currently broken, but the fix requires changes to incrementalbuild")
     public void testCustomManifest_incremental() throws Exception {
-        File basedir = resources.getBasedir("jar/project-with-manifest");
-        new File(basedir, "target/classes").mkdirs(); // TODO this shouldn't be necessary
-        mojos.executeMojo(basedir, "jar");
-        try (JarFile jar = new JarFile(new File(basedir, "target/test-1.0.jar"))) {
+        Path basedir = resources.getBasedir("jar/project-with-manifest").toPath();
+        Files.createDirectories(basedir.resolve("target/classes")); // TODO this shouldn't be necessary
+        mojos.executeMojo(basedir.toFile(), "jar");
+        try (JarFile jar = new JarFile(basedir.resolve("target/test-1.0.jar").toFile())) {
             Manifest mf = jar.getManifest();
             Assert.assertEquals("custom-value", mf.getMainAttributes().getValue("Custom-Entry"));
         }
 
-        cp(basedir, "src/META-INF/MANIFEST.MF-changed", "src/META-INF/MANIFEST.MF");
-        mojos.executeMojo(basedir, "jar");
-        try (JarFile jar = new JarFile(new File(basedir, "target/test-1.0.jar"))) {
+        cp(basedir.toFile(), "src/META-INF/MANIFEST.MF-changed", "src/META-INF/MANIFEST.MF");
+        mojos.executeMojo(basedir.toFile(), "jar");
+        try (JarFile jar = new JarFile(basedir.resolve("target/test-1.0.jar").toFile())) {
             Manifest mf = jar.getManifest();
             Assert.assertEquals("changed-custom-value", mf.getMainAttributes().getValue("Custom-Entry"));
         }
@@ -272,9 +272,11 @@ public class JarTest {
 
     @Test
     public void testDuplicateCustomManifest() throws Exception {
-        File basedir = resources.getBasedir("jar/project-with-manifest-under-target-classes");
-        mojos.executeMojo(basedir, "jar");
-        try (JarFile jar = new JarFile(new File(basedir, "target/test-1.0.jar"))) {
+        Path basedir = resources
+                .getBasedir("jar/project-with-manifest-under-target-classes")
+                .toPath();
+        mojos.executeMojo(basedir.toFile(), "jar");
+        try (JarFile jar = new JarFile(basedir.resolve("target/test-1.0.jar").toFile())) {
             // make sure there is only one manifest entry
             int count = 0;
             for (Enumeration<JarEntry> entries = jar.entries(); entries.hasMoreElements(); ) {
@@ -292,10 +294,10 @@ public class JarTest {
 
     @Test
     public void testCustomManifestEntries() throws Exception {
-        File basedir = resources.getBasedir("jar/project-with-manifest-entries");
-        new File(basedir, "target/classes").mkdirs(); // TODO this shouldn't be necessary
-        mojos.executeMojo(basedir, "jar");
-        try (JarFile jar = new JarFile(new File(basedir, "target/test-1.0.jar"))) {
+        Path basedir = resources.getBasedir("jar/project-with-manifest-entries").toPath();
+        Files.createDirectories(basedir.resolve("target/classes")); // TODO this shouldn't be necessary
+        mojos.executeMojo(basedir.toFile(), "jar");
+        try (JarFile jar = new JarFile(basedir.resolve("target/test-1.0.jar").toFile())) {
             Manifest mf = jar.getManifest();
             Attributes main = mf.getMainAttributes();
             assertEquals("1.0", main.getValue("Manifest-Version"));
@@ -308,34 +310,32 @@ public class JarTest {
 
     @Test
     public void testEmpty() throws Exception {
-        File basedir = resources.getBasedir("jar/empty");
-        mojos.executeMojo(basedir, "jar");
+        Path basedir = resources.getBasedir("jar/empty").toPath();
+        mojos.executeMojo(basedir.toFile(), "jar");
 
-        assertTrue(new File(basedir, "target/test-1.0.jar").exists());
-        assertTrue(new File(basedir, "target/test-1.0-sources.jar").exists());
-        assertFalse(new File(basedir, "target/test-1.0-tests.jar").exists());
+        assertTrue(Files.exists(basedir.resolve("target/test-1.0.jar")));
+        assertTrue(Files.exists(basedir.resolve("target/test-1.0-sources.jar")));
+        assertFalse(Files.exists(basedir.resolve("target/test-1.0-tests.jar")));
     }
 
     @Test
     public void testSymlinkedDirectories() throws Exception {
         Assume.assumeTrue(Os.isFamily(Os.FAMILY_UNIX));
 
-        File basedir = resources.getBasedir();
+        Path basedir = resources.getBasedir().toPath();
 
-        File orig = new File(basedir, "orig");
-        create(orig, "src/main/java/pkg/Class.java");
-        create(orig, "src/test/java/testpkg/Test.java");
-        create(orig, "target/classes/resource.txt", "target/classes/subdir/resource.txt");
-        java.nio.file.Files.createSymbolicLink(
-                new File(orig, "target/classes/symlinked-resource.txt").toPath(),
-                new File(orig, "target/classes/resource.txt").toPath());
-        create(orig, "target/test-classes/test-resource.txt");
+        Path orig = basedir.resolve("orig");
+        create(orig.toFile(), "src/main/java/pkg/Class.java");
+        create(orig.toFile(), "src/test/java/testpkg/Test.java");
+        create(orig.toFile(), "target/classes/resource.txt", "target/classes/subdir/resource.txt");
+        Files.createSymbolicLink(
+                orig.resolve("target/classes/symlinked-resource.txt"), orig.resolve("target/classes/resource.txt"));
+        create(orig.toFile(), "target/test-classes/test-resource.txt");
 
-        File symlink = java.nio.file.Files.createSymbolicLink(new File(basedir, "symlink").toPath(), orig.toPath())
-                .toFile();
-        mojos.executeMojo(symlink, "jar", newParameter("testJar", "true"), newParameter("sourceJar", "true"));
+        Path symlink = Files.createSymbolicLink(basedir.resolve("symlink"), orig);
+        mojos.executeMojo(symlink.toFile(), "jar", newParameter("testJar", "true"), newParameter("sourceJar", "true"));
         assertZipEntries(
-                new File(symlink, "target/test-1.jar") //
+                symlink.resolve("target/test-1.jar") //
                 ,
                 "D META-INF/ 315561600000" //
                 ,
@@ -358,7 +358,7 @@ public class JarTest {
                 "F symlinked-resource.txt 315561600000" //
                 );
         assertZipEntries(
-                new File(symlink, "target/test-1-tests.jar") //
+                symlink.resolve("target/test-1-tests.jar") //
                 ,
                 "D META-INF/ 315561600000" //
                 ,
@@ -367,7 +367,7 @@ public class JarTest {
                 "F test-resource.txt 315561600000" //
                 );
         assertZipEntries(
-                new File(symlink, "target/test-1-sources.jar") //
+                symlink.resolve("target/test-1-sources.jar") //
                 ,
                 "D META-INF/ 315561600000" //
                 ,
@@ -379,10 +379,10 @@ public class JarTest {
                 );
     }
 
-    private static String fingerprint(File file) throws IOException {
+    private static String fingerprint(Path file) throws IOException {
         Hasher hasher = Hashing.sha1().newHasher();
         byte[] buffer = new byte[30 * 1024];
-        try (ZipFile zip = new ZipFile(file)) {
+        try (ZipFile zip = new ZipFile(file.toFile())) {
             Enumeration<? extends ZipEntry> entries = zip.entries();
             while (entries.hasMoreElements()) {
                 ZipEntry entry = entries.nextElement();

@@ -21,7 +21,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -266,7 +265,7 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
             this.processorpath =
                     processorpath.stream().map(File::toString).collect(Collectors.joining(File.pathSeparator));
         }
-        return digester.digestProcessorpath(processorpath != null ? processorpath : Collections.emptyList());
+        return digester.digestProcessorpath(processorpath != null ? processorpath : List.of());
     }
 
     @Override

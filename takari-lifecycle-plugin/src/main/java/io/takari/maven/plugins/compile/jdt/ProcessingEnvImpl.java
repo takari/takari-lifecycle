@@ -8,7 +8,6 @@
 package io.takari.maven.plugins.compile.jdt;
 
 import io.takari.maven.plugins.compile.CompilerBuildContext;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Map;
@@ -48,7 +47,7 @@ class ProcessingEnvImpl extends BaseProcessingEnvImpl {
             CompilerJdt incrementalCompiler) {
         this._filer = new FilerImpl(context, fileManager, incrementalCompiler, this);
         this._messager = new MessagerImpl(context, this);
-        this._processorOptions = processorOptions != null ? processorOptions : Collections.<String, String>emptyMap();
+        this._processorOptions = processorOptions != null ? processorOptions : Map.of();
         this._compiler = compiler;
 
         this._elementUtils = new ElementsImpl(this) {

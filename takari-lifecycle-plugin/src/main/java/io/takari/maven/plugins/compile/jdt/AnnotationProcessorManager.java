@@ -11,6 +11,7 @@ import io.takari.incrementalbuild.MessageSeverity;
 import io.takari.maven.plugins.compile.CompilerBuildContext;
 import java.io.File;
 import java.io.PrintWriter;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -72,7 +73,9 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
         @Override
         public Processor next() {
             try {
-                return (Processor) loader.loadClass(processors[idx++]).newInstance();
+                return (Processor) loader.loadClass(processors[idx++])
+                        .getDeclaredConstructor()
+                        .newInstance();
             } catch (ReflectiveOperationException e) {
                 // TODO: better error handling
                 throw new AbortCompilation(null, e);
@@ -226,7 +229,8 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
             }
             Binding binding = topLevelType._binding;
             if (binding instanceof SourceTypeBinding) {
-                return new File(new String(((SourceTypeBinding) binding).getFileName()));
+                return Path.of(new String(((SourceTypeBinding) binding).getFileName()))
+                        .toFile();
             }
             return null;
         }

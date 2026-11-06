@@ -16,6 +16,7 @@ import io.takari.resources.filtering.ResourcesProcessor;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,7 +79,7 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
         for (Resource resource : resources) {
             boolean filter = Boolean.parseBoolean(resource.getFiltering());
             try {
-                File sourceDirectory = new File(resource.getDirectory());
+                File sourceDirectory = Path.of(resource.getDirectory()).toFile();
                 // Ensure the sourceDirectory is actually present before attempting to process any resources
                 if (!sourceDirectory.exists()) {
                     continue;
@@ -86,7 +87,9 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
                 sourceDirectory = sourceDirectory.getCanonicalFile();
                 File targetDirectory;
                 if (resource.getTargetPath() != null) {
-                    targetDirectory = new File(outputDirectory, resource.getTargetPath());
+                    // Path.of(String, String...) joins like new File(File, String), even for an absolute targetPath
+                    targetDirectory = Path.of(outputDirectory.getPath(), resource.getTargetPath())
+                            .toFile();
                 } else {
                     targetDirectory = outputDirectory;
                 }

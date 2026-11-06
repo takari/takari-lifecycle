@@ -9,9 +9,9 @@ package io.takari.maven.plugins.compile;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Named;
 import org.apache.maven.RepositoryUtils;
@@ -78,8 +78,8 @@ class ProcessorpathResolver {
             }
         }
 
-        DependencyFilter collectionFilter = new ScopeDependencyFilter(null, Collections.singleton("test"));
-        DependencyFilter resolutionFilter = new ScopeDependencyFilter(null, Collections.singleton("test"));
+        DependencyFilter collectionFilter = new ScopeDependencyFilter(null, Set.of("test"));
+        DependencyFilter resolutionFilter = new ScopeDependencyFilter(null, Set.of("test"));
         resolutionFilter = AndDependencyFilter.newInstance(collectionFilter, resolutionFilter);
 
         DependencyRequest depRequest = new DependencyRequest(collectRequest, resolutionFilter);

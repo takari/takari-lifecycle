@@ -2,8 +2,8 @@ package io.takari.maven.plugins.compile;
 
 import io.takari.maven.testing.TestResources;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.StringTokenizer;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -28,8 +28,8 @@ public abstract class AbstractCompileTest {
 
         String version = System.getProperty("java.specification.version");
         if (version != null) {
-            StringTokenizer st = new StringTokenizer(version, ".");
-            int major = Integer.parseInt(st.nextToken());
+            String[] parts = version.split("\\.");
+            int major = Integer.parseInt(parts[0]);
             if (major >= 11) {
                 _isJava8orBetter = true;
                 _isJava9orBetter = true;
@@ -43,7 +43,7 @@ public abstract class AbstractCompileTest {
                 _isJava8orBetter = true;
                 _isJava9orBetter = true;
             } else {
-                int minor = Integer.parseInt(st.nextToken());
+                int minor = Integer.parseInt(parts[1]);
                 _isJava8orBetter = minor >= 8;
             }
         }
@@ -96,6 +96,10 @@ public abstract class AbstractCompileTest {
 
     protected void addDependency(MavenProject project, String artifactId, File file) throws Exception {
         mojos.newDependency(file).setArtifactId(artifactId).addTo(project);
+    }
+
+    protected void addDependency(MavenProject project, String artifactId, Path file) throws Exception {
+        addDependency(project, artifactId, file.toFile());
     }
 
     protected Xpp3Dom newParameter(String name, String value) {

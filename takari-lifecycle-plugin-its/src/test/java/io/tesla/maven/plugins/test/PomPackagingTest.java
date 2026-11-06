@@ -2,7 +2,8 @@ package io.tesla.maven.plugins.test;
 
 import io.takari.maven.testing.executor.MavenExecutionResult;
 import io.takari.maven.testing.executor.MavenRuntime.MavenRuntimeBuilder;
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -13,22 +14,22 @@ public class PomPackagingTest extends AbstractIntegrationTest {
 
     @Test
     public void testPomPackaging() throws Exception {
-        File basedir = resources.getBasedir("pom-packaging");
+        Path basedir = resources.getBasedir("pom-packaging").toPath();
 
-        File remoterepo = new File(basedir, "remoterepo");
-        Assert.assertTrue(remoterepo.mkdirs());
+        Path remoterepo = basedir.resolve("remoterepo");
+        Files.createDirectory(remoterepo);
 
-        File localrepo = properties.getLocalRepository();
+        Path localrepo = properties.getLocalRepository().toPath();
 
-        MavenExecutionResult result = verifier.forProject(basedir) //
-                .withCliOption("-Drepopath=" + remoterepo.getCanonicalPath()) //
+        MavenExecutionResult result = verifier.forProject(basedir.toFile()) //
+                .withCliOption("-Drepopath=" + remoterepo.toRealPath()) //
                 .execute("deploy");
         result.assertErrorFreeLog();
 
-        File localGroup = new File(localrepo, "io/takari/lifecycle/its/pom-packaging");
-        Assert.assertTrue(new File(localGroup, "1.0/pom-packaging-1.0.pom").canRead());
+        Path localGroup = localrepo.resolve("io/takari/lifecycle/its/pom-packaging");
+        Assert.assertTrue(Files.isReadable(localGroup.resolve("1.0/pom-packaging-1.0.pom")));
 
-        File remoteGroup = new File(remoterepo, "io/takari/lifecycle/its/pom-packaging");
-        Assert.assertTrue(new File(remoteGroup, "1.0/pom-packaging-1.0.pom").canRead());
+        Path remoteGroup = remoterepo.resolve("io/takari/lifecycle/its/pom-packaging");
+        Assert.assertTrue(Files.isReadable(remoteGroup.resolve("1.0/pom-packaging-1.0.pom")));
     }
 }

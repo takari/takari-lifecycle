@@ -11,6 +11,7 @@ import io.takari.incrementalbuild.MessageSeverity;
 import io.takari.incrementalbuild.Resource;
 import io.takari.maven.plugins.compile.CompilerBuildContext;
 import java.io.File;
+import java.nio.file.Path;
 import javax.annotation.processing.Messager;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
@@ -52,7 +53,8 @@ class MessagerImpl extends BaseMessagerImpl implements Messager {
         }
         AptProblem problem = createProblem(kind, msg, e, a, v);
         if (problem != null && problem.getOriginatingFileName() != null) {
-            Resource<File> input = context.getProcessedSource(new File(new String(problem.getOriginatingFileName())));
+            Resource<File> input = context.getProcessedSource(
+                    Path.of(new String(problem.getOriginatingFileName())).toFile());
             input.addMessage(
                     problem.getSourceLineNumber(),
                     problem.getSourceColumnNumber(),

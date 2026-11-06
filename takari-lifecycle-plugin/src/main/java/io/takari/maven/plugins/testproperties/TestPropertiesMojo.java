@@ -17,12 +17,12 @@ import io.takari.maven.plugins.util.PropertiesWriter;
 import io.takari.resources.filtering.MissingPropertyAction;
 import io.takari.resources.filtering.ResourcesProcessor;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -267,7 +267,7 @@ public class TestPropertiesMojo extends AbstractMojo {
 
     private void mergeCustomTestProperties(Output output, Properties properties) throws MojoExecutionException {
         ResourceMetadata<File> metadata = context.registerInput(testProperties);
-        try (InputStream is = new FileInputStream(metadata.getResource())) {
+        try (InputStream is = Files.newInputStream(metadata.getResource().toPath())) {
             Properties custom = new Properties();
             custom.load(is);
             mergeCustomTestProperties(output, properties, custom);

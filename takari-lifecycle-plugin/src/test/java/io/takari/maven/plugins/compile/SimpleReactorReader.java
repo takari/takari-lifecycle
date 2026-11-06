@@ -2,9 +2,9 @@ package io.takari.maven.plugins.compile;
 
 import com.google.common.collect.ImmutableMap;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +54,7 @@ class SimpleReactorReader implements MavenWorkspaceReader {
             if ("pom".equals(artifact.getExtension())) {
                 return project.getFile();
             } else if ("jar".equals(artifact.getExtension()) && "".equals(artifact.getClassifier())) {
-                return new File(project.getBuild().getOutputDirectory());
+                return Path.of(project.getBuild().getOutputDirectory()).toFile();
             }
         }
         Artifact _artifact = getArtifact(artifact);
@@ -92,11 +92,11 @@ class SimpleReactorReader implements MavenWorkspaceReader {
     public List<String> findVersions(Artifact artifact) {
         MavenProject project = getProject(artifact);
         if (project != null) {
-            return Collections.singletonList(project.getVersion());
+            return List.of(project.getVersion());
         }
         Artifact _artifact = getArtifact(artifact);
         if (_artifact != null) {
-            return Collections.singletonList(_artifact.getVersion());
+            return List.of(_artifact.getVersion());
         }
         return null;
     }

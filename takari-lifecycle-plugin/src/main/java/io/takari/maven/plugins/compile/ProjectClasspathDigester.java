@@ -11,7 +11,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -149,7 +148,7 @@ public class ProjectClasspathDigester {
         scanner.scan();
         long maxLastModified = 0, fileCount = 0;
         for (String path : scanner.getIncludedFiles()) {
-            File file = new File(directory, path);
+            File file = directory.toPath().resolve(path).toFile();
             long lastModified = file.lastModified();
             maxLastModified = Math.max(maxLastModified, lastModified);
             fileCount++;
@@ -182,7 +181,7 @@ public class ProjectClasspathDigester {
         LinkedHashMap<File, ArtifactFile> digest = new LinkedHashMap<>();
         ArrayList<ArtifactFile> artifacts = context.getAttribute(key, true, ArrayList.class);
         if (artifacts == null) {
-            return Collections.emptyMap();
+            return Map.of();
         }
         for (ArtifactFile artifact : artifacts) {
             digest.put(artifact.file, artifact);

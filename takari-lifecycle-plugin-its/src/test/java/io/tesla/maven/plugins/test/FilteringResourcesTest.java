@@ -6,11 +6,10 @@ import io.takari.maven.testing.executor.MavenRuntime;
 import io.takari.maven.testing.executor.MavenRuntime.ForkedMavenRuntimeBuilder;
 import io.takari.maven.testing.executor.MavenRuntime.MavenRuntimeBuilder;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -43,12 +42,9 @@ public class FilteringResourcesTest extends AbstractIntegrationTest {
         result.assertErrorFreeLog();
 
         Properties properties = new Properties();
-        InputStream is = new FileInputStream(new File(result.getBasedir(), "target/classes/filtered.properties"));
-        Reader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
-        try {
+        try (Reader reader = Files.newBufferedReader(
+                result.getBasedir().toPath().resolve("target/classes/filtered.properties"), StandardCharsets.UTF_8)) {
             properties.load(reader);
-        } finally {
-            is.close();
         }
 
         return properties;
@@ -58,7 +54,7 @@ public class FilteringResourcesTest extends AbstractIntegrationTest {
     public void testLocalRepository() throws Exception {
         String localRepository = filter("filtering-reflective-settings").getProperty("localRepository");
         Assert.assertTrue(localRepository != null && !localRepository.isEmpty());
-        Assert.assertTrue(new File(localRepository).isDirectory());
+        Assert.assertTrue(Files.isDirectory(Path.of(localRepository)));
     }
 
     @Test

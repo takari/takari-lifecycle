@@ -104,14 +104,6 @@
             </licenseSets>
           </configuration>
         </plugin>
-        <plugin>
-          <groupId>org.gaul</groupId>
-          <artifactId>modernizer-maven-plugin</artifactId>
-          <configuration>
-            <!-- TODO: fix MANY violations we have -->
-            <failOnViolations>false</failOnViolations>
-          </configuration>
-        </plugin>
       </plugins>
     </pluginManagement>
   </build>

@@ -9,7 +9,6 @@ package io.takari.maven.plugins.jar;
 
 import static io.takari.maven.plugins.TakariLifecycles.isJarProducingTakariLifecycle;
 import static java.util.Arrays.asList;
-import static java.util.Collections.singleton;
 
 import ca.vanzyl.provisio.archive.Archiver;
 import ca.vanzyl.provisio.archive.ExtendedArchiveEntry;
@@ -23,12 +22,15 @@ import io.takari.maven.plugins.util.PropertiesWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
@@ -75,12 +77,17 @@ public class Jar extends TakariLifecycleMojo {
     @Override
     protected void executeMojo() throws MojoExecutionException {
 
-        if (!outputDirectory.exists()) {
-            outputDirectory.mkdir();
+        try {
+            Files.createDirectories(outputDirectory.toPath());
+        } catch (IOException e) {
+            throw new MojoExecutionException(e.getMessage(), e);
         }
 
         if (mainJar) {
-            File jar = new File(outputDirectory, String.format("%s.jar", finalName));
+            File jar = outputDirectory
+                    .toPath()
+                    .resolve(String.format("%s.jar", finalName))
+                    .toFile();
             InputSet registeredOutput = buildContext.newInputSet();
             try {
                 if (classesDirectory.isDirectory()) {
@@ -101,7 +108,7 @@ public class Jar extends TakariLifecycleMojo {
                             sources.add(jarManifestSource(archive.getManifestFile()));
                         }
                         sources.add(inputsSource(classesDirectory, inputs));
-                        sources.add(singleton(pomPropertiesSource(project)));
+                        sources.add(Set.of(pomPropertiesSource(project)));
                         sources.add(jarManifestSource(project));
                         archive(output.getResource(), sources);
                     }
@@ -130,11 +137,14 @@ public class Jar extends TakariLifecycleMojo {
 
         if (sourceJar) {
             final Map<File, List<File>> sources = new LinkedHashMap<>();
-            File sourceJar = new File(outputDirectory, String.format("%s-%s.jar", finalName, "sources"));
+            File sourceJar = outputDirectory
+                    .toPath()
+                    .resolve(String.format("%s-%s.jar", finalName, "sources"))
+                    .toFile();
             InputSet registeredOutput = buildContext.newInputSet();
             try {
                 for (String sourceRoot : project.getCompileSourceRoots()) {
-                    File dir = new File(sourceRoot);
+                    File dir = Path.of(sourceRoot).toFile();
                     if (dir.isDirectory()) {
                         dir = dir.getCanonicalFile();
                         List<File> inputs = StreamSupport.stream(
@@ -167,7 +177,10 @@ public class Jar extends TakariLifecycleMojo {
         }
 
         if (testJar && testClassesDirectory.isDirectory()) {
-            File testJar = new File(outputDirectory, String.format("%s-%s.jar", finalName, "tests"));
+            File testJar = outputDirectory
+                    .toPath()
+                    .resolve(String.format("%s-%s.jar", finalName, "tests"))
+                    .toFile();
             InputSet registeredOutput = buildContext.newInputSet();
             try {
                 testClassesDirectory = testClassesDirectory.getCanonicalFile();
@@ -233,7 +246,7 @@ public class Jar extends TakariLifecycleMojo {
     }
 
     public static Iterable<ExtendedArchiveEntry> jarManifestSource(File file) {
-        return singleton((ExtendedArchiveEntry) new FileEntry(MANIFEST_PATH, file));
+        return Set.of((ExtendedArchiveEntry) new FileEntry(MANIFEST_PATH, file));
     }
 
     private Iterable<ExtendedArchiveEntry> jarManifestSource(MavenProject project) throws IOException {
@@ -257,15 +270,12 @@ public class Jar extends TakariLifecycleMojo {
             }
         }
 
-        File manifestFile = new File(project.getBuild().getDirectory(), "MANIFEST.MF");
-        if (!manifestFile.getParentFile().exists()) {
-            manifestFile.getParentFile().mkdirs();
-        }
+        Files.createDirectories(Path.of(project.getBuild().getDirectory()));
 
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         manifest.write(buf);
 
-        return singleton(new BytesEntry(MANIFEST_PATH, buf.toByteArray()));
+        return Set.of(new BytesEntry(MANIFEST_PATH, buf.toByteArray()));
     }
 
     protected ExtendedArchiveEntry pomPropertiesSource(MavenProject project) throws IOException {

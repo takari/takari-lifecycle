@@ -21,6 +21,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -300,16 +301,16 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
         List<ResourceMetadata<File>> sources = new ArrayList<ResourceMetadata<File>>();
         StringBuilder msg = new StringBuilder();
         for (String sourcePath : getSourceRoots()) {
-            File sourceRoot = new File(sourcePath);
+            Path sourceRoot = Path.of(sourcePath);
             msg.append("\n").append(sourcePath);
-            if (!sourceRoot.isDirectory()) {
+            if (!Files.isDirectory(sourceRoot)) {
                 msg.append("\n   does not exist or not a directory, skiped");
                 continue;
             }
             // TODO this is a bug in project model, includes/excludes should be per sourceRoot
             Set<String> includes = getIncludes();
             if (includes == null || includes.isEmpty()) {
-                includes = Collections.singleton("**/*.java");
+                includes = Set.of("**/*.java");
             } else {
                 for (String include : includes) {
                     Set<String> illegal = new LinkedHashSet<>();
@@ -325,7 +326,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
             }
             Set<String> excludes = getExcludes();
             int sourceCount = 0;
-            for (ResourceMetadata<File> source : context.registerSources(sourceRoot, includes, excludes)) {
+            for (ResourceMetadata<File> source : context.registerSources(sourceRoot.toFile(), includes, excludes)) {
                 sources.add(source);
                 sourceCount++;
             }
@@ -461,7 +462,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
     private static Set<File> toFileSet(Set<String> paths) {
         Set<File> files = new LinkedHashSet<>();
-        paths.forEach(path -> files.add(new File(path)));
+        paths.forEach(path -> files.add(Path.of(path).toFile()));
         return files;
     }
 
@@ -478,10 +479,10 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
     private List<File> getSourcepath(Proc proc) throws MojoExecutionException {
         if (sourcepath == Sourcepath.disable) {
-            return Collections.emptyList();
+            return List.of();
         }
         if (sourcepath == null && proc != Proc.only) {
-            return Collections.emptyList();
+            return List.of();
         }
 
         if (privatePackageReference != AccessRulesViolation.ignore) {
@@ -530,9 +531,9 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     }
 
     private static void addIfExists(Set<File> sourcepath, String path) {
-        File file = new File(path);
-        if (file.exists()) {
-            sourcepath.add(file);
+        Path file = Path.of(path);
+        if (Files.exists(file)) {
+            sourcepath.add(file.toFile());
         }
     }
 
@@ -572,7 +573,7 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
                 } else if (jar.isDirectory()) {
                     try {
                         List<String> lines = Files.readAllLines(
-                                new File(jar, "META-INF/services/javax.annotation.processing.Processor").toPath(),
+                                jar.toPath().resolve("META-INF/services/javax.annotation.processing.Processor"),
                                 StandardCharsets.UTF_8);
                         if (!lines.isEmpty()) {
                             processors
@@ -619,9 +620,10 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
     private static Set<Debug> parseDebug(String debug) {
         Set<Debug> result = new HashSet<AbstractCompileMojo.Debug>();
-        StringTokenizer st = new StringTokenizer(debug, ",");
-        while (st.hasMoreTokens()) {
-            String token = st.nextToken();
+        for (String token : debug.split(",")) {
+            if (token.isEmpty()) {
+                continue; // StringTokenizer compatibility: skip empty tokens
+            }
             Debug keyword;
             if ("true".equalsIgnoreCase(token)) {
                 keyword = Debug.all;
@@ -639,8 +641,10 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
     }
 
     private File mkdirs(File dir) throws MojoExecutionException {
-        if (!dir.isDirectory() && !dir.mkdirs()) {
-            throw new MojoExecutionException("Could not create directory " + dir);
+        try {
+            Files.createDirectories(dir.toPath());
+        } catch (IOException e) {
+            throw new MojoExecutionException("Could not create directory " + dir, e);
         }
         return dir;
     }

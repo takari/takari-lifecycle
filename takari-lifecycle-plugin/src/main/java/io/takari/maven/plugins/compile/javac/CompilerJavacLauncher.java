@@ -17,6 +17,8 @@ import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerOutput;
 import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerOutputProcessor;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Inject;
@@ -52,18 +54,18 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
             return 0;
         }
 
-        File options = File.createTempFile("javac-forked", ".options", buildDirectory);
-        File output = File.createTempFile("javac-forked", ".output", buildDirectory);
+        Path options = Files.createTempFile(buildDirectory.toPath(), "javac-forked", ".options");
+        Path output = Files.createTempFile(buildDirectory.toPath(), "javac-forked", ".output");
         compile(options, output, sources);
         // don't delete temp files in case of an exception
         // they maybe useful to debug the problem
-        options.delete();
-        output.delete();
+        Files.deleteIfExists(options);
+        Files.deleteIfExists(output);
 
         return sources.size();
     }
 
-    private void compile(File options, File output, final Map<File, Resource<File>> sources) throws IOException {
+    private void compile(Path options, Path output, final Map<File, Resource<File>> sources) throws IOException {
         new CompilerConfiguration(getSourceEncoding(), getCompilerOptions(), sources.keySet()).write(options);
 
         // use the same JVM as the one used to run Maven (the "java.home" one)
@@ -85,8 +87,8 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
 
         // main class and program arguments
         cli.addArgument(CompilerJavacForked.class.getName());
-        cli.addArgument(options.getAbsolutePath(), false);
-        cli.addArgument(output.getAbsolutePath(), false);
+        cli.addArgument(options.toAbsolutePath().toString(), false);
+        cli.addArgument(output.toAbsolutePath().toString(), false);
 
         DefaultExecutor executor = new DefaultExecutor();
         // ExecuteWatchdog watchdog = null;
@@ -121,7 +123,7 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
                 if (".".equals(path)) {
                     context.addPomMessage(message, kind, null);
                 } else {
-                    File file = new File(path);
+                    File file = Path.of(path).toFile();
                     Resource<File> resource = sources.get(file);
                     if (resource == null) {
                         resource = outputs.get(file);

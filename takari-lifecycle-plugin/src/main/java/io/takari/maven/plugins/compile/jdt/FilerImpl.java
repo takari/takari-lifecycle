@@ -17,6 +17,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -45,7 +46,7 @@ class FilerImpl implements Filer {
 
     private class FileObjectDelegate {
         public OutputStream openOutputStream(URI uri) throws IOException {
-            File outputFile = new File(uri);
+            File outputFile = Path.of(uri).toFile();
             writtenFiles.add(outputFile);
             final Output<File> output = context.processOutput(outputFile);
             return new FilterOutputStream(output.newOutputStream()) {

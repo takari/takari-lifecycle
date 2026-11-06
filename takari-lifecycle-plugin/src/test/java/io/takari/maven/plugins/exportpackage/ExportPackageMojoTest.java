@@ -6,10 +6,10 @@ import static io.takari.maven.testing.TestResources.touch;
 
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 import io.takari.maven.testing.TestResources;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -30,57 +30,57 @@ public class ExportPackageMojoTest {
 
     @Test
     public void testBasic() throws Exception {
-        File basedir = resources.getBasedir("exportpackage/basic");
+        Path basedir = resources.getBasedir("exportpackage/basic").toPath();
 
         // initial build
         mkfile(basedir, "target/classes/exported/Exported.class");
         mkfile(basedir, "target/classes/internal/Internal.class");
-        mojos.executeMojo(basedir, "export-package");
-        mojos.assertBuildOutputs(basedir, "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE);
+        mojos.executeMojo(basedir.toFile(), "export-package");
+        mojos.assertBuildOutputs(basedir.toFile(), "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE);
         assertExportedPackages(basedir, "exported");
 
         // no-change rebuild
-        mojos.executeMojo(basedir, "export-package");
-        mojos.assertCarriedOverOutputs(basedir, "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE);
+        mojos.executeMojo(basedir.toFile(), "export-package");
+        mojos.assertCarriedOverOutputs(basedir.toFile(), "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE);
         assertExportedPackages(basedir, "exported");
 
         // change public and private classes
-        touch(basedir, "target/classes/exported/Exported.class");
-        touch(basedir, "target/classes/internal/Internal.class");
-        mojos.executeMojo(basedir, "export-package");
-        mojos.assertCarriedOverOutputs(basedir, "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE);
+        touch(basedir.toFile(), "target/classes/exported/Exported.class");
+        touch(basedir.toFile(), "target/classes/internal/Internal.class");
+        mojos.executeMojo(basedir.toFile(), "export-package");
+        mojos.assertCarriedOverOutputs(basedir.toFile(), "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE);
         assertExportedPackages(basedir, "exported");
 
         // remove private class
-        rm(basedir, "target/classes/internal/Internal.class");
-        mojos.executeMojo(basedir, "export-package");
-        mojos.assertCarriedOverOutputs(basedir, "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE);
+        rm(basedir.toFile(), "target/classes/internal/Internal.class");
+        mojos.executeMojo(basedir.toFile(), "export-package");
+        mojos.assertCarriedOverOutputs(basedir.toFile(), "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE);
         assertExportedPackages(basedir, "exported");
 
         // new public class
         mkfile(basedir, "target/classes/exported/another/Exported.class");
-        mojos.executeMojo(basedir, "export-package");
-        mojos.assertBuildOutputs(basedir, "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE);
+        mojos.executeMojo(basedir.toFile(), "export-package");
+        mojos.assertBuildOutputs(basedir.toFile(), "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE);
         assertExportedPackages(basedir, "exported", "exported.another");
 
         // remove public class
-        rm(basedir, "target/classes/exported/another/Exported.class");
-        mojos.executeMojo(basedir, "export-package");
-        mojos.assertBuildOutputs(basedir, "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE);
+        rm(basedir.toFile(), "target/classes/exported/another/Exported.class");
+        mojos.executeMojo(basedir.toFile(), "export-package");
+        mojos.assertBuildOutputs(basedir.toFile(), "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE);
         assertExportedPackages(basedir, "exported");
 
         // remove last public class
-        rm(basedir, "target/classes/exported/Exported.class");
-        mojos.executeMojo(basedir, "export-package");
-        mojos.assertBuildOutputs(basedir, "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE);
+        rm(basedir.toFile(), "target/classes/exported/Exported.class");
+        mojos.executeMojo(basedir.toFile(), "export-package");
+        mojos.assertBuildOutputs(basedir.toFile(), "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE);
         assertExportedPackages(basedir, new String[0]);
     }
 
     @Test
     public void testNoClassesDirectory() throws Exception {
-        File basedir = resources.getBasedir("exportpackage/basic");
-        mojos.executeMojo(basedir, "export-package");
-        mojos.assertBuildOutputs(basedir, "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE);
+        Path basedir = resources.getBasedir("exportpackage/basic").toPath();
+        mojos.executeMojo(basedir.toFile(), "export-package");
+        mojos.assertBuildOutputs(basedir.toFile(), "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE);
         assertExportedPackages(basedir, new String[0]);
     }
 
@@ -88,21 +88,19 @@ public class ExportPackageMojoTest {
     public void testBasic_symlinked() throws Exception {
         Assume.assumeTrue(Os.isFamily(Os.FAMILY_UNIX));
 
-        File basedir = resources.getBasedir();
+        Path basedir = resources.getBasedir().toPath();
 
-        File orig = new File(basedir, "orig");
-        create(orig, "target/classes/exported/Class.class");
-        File symlink = java.nio.file.Files.createSymbolicLink(new File(basedir, "symlink").toPath(), orig.toPath())
-                .toFile();
+        Path orig = basedir.resolve("orig");
+        create(orig.toFile(), "target/classes/exported/Class.class");
+        Path symlink = Files.createSymbolicLink(basedir.resolve("symlink"), orig);
 
-        mojos.executeMojo(symlink, "export-package");
+        mojos.executeMojo(symlink.toFile(), "export-package");
         assertExportedPackages(symlink, "exported");
     }
 
-    private void assertExportedPackages(File basedir, String... exportedPackages) throws IOException {
+    private void assertExportedPackages(Path basedir, String... exportedPackages) throws IOException {
         List<String> actual = Files.readAllLines(
-                new File(basedir, "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE).toPath(),
-                StandardCharsets.UTF_8);
+                basedir.resolve("target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE), StandardCharsets.UTF_8);
         Assert.assertEquals(toString(Arrays.asList(exportedPackages)), toString(actual));
     }
 
@@ -117,9 +115,9 @@ public class ExportPackageMojoTest {
         return sb.toString();
     }
 
-    private void mkfile(File basedir, String relpath) throws IOException {
-        File file = new File(basedir, relpath);
-        file.getParentFile().mkdirs();
-        file.createNewFile();
+    private void mkfile(Path basedir, String relpath) throws IOException {
+        Path file = basedir.resolve(relpath);
+        Files.createDirectories(file.getParent());
+        Files.createFile(file);
     }
 }

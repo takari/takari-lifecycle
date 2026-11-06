@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -37,17 +38,17 @@ public class CompileTest extends AbstractCompileTest {
 
     @Test
     public void testBasic() throws Exception {
-        File basedir = compile("compile/basic");
-        File classes = new File(basedir, "target/classes");
+        Path basedir = compile("compile/basic").toPath();
+        File classes = basedir.resolve("target/classes").toFile();
         mojos.assertBuildOutputs(classes, "basic/Basic.class");
     }
 
     @Test
     public void testBasic_testCompile() throws Exception {
-        File basedir = compile("compile/basic");
-        File testClasses = new File(basedir, "target/test-classes");
+        Path basedir = compile("compile/basic").toPath();
+        File testClasses = basedir.resolve("target/test-classes").toFile();
 
-        MavenProject project = mojos.readMavenProject(basedir);
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
         MavenSession session = mojos.newMavenSession(project);
         MojoExecution execution = mojos.newMojoExecution("testCompile");
         execution.getConfiguration().addChild(newParameter("compilerId", compilerId));
@@ -62,8 +63,9 @@ public class CompileTest extends AbstractCompileTest {
         try {
             ByteArrayOutputStream buf = new ByteArrayOutputStream();
             System.setOut(new PrintStream(buf, true));
-            File basedir = compile("compile/basic", newParameter("verbose", "true"));
-            mojos.assertBuildOutputs(basedir, "target/classes/basic/Basic.class");
+            Path basedir =
+                    compile("compile/basic", newParameter("verbose", "true")).toPath();
+            mojos.assertBuildOutputs(basedir.toFile(), "target/classes/basic/Basic.class");
             String output = new String(buf.toByteArray());
             Assert.assertTrue(output.contains("parsing "));
         } finally {
@@ -73,67 +75,70 @@ public class CompileTest extends AbstractCompileTest {
 
     @Test
     public void testBasic_debugInfo() throws Exception {
-        File basedir;
+        Path basedir;
 
         // all
-        basedir = compile("compile/basic");
+        basedir = compile("compile/basic").toPath();
         assertThat(
-                new File(basedir, "target/classes/basic/Basic.class"),
+                basedir.resolve("target/classes/basic/Basic.class").toFile(),
                 allOf(hasDebugSource(), hasDebugLines(), hasDebugVars()));
-        basedir = compile("compile/basic", newParameter("debug", "all"));
+        basedir = compile("compile/basic", newParameter("debug", "all")).toPath();
         assertThat(
-                new File(basedir, "target/classes/basic/Basic.class"),
+                basedir.resolve("target/classes/basic/Basic.class").toFile(),
                 allOf(hasDebugSource(), hasDebugLines(), hasDebugVars()));
-        basedir = compile("compile/basic", newParameter("debug", "true"));
+        basedir = compile("compile/basic", newParameter("debug", "true")).toPath();
         assertThat(
-                new File(basedir, "target/classes/basic/Basic.class"),
+                basedir.resolve("target/classes/basic/Basic.class").toFile(),
                 allOf(hasDebugSource(), hasDebugLines(), hasDebugVars()));
 
         // none
-        basedir = compile("compile/basic", newParameter("debug", "none"));
+        basedir = compile("compile/basic", newParameter("debug", "none")).toPath();
         assertThat(
-                new File(basedir, "target/classes/basic/Basic.class"),
+                basedir.resolve("target/classes/basic/Basic.class").toFile(),
                 allOf(not(hasDebugSource()), not(hasDebugLines()), not(hasDebugVars())));
-        basedir = compile("compile/basic", newParameter("debug", "false"));
+        basedir = compile("compile/basic", newParameter("debug", "false")).toPath();
         assertThat(
-                new File(basedir, "target/classes/basic/Basic.class"),
+                basedir.resolve("target/classes/basic/Basic.class").toFile(),
                 allOf(not(hasDebugSource()), not(hasDebugLines()), not(hasDebugVars())));
 
         // keywords
-        basedir = compile("compile/basic", newParameter("debug", "source"));
+        basedir = compile("compile/basic", newParameter("debug", "source")).toPath();
         assertThat(
-                new File(basedir, "target/classes/basic/Basic.class"),
+                basedir.resolve("target/classes/basic/Basic.class").toFile(),
                 allOf(hasDebugSource(), not(hasDebugLines()), not(hasDebugVars())));
-        basedir = compile("compile/basic", newParameter("debug", "source,lines"));
+        basedir =
+                compile("compile/basic", newParameter("debug", "source,lines")).toPath();
         assertThat(
-                new File(basedir, "target/classes/basic/Basic.class"),
+                basedir.resolve("target/classes/basic/Basic.class").toFile(),
                 allOf(hasDebugSource(), hasDebugLines(), not(hasDebugVars())));
-        basedir = compile("compile/basic", newParameter("debug", "source,lines,vars"));
+        basedir = compile("compile/basic", newParameter("debug", "source,lines,vars"))
+                .toPath();
         assertThat(
-                new File(basedir, "target/classes/basic/Basic.class"),
+                basedir.resolve("target/classes/basic/Basic.class").toFile(),
                 allOf(hasDebugSource(), hasDebugLines(), hasDebugVars()));
     }
 
     @Test
     public void testBasic_skipMain() throws Exception {
-        File basedir = compile("compile/basic", newParameter("skipMain", "true"));
-        File classes = new File(basedir, "target/classes");
+        Path basedir =
+                compile("compile/basic", newParameter("skipMain", "true")).toPath();
+        File classes = basedir.resolve("target/classes").toFile();
         mojos.assertBuildOutputs(classes, new String[0]);
 
-        compile(basedir);
+        compile(basedir.toFile());
         mojos.assertBuildOutputs(classes, "basic/Basic.class");
 
-        compile(basedir, newParameter("skipMain", "true"));
+        compile(basedir.toFile(), newParameter("skipMain", "true"));
         mojos.assertBuildOutputs(classes, new String[0]);
         mojos.assertDeletedOutputs(classes, new String[0]);
     }
 
     @Test
     public void testBasic_skip() throws Exception {
-        File basedir = compile("compile/basic");
-        File testClasses = new File(basedir, "target/test-classes");
+        Path basedir = compile("compile/basic").toPath();
+        File testClasses = basedir.resolve("target/test-classes").toFile();
 
-        MavenProject project = mojos.readMavenProject(basedir);
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
         MavenSession session = mojos.newMavenSession(project);
         MojoExecution execution = mojos.newMojoExecution("testCompile");
         execution.getConfiguration().addChild(newParameter("compilerId", compilerId));
@@ -157,61 +162,62 @@ public class CompileTest extends AbstractCompileTest {
     @Test
     @Ignore("Java 7 source/target is not supported on recent JDKs")
     public void testBasic_java7() throws Exception {
-        File basedir = compile("compile/basic", newParameter("source", "1.7"));
-        assertThat(new File(basedir, "target/classes/basic/Basic.class"), isVersion(51));
+        Path basedir = compile("compile/basic", newParameter("source", "1.7")).toPath();
+        assertThat(basedir.resolve("target/classes/basic/Basic.class").toFile(), isVersion(51));
     }
 
     @Test
     public void testBasic_java8() throws Exception {
-        File basedir = compile("compile/basic", newParameter("source", "1.8"));
-        assertThat(new File(basedir, "target/classes/basic/Basic.class"), isVersion(52));
+        Path basedir = compile("compile/basic", newParameter("source", "1.8")).toPath();
+        assertThat(basedir.resolve("target/classes/basic/Basic.class").toFile(), isVersion(52));
     }
 
     @Test
     public void testBasic_java9() throws Exception {
         assumeTrue(isJava9orBetter);
-        File basedir = compile("compile/basic", newParameter("source", "9"));
-        assertThat(new File(basedir, "target/classes/basic/Basic.class"), isVersion(53));
+        Path basedir = compile("compile/basic", newParameter("source", "9")).toPath();
+        assertThat(basedir.resolve("target/classes/basic/Basic.class").toFile(), isVersion(53));
     }
 
     @Test
     public void testBasic_java10() throws Exception {
         assumeTrue(isJava10orBetter);
-        File basedir = compile("compile/basic", newParameter("source", "10"));
-        assertThat(new File(basedir, "target/classes/basic/Basic.class"), isVersion(54));
+        Path basedir = compile("compile/basic", newParameter("source", "10")).toPath();
+        assertThat(basedir.resolve("target/classes/basic/Basic.class").toFile(), isVersion(54));
     }
 
     @Test
     public void testBasic_java11() throws Exception {
         assumeTrue(isJava10orBetter);
-        File basedir = compile("compile/basic", newParameter("source", "11"));
-        assertThat(new File(basedir, "target/classes/basic/Basic.class"), isVersion(55));
+        Path basedir = compile("compile/basic", newParameter("source", "11")).toPath();
+        assertThat(basedir.resolve("target/classes/basic/Basic.class").toFile(), isVersion(55));
     }
 
     @Test
     public void testIncludes() throws Exception {
         Xpp3Dom includes = new Xpp3Dom("includes");
         includes.addChild(newParameter("include", "basic/Basic.java"));
-        File basedir = compile("compile/source-filtering", includes);
+        Path basedir = compile("compile/source-filtering", includes).toPath();
 
-        mojos.assertBuildOutputs(new File(basedir, "target/classes"), "basic/Basic.class");
+        mojos.assertBuildOutputs(basedir.resolve("target/classes").toFile(), "basic/Basic.class");
     }
 
     @Test
     public void testExcludes() throws Exception {
         Xpp3Dom excludes = new Xpp3Dom("excludes");
         excludes.addChild(newParameter("exclude", "basic/Garbage.java"));
-        File basedir = compile("compile/source-filtering", excludes);
+        Path basedir = compile("compile/source-filtering", excludes).toPath();
 
-        mojos.assertBuildOutputs(new File(basedir, "target/classes"), "basic/Basic.class");
+        mojos.assertBuildOutputs(basedir.resolve("target/classes").toFile(), "basic/Basic.class");
     }
 
     @Test
     public void testClasspath() throws Exception {
-        File dependency = new File(compile("compile/basic"), "target/classes");
+        File dependency =
+                compile("compile/basic").toPath().resolve("target/classes").toFile();
 
-        File basedir = resources.getBasedir("compile/classpath");
-        MavenProject project = mojos.readMavenProject(basedir);
+        Path basedir = resources.getBasedir("compile/classpath").toPath();
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
         MavenSession session = mojos.newMavenSession(project);
         MojoExecution execution = mojos.newMojoExecution();
 
@@ -219,7 +225,7 @@ public class CompileTest extends AbstractCompileTest {
 
         mojos.executeMojo(session, project, execution);
 
-        mojos.assertBuildOutputs(new File(basedir, "target/classes"), "classpath/Classpath.class");
+        mojos.assertBuildOutputs(basedir.resolve("target/classes").toFile(), "classpath/Classpath.class");
     }
 
     @Test
@@ -227,26 +233,26 @@ public class CompileTest extends AbstractCompileTest {
         // dependency has both .java and .class files, but .java file is corrupted
         // assert the compiler uses .class file when dependencySourceTypes=ignore
 
-        File dependency = compile("compile/basic");
-        Files.writeString(
-                new File(dependency, "target/classes/basic/Basic.java").toPath(), "corrupted", StandardCharsets.UTF_8);
-        touch(new File(dependency, "target/classes/basic/Basic.java")); // javac will pick newer file by default
+        Path dependency = compile("compile/basic").toPath();
+        Files.writeString(dependency.resolve("target/classes/basic/Basic.java"), "corrupted", StandardCharsets.UTF_8);
+        touch(dependency.resolve("target/classes/basic/Basic.java").toFile()); // javac will pick newer file by default
 
-        File basedir = resources.getBasedir("compile/classpath");
-        MavenProject project = mojos.readMavenProject(basedir);
+        Path basedir = resources.getBasedir("compile/classpath").toPath();
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
 
-        addDependency(project, "dependency", new File(dependency, "target/classes"));
+        addDependency(
+                project, "dependency", dependency.resolve("target/classes").toFile());
 
         mojos.compile(project, newParameter("dependencySourceTypes", "ignore"));
 
-        mojos.assertBuildOutputs(new File(basedir, "target/classes"), "classpath/Classpath.class");
+        mojos.assertBuildOutputs(basedir.resolve("target/classes").toFile(), "classpath/Classpath.class");
     }
 
     @Test
     public void testSpace() throws Exception {
-        File basedir = compile("compile/spa ce");
-        Assert.assertTrue(basedir.getAbsolutePath().contains(" "));
-        mojos.assertBuildOutputs(new File(basedir, "target/classes"), "space/Space.class");
+        Path basedir = compile("compile/spa ce").toPath();
+        Assert.assertTrue(basedir.toAbsolutePath().toString().contains(" "));
+        mojos.assertBuildOutputs(basedir.resolve("target/classes").toFile(), "space/Space.class");
     }
 
     @Test
@@ -256,23 +262,23 @@ public class CompileTest extends AbstractCompileTest {
         expected.setSnippets(
                 "javac", "ERROR Error.java [4:11]", "cannot find symbol", "class Foo", "location", "class basic.Error");
 
-        File basedir = resources.getBasedir("compile/error");
+        Path basedir = resources.getBasedir("compile/error").toPath();
         try {
-            compile(basedir);
+            compile(basedir.toFile());
             Assert.fail();
         } catch (MojoExecutionException e) {
             // expected
         }
-        mojos.assertBuildOutputs(basedir, new String[0]);
-        mojos.assertMessage(basedir, "src/main/java/error/Error.java", expected);
+        mojos.assertBuildOutputs(basedir.toFile(), new String[0]);
+        mojos.assertMessage(basedir.toFile(), "src/main/java/error/Error.java", expected);
     }
 
     @Test
     public void testWarn() throws Exception {
-        File basedir = resources.getBasedir("compile/warn");
-        compile(basedir); // no warnings by default
-        mojos.assertBuildOutputs(new File(basedir, "target/classes"), "warn/Warn.class");
-        mojos.assertMessages(basedir, "src/main/java/warn/Warn.java", new String[0]);
+        Path basedir = resources.getBasedir("compile/warn").toPath();
+        compile(basedir.toFile()); // no warnings by default
+        mojos.assertBuildOutputs(basedir.resolve("target/classes").toFile(), "warn/Warn.class");
+        mojos.assertMessages(basedir.toFile(), "src/main/java/warn/Warn.java", new String[0]);
 
         ErrorMessage expected = new ErrorMessage(compilerId);
         expected.setSnippets(
@@ -282,56 +288,57 @@ public class CompileTest extends AbstractCompileTest {
                 "javac",
                 "WARNING Warn.java [5:12] found raw type: java.util.List\n  missing type arguments for generic class java.util.List<E>");
 
-        compile(basedir, newParameter("showWarnings", "true"));
-        mojos.assertBuildOutputs(new File(basedir, "target/classes"), "warn/Warn.class");
-        mojos.assertMessage(basedir, "src/main/java/warn/Warn.java", expected);
+        compile(basedir.toFile(), newParameter("showWarnings", "true"));
+        mojos.assertBuildOutputs(basedir.resolve("target/classes").toFile(), "warn/Warn.class");
+        mojos.assertMessage(basedir.toFile(), "src/main/java/warn/Warn.java", expected);
     }
 
     @Test
     public void testEncoding() throws Exception {
-        File basedir = resources.getBasedir("compile/encoding");
+        Path basedir = resources.getBasedir("compile/encoding").toPath();
         try {
-            compile(basedir, newParameter("encoding", "ISO-8859-5"));
+            compile(basedir.toFile(), newParameter("encoding", "ISO-8859-5"));
             Assert.fail();
         } catch (MojoExecutionException e) {
             //
         }
         mojos.assertMessage(
-                new File(basedir, "src/main/java/encoding/ISO8859p5.java"),
+                basedir.resolve("src/main/java/encoding/ISO8859p5.java").toFile(),
                 "\u043f\u043e\u0440\u0443\u0441\u0441\u043a\u0438"); // "inrussian" in UTF8 Russian
     }
 
     @Test
     public void testParameters() throws Exception {
-        File basedir = resources.getBasedir("compile/parameters");
-        compile(basedir, newParameter("parameters", "true"), newParameter("source", "1.8"));
+        Path basedir = resources.getBasedir("compile/parameters").toPath();
+        compile(basedir.toFile(), newParameter("parameters", "true"), newParameter("source", "1.8"));
         assertThat(
-                new File(basedir, "target/classes/parameters/MethodParameter.class"),
+                basedir.resolve("target/classes/parameters/MethodParameter.class")
+                        .toFile(),
                 hasMethodParameterWithName("myNamedParameter"));
     }
 
     @Test
     public void testEmpty() throws Exception {
-        File basedir = compile("compile/empty");
-        mojos.assertBuildOutputs(basedir, new String[0]);
-        Assert.assertFalse("outputDirectory was not created", new File(basedir, "target/classes").exists());
+        Path basedir = compile("compile/empty").toPath();
+        mojos.assertBuildOutputs(basedir.toFile(), new String[0]);
+        Assert.assertFalse("outputDirectory was not created", Files.exists(basedir.resolve("target/classes")));
     }
 
     @Test
     public void testIncludeNonJavaSources() throws Exception {
-        File basedir = resources.getBasedir("compile/unexpected-sources");
+        Path basedir = resources.getBasedir("compile/unexpected-sources").toPath();
         try {
-            compile(basedir);
+            compile(basedir.toFile());
         } catch (MojoExecutionException e) {
             Assert.assertEquals("<includes> patterns must end with .java. Illegal patterns: [**]", e.getMessage());
         }
-        mojos.assertBuildOutputs(basedir, new String[0]);
+        mojos.assertBuildOutputs(basedir.toFile(), new String[0]);
     }
 
     @Test
     public void testMultipleExecutions() throws Exception {
-        File basedir = resources.getBasedir("compile/multiple-executions");
-        MavenProject project = mojos.readMavenProject(basedir);
+        Path basedir = resources.getBasedir("compile/multiple-executions").toPath();
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
         MavenSession session = mojos.newMavenSession(project);
 
         // compile "other" sources, execution id="other"
@@ -343,13 +350,13 @@ public class CompileTest extends AbstractCompileTest {
         execution = new MojoExecution(execution.getMojoDescriptor(), "other", execution.getSource());
         execution.setConfiguration(configuration);
         mojos.executeMojo(session, project, execution);
-        mojos.assertBuildOutputs(new File(basedir, "target/classes"), "other/Other.class");
+        mojos.assertBuildOutputs(basedir.resolve("target/classes").toFile(), "other/Other.class");
 
         // compile main sources
         Xpp3Dom includes = new Xpp3Dom("includes");
         includes.addChild(newParameter("include", "main/*.java"));
-        compile(basedir, includes);
-        mojos.assertBuildOutputs(new File(basedir, "target/classes"), "main/Main.class");
+        compile(basedir.toFile(), includes);
+        mojos.assertBuildOutputs(basedir.resolve("target/classes").toFile(), "main/Main.class");
     }
 
     @Test
@@ -358,14 +365,14 @@ public class CompileTest extends AbstractCompileTest {
         // the point of this test is to verify compile mojo tolerates this messages, i.e. does not fail
         // in this particular test, the message is triggered by missing @annotation referenced from a dependency class
 
-        File basedir = resources.getBasedir("compile/binary-class-message");
+        Path basedir = resources.getBasedir("compile/binary-class-message").toPath();
 
-        MavenProject project = mojos.readMavenProject(new File(basedir, "project"));
+        MavenProject project = mojos.readMavenProject(basedir.resolve("project").toFile());
         MavenSession session = mojos.newMavenSession(project);
         MojoExecution execution = mojos.newMojoExecution();
-        addDependency(project, "dependency", new File(basedir, "annotated.zip"));
+        addDependency(project, "dependency", basedir.resolve("annotated.zip").toFile());
         mojos.executeMojo(session, project, execution);
-        mojos.assertBuildOutputs(new File(basedir, "project/target/classes"), "project/Project.class");
+        mojos.assertBuildOutputs(basedir.resolve("project/target/classes").toFile(), "project/Project.class");
     }
 
     @Test
@@ -373,41 +380,46 @@ public class CompileTest extends AbstractCompileTest {
         // javac automatically generates class files from sources found on classpath in some cases
         // the point of this test is to make sure this behaviour is disabled
 
-        File dependency = compile("compile/basic");
-        cp(dependency, "src/main/java/basic/Basic.java", "target/classes/basic/Basic.java");
-        touch(dependency, "target/classes/basic/Basic.java"); // must be newer than .class file
+        Path dependency = compile("compile/basic").toPath();
+        cp(dependency.toFile(), "src/main/java/basic/Basic.java", "target/classes/basic/Basic.java");
+        touch(dependency.toFile(), "target/classes/basic/Basic.java"); // must be newer than .class file
 
-        File basedir = resources.getBasedir("compile/implicit-classfile");
-        MavenProject project = mojos.readMavenProject(basedir);
+        Path basedir = resources.getBasedir("compile/implicit-classfile").toPath();
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
         MavenSession session = mojos.newMavenSession(project);
         MojoExecution execution = mojos.newMojoExecution();
 
-        addDependency(project, "dependency", new File(dependency, "target/classes"));
+        addDependency(
+                project, "dependency", dependency.resolve("target/classes").toFile());
 
         mojos.executeMojo(session, project, execution);
 
-        mojos.assertBuildOutputs(new File(basedir, "target/classes"), "implicit/Implicit.class");
+        mojos.assertBuildOutputs(basedir.resolve("target/classes").toFile(), "implicit/Implicit.class");
     }
 
     @Test
     public void testAnnotation() throws Exception {
-        File basedir = compile("compile/annotation");
+        Path basedir = compile("compile/annotation").toPath();
 
         assertThat(
-                new File(basedir, "target/classes/annotation/AnnotatedClass.class"),
+                basedir.resolve("target/classes/annotation/AnnotatedClass.class")
+                        .toFile(),
                 hasAnnotation("annotation.Annotation"));
     }
 
     @Test
     @Ignore("The test is useful but needs to be reimplemented")
     public void testInnerTypeDependency_sourceDependencies() throws Exception {
-        File basedir = resources.getBasedir("compile/inner-type-dependency");
+        Path basedir = resources.getBasedir("compile/inner-type-dependency").toPath();
 
-        MavenProject project = mojos.readMavenProject(basedir);
-        addDependency(project, "dependency", new File(basedir, "dependency/src/main/java"));
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
+        addDependency(
+                project,
+                "dependency",
+                basedir.resolve("dependency/src/main/java").toFile());
 
         mojos.compile(project, newParameter("dependencySourceTypes", "prefer"));
-        mojos.assertBuildOutputs(new File(basedir, "target/classes"), "innertyperef/InnerTypeRef.class");
+        mojos.assertBuildOutputs(basedir.resolve("target/classes").toFile(), "innertyperef/InnerTypeRef.class");
     }
 
     @Test
@@ -426,23 +438,23 @@ public class CompileTest extends AbstractCompileTest {
             expected.setSnippets(CompilerJavac.ID, msg);
         }
 
-        File basedir = resources.getBasedir("compile/failOnError");
+        Path basedir = resources.getBasedir("compile/failOnError").toPath();
         try {
             compile("compile/failOnError");
             // Assert.fail();
         } catch (MojoExecutionException e) {
             //
         }
-        mojos.assertMessage(basedir, "src/main/java/basic/Error.java", expected);
+        mojos.assertMessage(basedir.toFile(), "src/main/java/basic/Error.java", expected);
     }
 
     @Test
     public void testFailOnErrorFalse() throws Exception {
         try {
-            File basedir = resources.getBasedir("compile/failOnError");
+            Path basedir = resources.getBasedir("compile/failOnError").toPath();
             compile("compile/failOnError", newParameter("failOnError", "false"));
             if (compilerId.equals(CompilerJdt.ID)) {
-                mojos.assertBuildOutputs(new File(basedir, "target/classes"), "basic/Basic.class");
+                mojos.assertBuildOutputs(basedir.resolve("target/classes").toFile(), "basic/Basic.class");
             }
         } catch (MojoExecutionException e) {
             Assert.fail();

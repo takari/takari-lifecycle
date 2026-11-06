@@ -4,6 +4,7 @@ import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 import io.takari.maven.plugins.compile.jdt.ClasspathDigester;
 import io.takari.maven.plugins.compile.jdt.ClasspathEntryCache;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
@@ -50,7 +51,12 @@ public class CompileRule extends IncrementalBuildRule {
     }
 
     public void assertMessage(File basedir, String path, ErrorMessage expected) throws Exception {
-        Collection<String> messages = getBuildContextLog().getMessages(new File(basedir, path));
+        assertMessage(basedir.toPath(), path, expected);
+    }
+
+    public void assertMessage(Path basedir, String path, ErrorMessage expected) throws Exception {
+        Collection<String> messages =
+                getBuildContextLog().getMessages(basedir.resolve(path).toFile());
         if (messages.size() != 1) {
             throw new ComparisonFailure("Number of messages", expected.toString(), messages.toString());
         }
@@ -58,6 +64,18 @@ public class CompileRule extends IncrementalBuildRule {
         if (!expected.isMatch(message)) {
             throw new ComparisonFailure("", expected.toString(), message);
         }
+    }
+
+    public void assertBuildOutputs(Path basedir, String... paths) throws Exception {
+        assertBuildOutputs(basedir.toFile(), paths);
+    }
+
+    public void assertDeletedOutputs(Path basedir, String... paths) throws Exception {
+        assertDeletedOutputs(basedir.toFile(), paths);
+    }
+
+    public void assertCarriedOverOutputs(Path basedir, String... paths) throws Exception {
+        assertCarriedOverOutputs(basedir.toFile(), paths);
     }
 
     public void flushClasspathCaches() {

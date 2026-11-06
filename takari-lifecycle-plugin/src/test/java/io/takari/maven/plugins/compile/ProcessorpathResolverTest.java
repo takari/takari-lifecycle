@@ -6,9 +6,7 @@ import static org.junit.Assert.assertTrue;
 import io.takari.maven.testing.TestMavenRuntime;
 import io.takari.maven.testing.TestResources;
 import java.io.File;
-import java.util.Collections;
 import java.util.List;
-import java.util.StringTokenizer;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.project.MavenProject;
@@ -52,10 +50,10 @@ public class ProcessorpathResolverTest {
     }
 
     private List<Dependency> dependencies(String coords) {
-        StringTokenizer st = new StringTokenizer(coords, ":");
+        String[] parts = coords.split(":");
         Dependency dependency = new Dependency();
-        dependency.setGroupId(st.nextToken());
-        dependency.setArtifactId(st.nextToken());
-        return Collections.singletonList(dependency);
+        dependency.setGroupId(parts[0]);
+        dependency.setArtifactId(parts[1]);
+        return List.of(dependency);
     }
 }

@@ -14,8 +14,9 @@ import com.squareup.javapoet.TypeSpec;
 import io.takari.maven.plugins.compile.AbstractCompileMojo.Proc;
 import io.takari.maven.plugins.compile.javac.CompilerJavac;
 import io.takari.maven.plugins.compile.jdt.CompilerJdt;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -49,34 +50,36 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         return compilers;
     }
 
-    private File procCompile(String projectName, Proc proc, Xpp3Dom... parameters) throws Exception, IOException {
-        File basedir = resources.getBasedir(projectName);
+    private Path procCompile(String projectName, Proc proc, Xpp3Dom... parameters) throws Exception, IOException {
+        Path basedir = resources.getBasedir(projectName).toPath();
         return procCompile(basedir, proc, parameters);
     }
 
-    private File procCompile(File basedir, Proc proc, Xpp3Dom... parameters) throws Exception, IOException {
-        File processor = compileAnnotationProcessor();
+    private Path procCompile(Path basedir, Proc proc, Xpp3Dom... parameters) throws Exception, IOException {
+        Path processor = compileAnnotationProcessor();
         return processAnnotations(basedir, proc, processor, parameters);
     }
 
-    private File processAnnotations(File basedir, Proc proc, File processor, Xpp3Dom... parameters) throws Exception {
-        MavenProject project = mojos.readMavenProject(basedir);
+    private Path processAnnotations(Path basedir, Proc proc, Path processor, Xpp3Dom... parameters) throws Exception {
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
         processAnnotations(project, processor, proc, parameters);
         return basedir;
     }
 
-    protected void processAnnotations(MavenProject project, File processor, Proc proc, Xpp3Dom... parameters)
+    protected void processAnnotations(MavenProject project, Path processor, Proc proc, Xpp3Dom... parameters)
             throws Exception {
         MavenSession session = mojos.newMavenSession(project);
         processAnnotations(session, project, "compile", processor, proc, parameters);
     }
 
     protected void processAnnotations(
-            MavenSession session, MavenProject project, String goal, File processor, Proc proc, Xpp3Dom... parameters)
+            MavenSession session, MavenProject project, String goal, Path processor, Proc proc, Xpp3Dom... parameters)
             throws Exception {
         MojoExecution execution = mojos.newMojoExecution(goal);
 
-        addDependency(project, "processor", new File(processor, "target/classes"));
+        if (processor != null) {
+            addDependency(project, "processor", processor.resolve("target/classes"));
+        }
 
         Xpp3Dom configuration = execution.getConfiguration();
 
@@ -92,10 +95,10 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         mojos.executeMojo(session, project, execution);
     }
 
-    private File compileAnnotationProcessor() throws Exception, IOException {
-        File processor = compile("compile-proc/processor");
+    private Path compileAnnotationProcessor() throws Exception, IOException {
+        Path processor = compile("compile-proc/processor").toPath();
         cp(
-                processor,
+                processor.toFile(),
                 "src/main/resources/META-INF/services/javax.annotation.processing.Processor",
                 "target/classes/META-INF/services/javax.annotation.processing.Processor");
         return processor;
@@ -103,24 +106,24 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
     @Test
     public void testProc_only() throws Exception {
-        File basedir = procCompile("compile-proc/proc", Proc.only);
+        Path basedir = procCompile("compile-proc/proc", Proc.only);
         mojos.assertBuildOutputs(
-                new File(basedir, "target/generated-sources/annotations"),
+                basedir.resolve("target/generated-sources/annotations"),
                 "proc/GeneratedSource.java",
                 "proc/AnotherGeneratedSource.java");
     }
 
     @Test
     public void testProc_none() throws Exception {
-        File basedir = procCompile("compile-proc/proc", Proc.none);
-        mojos.assertBuildOutputs(new File(basedir, "target"), "classes/proc/Source.class");
+        Path basedir = procCompile("compile-proc/proc", Proc.none);
+        mojos.assertBuildOutputs(basedir.resolve("target"), "classes/proc/Source.class");
     }
 
     @Test
     public void testProc_proc() throws Exception {
-        File basedir = procCompile("compile-proc/proc", Proc.proc);
+        Path basedir = procCompile("compile-proc/proc", Proc.proc);
         mojos.assertBuildOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "classes/proc/Source.class", //
                 "generated-sources/annotations/proc/GeneratedSource.java", //
                 "classes/proc/GeneratedSource.class", //
@@ -130,13 +133,13 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
     @Test
     public void testProc_incrementalTypeIndex() throws Exception {
-        File processor = compileAnnotationProcessor();
-        File basedir = resources.getBasedir("compile-proc/proc");
-        File src = new File(basedir, "src/main/java");
+        Path processor = compileAnnotationProcessor();
+        Path basedir = resources.getBasedir("compile-proc/proc").toPath();
+        Path src = basedir.resolve("src/main/java");
 
         processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.ProcessorLastRound"));
-        mojos.assertBuildOutputs(new File(basedir, "target/classes"), "proc/Source.class", "types.lst");
-        assertFileContents("proc.Source\n", basedir, "target/classes/types.lst");
+        mojos.assertBuildOutputs(basedir.resolve("target/classes"), "proc/Source.class", "types.lst");
+        assertFileContents("proc.Source\n", basedir.toFile(), "target/classes/types.lst");
 
         // create new annotated source and run incremental build
         JavaFile.builder(
@@ -149,36 +152,36 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
                 .writeTo(src);
         processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.ProcessorLastRound"));
         mojos.assertBuildOutputs(
-                new File(basedir, "target/classes"), "proc/Source.class", "proc/AnotherSource.class", "types.lst");
-        assertFileContents("proc.AnotherSource\nproc.Source\n", basedir, "target/classes/types.lst");
+                basedir.resolve("target/classes"), "proc/Source.class", "proc/AnotherSource.class", "types.lst");
+        assertFileContents("proc.AnotherSource\nproc.Source\n", basedir.toFile(), "target/classes/types.lst");
 
         // delete the new source and run incremental build
-        rm(src, "proc/AnotherSource.java");
+        rm(src.toFile(), "proc/AnotherSource.java");
         processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.ProcessorLastRound"));
-        mojos.assertBuildOutputs(new File(basedir, "target/classes"), "proc/Source.class", "types.lst");
-        mojos.assertDeletedOutputs(new File(basedir, "target/classes"), "proc/AnotherSource.class");
-        assertFileContents("proc.Source\n", basedir, "target/classes/types.lst");
+        mojos.assertBuildOutputs(basedir.resolve("target/classes"), "proc/Source.class", "types.lst");
+        mojos.assertDeletedOutputs(basedir.resolve("target/classes"), "proc/AnotherSource.class");
+        assertFileContents("proc.Source\n", basedir.toFile(), "target/classes/types.lst");
     }
 
     @Test
     public void testProc_incrementalProcessorChange() throws Exception {
-        File processor = compileAnnotationProcessor();
-        File basedir = resources.getBasedir("compile-proc/proc");
+        Path processor = compileAnnotationProcessor();
+        Path basedir = resources.getBasedir("compile-proc/proc").toPath();
         processAnnotations(basedir, Proc.proc, processor);
         mojos.assertBuildOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "classes/proc/Source.class", //
                 "generated-sources/annotations/proc/GeneratedSource.java", //
                 "classes/proc/GeneratedSource.class", //
                 "generated-sources/annotations/proc/AnotherGeneratedSource.java", //
                 "classes/proc/AnotherGeneratedSource.class");
 
-        rm(processor, "target/classes/META-INF/services/javax.annotation.processing.Processor");
+        rm(processor.toFile(), "target/classes/META-INF/services/javax.annotation.processing.Processor");
         mojos.flushClasspathCaches();
         processAnnotations(basedir, Proc.proc, processor);
-        mojos.assertBuildOutputs(new File(basedir, "target"), "classes/proc/Source.class");
+        mojos.assertBuildOutputs(basedir.resolve("target"), "classes/proc/Source.class");
         mojos.assertDeletedOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "generated-sources/annotations/proc/GeneratedSource.java", //
                 "classes/proc/GeneratedSource.class", //
                 "generated-sources/annotations/proc/AnotherGeneratedSource.java", //
@@ -187,15 +190,15 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
     @Test
     public void testProc_dummyOutput() throws Exception {
-        File basedir = procCompile("compile-proc/proc", Proc.proc, newProcessors("processor.Processor_dummyOutput"));
-        mojos.assertBuildOutputs(new File(basedir, "target"), "classes/proc/Source.class");
+        Path basedir = procCompile("compile-proc/proc", Proc.proc, newProcessors("processor.Processor_dummyOutput"));
+        mojos.assertBuildOutputs(basedir.resolve("target"), "classes/proc/Source.class");
     }
 
     @Test
     public void testProcTypeReference() throws Exception {
-        File basedir = procCompile("compile-proc/proc-type-reference", Proc.proc);
+        Path basedir = procCompile("compile-proc/proc-type-reference", Proc.proc);
         mojos.assertBuildOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "classes/proc/Source.class", //
                 "classes/proc/GeneratedSourceSubclass.class", //
                 "generated-sources/annotations/proc/GeneratedSource.java", //
@@ -206,9 +209,9 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
     @Test
     public void testProc_createResource() throws Exception {
-        File basedir = procCompile("compile-proc/proc", Proc.proc, newProcessors("processor.ProcessorCreateResource"));
+        Path basedir = procCompile("compile-proc/proc", Proc.proc, newProcessors("processor.ProcessorCreateResource"));
         mojos.assertBuildOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "classes/proc/Source.class", //
                 "generated-sources/annotations/proc/GeneratedSource.java");
     }
@@ -229,9 +232,9 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     @Test
     public void testProc_annotationProcessors() throws Exception {
         Xpp3Dom processors = newProcessors("processor.Processor");
-        File basedir = procCompile("compile-proc/proc", Proc.proc, processors);
+        Path basedir = procCompile("compile-proc/proc", Proc.proc, processors);
         mojos.assertBuildOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "classes/proc/Source.class", //
                 "generated-sources/annotations/proc/GeneratedSource.java", //
                 "classes/proc/GeneratedSource.class");
@@ -249,9 +252,9 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     @Test
     public void testProcRef_annotationProcessors() throws Exception {
         Xpp3Dom processors = newProcessors("processor.Processor");
-        File basedir = procCompile("compile-proc/proc-type-reference", Proc.proc, processors);
+        Path basedir = procCompile("compile-proc/proc-type-reference", Proc.proc, processors);
         mojos.assertBuildOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "classes/proc/Source.class", //
                 "generated-sources/annotations/proc/GeneratedSource.java", //
                 "classes/proc/GeneratedSource.class", //
@@ -272,10 +275,10 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         // javac can't handle forward references in the last round, but jdt can.
         Assume.assumeTrue(CompilerJdt.ID.equals(compilerId));
         Xpp3Dom processors = newProcessors("processor.ProcessorImplLastRound");
-        File basedir = procCompile("compile-proc/proc-type-reference", Proc.proc, processors);
+        Path basedir = procCompile("compile-proc/proc-type-reference", Proc.proc, processors);
 
         mojos.assertBuildOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "classes/proc/Source.class", //
                 "generated-sources/annotations/proc/GeneratedSource.java", //
                 "classes/proc/GeneratedSource.class", //
@@ -294,15 +297,15 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     @Test
     public void testProcRef_annotationProcessors_recompile() throws Exception {
         Xpp3Dom processors = newProcessors("processor.Processor");
-        File basedir = procCompile("compile-proc/proc-type-reference", Proc.proc, processors);
+        Path basedir = procCompile("compile-proc/proc-type-reference", Proc.proc, processors);
         mojos.assertBuildOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "classes/proc/Source.class", //
                 "generated-sources/annotations/proc/GeneratedSource.java", //
                 "classes/proc/GeneratedSource.class", //
                 "classes/proc/GeneratedSourceSubclass.class");
 
-        touch(basedir, "src/main/java/proc/Source.java");
+        touch(basedir.toFile(), "src/main/java/proc/Source.java");
 
         procCompile(basedir, Proc.proc, processors);
 
@@ -324,7 +327,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
                 "classes/proc/GeneratedSourceSubclass.class"
             };
         }
-        mojos.assertBuildOutputs(new File(basedir, "target"), expectedOuput);
+        mojos.assertBuildOutputs(basedir.resolve("target"), expectedOuput);
     }
 
     /**
@@ -341,15 +344,15 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         // javac can't handle forward references in the last round, but jdt can.
         Assume.assumeTrue(CompilerJdt.ID.equals(compilerId));
         Xpp3Dom processors = newProcessors("processor.ProcessorImplLastRound");
-        File basedir = procCompile("compile-proc/proc-type-reference", Proc.proc, processors);
+        Path basedir = procCompile("compile-proc/proc-type-reference", Proc.proc, processors);
         mojos.assertBuildOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "classes/proc/Source.class", //
                 "generated-sources/annotations/proc/GeneratedSource.java", //
                 "classes/proc/GeneratedSource.class", //
                 "classes/proc/GeneratedSourceSubclass.class");
 
-        touch(basedir, "src/main/java/proc/Source.java");
+        touch(basedir.toFile(), "src/main/java/proc/Source.java");
 
         procCompile(basedir, Proc.proc, processors);
 
@@ -359,7 +362,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         // recompile GeneratedSourceSubclass, hence it appears in this test and not
         // testProcRef_annotationProcessors_recompile's list of output for jdt.
         mojos.assertBuildOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "classes/proc/Source.class", //
                 "generated-sources/annotations/proc/GeneratedSource.java", //
                 "classes/proc/GeneratedSource.class", //
@@ -369,21 +372,22 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     @Test
     public void testProc_processorErrorMessage() throws Exception {
         Xpp3Dom processors = newProcessors("processor.ErrorMessageProcessor");
-        File basedir = resources.getBasedir("compile-proc/proc");
+        Path basedir = resources.getBasedir("compile-proc/proc").toPath();
         try {
             procCompile(basedir, Proc.only, processors);
             Assert.fail();
         } catch (MojoExecutionException e) {
             // expected
         }
-        mojos.assertBuildOutputs(new File(basedir, "target"), new String[0]);
+        mojos.assertBuildOutputs(basedir.resolve("target"), new String[0]);
 
         ErrorMessage expected = new ErrorMessage(compilerId);
         expected.setSnippets("jdt", "ERROR Source.java [6:14] test error message"); // TODO why 14?
         expected.setSnippets("javac", "ERROR Source.java [6:8] test error message");
         mojos.assertMessage(basedir, "src/main/java/proc/Source.java", expected);
 
-        Collection<String> pomMessages = mojos.getBuildContextLog().getMessages(new File(basedir, "pom.xml"));
+        Collection<String> pomMessages = mojos.getBuildContextLog()
+                .getMessages(basedir.resolve("pom.xml").toFile());
         Assert.assertEquals(pomMessages.toString(), 3, pomMessages.size());
         // TODO assert actual messages are as expected
     }
@@ -394,8 +398,8 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         expected.setSnippets("javac", "ERROR BrokenSource.java [2:29]", "cannot find symbol");
         expected.setSnippets("jdt", "ERROR BrokenSource.java [2:29]", "cannot be resolved to a type");
 
-        File processor = compileAnnotationProcessor();
-        File basedir = resources.getBasedir("compile-proc/proc");
+        Path processor = compileAnnotationProcessor();
+        Path basedir = resources.getBasedir("compile-proc/proc").toPath();
 
         String[] outputs;
         if (CompilerJdt.ID.equals(compilerId)) {
@@ -416,7 +420,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         } catch (MojoExecutionException e) {
             // expected
         }
-        mojos.assertBuildOutputs(new File(basedir, "target"), outputs);
+        mojos.assertBuildOutputs(basedir.resolve("target"), outputs);
         assertProcMessage(basedir, "target/generated-sources/annotations/proc/BrokenSource.java", expected);
 
         // no change rebuild should produce the same messages
@@ -426,13 +430,14 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         } catch (MojoExecutionException e) {
             // expected
         }
-        mojos.assertCarriedOverOutputs(new File(basedir, "target"), outputs);
+        mojos.assertCarriedOverOutputs(basedir.resolve("target"), outputs);
         assertProcMessage(basedir, "target/generated-sources/annotations/proc/BrokenSource.java", expected);
     }
 
-    private void assertProcMessage(File basedir, String path, ErrorMessage expected) throws Exception {
+    private void assertProcMessage(Path basedir, String path, ErrorMessage expected) throws Exception {
         // javac reports the same compilation error twice when Proc.proc
-        Set<String> messages = new HashSet<String>(mojos.getBuildContextLog().getMessages(new File(basedir, path)));
+        Set<String> messages = new HashSet<String>(
+                mojos.getBuildContextLog().getMessages(basedir.resolve(path).toFile()));
         Assert.assertEquals(messages.toString(), 1, messages.size());
         String message = messages.iterator().next();
         Assert.assertTrue(expected.isMatch(message));
@@ -450,12 +455,12 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
     @Test
     public void testProc_staleGeneratedSourcesCleanup() throws Exception {
-        File processor = compileAnnotationProcessor();
-        File basedir = resources.getBasedir("compile-proc/proc");
+        Path processor = compileAnnotationProcessor();
+        Path basedir = resources.getBasedir("compile-proc/proc").toPath();
 
         processAnnotations(basedir, Proc.proc, processor);
         mojos.assertBuildOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "classes/proc/Source.class", //
                 "generated-sources/annotations/proc/GeneratedSource.java", //
                 "classes/proc/GeneratedSource.class", //
@@ -463,10 +468,10 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
                 "classes/proc/AnotherGeneratedSource.class");
 
         // remove annotation
-        cp(basedir, "src/main/java/proc/Source.java-remove-annotation", "src/main/java/proc/Source.java");
+        cp(basedir.toFile(), "src/main/java/proc/Source.java-remove-annotation", "src/main/java/proc/Source.java");
         processAnnotations(basedir, Proc.proc, processor);
         mojos.assertDeletedOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "generated-sources/annotations/proc/GeneratedSource.java", //
                 "classes/proc/GeneratedSource.class", //
                 "generated-sources/annotations/proc/AnotherGeneratedSource.java", //
@@ -475,15 +480,15 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
     @Test
     public void testProc_incrementalDeleteLastAnnotatedSource() throws Exception {
-        File processor = compileAnnotationProcessor();
-        File basedir = resources.getBasedir("compile-proc/proc");
+        Path processor = compileAnnotationProcessor();
+        Path basedir = resources.getBasedir("compile-proc/proc").toPath();
 
         Xpp3Dom processors = newProcessors("processor.Processor");
 
         // initial compilation
         processAnnotations(basedir, Proc.proc, processor, processors);
         mojos.assertBuildOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "classes/proc/Source.class", //
                 "generated-sources/annotations/proc/GeneratedSource.java", //
                 "classes/proc/GeneratedSource.class");
@@ -491,16 +496,16 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         // no-change rebuild
         processAnnotations(basedir, Proc.proc, processor, processors);
         mojos.assertCarriedOverOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "classes/proc/Source.class", //
                 "generated-sources/annotations/proc/GeneratedSource.java", //
                 "classes/proc/GeneratedSource.class");
 
         // remove annotated class
-        rm(basedir, "src/main/java/proc/Source.java");
+        rm(basedir.toFile(), "src/main/java/proc/Source.java");
         processAnnotations(basedir, Proc.proc, processor, processors);
         mojos.assertDeletedOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "generated-sources/annotations/proc/GeneratedSource.java", //
                 "classes/proc/Source.class", //
                 "classes/proc/GeneratedSource.class");
@@ -508,10 +513,10 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
     @Test
     public void testProc_nonIncrementalProcessor_onlyEX_deleteSource() throws Exception {
-        File processor = compileAnnotationProcessor();
+        Path processor = compileAnnotationProcessor();
 
-        File basedir = resources.getBasedir("compile-proc/proc");
-        File target = new File(basedir, "target");
+        Path basedir = resources.getBasedir("compile-proc/proc").toPath();
+        Path target = basedir.resolve("target");
 
         Xpp3Dom processors = newProcessors("processor.NonIncrementalProcessor");
 
@@ -520,7 +525,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
                 target, //
                 "generated-sources/annotations/proc/NonIncrementalSource.java");
 
-        rm(basedir, "src/main/java/proc/Source.java");
+        rm(basedir.toFile(), "src/main/java/proc/Source.java");
 
         processAnnotations(basedir, Proc.only, processor, processors);
         mojos.assertDeletedOutputs(
@@ -530,31 +535,34 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
     @Test
     public void testProc_projectSourceRoots() throws Exception {
-        File processor = compileAnnotationProcessor();
+        Path processor = compileAnnotationProcessor();
 
-        File basedir = resources.getBasedir("compile-proc/proc");
-        MavenProject project = mojos.readMavenProject(basedir);
-        addDependency(project, "processor", new File(processor, "target/classes"));
+        Path basedir = resources.getBasedir("compile-proc/proc").toPath();
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
+        addDependency(project, "processor", processor.resolve("target/classes"));
 
         mojos.compile(project, newParameter("proc", Proc.proc.name()), newProcessors("processor.Processor"));
 
         Assert.assertTrue(project.getCompileSourceRoots()
-                .contains(new File(basedir, "target/generated-sources/annotations").getAbsolutePath()));
+                .contains(basedir.resolve("target/generated-sources/annotations")
+                        .toAbsolutePath()
+                        .toString()));
 
         // TODO testCompile
     }
 
     @Test
     public void testIncrementalDelete() throws Exception {
-        File processor = compileAnnotationProcessor();
-        File basedir = resources.getBasedir("compile-proc/proc-incremental-delete");
+        Path processor = compileAnnotationProcessor();
+        Path basedir =
+                resources.getBasedir("compile-proc/proc-incremental-delete").toPath();
 
         Xpp3Dom processors = newProcessors("processor.Processor");
 
         // initial compilation
         processAnnotations(basedir, Proc.proc, processor, processors);
         mojos.assertBuildOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "classes/proc/Keep.class", //
                 "classes/proc/Source.class", //
                 "generated-sources/annotations/proc/GeneratedSource.java", //
@@ -563,17 +571,17 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         // no-change rebuild
         processAnnotations(basedir, Proc.proc, processor, processors);
         mojos.assertCarriedOverOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "classes/proc/Keep.class", //
                 "classes/proc/Source.class", //
                 "generated-sources/annotations/proc/GeneratedSource.java", //
                 "classes/proc/GeneratedSource.class");
 
         // remove annotated source
-        rm(basedir, "src/main/java/proc/Source.java");
+        rm(basedir.toFile(), "src/main/java/proc/Source.java");
         processAnnotations(basedir, Proc.proc, processor, processors);
         mojos.assertDeletedOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "generated-sources/annotations/proc/GeneratedSource.java", //
                 "classes/proc/Source.class", //
                 "classes/proc/GeneratedSource.class");
@@ -586,19 +594,20 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         // 2. annotation is removed from original source and the generated source is moved to a dependency
         // assert original generatedSource.java and generatedSource.class are deleted
 
-        File processor = compileAnnotationProcessor();
-        File basedir = resources.getBasedir("compile-proc/proc-incremental-move");
-        File moduleA = new File(basedir, "module-a");
-        File moduleB = new File(basedir, "module-b");
+        Path processor = compileAnnotationProcessor();
+        Path basedir =
+                resources.getBasedir("compile-proc/proc-incremental-move").toPath();
+        Path moduleA = basedir.resolve("module-a");
+        Path moduleB = basedir.resolve("module-b");
 
         Xpp3Dom processors = newProcessors("processor.Processor");
 
-        mojos.compile(moduleB);
-        MavenProject projectA = mojos.readMavenProject(moduleA);
-        addDependency(projectA, "module-b", new File(moduleB, "target/classes"));
+        mojos.compile(moduleB.toFile());
+        MavenProject projectA = mojos.readMavenProject(moduleA.toFile());
+        addDependency(projectA, "module-b", moduleB.resolve("target/classes"));
         processAnnotations(projectA, processor, Proc.proc, processors);
         mojos.assertBuildOutputs(
-                new File(moduleA, "target"), //
+                moduleA.resolve("target"), //
                 "classes/proc/Source.class", //
                 "generated-sources/annotations/proc/GeneratedSource.java", //
                 "classes/proc/GeneratedSource.class");
@@ -606,20 +615,23 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         mojos.flushClasspathCaches();
 
         // move generated source to module-b/src/main/java
-        cp(moduleB, "src/main/java/proc/GeneratedSource.java-moved", "src/main/java/proc/GeneratedSource.java");
-        cp(moduleA, "src/main/java/modulea/ModuleA.java-new", "src/main/java/modulea/ModuleA.java");
-        cp(moduleA, "src/main/java/proc/Source.java-remove-annotation", "src/main/java/proc/Source.java");
-        mojos.compile(moduleB);
+        cp(
+                moduleB.toFile(),
+                "src/main/java/proc/GeneratedSource.java-moved",
+                "src/main/java/proc/GeneratedSource.java");
+        cp(moduleA.toFile(), "src/main/java/modulea/ModuleA.java-new", "src/main/java/modulea/ModuleA.java");
+        cp(moduleA.toFile(), "src/main/java/proc/Source.java-remove-annotation", "src/main/java/proc/Source.java");
+        mojos.compile(moduleB.toFile());
         mojos.assertBuildOutputs(moduleB, "target/classes/proc/GeneratedSource.class");
-        projectA = mojos.readMavenProject(moduleA);
-        addDependency(projectA, "module-b", new File(moduleB, "target/classes"));
+        projectA = mojos.readMavenProject(moduleA.toFile());
+        addDependency(projectA, "module-b", moduleB.resolve("target/classes"));
         processAnnotations(projectA, processor, Proc.proc, processors);
         mojos.assertBuildOutputs(
-                new File(moduleA, "target"), //
+                moduleA.resolve("target"), //
                 "classes/proc/Source.class",
                 "classes/modulea/ModuleA.class");
         mojos.assertDeletedOutputs(
-                new File(moduleA, "target"), //
+                moduleA.resolve("target"), //
                 "generated-sources/annotations/proc/GeneratedSource.java", //
                 "classes/proc/GeneratedSource.class");
     }
@@ -634,8 +646,8 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
     @Test
     public void testRequireProc() throws Exception {
-        File processor = compileAnnotationProcessor();
-        File basedir = resources.getBasedir("compile-proc/require-proc");
+        Path processor = compileAnnotationProcessor();
+        Path basedir = resources.getBasedir("compile-proc/require-proc").toPath();
         try {
             processAnnotations(basedir, null, processor);
             Assert.fail();
@@ -650,11 +662,11 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     public void testRequireProc_processorpathMasksClasspath() throws Exception {
         // assert annotation processors present on project classpath are ignored when processorpath is configured
 
-        File processor = compileAnnotationProcessor();
-        File basedir = resources.getBasedir("compile-proc/require-proc");
+        Path processor = compileAnnotationProcessor();
+        Path basedir = resources.getBasedir("compile-proc/require-proc").toPath();
         processAnnotations(basedir, null, processor, new Xpp3Dom("processorpath"));
         mojos.assertBuildOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "classes/proc/Source.class");
     }
 
@@ -665,7 +677,11 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         mojos.compile(annotations);
 
         MavenProject processor = mojos.readMavenProject(resources.getBasedir("compile-proc/processorpath-processor"));
-        mojos.newDependency(new File(annotations.getBasedir(), "target/classes"))
+        mojos.newDependency(annotations
+                        .getBasedir()
+                        .toPath()
+                        .resolve("target/classes")
+                        .toFile())
                 .setArtifactId("annotations")
                 .addTo(processor);
         mojos.compile(processor);
@@ -674,9 +690,13 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
                 "src/main/resources/META-INF/services/javax.annotation.processing.Processor",
                 "target/classes/META-INF/services/javax.annotation.processing.Processor");
 
-        File basedir = resources.getBasedir("compile-proc/proc");
-        MavenProject project = mojos.readMavenProject(basedir);
-        mojos.newDependency(new File(annotations.getBasedir(), "target/classes"))
+        Path basedir = resources.getBasedir("compile-proc/proc").toPath();
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
+        mojos.newDependency(annotations
+                        .getBasedir()
+                        .toPath()
+                        .resolve("target/classes")
+                        .toFile())
                 .setArtifactId("annotations")
                 .addTo(project);
 
@@ -708,26 +728,31 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
          *                                Client.java -> Client.class
          * </pre>
          */
-        File processor = compileAnnotationProcessor();
-        File basedir = resources.getBasedir("compile-proc/proc-incremental-recompile");
+        Path processor = compileAnnotationProcessor();
+        Path basedir =
+                resources.getBasedir("compile-proc/proc-incremental-recompile").toPath();
 
         Xpp3Dom processors = newProcessors("processor.ProcessorSiblingBody");
         Xpp3Dom options = new Xpp3Dom("annotationProcessorOptions");
-        options.addChild(newParameter("basedir", new File(basedir, "src/main/java").getCanonicalPath()));
+        options.addChild(newParameter(
+                "basedir", basedir.resolve("src/main/java").toRealPath().toString()));
 
         processAnnotations(basedir, Proc.proc, processor, processors, options);
         mojos.assertBuildOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "classes/proc/Source.class", //
                 "classes/proc/Client.class", //
                 "generated-sources/annotations/proc/GeneratedSource.java", //
                 "classes/proc/GeneratedSource.class");
 
-        cp(basedir, "src/main/java/proc/GeneratedSource.body-changed", "src/main/java/proc/GeneratedSource.body");
-        touch(basedir, "src/main/java/proc/Source.java");
+        cp(
+                basedir.toFile(),
+                "src/main/java/proc/GeneratedSource.body-changed",
+                "src/main/java/proc/GeneratedSource.body");
+        touch(basedir.toFile(), "src/main/java/proc/Source.java");
         processAnnotations(basedir, Proc.proc, processor, processors, options);
         mojos.assertBuildOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "classes/proc/Source.class", //
                 "classes/proc/Client.class", //
                 "generated-sources/annotations/proc/GeneratedSource.java", //
@@ -737,12 +762,12 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     @Test
     public void testProc_processorLastRound() throws Exception {
         Xpp3Dom processors = newProcessors("processor.ProcessorLastRound");
-        File basedir = procCompile("compile-proc/proc", Proc.only, processors);
+        Path basedir = procCompile("compile-proc/proc", Proc.only, processors);
         mojos.assertBuildOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "classes/types.lst");
 
-        assertFileContents("proc.Source\n", basedir, "target/classes/types.lst");
+        assertFileContents("proc.Source\n", basedir.toFile(), "target/classes/types.lst");
     }
 
     @Test
@@ -753,9 +778,10 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
         // TODO this test likely becomes redundant when annotation processing is always all-or-nothing
 
-        File processor = compileAnnotationProcessor();
-        File basedir = resources.getBasedir("compile-proc/proc-incremental-proconly");
-        File generatedSources = new File(basedir, "target/generated-sources/annotations");
+        Path processor = compileAnnotationProcessor();
+        Path basedir =
+                resources.getBasedir("compile-proc/proc-incremental-proconly").toPath();
+        Path generatedSources = basedir.resolve("target/generated-sources/annotations");
 
         Xpp3Dom processors = newProcessors("processor.Processor");
 
@@ -767,7 +793,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
                 "proc/GeneratedAbstract.java",
                 "proc/GeneratedAnother.java");
 
-        cp(basedir, "src/main/java/proc/Abstract.java-remove-annotation", "src/main/java/proc/Abstract.java");
+        cp(basedir.toFile(), "src/main/java/proc/Abstract.java-remove-annotation", "src/main/java/proc/Abstract.java");
         compile(basedir, processor, "compile-only");
         processAnnotations(basedir, Proc.only, processor, processors, newParameter("sourcepath", "disable"));
         mojos.assertDeletedOutputs(generatedSources, "proc/GeneratedConcrete.java", "proc/GeneratedAbstract.java");
@@ -780,23 +806,23 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         }
     }
 
-    private void compile(File basedir, File processor, String executionId) throws Exception {
-        MavenProject project = mojos.readMavenProject(basedir);
+    private void compile(Path basedir, Path processor, String executionId) throws Exception {
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
         MavenSession session = mojos.newMavenSession(project);
         MojoExecution execution = mojos.newMojoExecution();
         MojoExecution cloned = new MojoExecution(execution.getMojoDescriptor(), executionId, null);
         cloned.setConfiguration(execution.getConfiguration());
         execution.getConfiguration().addChild(newParameter("proc", Proc.none.name()));
-        addDependency(project, "processor", new File(processor, "target/classes"));
+        addDependency(project, "processor", processor.resolve("target/classes"));
         mojos.executeMojo(session, project, cloned);
     }
 
     @Test
     public void testMutliround_procOnly() throws Exception {
-        File basedir = procCompile("compile-proc/multiround", Proc.only);
-        File generatedSources = new File(basedir, "target/generated-sources/annotations");
+        Path basedir = procCompile("compile-proc/multiround", Proc.only);
+        Path generatedSources = basedir.resolve("target/generated-sources/annotations");
 
-        mojos.assertMessages(basedir, "src/main/java/multiround/Source.java", new String[] {});
+        mojos.assertMessages(basedir.toFile(), "src/main/java/multiround/Source.java", new String[] {});
         mojos.assertBuildOutputs(
                 generatedSources, "multiround/GeneratedSource.java", "multiround/AnotherGeneratedSource.java");
     }
@@ -807,20 +833,21 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         // the point of this test is to assert this works during incremental build
         // when compiler may be invoked several times to compile indirectly affected sources
 
-        File processor = compileAnnotationProcessor();
-        File basedir = resources.getBasedir("compile-proc/multiround-type-reference");
+        Path processor = compileAnnotationProcessor();
+        Path basedir =
+                resources.getBasedir("compile-proc/multiround-type-reference").toPath();
 
         processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.ProcessorLastRound"));
         mojos.assertBuildOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "classes/proc/Source.class", //
                 "classes/proc/AnotherSource.class", //
                 "classes/types.lst");
 
-        cp(basedir, "src/main/java/proc/Source.java-changed", "src/main/java/proc/Source.java");
+        cp(basedir.toFile(), "src/main/java/proc/Source.java-changed", "src/main/java/proc/Source.java");
         processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.ProcessorLastRound"));
         mojos.assertBuildOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "classes/proc/Source.class", //
                 "classes/proc/AnotherSource.class", //
                 "classes/types.lst");
@@ -832,8 +859,8 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         Assume.assumeTrue(CompilerJdt.ID.equals(compilerId));
 
         Xpp3Dom processors = newProcessors("processor.ProcessorLastRound_typeIndex");
-        File basedir = procCompile("compile-proc/multiround-type-index", Proc.proc, processors);
-        File target = new File(basedir, "target");
+        Path basedir = procCompile("compile-proc/multiround-type-index", Proc.proc, processors);
+        Path target = basedir.resolve("target");
         mojos.assertBuildOutputs(
                 target, //
                 "generated-sources/annotations/generated/TypeIndex.java", //
@@ -847,9 +874,9 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
     @Test
     public void testReprocess() throws Exception {
-        File processor = compileAnnotationProcessor();
-        File basedir = resources.getBasedir("compile-proc/reprocess");
-        File target = new File(basedir, "target");
+        Path processor = compileAnnotationProcessor();
+        Path basedir = resources.getBasedir("compile-proc/reprocess").toPath();
+        Path target = basedir.resolve("target");
 
         processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.ProessorValue"));
         mojos.assertBuildOutputs(
@@ -859,10 +886,10 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
                 "classes/reprocess/SimpleA.class", //
                 "classes/reprocess/SimpleB.class");
 
-        Assert.assertEquals("1", FileUtils.fileRead(new File(target, "classes/reprocess/Annotated.value")));
+        Assert.assertEquals("1", Files.readString(target.resolve("classes/reprocess/Annotated.value")));
 
-        cp(basedir, "src/main/java/reprocess/SimpleA.java-changed", "src/main/java/reprocess/SimpleA.java");
-        touch(new File(basedir, "src/main/java/reprocess/Annotated.java"));
+        cp(basedir.toFile(), "src/main/java/reprocess/SimpleA.java-changed", "src/main/java/reprocess/SimpleA.java");
+        touch(basedir.toFile(), "src/main/java/reprocess/Annotated.java");
 
         processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.ProessorValue"));
         mojos.assertBuildOutputs(
@@ -872,16 +899,16 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
                 "classes/reprocess/SimpleA.class", //
                 "classes/reprocess/SimpleB.class");
 
-        Assert.assertEquals("10", FileUtils.fileRead(new File(target, "classes/reprocess/Annotated.value")));
+        Assert.assertEquals("10", Files.readString(target.resolve("classes/reprocess/Annotated.value")));
     }
 
     @Test
     public void testProc_nonIncrementalProcessor() throws Exception {
         Assume.assumeTrue(CompilerJdt.ID.equals(compilerId));
 
-        File processor = compileAnnotationProcessor();
-        File basedir = resources.getBasedir("compile-proc/proc");
-        File target = new File(basedir, "target");
+        Path processor = compileAnnotationProcessor();
+        Path basedir = resources.getBasedir("compile-proc/proc").toPath();
+        Path target = basedir.resolve("target");
 
         processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.NonIncrementalProcessor"));
         mojos.assertBuildOutputs(
@@ -890,13 +917,13 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
                 "generated-sources/annotations/proc/NonIncrementalSource.java", //
                 "classes/proc/NonIncrementalSource.class");
 
-        FileUtils.deleteDirectory(target);
+        FileUtils.deleteDirectory(target.toFile());
         processAnnotations(basedir, Proc.only, processor, newProcessors("processor.NonIncrementalProcessor"));
         mojos.assertBuildOutputs(
                 target, //
                 "generated-sources/annotations/proc/NonIncrementalSource.java");
 
-        FileUtils.deleteDirectory(target);
+        FileUtils.deleteDirectory(target.toFile());
         processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.NonIncrementalProcessor"));
         mojos.assertBuildOutputs(
                 target, //
@@ -904,7 +931,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
                 "generated-sources/annotations/proc/NonIncrementalSource.java", //
                 "classes/proc/NonIncrementalSource.class");
 
-        FileUtils.deleteDirectory(target);
+        FileUtils.deleteDirectory(target.toFile());
         processAnnotations(basedir, Proc.only, processor, newProcessors("processor.NonIncrementalProcessor"));
         mojos.assertBuildOutputs(
                 target, //
@@ -918,7 +945,11 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         mojos.compile(annotations);
 
         MavenProject processor = mojos.readMavenProject(resources.getBasedir("compile-proc/processorpath-processor"));
-        mojos.newDependency(new File(annotations.getBasedir(), "target/classes"))
+        mojos.newDependency(annotations
+                        .getBasedir()
+                        .toPath()
+                        .resolve("target/classes")
+                        .toFile())
                 .setArtifactId("annotations")
                 .addTo(processor);
         mojos.compile(processor);
@@ -927,9 +958,13 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
                 "src/main/resources/META-INF/services/javax.annotation.processing.Processor",
                 "target/classes/META-INF/services/javax.annotation.processing.Processor");
 
-        File basedir = resources.getBasedir("compile-proc/proc");
-        MavenProject project = mojos.readMavenProject(basedir);
-        mojos.newDependency(new File(annotations.getBasedir(), "target/classes"))
+        Path basedir = resources.getBasedir("compile-proc/proc").toPath();
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
+        mojos.newDependency(annotations
+                        .getBasedir()
+                        .toPath()
+                        .resolve("target/classes")
+                        .toFile())
                 .setArtifactId("annotations")
                 .addTo(project);
 
@@ -944,7 +979,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         processorpath.addChild(newProcessorpathEntry(processor));
         mojos.compile(session, project, newParameter("proc", "proc"), processorpath);
         mojos.assertBuildOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "classes/proc/Source.class", //
                 "generated-sources/annotations/proc/GeneratedSource.java", //
                 "classes/proc/GeneratedSource.class");
@@ -952,9 +987,9 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
     @Test
     public void testProc_emptyProcessorPath() throws Exception {
-        File basedir = procCompile("compile-proc/proc", Proc.proc, new Xpp3Dom("processorpath"));
+        Path basedir = procCompile("compile-proc/proc", Proc.proc, new Xpp3Dom("processorpath"));
         mojos.assertBuildOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "classes/proc/Source.class");
     }
 
@@ -964,14 +999,14 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         // jdt is expected to run annotation processor if referenced non-annotated types change
         // (obviously still need to run apt when annotated types change, but that is tested elsewhere)
 
-        File processor = compileAnnotationProcessor();
-        File basedir = resources.getBasedir("compile-proc/proc");
-        File src = new File(basedir, "src/main/java");
+        Path processor = compileAnnotationProcessor();
+        Path basedir = resources.getBasedir("compile-proc/proc").toPath();
+        Path src = basedir.resolve("src/main/java");
 
         // processor references non-existing type proc.SourceJump
         processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.TypeJumpingProcessor"));
         mojos.assertBuildOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "classes/proc/Source.class");
 
         // create proc.SourceJump, assert apt ran as expected
@@ -980,7 +1015,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
                 .writeTo(src);
         processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.TypeJumpingProcessor"));
         mojos.assertBuildOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "classes/proc.SourceJump", // the generated resource
                 "classes/proc/Source.class", //
                 "classes/proc/SourceJump.class" //
@@ -994,11 +1029,11 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         if (CompilerJdt.ID.equals(compilerId)) {
             // jdt is supposed to compile the new type but carry-over everything else
             mojos.assertBuildOutputs(
-                    new File(basedir, "target"), //
+                    basedir.resolve("target"), //
                     "classes/proc/Unrelated.class");
-            mojos.assertDeletedOutputs(new File(basedir, "target"), new String[0]);
+            mojos.assertDeletedOutputs(basedir.resolve("target"), new String[0]);
             mojos.assertCarriedOverOutputs(
-                    new File(basedir, "target"), //
+                    basedir.resolve("target"), //
                     "classes/proc.SourceJump", // the generated resource
                     "classes/proc/Source.class", //
                     "classes/proc/SourceJump.class" //
@@ -1006,7 +1041,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         } else {
             // javac recompiles everything
             mojos.assertBuildOutputs(
-                    new File(basedir, "target"), //
+                    basedir.resolve("target"), //
                     "classes/proc.SourceJump", // the generated resource
                     "classes/proc/Source.class", //
                     "classes/proc/SourceJump.class", //
@@ -1027,19 +1062,19 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
     @Test
     public void testSourcepathDependency() throws Exception {
-        File processor = compileAnnotationProcessor();
-        File basedir = resources.getBasedir("compile-proc/proc-sourcepath");
+        Path processor = compileAnnotationProcessor();
+        Path basedir = resources.getBasedir("compile-proc/proc-sourcepath").toPath();
 
-        File dependencyBasedir = new File(basedir, "dependency");
-        File projectBasedir = new File(basedir, "project");
+        Path dependencyBasedir = basedir.resolve("dependency");
+        Path projectBasedir = basedir.resolve("project");
 
         Xpp3Dom processors = newProcessors("processor.Processor");
         Xpp3Dom sourcepath = newParameter("sourcepath", "reactorDependencies");
 
-        MavenProject dependency = mojos.readMavenProject(dependencyBasedir);
-        MavenProject project = mojos.readMavenProject(projectBasedir);
+        MavenProject dependency = mojos.readMavenProject(dependencyBasedir.toFile());
+        MavenProject project = mojos.readMavenProject(projectBasedir.toFile());
 
-        mojos.newDependency(new File(dependencyBasedir, "target/classes")) //
+        mojos.newDependency(dependencyBasedir.resolve("target/classes").toFile()) //
                 .setGroupId(dependency.getGroupId()) //
                 .setArtifactId(dependency.getArtifactId()) //
                 .setVersion(dependency.getVersion()) //
@@ -1050,30 +1085,34 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
         processAnnotations(session, project, "compile", processor, Proc.only, processors, sourcepath);
         mojos.assertBuildOutputs(
-                new File(projectBasedir, "target"), //
+                projectBasedir.resolve("target"), //
                 "generated-sources/annotations/sourcepath/project/GeneratedSource.java" //
                 );
     }
 
     @Test
     public void testSourcepathDependencyNestedTypeThroughBinaryDependency() throws Exception {
-        File processor = compileAnnotationProcessor();
-        File basedir = resources.getBasedir("compile-proc/proc-sourcepath-nestedtype-through-binary");
+        Path processor = compileAnnotationProcessor();
+        Path basedir = resources
+                .getBasedir("compile-proc/proc-sourcepath-nestedtype-through-binary")
+                .toPath();
 
-        File dependencyBasedir = new File(basedir, "dependency");
-        File binaryDependencyBasedir = new File(basedir, "binary-dependency");
-        File projectBasedir = new File(basedir, "project");
+        Path dependencyBasedir = basedir.resolve("dependency");
+        Path binaryDependencyBasedir = basedir.resolve("binary-dependency");
+        Path projectBasedir = basedir.resolve("project");
 
         Xpp3Dom processors = newProcessors("processor.EnclosedElementsProcessor");
         Xpp3Dom sourcepath = newParameter("sourcepath", "reactorDependencies");
 
-        MavenProject dependency = mojos.readMavenProject(dependencyBasedir);
-        MavenProject project = mojos.readMavenProject(projectBasedir);
+        MavenProject dependency = mojos.readMavenProject(dependencyBasedir.toFile());
+        MavenProject project = mojos.readMavenProject(projectBasedir.toFile());
 
-        mojos.newDependency(new File(binaryDependencyBasedir, "target/binary-dependency-1.0.jar"))
+        mojos.newDependency(binaryDependencyBasedir
+                        .resolve("target/binary-dependency-1.0.jar")
+                        .toFile())
                 .addTo(project);
 
-        mojos.newDependency(new File(dependencyBasedir, "target/classes")) //
+        mojos.newDependency(dependencyBasedir.resolve("target/classes").toFile()) //
                 .setGroupId(dependency.getGroupId()) //
                 .setArtifactId(dependency.getArtifactId()) //
                 .setVersion(dependency.getVersion()) //
@@ -1084,7 +1123,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
         processAnnotations(session, project, "compile", processor, Proc.only, processors, sourcepath);
         mojos.assertBuildOutputs(
-                new File(projectBasedir, "target"), //
+                projectBasedir.resolve("target"), //
                 "generated-sources/annotations/sourcepath/nestedtype/project/GeneratedSource.java" //
                 );
     }
@@ -1094,19 +1133,19 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         // the point of this test is assert that changes to sourcepath files are expected to trigger reprocessing of
         // affected sources
 
-        File processor = compileAnnotationProcessor();
-        File basedir = resources.getBasedir("compile-proc/proc-sourcepath");
+        Path processor = compileAnnotationProcessor();
+        Path basedir = resources.getBasedir("compile-proc/proc-sourcepath").toPath();
 
-        File dependencyBasedir = new File(basedir, "dependency");
-        File projectBasedir = new File(basedir, "project");
+        Path dependencyBasedir = basedir.resolve("dependency");
+        Path projectBasedir = basedir.resolve("project");
 
         Xpp3Dom processors = newProcessors("processor.Processor");
         Xpp3Dom sourcepath = newParameter("sourcepath", "reactorDependencies");
 
-        MavenProject dependency = mojos.readMavenProject(dependencyBasedir);
-        MavenProject project = mojos.readMavenProject(projectBasedir);
+        MavenProject dependency = mojos.readMavenProject(dependencyBasedir.toFile());
+        MavenProject project = mojos.readMavenProject(projectBasedir.toFile());
 
-        mojos.newDependency(new File(dependencyBasedir, "target/classes")) //
+        mojos.newDependency(dependencyBasedir.resolve("target/classes").toFile()) //
                 .setGroupId(dependency.getGroupId()) //
                 .setArtifactId(dependency.getArtifactId()) //
                 .setVersion(dependency.getVersion()) //
@@ -1117,19 +1156,19 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
         processAnnotations(session, project, "compile", processor, Proc.only, processors, sourcepath);
         mojos.assertBuildOutputs(
-                new File(projectBasedir, "target"), //
+                projectBasedir.resolve("target"), //
                 "generated-sources/annotations/sourcepath/project/GeneratedSource.java" //
                 );
 
         // second, incremental, compilation with one of sourcepath files removed
 
-        rm(dependencyBasedir, "src/main/java/sourcepath/dependency/SourcepathDependency.java");
+        rm(dependencyBasedir.toFile(), "src/main/java/sourcepath/dependency/SourcepathDependency.java");
         mojos.flushClasspathCaches();
 
-        dependency = mojos.readMavenProject(dependencyBasedir);
-        project = mojos.readMavenProject(projectBasedir);
+        dependency = mojos.readMavenProject(dependencyBasedir.toFile());
+        project = mojos.readMavenProject(projectBasedir.toFile());
 
-        mojos.newDependency(new File(dependencyBasedir, "target/classes")) //
+        mojos.newDependency(dependencyBasedir.resolve("target/classes").toFile()) //
                 .setGroupId(dependency.getGroupId()) //
                 .setArtifactId(dependency.getArtifactId()) //
                 .setVersion(dependency.getVersion()) //
@@ -1150,19 +1189,19 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
     @Test
     public void testSourcepathDependency_classifiedDependency() throws Exception {
-        File processor = compileAnnotationProcessor();
-        File basedir = resources.getBasedir("compile-proc/proc-sourcepath");
+        Path processor = compileAnnotationProcessor();
+        Path basedir = resources.getBasedir("compile-proc/proc-sourcepath").toPath();
 
-        File dependencyBasedir = new File(basedir, "dependency");
-        File projectBasedir = new File(basedir, "project");
+        Path dependencyBasedir = basedir.resolve("dependency");
+        Path projectBasedir = basedir.resolve("project");
 
         Xpp3Dom processors = newProcessors("processor.Processor");
         Xpp3Dom sourcepath = newParameter("sourcepath", "reactorDependencies");
 
-        MavenProject dependency = mojos.readMavenProject(dependencyBasedir);
-        MavenProject project = mojos.readMavenProject(projectBasedir);
+        MavenProject dependency = mojos.readMavenProject(dependencyBasedir.toFile());
+        MavenProject project = mojos.readMavenProject(projectBasedir.toFile());
 
-        mojos.newDependency(new File(dependencyBasedir, "target/classes")) //
+        mojos.newDependency(dependencyBasedir.resolve("target/classes").toFile()) //
                 .setGroupId(dependency.getGroupId()) //
                 .setArtifactId(dependency.getArtifactId()) //
                 .setVersion(dependency.getVersion()) //
@@ -1187,35 +1226,35 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         includes.addChild(newParameter("include", "sourcepath/project/*.java"));
         Xpp3Dom processors = newProcessors("processor.Processor");
         Xpp3Dom sourcepath = newParameter("sourcepath", "reactorDependencies");
-        File basedir =
+        Path basedir =
                 procCompile("compile-proc/proc-sourcepath-includes", Proc.only, includes, processors, sourcepath);
         mojos.assertBuildOutputs(
-                new File(basedir, "target"), //
+                basedir.resolve("target"), //
                 "generated-sources/annotations/sourcepath/project/GeneratedSource.java" //
                 );
     }
 
     @Test
     public void testSourcepathDependency_testCompile() throws Exception {
-        File processor = compileAnnotationProcessor();
-        File basedir = resources.getBasedir("compile-proc/proc-sourcepath");
+        Path processor = compileAnnotationProcessor();
+        Path basedir = resources.getBasedir("compile-proc/proc-sourcepath").toPath();
 
-        File dependencyBasedir = new File(basedir, "dependency");
-        File projectBasedir = new File(basedir, "project");
+        Path dependencyBasedir = basedir.resolve("dependency");
+        Path projectBasedir = basedir.resolve("project");
 
         Xpp3Dom processors = newProcessors("processor.Processor");
         Xpp3Dom sourcepath = newParameter("sourcepath", "reactorDependencies");
 
-        MavenProject dependency = mojos.readMavenProject(dependencyBasedir);
-        MavenProject project = mojos.readMavenProject(projectBasedir);
+        MavenProject dependency = mojos.readMavenProject(dependencyBasedir.toFile());
+        MavenProject project = mojos.readMavenProject(projectBasedir.toFile());
 
-        mojos.newDependency(new File(dependencyBasedir, "target/classes")) //
+        mojos.newDependency(dependencyBasedir.resolve("target/classes").toFile()) //
                 .setGroupId(dependency.getGroupId()) //
                 .setArtifactId(dependency.getArtifactId()) //
                 .setVersion(dependency.getVersion()) //
                 .addTo(project);
 
-        mojos.newDependency(new File(dependencyBasedir, "target/test-classes")) //
+        mojos.newDependency(dependencyBasedir.resolve("target/test-classes").toFile()) //
                 .setGroupId(dependency.getGroupId()) //
                 .setArtifactId(dependency.getArtifactId()) //
                 .setType("test-jar") //
@@ -1227,7 +1266,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
 
         processAnnotations(session, project, "testCompile", processor, Proc.only, processors, sourcepath);
         mojos.assertBuildOutputs(
-                new File(projectBasedir, "target"), //
+                projectBasedir.resolve("target"), //
                 "generated-test-sources/test-annotations/sourcepath/project/test/GeneratedSourceTest.java" //
                 );
     }
@@ -1236,7 +1275,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     public void testSourcepath_classpathVisibility() throws Exception {
         Assume.assumeTrue(CompilerJdt.ID.equals(compilerId));
 
-        File basedir = resources.getBasedir();
+        Path basedir = resources.getBasedir().toPath();
         Xpp3Dom sourcepath = newParameter("sourcepath", "reactorDependencies");
         Xpp3Dom classpathVisibility = newParameter("privatePackageReference", "error");
         try {
@@ -1250,19 +1289,21 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     @Test
     @Ignore("Neither javac nor jdt support secondary types on sourcepath")
     public void testSourcepathSecondatytype() throws Exception {
-        File processor = compileAnnotationProcessor();
-        File basedir = resources.getBasedir("compile-proc/proc-sourcepath-secondarytype");
+        Path processor = compileAnnotationProcessor();
+        Path basedir = resources
+                .getBasedir("compile-proc/proc-sourcepath-secondarytype")
+                .toPath();
 
-        File dependencyBasedir = new File(basedir, "dependency");
-        File projectBasedir = new File(basedir, "project");
+        Path dependencyBasedir = basedir.resolve("dependency");
+        Path projectBasedir = basedir.resolve("project");
 
         Xpp3Dom processors = newProcessors("processor.Processor");
         Xpp3Dom sourcepath = newParameter("sourcepath", "reactorDependencies");
 
-        MavenProject dependency = mojos.readMavenProject(dependencyBasedir);
-        MavenProject project = mojos.readMavenProject(projectBasedir);
+        MavenProject dependency = mojos.readMavenProject(dependencyBasedir.toFile());
+        MavenProject project = mojos.readMavenProject(projectBasedir.toFile());
 
-        mojos.newDependency(new File(dependencyBasedir, "target/classes")) //
+        mojos.newDependency(dependencyBasedir.resolve("target/classes").toFile()) //
                 .setGroupId(dependency.getGroupId()) //
                 .setArtifactId(dependency.getArtifactId()) //
                 .setVersion(dependency.getVersion()) //
@@ -1280,25 +1321,29 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         // project-b depends on project-a generated sources
         // both project-a and project-b run proc=only sourcepath=reactorDependencies
 
-        File processor = compileAnnotationProcessor();
-        File basedir = resources.getBasedir("compile-proc/proc-sourcepath-cache");
+        Path processor = compileAnnotationProcessor();
+        Path basedir =
+                resources.getBasedir("compile-proc/proc-sourcepath-cache").toPath();
 
         Xpp3Dom processors = newProcessors("processor.Processor");
         Xpp3Dom sourcepath = newParameter("sourcepath", "reactorDependencies");
         Xpp3Dom procOnly = newParameter("proc", Proc.only.name());
 
         // setting up project-a
-        File projectaBasedir = new File(basedir, "project-a");
-        MavenProject projecta = mojos.readMavenProject(projectaBasedir);
-        addDependency(projecta, "processor", new File(processor, "target/classes"));
-        projecta.addCompileSourceRoot(
-                new File(projectaBasedir, "target/generated-sources/annotations").getCanonicalPath());
+        Path projectaBasedir = basedir.resolve("project-a");
+        MavenProject projecta = mojos.readMavenProject(projectaBasedir.toFile());
+        addDependency(projecta, "processor", processor.resolve("target/classes"));
+        projecta.addCompileSourceRoot(projectaBasedir
+                .resolve("target/generated-sources/annotations")
+                .toAbsolutePath()
+                .normalize()
+                .toString());
 
         // setting up project-b
-        File projectbBasedir = new File(basedir, "project-b");
-        MavenProject projectb = mojos.readMavenProject(projectbBasedir);
-        addDependency(projectb, "processor", new File(processor, "target/classes"));
-        mojos.newDependency(new File(projectaBasedir, "target/classes")) //
+        Path projectbBasedir = basedir.resolve("project-b");
+        MavenProject projectb = mojos.readMavenProject(projectbBasedir.toFile());
+        addDependency(projectb, "processor", processor.resolve("target/classes"));
+        mojos.newDependency(projectaBasedir.resolve("target/classes").toFile()) //
                 .setGroupId(projecta.getGroupId()) //
                 .setArtifactId(projecta.getArtifactId()) //
                 .setVersion(projecta.getVersion()) //
@@ -1310,7 +1355,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         // process annotations in project-a
         mojos.executeMojo(session, projecta, "compile", procOnly, processors, sourcepath);
         mojos.assertBuildOutputs(
-                new File(projectaBasedir, "target"), //
+                projectaBasedir.resolve("target"), //
                 "generated-sources/annotations/sourcepath/projecta/GeneratedSourceA.java" //
                 );
 
@@ -1318,16 +1363,16 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         session.setCurrentProject(projectb);
         mojos.executeMojo(session, projectb, "compile", procOnly, processors, sourcepath);
         mojos.assertBuildOutputs(
-                new File(projectbBasedir, "target"), //
+                projectbBasedir.resolve("target"), //
                 "generated-sources/annotations/sourcepath/projectb/GeneratedSourceB.java" //
                 );
     }
 
     @Test
     public void testAnnotatedMember_incrementalProcessingTrigger() throws Exception {
-        File processor = compileAnnotationProcessor();
-        File basedir = resources.getBasedir();
-        File src = new File(basedir, "src/main/java");
+        Path processor = compileAnnotationProcessor();
+        Path basedir = resources.getBasedir().toPath();
+        Path src = basedir.resolve("src/main/java");
 
         // initial build, writes annotated field path is written to elements.lst file
         AnnotationSpec annotation =
@@ -1342,10 +1387,9 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
                 .build()
                 .writeTo(src);
         processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.ElementsListProcessor"));
-        mojos.assertBuildOutputs(
-                new File(basedir, "target/classes"), "proc/AnnotatedMemberSource.class", "elements.lst");
+        mojos.assertBuildOutputs(basedir.resolve("target/classes"), "proc/AnnotatedMemberSource.class", "elements.lst");
         assertFileContents(
-                "/proc/AnnotatedMemberSource/annotatedfield FIELD\n", basedir, "target/classes/elements.lst");
+                "/proc/AnnotatedMemberSource/annotatedfield FIELD\n", basedir.toFile(), "target/classes/elements.lst");
 
         // incremental build, introduce new annotated element and assert elements.lst includes both the new and the old
         // elements
@@ -1358,21 +1402,21 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
                 .writeTo(src);
         processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.ElementsListProcessor"));
         mojos.assertBuildOutputs(
-                new File(basedir, "target/classes"),
+                basedir.resolve("target/classes"),
                 "proc/AnnotatedMemberSource.class",
                 "proc/AnnotatedSource.class",
                 "elements.lst");
         assertFileContents(
                 "/proc/AnnotatedMemberSource/annotatedfield FIELD\n/proc/AnnotatedSource CLASS\n",
-                basedir,
+                basedir.toFile(),
                 "target/classes/elements.lst");
     }
 
     @Test
     public void testNestedTypeReference() throws Exception {
-        File processor = compileAnnotationProcessor();
-        File basedir = resources.getBasedir();
-        File src = new File(basedir, "src/main/java");
+        Path processor = compileAnnotationProcessor();
+        Path basedir = resources.getBasedir().toPath();
+        Path src = basedir.resolve("src/main/java");
 
         // initial build
         JavaFile.builder(
@@ -1395,12 +1439,12 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
                 .writeTo(src);
         processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.ElementsTypeMemberListProcessor"));
         mojos.assertBuildOutputs(
-                new File(basedir, "target/classes"),
+                basedir.resolve("target/classes"),
                 "proc/AnnotatedSource.class",
                 "proc/Dependency.class",
                 "proc/Dependency$Nested.class",
                 "elements.lst");
-        assertFileContents("<init> CONSTRUCTOR\n", basedir, "target/classes/elements.lst");
+        assertFileContents("<init> CONSTRUCTOR\n", basedir.toFile(), "target/classes/elements.lst");
 
         // add new member to Dependency.Nested type, run incremental build
         JavaFile.builder(
@@ -1415,11 +1459,12 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
                 .writeTo(src);
         processAnnotations(basedir, Proc.proc, processor, newProcessors("processor.ElementsTypeMemberListProcessor"));
         mojos.assertBuildOutputs(
-                new File(basedir, "target/classes"),
+                basedir.resolve("target/classes"),
                 "proc/AnnotatedSource.class",
                 "proc/Dependency.class",
                 "proc/Dependency$Nested.class",
                 "elements.lst");
-        assertFileContents("<init> CONSTRUCTOR\nnestedTypeField FIELD\n", basedir, "target/classes/elements.lst");
+        assertFileContents(
+                "<init> CONSTRUCTOR\nnestedTypeField FIELD\n", basedir.toFile(), "target/classes/elements.lst");
     }
 }

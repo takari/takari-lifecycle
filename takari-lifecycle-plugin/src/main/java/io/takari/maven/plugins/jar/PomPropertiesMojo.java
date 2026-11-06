@@ -9,7 +9,6 @@ package io.takari.maven.plugins.jar;
 
 import ca.vanzyl.provisio.archive.ExtendedArchiveEntry;
 import io.takari.incrementalbuild.BasicBuildContext;
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -31,7 +30,8 @@ public class PomPropertiesMojo extends Jar {
     public void executeMojo() throws MojoExecutionException {
         try {
             ExtendedArchiveEntry entry = pomPropertiesSource(project);
-            try (OutputStream os = context.processOutput(new File(classesDirectory, entry.getName()))
+            try (OutputStream os = context.processOutput(
+                            classesDirectory.toPath().resolve(entry.getName()).toFile())
                     .newOutputStream()) {
                 entry.writeEntry(os);
             }

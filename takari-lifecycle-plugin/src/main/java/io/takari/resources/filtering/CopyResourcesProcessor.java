@@ -11,10 +11,10 @@ import io.takari.incrementalbuild.BuildContext;
 import io.takari.incrementalbuild.Output;
 import io.takari.incrementalbuild.Resource;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 
@@ -43,7 +43,7 @@ class CopyResourcesProcessor extends AbstractResourceProcessor {
             throws IOException {
         File outputFile = relativize(sourceDirectory, targetDirectory, input.getResource());
         Output<File> output = input.associateOutput(outputFile);
-        try (InputStream is = new FileInputStream(input.getResource());
+        try (InputStream is = Files.newInputStream(input.getResource().toPath());
                 OutputStream os = output.newOutputStream()) {
             is.transferTo(os);
         }

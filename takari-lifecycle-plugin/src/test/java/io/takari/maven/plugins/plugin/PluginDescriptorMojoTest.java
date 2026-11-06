@@ -11,7 +11,8 @@ import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 import io.takari.maven.testing.TestProperties;
 import io.takari.maven.testing.TestResources;
 import java.io.File;
-import java.io.FileOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -55,24 +56,23 @@ public class PluginDescriptorMojoTest {
     }
 
     private void addDependencies(MavenProject project, String... keys) throws Exception {
-        File[] files = new File[keys.length];
-        for (int i = 0; i < keys.length; i++) {
-            files[i] = new File(properties.get(keys[i]));
+        for (String key : keys) {
+            addDependencies(project, Path.of(properties.get(key)));
         }
-        addDependencies(project, files);
     }
 
-    private void addDependencies(MavenProject project, File... files) throws Exception {
-        for (File file : files) {
-            mojos.newDependency(file).addTo(project);
+    private void addDependencies(MavenProject project, Path... files) throws Exception {
+        for (Path file : files) {
+            mojos.newDependency(file.toFile()).addTo(project);
         }
     }
 
     @Test
     public void testLegacyInheritance() throws Exception {
-        File basedir = resources.getBasedir("plugin-descriptor/legacy-inheritance");
-        File legacyBasedir = new File(basedir, "legacy");
-        File pluginBasedir = new File(basedir, "plugin");
+        Path basedir =
+                resources.getBasedir("plugin-descriptor/legacy-inheritance").toPath();
+        File legacyBasedir = basedir.resolve("legacy").toFile();
+        File pluginBasedir = basedir.resolve("plugin").toFile();
 
         final MavenProject legacyProject = mojos.readMavenProject(legacyBasedir);
         addDependencies(legacyProject, "apache-plugin-annotations-jar", "maven-plugin-api-jar");
@@ -89,7 +89,7 @@ public class PluginDescriptorMojoTest {
 
         final MavenProject pluginProject = mojos.readMavenProject(pluginBasedir);
         addDependencies(pluginProject, "apache-plugin-annotations-jar", "maven-plugin-api-jar");
-        addDependencies(pluginProject, new File(legacyBasedir, "target/plugin-descriptor-legacy-0.1.jar"));
+        addDependencies(pluginProject, legacyBasedir.toPath().resolve("target/plugin-descriptor-legacy-0.1.jar"));
 
         generatePluginDescriptor(pluginProject);
         mojos.assertBuildOutputs(
@@ -102,15 +102,17 @@ public class PluginDescriptorMojoTest {
 
     @Test
     public void testInheritance_incremental() throws Exception {
-        File basedir = resources.getBasedir("plugin-descriptor/incremental-inheritance");
-        File abstractBasedir = new File(basedir, "abstract");
-        File concreteBasedir = new File(basedir, "concrete");
+        Path basedir = resources
+                .getBasedir("plugin-descriptor/incremental-inheritance")
+                .toPath();
+        File abstractBasedir = basedir.resolve("abstract").toFile();
+        File concreteBasedir = basedir.resolve("concrete").toFile();
 
         final MavenProject abstractProject = mojos.readMavenProject(abstractBasedir);
         addDependencies(abstractProject, "apache-plugin-annotations-jar", "maven-plugin-api-jar");
         final MavenProject concreteProject = mojos.readMavenProject(concreteBasedir);
         addDependencies(concreteProject, "apache-plugin-annotations-jar", "maven-plugin-api-jar");
-        addDependencies(concreteProject, new File(abstractBasedir, "target/classes"));
+        addDependencies(concreteProject, abstractBasedir.toPath().resolve("target/classes"));
 
         // initial build
         generatePluginDescriptor(abstractProject);
@@ -137,9 +139,9 @@ public class PluginDescriptorMojoTest {
 
         // change external superclass
         cp(
-                new File(abstractBasedir, "src/main/java/io/takari/lifecycle/uts/plugindescriptor"),
-                "AbstractExternalMojo.java-changed",
-                "AbstractExternalMojo.java");
+                abstractBasedir,
+                "src/main/java/io/takari/lifecycle/uts/plugindescriptor/AbstractExternalMojo.java-changed",
+                "src/main/java/io/takari/lifecycle/uts/plugindescriptor/AbstractExternalMojo.java");
         generatePluginDescriptor(abstractProject);
         assertFileContents(abstractBasedir, "expected/mojos.xml-changed", "target/classes/META-INF/takari/mojos.xml");
         generatePluginDescriptor(concreteProject);
@@ -150,9 +152,9 @@ public class PluginDescriptorMojoTest {
 
         // remove annotations from external superclass
         cp(
-                new File(abstractBasedir, "src/main/java/io/takari/lifecycle/uts/plugindescriptor"),
-                "AbstractExternalMojo.java-removed",
-                "AbstractExternalMojo.java");
+                abstractBasedir,
+                "src/main/java/io/takari/lifecycle/uts/plugindescriptor/AbstractExternalMojo.java-removed",
+                "src/main/java/io/takari/lifecycle/uts/plugindescriptor/AbstractExternalMojo.java");
         generatePluginDescriptor(abstractProject);
         generatePluginDescriptor(concreteProject);
         assertFileContents(
@@ -233,11 +235,10 @@ public class PluginDescriptorMojoTest {
         // read
         // such dependencies are ignored by the compiler, so plugin.xml generation should ignore them too
 
-        File basedir = resources.getBasedir("plugin-descriptor/basic");
-        File bogusJar = new File(basedir, "bogus.jar");
-        new FileOutputStream(bogusJar).close();
+        Path basedir = resources.getBasedir("plugin-descriptor/basic").toPath();
+        Path bogusJar = Files.createFile(basedir.resolve("bogus.jar"));
 
-        MavenProject project = mojos.readMavenProject(basedir);
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
         addDependencies(project, "apache-plugin-annotations-jar", "maven-plugin-api-jar");
         addDependencies(project, bogusJar);
 
@@ -249,15 +250,16 @@ public class PluginDescriptorMojoTest {
         // the point of this test is to assert that non-structural dependency change does not force plugin.xml
         // regeneration
 
-        File basedir = resources.getBasedir("plugin-descriptor/incremental-dependency");
-        File dependency = new File(basedir, "dependency");
-        File plugin = new File(basedir, "plugin");
+        Path basedir =
+                resources.getBasedir("plugin-descriptor/incremental-dependency").toPath();
+        File dependency = basedir.resolve("dependency").toFile();
+        File plugin = basedir.resolve("plugin").toFile();
 
         mojos.executeMojo(dependency, "compile");
 
         MavenProject project = mojos.readMavenProject(plugin);
         addDependencies(project, "apache-plugin-annotations-jar", "maven-plugin-api-jar");
-        addDependencies(project, new File(dependency, "target/classes"));
+        addDependencies(project, dependency.toPath().resolve("target/classes"));
         generatePluginDescriptor(project);
         mojos.assertBuildOutputs(
                 plugin,
@@ -290,14 +292,16 @@ public class PluginDescriptorMojoTest {
     public void testSourcepathDependency() throws Exception {
         // assert that MojoAnnotationProcessorMojo honours sourcepath=reactorDependencies
 
-        File basedir = resources.getBasedir("plugin-descriptor/sourcepath-dependency");
-        File dependency = new File(basedir, "dependency");
-        File plugin = new File(basedir, "plugin");
+        Path basedir =
+                resources.getBasedir("plugin-descriptor/sourcepath-dependency").toPath();
+        File dependency = basedir.resolve("dependency").toFile();
+        File plugin = basedir.resolve("plugin").toFile();
 
         MavenProject dependencyProject = mojos.readMavenProject(dependency);
         MavenProject pluginProject = mojos.readMavenProject(plugin);
         addDependencies(pluginProject, "apache-plugin-annotations-jar", "maven-plugin-api-jar");
-        mojos.newDependency(new File(dependencyProject.getBuild().getOutputDirectory())) //
+        mojos.newDependency(Path.of(dependencyProject.getBuild().getOutputDirectory())
+                        .toFile()) //
                 .setGroupId(dependencyProject.getGroupId()) //
                 .setArtifactId(dependencyProject.getArtifactId()) //
                 .setVersion(dependencyProject.getVersion()) //

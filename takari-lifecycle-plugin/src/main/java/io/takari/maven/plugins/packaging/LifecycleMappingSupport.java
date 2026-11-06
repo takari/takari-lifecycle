@@ -10,7 +10,6 @@ package io.takari.maven.plugins.packaging;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +34,7 @@ public abstract class LifecycleMappingSupport implements Provider<LifecycleMappi
         this.lifecycleMapping = new LifecycleMapping() {
             @Override
             public Map<String, Lifecycle> getLifecycles() {
-                return Collections.singletonMap(DEFAULT_LIFECYCLE_KEY, defaultLifecycle);
+                return Map.of(DEFAULT_LIFECYCLE_KEY, defaultLifecycle);
             }
 
             @Override

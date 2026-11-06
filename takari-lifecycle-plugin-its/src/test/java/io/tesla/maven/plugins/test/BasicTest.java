@@ -2,14 +2,13 @@ package io.tesla.maven.plugins.test;
 
 import static io.takari.maven.testing.TestResources.assertFilesPresent;
 
-import com.google.common.io.ByteStreams;
 import io.takari.maven.testing.executor.MavenExecutionResult;
 import io.takari.maven.testing.executor.MavenRuntime.MavenRuntimeBuilder;
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.zip.ZipEntry;
+import java.nio.file.Path;
 import java.util.zip.ZipFile;
 import org.junit.Assert;
 import org.junit.Test;
@@ -22,15 +21,15 @@ public class BasicTest extends AbstractIntegrationTest {
 
     @Test
     public void testBasic() throws Exception {
-        File basedir = resources.getBasedir("basic");
+        Path basedir = resources.getBasedir("basic").toPath();
 
-        File remoterepo = new File(basedir, "remoterepo");
-        Assert.assertTrue(remoterepo.mkdirs());
+        Path remoterepo = basedir.resolve("remoterepo");
+        Files.createDirectory(remoterepo);
 
-        File localrepo = properties.getLocalRepository();
+        Path localrepo = properties.getLocalRepository().toPath();
 
-        MavenExecutionResult result = verifier.forProject(basedir) //
-                .withCliOption("-Drepopath=" + remoterepo.getCanonicalPath()) //
+        MavenExecutionResult result = verifier.forProject(basedir.toFile()) //
+                .withCliOption("-Drepopath=" + remoterepo.toRealPath()) //
                 .withCliOption("-X") //
                 .execute("deploy");
 
@@ -39,34 +38,34 @@ public class BasicTest extends AbstractIntegrationTest {
         // TODO assert expected mojos were executed
         // TODO assertFileExist, etc
         // TODO assert jar content
-        Assert.assertTrue(new File(basedir, "target/basic-1.0.jar").canRead());
-        Assert.assertTrue(new File(basedir, "target/basic-1.0-sources.jar").canRead());
-        Assert.assertTrue(new File(basedir, "target/basic-1.0-tests.jar").canRead());
+        Assert.assertTrue(Files.isReadable(basedir.resolve("target/basic-1.0.jar")));
+        Assert.assertTrue(Files.isReadable(basedir.resolve("target/basic-1.0-sources.jar")));
+        Assert.assertTrue(Files.isReadable(basedir.resolve("target/basic-1.0-tests.jar")));
 
-        File localGroup = new File(localrepo, "io/takari/lifecycle/its/basic");
-        Assert.assertTrue(new File(localGroup, "basic/1.0/basic-1.0.pom").canRead());
-        Assert.assertTrue(new File(localGroup, "basic/1.0/basic-1.0.jar").canRead());
-        Assert.assertTrue(new File(localGroup, "basic/1.0/basic-1.0-sources.jar").canRead());
-        Assert.assertTrue(new File(localGroup, "basic/1.0/basic-1.0-tests.jar").canRead());
+        Path localGroup = localrepo.resolve("io/takari/lifecycle/its/basic");
+        Assert.assertTrue(Files.isReadable(localGroup.resolve("basic/1.0/basic-1.0.pom")));
+        Assert.assertTrue(Files.isReadable(localGroup.resolve("basic/1.0/basic-1.0.jar")));
+        Assert.assertTrue(Files.isReadable(localGroup.resolve("basic/1.0/basic-1.0-sources.jar")));
+        Assert.assertTrue(Files.isReadable(localGroup.resolve("basic/1.0/basic-1.0-tests.jar")));
 
-        File remoteGroup = new File(remoterepo, "io/takari/lifecycle/its/basic");
-        Assert.assertTrue(new File(remoteGroup, "basic/1.0/basic-1.0.pom").canRead());
-        Assert.assertTrue(new File(remoteGroup, "basic/1.0/basic-1.0.jar").canRead());
-        Assert.assertTrue(new File(remoteGroup, "basic/1.0/basic-1.0-sources.jar").canRead());
-        Assert.assertTrue(new File(remoteGroup, "basic/1.0/basic-1.0-tests.jar").canRead());
+        Path remoteGroup = remoterepo.resolve("io/takari/lifecycle/its/basic");
+        Assert.assertTrue(Files.isReadable(remoteGroup.resolve("basic/1.0/basic-1.0.pom")));
+        Assert.assertTrue(Files.isReadable(remoteGroup.resolve("basic/1.0/basic-1.0.jar")));
+        Assert.assertTrue(Files.isReadable(remoteGroup.resolve("basic/1.0/basic-1.0-sources.jar")));
+        Assert.assertTrue(Files.isReadable(remoteGroup.resolve("basic/1.0/basic-1.0-tests.jar")));
     }
 
     @Test
     public void testBasicPlugin() throws Exception {
-        File basedir = resources.getBasedir("basic-plugin");
+        Path basedir = resources.getBasedir("basic-plugin").toPath();
 
-        File remoterepo = new File(basedir, "remoterepo");
-        Assert.assertTrue(remoterepo.mkdirs());
+        Path remoterepo = basedir.resolve("remoterepo");
+        Files.createDirectory(remoterepo);
 
-        File localrepo = properties.getLocalRepository();
+        Path localrepo = properties.getLocalRepository().toPath();
 
-        MavenExecutionResult result = verifier.forProject(basedir) //
-                .withCliOption("-Drepopath=" + remoterepo.getCanonicalPath()) //
+        MavenExecutionResult result = verifier.forProject(basedir.toFile()) //
+                .withCliOption("-Drepopath=" + remoterepo.toRealPath()) //
                 .execute("deploy");
 
         result.assertErrorFreeLog();
@@ -74,52 +73,51 @@ public class BasicTest extends AbstractIntegrationTest {
         // TODO assert expected mojos were executed
         // TODO assertFileExist, etc
         // TODO assert jar content
-        Assert.assertTrue(new File(basedir, "target/basic-plugin-1.0.jar").canRead());
-        Assert.assertTrue(new File(basedir, "target/basic-plugin-1.0-sources.jar").canRead());
-        Assert.assertTrue(new File(basedir, "target/basic-plugin-1.0-tests.jar").canRead());
+        Assert.assertTrue(Files.isReadable(basedir.resolve("target/basic-plugin-1.0.jar")));
+        Assert.assertTrue(Files.isReadable(basedir.resolve("target/basic-plugin-1.0-sources.jar")));
+        Assert.assertTrue(Files.isReadable(basedir.resolve("target/basic-plugin-1.0-tests.jar")));
 
-        File localGroup = new File(localrepo, "io/takari/lifecycle/its/basic");
-        Assert.assertTrue(new File(localGroup, "basic-plugin/1.0/basic-plugin-1.0.pom").canRead());
-        Assert.assertTrue(new File(localGroup, "basic-plugin/1.0/basic-plugin-1.0.jar").canRead());
-        Assert.assertTrue(new File(localGroup, "basic-plugin/1.0/basic-plugin-1.0-sources.jar").canRead());
-        Assert.assertTrue(new File(localGroup, "basic-plugin/1.0/basic-plugin-1.0-tests.jar").canRead());
+        Path localGroup = localrepo.resolve("io/takari/lifecycle/its/basic");
+        Assert.assertTrue(Files.isReadable(localGroup.resolve("basic-plugin/1.0/basic-plugin-1.0.pom")));
+        Assert.assertTrue(Files.isReadable(localGroup.resolve("basic-plugin/1.0/basic-plugin-1.0.jar")));
+        Assert.assertTrue(Files.isReadable(localGroup.resolve("basic-plugin/1.0/basic-plugin-1.0-sources.jar")));
+        Assert.assertTrue(Files.isReadable(localGroup.resolve("basic-plugin/1.0/basic-plugin-1.0-tests.jar")));
 
-        File remoteGroup = new File(remoterepo, "io/takari/lifecycle/its/basic");
-        Assert.assertTrue(new File(remoteGroup, "basic-plugin/1.0/basic-plugin-1.0.pom").canRead());
-        Assert.assertTrue(new File(remoteGroup, "basic-plugin/1.0/basic-plugin-1.0.jar").canRead());
-        Assert.assertTrue(new File(remoteGroup, "basic-plugin/1.0/basic-plugin-1.0-sources.jar").canRead());
-        Assert.assertTrue(new File(remoteGroup, "basic-plugin/1.0/basic-plugin-1.0-tests.jar").canRead());
+        Path remoteGroup = remoterepo.resolve("io/takari/lifecycle/its/basic");
+        Assert.assertTrue(Files.isReadable(remoteGroup.resolve("basic-plugin/1.0/basic-plugin-1.0.pom")));
+        Assert.assertTrue(Files.isReadable(remoteGroup.resolve("basic-plugin/1.0/basic-plugin-1.0.jar")));
+        Assert.assertTrue(Files.isReadable(remoteGroup.resolve("basic-plugin/1.0/basic-plugin-1.0-sources.jar")));
+        Assert.assertTrue(Files.isReadable(remoteGroup.resolve("basic-plugin/1.0/basic-plugin-1.0-tests.jar")));
 
         // assert m2e metadata
         Assert.assertEquals(
-                readFileUTF8(new File(basedir, "src/main/m2e/lifecycle-mapping-metadata.xml")), //
+                readFileUTF8(basedir.resolve("src/main/m2e/lifecycle-mapping-metadata.xml")), //
                 readZipFileEntryUTF8(
-                        new File(basedir, "target/basic-plugin-1.0.jar"),
-                        "META-INF/m2e/lifecycle-mapping-metadata.xml"));
+                        basedir.resolve("target/basic-plugin-1.0.jar"), "META-INF/m2e/lifecycle-mapping-metadata.xml"));
     }
 
-    private String readZipFileEntryUTF8(File zipFile, String entryPath) throws IOException {
-        try (ZipFile zip = new ZipFile(zipFile)) {
-            ZipEntry entry = zip.getEntry(entryPath);
-            return new String(ByteStreams.toByteArray(zip.getInputStream(entry)), StandardCharsets.UTF_8);
+    private String readZipFileEntryUTF8(Path zipFile, String entryPath) throws IOException {
+        try (ZipFile zip = new ZipFile(zipFile.toFile());
+                InputStream is = zip.getInputStream(zip.getEntry(entryPath))) {
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
         }
     }
 
-    private String readFileUTF8(File file) throws IOException {
-        return Files.readString(file.toPath(), StandardCharsets.UTF_8);
+    private String readFileUTF8(Path file) throws IOException {
+        return Files.readString(file, StandardCharsets.UTF_8);
     }
 
     @Test
     public void testBasicBuilder() throws Exception {
-        File basedir = resources.getBasedir("basic-builder");
+        Path basedir = resources.getBasedir("basic-builder").toPath();
 
-        File remoterepo = new File(basedir, "remoterepo");
-        Assert.assertTrue(remoterepo.mkdirs());
+        Path remoterepo = basedir.resolve("remoterepo");
+        Files.createDirectory(remoterepo);
 
-        File localrepo = properties.getLocalRepository();
+        Path localrepo = properties.getLocalRepository().toPath();
 
-        MavenExecutionResult result = verifier.forProject(basedir) //
-                .withCliOption("-Drepopath=" + remoterepo.getCanonicalPath()) //
+        MavenExecutionResult result = verifier.forProject(basedir.toFile()) //
+                .withCliOption("-Drepopath=" + remoterepo.toRealPath()) //
                 .withCliOption("-Dincrementalbuild.version=" + properties.get("incrementalbuild.version")) //
                 .execute("deploy");
 
@@ -128,41 +126,42 @@ public class BasicTest extends AbstractIntegrationTest {
         // TODO assert expected mojos were executed
         // TODO assertFileExist, etc
         // TODO assert jar content
-        Assert.assertTrue(new File(basedir, "target/basic-builder-1.0.jar").canRead());
-        Assert.assertTrue(new File(basedir, "target/basic-builder-1.0-sources.jar").canRead());
-        Assert.assertTrue(new File(basedir, "target/basic-builder-1.0-tests.jar").canRead());
-        Assert.assertTrue(new File(basedir, "target/classes/META-INF/m2e/lifecycle-mapping-metadata.xml").canRead());
+        Assert.assertTrue(Files.isReadable(basedir.resolve("target/basic-builder-1.0.jar")));
+        Assert.assertTrue(Files.isReadable(basedir.resolve("target/basic-builder-1.0-sources.jar")));
+        Assert.assertTrue(Files.isReadable(basedir.resolve("target/basic-builder-1.0-tests.jar")));
+        Assert.assertTrue(
+                Files.isReadable(basedir.resolve("target/classes/META-INF/m2e/lifecycle-mapping-metadata.xml")));
 
-        File localGroup = new File(localrepo, "io/takari/lifecycle/its/basic");
-        Assert.assertTrue(new File(localGroup, "basic-builder/1.0/basic-builder-1.0.pom").canRead());
-        Assert.assertTrue(new File(localGroup, "basic-builder/1.0/basic-builder-1.0.jar").canRead());
-        Assert.assertTrue(new File(localGroup, "basic-builder/1.0/basic-builder-1.0-sources.jar").canRead());
-        Assert.assertTrue(new File(localGroup, "basic-builder/1.0/basic-builder-1.0-tests.jar").canRead());
+        Path localGroup = localrepo.resolve("io/takari/lifecycle/its/basic");
+        Assert.assertTrue(Files.isReadable(localGroup.resolve("basic-builder/1.0/basic-builder-1.0.pom")));
+        Assert.assertTrue(Files.isReadable(localGroup.resolve("basic-builder/1.0/basic-builder-1.0.jar")));
+        Assert.assertTrue(Files.isReadable(localGroup.resolve("basic-builder/1.0/basic-builder-1.0-sources.jar")));
+        Assert.assertTrue(Files.isReadable(localGroup.resolve("basic-builder/1.0/basic-builder-1.0-tests.jar")));
 
-        File remoteGroup = new File(remoterepo, "io/takari/lifecycle/its/basic");
-        Assert.assertTrue(new File(remoteGroup, "basic-builder/1.0/basic-builder-1.0.pom").canRead());
-        Assert.assertTrue(new File(remoteGroup, "basic-builder/1.0/basic-builder-1.0.jar").canRead());
-        Assert.assertTrue(new File(remoteGroup, "basic-builder/1.0/basic-builder-1.0-sources.jar").canRead());
-        Assert.assertTrue(new File(remoteGroup, "basic-builder/1.0/basic-builder-1.0-tests.jar").canRead());
+        Path remoteGroup = remoterepo.resolve("io/takari/lifecycle/its/basic");
+        Assert.assertTrue(Files.isReadable(remoteGroup.resolve("basic-builder/1.0/basic-builder-1.0.pom")));
+        Assert.assertTrue(Files.isReadable(remoteGroup.resolve("basic-builder/1.0/basic-builder-1.0.jar")));
+        Assert.assertTrue(Files.isReadable(remoteGroup.resolve("basic-builder/1.0/basic-builder-1.0-sources.jar")));
+        Assert.assertTrue(Files.isReadable(remoteGroup.resolve("basic-builder/1.0/basic-builder-1.0-tests.jar")));
     }
 
     @Test
     public void testBasicComponent() throws Exception {
-        File basedir = resources.getBasedir("basic-component");
+        Path basedir = resources.getBasedir("basic-component").toPath();
 
-        File remoterepo = new File(basedir, "remoterepo");
-        Assert.assertTrue(remoterepo.mkdirs());
+        Path remoterepo = basedir.resolve("remoterepo");
+        Files.createDirectory(remoterepo);
 
-        File localrepo = properties.getLocalRepository();
+        Path localrepo = properties.getLocalRepository().toPath();
 
-        MavenExecutionResult result = verifier.forProject(basedir) //
-                .withCliOption("-Drepopath=" + remoterepo.getCanonicalPath()) //
+        MavenExecutionResult result = verifier.forProject(basedir.toFile()) //
+                .withCliOption("-Drepopath=" + remoterepo.toRealPath()) //
                 .execute("deploy");
 
         result.assertErrorFreeLog();
 
         assertFilesPresent(
-                basedir, //
+                basedir.toFile(), //
                 "target/classes/META-INF/sisu/javax.inject.Named", //
                 "target/test-classes/META-INF/sisu/javax.inject.Named", //
                 "target/test-classes/test.properties");
@@ -170,20 +169,20 @@ public class BasicTest extends AbstractIntegrationTest {
         // TODO assert expected mojos were executed
         // TODO assertFileExist, etc
         // TODO assert jar content
-        Assert.assertTrue(new File(basedir, "target/basic-component-1.0.jar").canRead());
-        Assert.assertTrue(new File(basedir, "target/basic-component-1.0-sources.jar").canRead());
-        Assert.assertTrue(new File(basedir, "target/basic-component-1.0-tests.jar").canRead());
+        Assert.assertTrue(Files.isReadable(basedir.resolve("target/basic-component-1.0.jar")));
+        Assert.assertTrue(Files.isReadable(basedir.resolve("target/basic-component-1.0-sources.jar")));
+        Assert.assertTrue(Files.isReadable(basedir.resolve("target/basic-component-1.0-tests.jar")));
 
-        File localGroup = new File(localrepo, "io/takari/lifecycle/its/basic");
-        Assert.assertTrue(new File(localGroup, "basic-component/1.0/basic-component-1.0.pom").canRead());
-        Assert.assertTrue(new File(localGroup, "basic-component/1.0/basic-component-1.0.jar").canRead());
-        Assert.assertTrue(new File(localGroup, "basic-component/1.0/basic-component-1.0-sources.jar").canRead());
-        Assert.assertTrue(new File(localGroup, "basic-component/1.0/basic-component-1.0-tests.jar").canRead());
+        Path localGroup = localrepo.resolve("io/takari/lifecycle/its/basic");
+        Assert.assertTrue(Files.isReadable(localGroup.resolve("basic-component/1.0/basic-component-1.0.pom")));
+        Assert.assertTrue(Files.isReadable(localGroup.resolve("basic-component/1.0/basic-component-1.0.jar")));
+        Assert.assertTrue(Files.isReadable(localGroup.resolve("basic-component/1.0/basic-component-1.0-sources.jar")));
+        Assert.assertTrue(Files.isReadable(localGroup.resolve("basic-component/1.0/basic-component-1.0-tests.jar")));
 
-        File remoteGroup = new File(remoterepo, "io/takari/lifecycle/its/basic");
-        Assert.assertTrue(new File(remoteGroup, "basic-component/1.0/basic-component-1.0.pom").canRead());
-        Assert.assertTrue(new File(remoteGroup, "basic-component/1.0/basic-component-1.0.jar").canRead());
-        Assert.assertTrue(new File(remoteGroup, "basic-component/1.0/basic-component-1.0-sources.jar").canRead());
-        Assert.assertTrue(new File(remoteGroup, "basic-component/1.0/basic-component-1.0-tests.jar").canRead());
+        Path remoteGroup = remoterepo.resolve("io/takari/lifecycle/its/basic");
+        Assert.assertTrue(Files.isReadable(remoteGroup.resolve("basic-component/1.0/basic-component-1.0.pom")));
+        Assert.assertTrue(Files.isReadable(remoteGroup.resolve("basic-component/1.0/basic-component-1.0.jar")));
+        Assert.assertTrue(Files.isReadable(remoteGroup.resolve("basic-component/1.0/basic-component-1.0-sources.jar")));
+        Assert.assertTrue(Files.isReadable(remoteGroup.resolve("basic-component/1.0/basic-component-1.0-tests.jar")));
     }
 }

@@ -9,6 +9,7 @@ package io.takari.maven.plugins.compile.javac;
 
 import java.io.File;
 import java.net.URI;
+import java.nio.file.Path;
 import javax.tools.FileObject;
 
 class FileObjects {
@@ -24,6 +25,9 @@ class FileObjects {
         if (path == null) {
             return null;
         }
-        return new File(path);
+        if ("file".equals(uri.getScheme())) {
+            return Path.of(uri).toFile();
+        }
+        return Path.of(path).toFile();
     }
 }

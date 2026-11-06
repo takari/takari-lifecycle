@@ -1,8 +1,8 @@
 package io.takari.maven.plugins.compile.jdt;
 
 import io.takari.maven.plugins.exportpackage.ExportPackageMojo;
-import java.io.File;
-import java.io.FileOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
@@ -12,17 +12,19 @@ import org.junit.Test;
 
 public class CompileJdtClasspathVisibilityTest extends AbstractCompileJdtTest {
 
-    private static final File DEPENDENCY =
-            new File("src/test/projects/compile-jdt-classpath-visibility/test-dependency/test-dependency-0.1.jar");
+    private static final Path DEPENDENCY =
+            Path.of("src/test/projects/compile-jdt-classpath-visibility/test-dependency/test-dependency-0.1.jar");
 
     @Test
     public void testReference_directDependencyArtifact() throws Exception {
         // sanity check, references to classes from direct dependencies are allowed
 
-        File basedir = resources.getBasedir("compile-jdt-classpath-visibility/reference");
+        Path basedir = resources
+                .getBasedir("compile-jdt-classpath-visibility/reference")
+                .toPath();
 
-        MavenProject project = mojos.readMavenProject(basedir);
-        addDependency(project, "dependency", DEPENDENCY);
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
+        addDependency(project, "dependency", DEPENDENCY.toFile());
 
         compile(project, true);
     }
@@ -31,24 +33,28 @@ public class CompileJdtClasspathVisibilityTest extends AbstractCompileJdtTest {
     public void testReference_indirectDependencyArtifact() throws Exception {
         // references to classes from indirect dependencies fail the build
 
-        File basedir = resources.getBasedir("compile-jdt-classpath-visibility/reference");
+        Path basedir = resources
+                .getBasedir("compile-jdt-classpath-visibility/reference")
+                .toPath();
 
-        MavenProject project = mojos.readMavenProject(basedir);
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
         addIndirectDependency(project, "dependency", DEPENDENCY);
 
         compile(project);
         mojos.assertMessage(
-                new File(basedir, "src/main/java/reference/Reference.java"),
+                basedir.resolve("src/main/java/reference/Reference.java").toFile(),
                 "The type 'DependencyClass' is not accessible",
                 "test-dependency-0.1.jar");
     }
 
     @Test
     public void testReference_accessRulesViolationIgnore() throws Exception {
-        File basedir = resources.getBasedir("compile-jdt-classpath-visibility/reference");
+        Path basedir = resources
+                .getBasedir("compile-jdt-classpath-visibility/reference")
+                .toPath();
 
-        MavenProject project = mojos.readMavenProject(basedir);
-        addDependency(project, "dependency", DEPENDENCY);
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
+        addDependency(project, "dependency", DEPENDENCY.toFile());
 
         MavenSession session = mojos.newMavenSession(project);
 
@@ -63,10 +69,12 @@ public class CompileJdtClasspathVisibilityTest extends AbstractCompileJdtTest {
 
     @Test
     public void testReference_testCompile() throws Exception {
-        File basedir = resources.getBasedir("compile-jdt-classpath-visibility/reference");
+        Path basedir = resources
+                .getBasedir("compile-jdt-classpath-visibility/reference")
+                .toPath();
 
-        MavenProject project = mojos.readMavenProject(basedir);
-        addDependency(project, "dependency", DEPENDENCY);
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
+        addDependency(project, "dependency", DEPENDENCY.toFile());
 
         MavenSession session = mojos.newMavenSession(project);
 
@@ -83,10 +91,12 @@ public class CompileJdtClasspathVisibilityTest extends AbstractCompileJdtTest {
 
     @Test
     public void testReference_testCompile_internal() throws Exception {
-        File basedir = resources.getBasedir("compile-jdt-classpath-visibility/reference");
+        Path basedir = resources
+                .getBasedir("compile-jdt-classpath-visibility/reference")
+                .toPath();
 
-        MavenProject project = mojos.readMavenProject(basedir);
-        addDependency(project, "dependency", DEPENDENCY);
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
+        addDependency(project, "dependency", DEPENDENCY.toFile());
 
         MavenSession session = mojos.newMavenSession(project);
 
@@ -99,9 +109,9 @@ public class CompileJdtClasspathVisibilityTest extends AbstractCompileJdtTest {
         mojos.executeMojo(session, project, "compile", params);
 
         // make all main classes internal
-        File exportsFile = new File(basedir, "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE);
-        exportsFile.getParentFile().mkdirs();
-        new FileOutputStream(exportsFile).close();
+        Path exportsFile = basedir.resolve("target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE);
+        Files.createDirectories(exportsFile.getParent());
+        Files.write(exportsFile, new byte[0]);
 
         mojos.executeMojo(session, project, "testCompile", params);
     }
@@ -110,10 +120,15 @@ public class CompileJdtClasspathVisibilityTest extends AbstractCompileJdtTest {
     public void testIndirectGrandparent() throws Exception {
         // project -> ParentClass@direct-dependency -> DependencyClass@indirect-dependency
 
-        File basedir = resources.getBasedir("compile-jdt-classpath-visibility/indirect-grandparent");
+        Path basedir = resources
+                .getBasedir("compile-jdt-classpath-visibility/indirect-grandparent")
+                .toPath();
 
-        MavenProject project = mojos.readMavenProject(basedir);
-        addDependency(project, "direct-dependency", new File(basedir, "test-parent/test-parent-0.1.jar"));
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
+        addDependency(
+                project,
+                "direct-dependency",
+                basedir.resolve("test-parent/test-parent-0.1.jar").toFile());
         addIndirectDependency(project, "indirect-dependency", DEPENDENCY);
 
         compile(project, true);
@@ -123,14 +138,16 @@ public class CompileJdtClasspathVisibilityTest extends AbstractCompileJdtTest {
     public void testInternalReference() throws Exception {
         // project references classes that are not exported by the dependency (takari export-package)
 
-        File basedir = resources.getBasedir("compile-jdt-classpath-visibility/internal-reference");
+        Path basedir = resources
+                .getBasedir("compile-jdt-classpath-visibility/internal-reference")
+                .toPath();
 
-        MavenProject project = mojos.readMavenProject(basedir);
-        addDependency(project, "indirect-dependency", DEPENDENCY);
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
+        addDependency(project, "indirect-dependency", DEPENDENCY.toFile());
 
         compile(project);
         mojos.assertMessage(
-                new File(basedir, "src/main/java/reference/Reference.java"),
+                basedir.resolve("src/main/java/reference/Reference.java").toFile(),
                 "The type 'DependencyInternalClass' is not accessible",
                 "test-dependency-0.1.jar");
     }
@@ -139,10 +156,12 @@ public class CompileJdtClasspathVisibilityTest extends AbstractCompileJdtTest {
     public void testInternalReference_testCompile() throws Exception {
         // project references classes that are not exported by the dependency (takari export-package)
 
-        File basedir = resources.getBasedir("compile-jdt-classpath-visibility/internal-reference");
+        Path basedir = resources
+                .getBasedir("compile-jdt-classpath-visibility/internal-reference")
+                .toPath();
 
-        MavenProject project = mojos.readMavenProject(basedir);
-        addDependency(project, "indirect-dependency", DEPENDENCY);
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
+        addDependency(project, "indirect-dependency", DEPENDENCY.toFile());
 
         MavenSession session = mojos.newMavenSession(project);
 
@@ -160,7 +179,7 @@ public class CompileJdtClasspathVisibilityTest extends AbstractCompileJdtTest {
         }
 
         mojos.assertMessage(
-                new File(basedir, "src/test/java/reference/ReferenceTest.java"),
+                basedir.resolve("src/test/java/reference/ReferenceTest.java").toFile(),
                 "The type 'DependencyInternalClass' is not accessible",
                 "test-dependency-0.1.jar");
     }
@@ -169,24 +188,27 @@ public class CompileJdtClasspathVisibilityTest extends AbstractCompileJdtTest {
     public void testInternalReference_dependencyBundle() throws Exception {
         // project references classes that are not exported by the dependency (bundle manifest)
 
-        File basedir = resources.getBasedir("compile-jdt-classpath-visibility/internal-reference");
+        Path basedir = resources
+                .getBasedir("compile-jdt-classpath-visibility/internal-reference")
+                .toPath();
 
-        MavenProject project = mojos.readMavenProject(basedir);
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
         addDependency(
                 project,
                 "indirect-dependency",
-                new File(
-                        "src/test/projects/compile-jdt-classpath-visibility/test-dependency-bundle/test-dependency-bundle-0.1.jar"));
+                Path.of(
+                                "src/test/projects/compile-jdt-classpath-visibility/test-dependency-bundle/test-dependency-bundle-0.1.jar")
+                        .toFile());
 
         compile(project);
         mojos.assertMessage(
-                new File(basedir, "src/main/java/reference/Reference.java"),
+                basedir.resolve("src/main/java/reference/Reference.java").toFile(),
                 "The type 'DependencyInternalClass' is not accessible",
                 "test-dependency-bundle-0.1.jar");
     }
 
-    private void addIndirectDependency(MavenProject project, String string, File file) throws Exception {
-        addDependency(project, string, file, false);
+    private void addIndirectDependency(MavenProject project, String string, Path file) throws Exception {
+        addDependency(project, string, file.toFile(), false);
     }
 
     private void compile(MavenProject project) throws Exception {

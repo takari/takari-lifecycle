@@ -78,7 +78,7 @@ public abstract class DependencyClasspathEntry implements ClasspathEntry {
         }
         String exportPackageHeader = headers.get(Constants.EXPORT_PACKAGE);
         if (exportPackageHeader == null) {
-            return Collections.emptySet(); // nothing is exported
+            return Set.of(); // nothing is exported
         }
         Set<String> packages = new HashSet<>();
         for (ManifestElement element : ManifestElement.parseHeader(Constants.EXPORT_PACKAGE, exportPackageHeader)) {

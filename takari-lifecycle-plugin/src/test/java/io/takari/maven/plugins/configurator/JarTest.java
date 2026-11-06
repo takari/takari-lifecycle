@@ -2,7 +2,8 @@ package io.takari.maven.plugins.configurator;
 
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 import io.takari.maven.testing.TestResources;
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -21,10 +22,11 @@ public class JarTest {
 
     @Test
     public void testCustomManifest() throws Exception {
-        File basedir = resources.getBasedir("configurator/jar/project-with-manifest");
-        new File(basedir, "target/classes").mkdirs(); // TODO this shouldn't be necessary
-        mojos.executeMojo(basedir, "jar");
-        try (JarFile jar = new JarFile(new File(basedir, "target/test-1.0.jar"))) {
+        Path basedir =
+                resources.getBasedir("configurator/jar/project-with-manifest").toPath();
+        Files.createDirectories(basedir.resolve("target/classes")); // TODO this shouldn't be necessary
+        mojos.executeMojo(basedir.toFile(), "jar");
+        try (JarFile jar = new JarFile(basedir.resolve("target/test-1.0.jar").toFile())) {
             Manifest mf = jar.getManifest();
             Assert.assertEquals("custom-value", mf.getMainAttributes().getValue("Custom-Entry"));
         }
@@ -32,9 +34,11 @@ public class JarTest {
 
     @Test
     public void testDuplicateCustomManifest() throws Exception {
-        File basedir = resources.getBasedir("configurator/jar/project-with-manifest-under-target-classes");
-        mojos.executeMojo(basedir, "jar");
-        JarFile jar = new JarFile(new File(basedir, "target/test-1.0.jar"));
+        Path basedir = resources
+                .getBasedir("configurator/jar/project-with-manifest-under-target-classes")
+                .toPath();
+        mojos.executeMojo(basedir.toFile(), "jar");
+        JarFile jar = new JarFile(basedir.resolve("target/test-1.0.jar").toFile());
         try {
             // make sure there is only one manifest entry
             int count = 0;

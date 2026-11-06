@@ -17,10 +17,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.processing.FilerException;
 import javax.lang.model.element.TypeElement;
 import javax.tools.FileObject;
@@ -61,10 +61,12 @@ public class FilerImplTest {
     public void testGetResource_location_classpath() throws Exception {
         EclipseFileManager fileManager = new EclipseFileManager(null, StandardCharsets.UTF_8);
 
-        List<File> classpath = new ArrayList<>();
-        classpath.add(new File("src/test/projects/compile-jdt-proc/getresource-location-classpath/classes"));
-        classpath.add(new File("src/test/projects/compile-jdt-proc/getresource-location-classpath/dependency.zip"));
-        fileManager.setLocation(StandardLocation.CLASS_PATH, classpath);
+        Path basedir = Path.of("src/test/projects/compile-jdt-proc/getresource-location-classpath");
+        fileManager.setLocation(
+                StandardLocation.CLASS_PATH,
+                List.of(
+                        basedir.resolve("classes").toFile(),
+                        basedir.resolve("dependency.zip").toFile()));
 
         FilerImpl filer = new FilerImpl(null /* context */, fileManager, null /* compiler */, null /* env */);
 
@@ -87,7 +89,7 @@ public class FilerImplTest {
         EclipseFileManager fileManager = new EclipseFileManager(null, StandardCharsets.UTF_8);
 
         File outputDir = temp.newFolder();
-        fileManager.setLocation(StandardLocation.SOURCE_OUTPUT, Collections.singleton(outputDir));
+        fileManager.setLocation(StandardLocation.SOURCE_OUTPUT, Set.of(outputDir));
 
         FilerImpl filer = new FilerImpl(null /* context */, fileManager, null /* compiler */, null /* env */);
 
@@ -108,7 +110,7 @@ public class FilerImplTest {
         EclipseFileManager fileManager = new EclipseFileManager(null, StandardCharsets.UTF_8);
 
         File outputDir = temp.newFolder();
-        fileManager.setLocation(StandardLocation.SOURCE_OUTPUT, Collections.singleton(outputDir));
+        fileManager.setLocation(StandardLocation.SOURCE_OUTPUT, Set.of(outputDir));
 
         FilerImpl filer = new FilerImpl(null /* context */, fileManager, null /* compiler */, null /* env */);
 
@@ -151,7 +153,7 @@ public class FilerImplTest {
 
         EclipseFileManager fileManager = new EclipseFileManager(null, StandardCharsets.UTF_8);
         File outputDir = temp.newFolder();
-        fileManager.setLocation(StandardLocation.SOURCE_OUTPUT, Collections.singleton(outputDir));
+        fileManager.setLocation(StandardLocation.SOURCE_OUTPUT, Set.of(outputDir));
 
         CompilerBuildContext context = null;
         Map<String, String> processorOptions = null;
@@ -170,7 +172,7 @@ public class FilerImplTest {
         EclipseFileManager fileManager = new EclipseFileManager(null, StandardCharsets.UTF_8);
 
         File outputDir = temp.newFolder();
-        fileManager.setLocation(StandardLocation.SOURCE_OUTPUT, Collections.singleton(outputDir));
+        fileManager.setLocation(StandardLocation.SOURCE_OUTPUT, Set.of(outputDir));
 
         FilerImpl filer = new FilerImpl(null /* context */, fileManager, null /* compiler */, null /* env */);
 

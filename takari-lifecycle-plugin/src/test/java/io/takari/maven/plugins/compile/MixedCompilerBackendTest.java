@@ -4,6 +4,7 @@ import static io.takari.maven.testing.TestMavenRuntime.newParameter;
 
 import io.takari.maven.testing.TestResources;
 import java.io.File;
+import java.nio.file.Path;
 import org.apache.maven.project.MavenProject;
 import org.junit.Rule;
 import org.junit.Test;
@@ -19,9 +20,9 @@ public class MixedCompilerBackendTest {
     public void testClasspath() throws Exception {
         // assert classpath caches are updated when project classes/test-classes changes
 
-        File basedir = resources.getBasedir("compile-incremental/classpath");
-        File moduleB = new File(basedir, "module-b");
-        File moduleA = new File(basedir, "module-a");
+        Path basedir = resources.getBasedir("compile-incremental/classpath").toPath();
+        File moduleB = basedir.resolve("module-b").toFile();
+        File moduleA = basedir.resolve("module-a").toFile();
 
         mojos.compile(moduleB, newParameter("proc", "only"), newParameter("compilerId", "jdt"));
         mojos.assertBuildOutputs(moduleB, new String[0]);
@@ -29,7 +30,7 @@ public class MixedCompilerBackendTest {
         mojos.assertBuildOutputs(moduleB, "target/classes/moduleb/ModuleB.class");
 
         MavenProject projectA = mojos.readMavenProject(moduleA);
-        mojos.newDependency(new File(moduleB, "target/classes")).addTo(projectA);
+        mojos.newDependency(moduleB.toPath().resolve("target/classes").toFile()).addTo(projectA);
         mojos.compile(projectA, newParameter("compilerId", "jdt"));
         mojos.assertBuildOutputs(moduleA, "target/classes/modulea/ModuleA.class");
     }

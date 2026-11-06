@@ -5,18 +5,14 @@ import static org.hamcrest.CoreMatchers.containsString;
 
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
-import com.google.common.io.Files;
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 import io.takari.maven.testing.TestResources;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.apache.maven.artifact.Artifact;
@@ -58,7 +54,10 @@ public class TestPropertiesMojoTest {
                 ".jar",
                 null,
                 handler);
-        workspaceResolver.setFile(new File("target/workspaceResolver.jar").getCanonicalFile());
+        workspaceResolver.setFile(Path.of("target/workspaceResolver.jar")
+                .toAbsolutePath()
+                .normalize()
+                .toFile());
 
         List<Artifact> pluginArtifacts = new ArrayList<>(pluginDescriptor.getArtifacts());
         pluginArtifacts.add(workspaceResolver);
@@ -69,49 +68,50 @@ public class TestPropertiesMojoTest {
 
     @Test
     public void testIncremental() throws Exception {
-        File basedir = resources.getBasedir("testproperties/basic");
-        final MavenProject project = mojos.readMavenProject(basedir);
+        Path basedir = resources.getBasedir("testproperties/basic").toPath();
+        final MavenProject project = mojos.readMavenProject(basedir.toFile());
         MavenSession session = mojos.newMavenSession(project);
         session.setProjectDependencyGraph(new ProjectDependencyGraph() {
             @Override
             public List<MavenProject> getUpstreamProjects(MavenProject project, boolean transitive) {
-                return Collections.emptyList();
+                return List.of();
             }
 
             @Override
             public List<MavenProject> getSortedProjects() {
-                return Collections.singletonList(project);
+                return List.of(project);
             }
 
             @Override
             public List<MavenProject> getDownstreamProjects(MavenProject project, boolean transitive) {
-                return Collections.emptyList();
+                return List.of();
             }
 
             @Override
             public List<MavenProject> getAllProjects() {
-                return Collections.emptyList();
+                return List.of();
             }
         });
 
         mojos.executeMojo(session, project, newMojoExecution());
-        mojos.assertBuildOutputs(basedir, "target/test-classes/test.properties", "target/workspacestate.properties");
+        mojos.assertBuildOutputs(
+                basedir.toFile(), "target/test-classes/test.properties", "target/workspacestate.properties");
 
-        File testProperties = new File(basedir, "target/test-classes/test.properties");
-        File workspaceState = new File(basedir, "target/workspacestate.properties");
+        Path testProperties = basedir.resolve("target/test-classes/test.properties");
+        Path workspaceState = basedir.resolve("target/workspacestate.properties");
 
-        long testPropertiesLastmodified = testProperties.lastModified();
-        long workspaceStateLastmodified = workspaceState.lastModified();
+        FileTime testPropertiesLastmodified = Files.getLastModifiedTime(testProperties);
+        FileTime workspaceStateLastmodified = Files.getLastModifiedTime(workspaceState);
 
-        HashCode testPropertiesSha1 = Files.hash(testProperties, Hashing.sha1());
-        HashCode workspaceStateSha1 = Files.hash(workspaceState, Hashing.sha1());
+        HashCode testPropertiesSha1 = sha1(testProperties);
+        HashCode workspaceStateSha1 = sha1(workspaceState);
 
         mojos.executeMojo(session, project, newMojoExecution());
         // mojos.assertCarriedOverOutputs(basedir, "target/test-classes/test.properties",
         // "target/workspacestate.properties");
 
-        Assert.assertEquals(testPropertiesLastmodified, testProperties.lastModified());
-        Assert.assertEquals(workspaceStateLastmodified, workspaceState.lastModified());
+        Assert.assertEquals(testPropertiesLastmodified, Files.getLastModifiedTime(testProperties));
+        Assert.assertEquals(workspaceStateLastmodified, Files.getLastModifiedTime(workspaceState));
 
         Assert.assertEquals(testPropertiesSha1, sha1(basedir, "target/test-classes/test.properties"));
         Assert.assertEquals(workspaceStateSha1, sha1(basedir, "target/workspacestate.properties"));
@@ -119,9 +119,9 @@ public class TestPropertiesMojoTest {
 
     @Test
     public void testOffline() throws Exception {
-        File basedir = resources.getBasedir("testproperties/basic");
+        Path basedir = resources.getBasedir("testproperties/basic").toPath();
 
-        MavenProject project = mojos.readMavenProject(basedir);
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
         MavenSession session = mojos.newMavenSession(project);
 
         session.getRequest().setOffline(true);
@@ -135,9 +135,9 @@ public class TestPropertiesMojoTest {
 
     @Test
     public void testUpdateSnapshots() throws Exception {
-        File basedir = resources.getBasedir("testproperties/basic");
+        Path basedir = resources.getBasedir("testproperties/basic").toPath();
 
-        MavenProject project = mojos.readMavenProject(basedir);
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
         MavenSession session = mojos.newMavenSession(project);
 
         session.getRequest().setUpdateSnapshots(true);
@@ -151,22 +151,25 @@ public class TestPropertiesMojoTest {
 
     @Test
     public void testCustomTestPropertiesFile() throws Exception {
-        File basedir = resources.getBasedir("testproperties/custom-test-properties-file");
-        MavenProject project = mojos.readMavenProject(basedir);
+        Path basedir = resources
+                .getBasedir("testproperties/custom-test-properties-file")
+                .toPath();
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
         MavenSession session = mojos.newMavenSession(project);
 
         mojos.executeMojo(session, project, newMojoExecution());
         Assert.assertEquals("value", readProperties(basedir).get("custom"));
 
-        TestResources.cp(basedir, "src/test/modified-test.properties", "src/test/test.properties");
+        TestResources.cp(basedir.toFile(), "src/test/modified-test.properties", "src/test/test.properties");
         mojos.executeMojo(session, project, newMojoExecution());
         Assert.assertEquals("modified-value", readProperties(basedir).get("custom"));
     }
 
     @Test
     public void testMissingTestPropertiesEmpty() throws Exception {
-        File basedir = resources.getBasedir("testproperties/missing-test-properties");
-        MavenProject project = mojos.readMavenProject(basedir);
+        Path basedir =
+                resources.getBasedir("testproperties/missing-test-properties").toPath();
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
         MavenSession session = mojos.newMavenSession(project);
 
         mojos.executeMojo(session, project, newMojoExecution(newParameter("missingPropertyAction", "empty")));
@@ -175,8 +178,9 @@ public class TestPropertiesMojoTest {
 
     @Test
     public void testMissingTestPropertiesLeave() throws Exception {
-        File basedir = resources.getBasedir("testproperties/missing-test-properties");
-        MavenProject project = mojos.readMavenProject(basedir);
+        Path basedir =
+                resources.getBasedir("testproperties/missing-test-properties").toPath();
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
         MavenSession session = mojos.newMavenSession(project);
 
         mojos.executeMojo(session, project, newMojoExecution(newParameter("missingPropertyAction", "leave")));
@@ -185,8 +189,9 @@ public class TestPropertiesMojoTest {
 
     @Test
     public void testMissingTestPropertiesFail() throws Exception {
-        File basedir = resources.getBasedir("testproperties/missing-test-properties");
-        MavenProject project = mojos.readMavenProject(basedir);
+        Path basedir =
+                resources.getBasedir("testproperties/missing-test-properties").toPath();
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
         MavenSession session = mojos.newMavenSession(project);
 
         try {
@@ -199,61 +204,58 @@ public class TestPropertiesMojoTest {
 
     @Test
     public void testWorkspaceStateIncludesThisProjectJarArtifact() throws Exception {
-        File basedir = resources.getBasedir();
-        MavenProject project = mojos.readMavenProject(basedir);
+        Path basedir = resources.getBasedir().toPath();
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
         MavenSession session = mojos.newMavenSession(project);
 
         mojos.executeMojo(session, project, newMojoExecution());
-        Map<String, String> state = TestResources.readProperties(basedir, "target/workspacestate.properties");
+        Map<String, String> state = TestResources.readProperties(basedir.toFile(), "target/workspacestate.properties");
 
-        Assert.assertEquals(new File(basedir, "pom.xml").getCanonicalPath(), state.get("test:test:pom::1"));
-        Assert.assertEquals(new File(basedir, "target/classes").getCanonicalPath(), state.get("test:test:jar::1"));
+        Assert.assertEquals(basedir.resolve("pom.xml").toRealPath().toString(), state.get("test:test:pom::1"));
+        Assert.assertEquals(basedir.toRealPath().resolve("target/classes").toString(), state.get("test:test:jar::1"));
     }
 
-    private HashCode sha1(File basedir, String path) throws IOException {
-        return Files.hash(new File(basedir, path), Hashing.sha1());
+    private HashCode sha1(Path basedir, String path) throws IOException {
+        return sha1(basedir.resolve(path));
     }
 
-    private Map<String, String> readProperties(File basedir) throws IOException {
-        return TestResources.readProperties(basedir, "target/test-classes/test.properties");
+    private HashCode sha1(Path file) throws IOException {
+        return Hashing.sha1().hashBytes(Files.readAllBytes(file));
+    }
+
+    private Map<String, String> readProperties(Path basedir) throws IOException {
+        return TestResources.readProperties(basedir.toFile(), "target/test-classes/test.properties");
     }
 
     @Test
     public void testWorkspaceResolver() throws Exception {
-        File basedir = resources.getBasedir();
-        MavenProject project = mojos.readMavenProject(basedir);
+        Path basedir = resources.getBasedir().toPath();
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
         MavenSession session = mojos.newMavenSession(project);
-        mojos.newDependency(basedir)
+        mojos.newDependency(basedir.toFile())
                 .setGroupId("io.takari.m2e.workspace")
                 .setArtifactId("org.eclipse.m2e.workspace.cli")
                 .addTo(project);
         mojos.executeMojo(session, project, newMojoExecution());
         Map<String, String> properties = readProperties(basedir);
-        Assert.assertEquals(basedir.getCanonicalPath(), properties.get("workspaceResolver"));
+        Assert.assertEquals(basedir.toRealPath().toString(), properties.get("workspaceResolver"));
     }
 
     @Test
     public void testDependencyProperties() throws Exception {
-        File basedir = resources.getBasedir();
-        MavenProject project = mojos.readMavenProject(basedir);
+        Path basedir = resources.getBasedir().toPath();
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
         MavenSession session = mojos.newMavenSession(project);
 
-        Assert.assertTrue(new File(basedir, "src/test").mkdirs());
+        Path testProperties =
+                Files.createDirectories(basedir.resolve("src/test")).resolve("test.properties");
+        Files.write(testProperties, List.of("ga=${g:a}", "ga_tests=${g:a:tests}"), StandardCharsets.UTF_8);
 
-        try (OutputStream os = new FileOutputStream(new File(basedir, "src/test/test.properties"))) {
-            BufferedWriter w = new BufferedWriter(new OutputStreamWriter(os, StandardCharsets.UTF_8));
-            w.write("ga=${g:a}");
-            w.newLine();
-            w.write("ga_tests=${g:a:tests}");
-            w.newLine();
-            w.flush();
-        }
+        Path ga = temp.newFile().toPath().toRealPath();
+        Path ga_tests = temp.newFile().toPath().toRealPath();
 
-        File ga = temp.newFile().getCanonicalFile();
-        File ga_tests = temp.newFile().getCanonicalFile();
-
-        mojos.newDependency(ga).setGroupId("g").setArtifactId("a").addTo(project);
-        mojos.newDependency(ga_tests)
+        mojos.newDependency(ga.toFile()).setGroupId("g").setArtifactId("a").addTo(project);
+        mojos.newDependency(ga_tests.toFile())
                 .setGroupId("g")
                 .setArtifactId("a")
                 .setClassifier("tests")
@@ -262,25 +264,25 @@ public class TestPropertiesMojoTest {
         mojos.executeMojo(session, project, "testProperties");
 
         Map<String, String> properties = readProperties(basedir);
-        Assert.assertEquals(ga.getCanonicalPath().replace('\\', '/'), properties.get("ga"));
-        Assert.assertEquals(ga_tests.getCanonicalPath().replace('\\', '/'), properties.get("ga_tests"));
+        Assert.assertEquals(ga.toString().replace('\\', '/'), properties.get("ga"));
+        Assert.assertEquals(ga_tests.toString().replace('\\', '/'), properties.get("ga_tests"));
     }
 
     @Test
     public void testClasspathScope() throws Exception {
-        File basedir = resources.getBasedir();
-        MavenProject project = mojos.readMavenProject(basedir);
+        Path basedir = resources.getBasedir().toPath();
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
         MavenSession session = mojos.newMavenSession(project);
 
-        File providedScoped = temp.newFile("provided.jar").getCanonicalFile();
-        File testScoped = temp.newFile("test.jar").getCanonicalFile();
+        Path providedScoped = temp.newFile("provided.jar").toPath().toRealPath();
+        Path testScoped = temp.newFile("test.jar").toPath().toRealPath();
 
-        mojos.newDependency(providedScoped)
+        mojos.newDependency(providedScoped.toFile())
                 .setGroupId("g")
                 .setArtifactId("provided")
                 .setScope("provided")
                 .addTo(project);
-        mojos.newDependency(testScoped)
+        mojos.newDependency(testScoped.toFile())
                 .setGroupId("g")
                 .setArtifactId("test")
                 .setScope("test")
@@ -289,6 +291,6 @@ public class TestPropertiesMojoTest {
         mojos.executeMojo(session, project, "testProperties");
 
         Map<String, String> properties = readProperties(basedir);
-        Assert.assertEquals(new File(basedir, "target/classes").getCanonicalPath(), properties.get("classpath"));
+        Assert.assertEquals(basedir.toRealPath().resolve("target/classes").toString(), properties.get("classpath"));
     }
 }

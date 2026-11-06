@@ -8,6 +8,7 @@
 package io.takari.resources.filtering;
 
 import java.io.File;
+import java.nio.file.Path;
 
 abstract class AbstractResourceProcessor {
 
@@ -18,6 +19,7 @@ abstract class AbstractResourceProcessor {
             throw new IllegalArgumentException(); // can't happen
         }
         String relative = source.substring(sourceDir.length());
-        return new File(targetDirectory, relative);
+        // Path.of(String, String...) joins like new File(File, String); relative starts with a separator
+        return Path.of(targetDirectory.getPath(), relative).toFile();
     }
 }

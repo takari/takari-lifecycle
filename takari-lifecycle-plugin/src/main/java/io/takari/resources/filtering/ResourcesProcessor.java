@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.Charset;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
@@ -50,14 +49,7 @@ public class ResourcesProcessor {
             MissingPropertyAction mpa)
             throws IOException {
         filterProcessor.process(
-                sourceDirectory,
-                targetDirectory,
-                includes,
-                excludes,
-                filterProperties,
-                Collections.emptyList(),
-                encoding,
-                mpa);
+                sourceDirectory, targetDirectory, includes, excludes, filterProperties, List.of(), encoding, mpa);
     }
 
     public void process(
