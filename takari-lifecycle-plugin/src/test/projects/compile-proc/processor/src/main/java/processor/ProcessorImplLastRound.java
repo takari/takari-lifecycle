@@ -79,6 +79,6 @@ public class ProcessorImplLastRound extends AbstractProcessor {
 
   @Override
   public SourceVersion getSupportedSourceVersion() {
-    return SourceVersion.RELEASE_7;
+    return SourceVersion.RELEASE_8;
   }
 }

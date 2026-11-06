@@ -18,7 +18,7 @@ import javax.tools.FileObject;
 import javax.tools.StandardLocation;
 
 @SupportedAnnotationTypes("processor.Annotation")
-@SupportedSourceVersion(SourceVersion.RELEASE_7)
+@SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class ProessorValue extends AbstractProcessor {
 
   @Override

@@ -11,7 +11,7 @@ import javax.lang.model.element.TypeElement;
 
 // writes annotated elements path and kind to a file
 @SupportedAnnotationTypes("processor.Annotation")
-@SupportedSourceVersion(SourceVersion.RELEASE_6)
+@SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class ElementsListProcessor extends AbstractElementsListProcessor {
 
   @Override

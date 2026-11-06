@@ -16,7 +16,7 @@ import javax.tools.Diagnostic.Kind;
 import javax.tools.FileObject;
 
 @SupportedAnnotationTypes("processor.Annotation")
-@SupportedSourceVersion(SourceVersion.RELEASE_7)
+@SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class ProcessorLastRound_typeIndex extends AbstractProcessor {
 
   private TreeSet<String> types = new TreeSet<>();

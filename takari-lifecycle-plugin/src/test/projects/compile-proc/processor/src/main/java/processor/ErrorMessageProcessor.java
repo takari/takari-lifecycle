@@ -13,7 +13,7 @@ import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic.Kind;
 
 @SupportedAnnotationTypes("processor.Annotation")
-@SupportedSourceVersion(SourceVersion.RELEASE_7)
+@SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class ErrorMessageProcessor extends AbstractProcessor {
 
   @Override

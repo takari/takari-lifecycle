@@ -384,7 +384,7 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
         mojos.assertMessage(basedir, "src/main/java/proc/Source.java", expected);
 
         Collection<String> pomMessages = mojos.getBuildContextLog().getMessages(new File(basedir, "pom.xml"));
-        Assert.assertEquals(3, pomMessages.size());
+        Assert.assertEquals(pomMessages.toString(), 3, pomMessages.size());
         // TODO assert actual messages are as expected
     }
 

@@ -34,7 +34,7 @@ import static javax.lang.model.util.ElementFilter.*;
  * 
  */
 @SupportedAnnotationTypes("processor.Annotation")
-@SupportedSourceVersion(SourceVersion.RELEASE_6)
+@SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class ElementsTypeMemberListProcessor extends AbstractElementsListProcessor {
 
   @Override
