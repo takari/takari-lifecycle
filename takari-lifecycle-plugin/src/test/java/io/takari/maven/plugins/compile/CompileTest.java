@@ -160,13 +160,6 @@ public class CompileTest extends AbstractCompileTest {
     }
 
     @Test
-    @Ignore("Java 7 source/target is not supported on recent JDKs")
-    public void testBasic_java7() throws Exception {
-        Path basedir = compile("compile/basic", newParameter("source", "1.7")).toPath();
-        assertThat(basedir.resolve("target/classes/basic/Basic.class").toFile(), isVersion(51));
-    }
-
-    @Test
     public void testBasic_java8() throws Exception {
         Path basedir = compile("compile/basic", newParameter("source", "1.8")).toPath();
         assertThat(basedir.resolve("target/classes/basic/Basic.class").toFile(), isVersion(52));

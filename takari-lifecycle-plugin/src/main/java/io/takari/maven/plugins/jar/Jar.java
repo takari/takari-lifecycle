@@ -282,8 +282,6 @@ public class Jar extends TakariLifecycleMojo {
             }
         }
 
-        Files.createDirectories(Path.of(project.getBuild().getDirectory()));
-
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         manifest.write(buf);
 

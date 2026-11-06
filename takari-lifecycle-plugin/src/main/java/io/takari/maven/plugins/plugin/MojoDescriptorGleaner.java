@@ -24,7 +24,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
-import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -45,10 +44,15 @@ import org.apache.maven.plugins.annotations.Parameter;
 /**
  * @TODO access javadoc tag text, like @deprecated and @since
  */
-@SupportedSourceVersion(SourceVersion.RELEASE_7)
 public class MojoDescriptorGleaner extends AbstractProcessor {
 
     private final TreeMap<String, MojoDescriptor> descriptors = new TreeMap<>();
+
+    @Override
+    public SourceVersion getSupportedSourceVersion() {
+        // only reads annotations and type signatures, so any language level is fine
+        return SourceVersion.latestSupported();
+    }
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {

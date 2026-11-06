@@ -25,7 +25,7 @@ import javax.lang.model.element.TypeElement;
 import javax.tools.JavaFileObject;
 
 @SupportedAnnotationTypes("processor.MyAnnotation")
-@SupportedSourceVersion(SourceVersion.RELEASE_6)
+@SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class MyAnnotationProcessor extends AbstractProcessor {
 
   @Override
