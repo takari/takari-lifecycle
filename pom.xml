@@ -14,7 +14,7 @@
   <parent>
     <groupId>io.takari</groupId>
     <artifactId>takari</artifactId>
-    <version>73</version>
+    <version>74</version>
   </parent>
 
   <groupId>io.takari.maven.plugins</groupId>
@@ -44,8 +44,6 @@
     discoverable, but takari-lifecycle due dependencies is in fact Java 17+
     -->
     <takari.javaSourceVersion>11</takari.javaSourceVersion>
-    <takari.lifecycleVersion>2.3.4</takari.lifecycleVersion>
-    <modernizer.version>3.5.0</modernizer.version>
 
     <mavenVersion>3.9.16</mavenVersion>
     <aetherVersion>1.9.27</aetherVersion>
@@ -55,7 +53,6 @@
     <m2eWorkspaceVersion>0.4.0</m2eWorkspaceVersion>
     <plexusUtilsVersion>3.6.2</plexusUtilsVersion>
     <pluginTestingVersion>3.1.1</pluginTestingVersion>
-    <surefire.version>3.6.1</surefire.version>
 
     <!-- UT and IT only! -->
     <guava.version>33.8.0-jre</guava.version>
