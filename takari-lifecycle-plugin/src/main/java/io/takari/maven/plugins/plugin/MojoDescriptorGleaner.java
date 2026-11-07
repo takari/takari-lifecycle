@@ -50,7 +50,7 @@ public class MojoDescriptorGleaner extends AbstractProcessor {
 
     @Override
     public SourceVersion getSupportedSourceVersion() {
-        // only reads annotations and type signatures, so any language level is fine
+        // latestSupported avoids javac's "supported source version less than -source" warning
         return SourceVersion.latestSupported();
     }
 
@@ -175,9 +175,10 @@ public class MojoDescriptorGleaner extends AbstractProcessor {
                 Parameter parameter = member.getAnnotation(Parameter.class);
                 Component component = member.getAnnotation(Component.class);
                 if (parameter != null && component != null) {
-                    // TODO error marker
-                }
-                if (parameter != null) {
+                    processingEnv
+                            .getMessager()
+                            .printMessage(Kind.ERROR, "@Parameter and @Component are mutually exclusive", member);
+                } else if (parameter != null) {
                     descriptor.addParameter(toParameterDescriptor((VariableElement) member, parameter));
                 } else if (component != null) {
                     descriptor.addRequirement(toComponentDescriptor((VariableElement) member, component));
@@ -199,7 +200,7 @@ public class MojoDescriptorGleaner extends AbstractProcessor {
         try {
             role = component.role().getName();
         } catch (MirroredTypeException e) {
-            role = e.getTypeMirror().toString();
+            role = getTypeString(e.getTypeMirror());
         }
         if (!Object.class.getName().equals(role)) {
             return role;
@@ -208,10 +209,11 @@ public class MojoDescriptorGleaner extends AbstractProcessor {
     }
 
     private String getTypeString(TypeMirror type) {
-        TypeElement typeElement = (TypeElement) getTypeUtils().asElement(type);
-        if (typeElement != null) {
-            // this returns raw parameterized types
-            return typeElement.getQualifiedName().toString();
+        // erasure turns type variables into their bound and drops type arguments
+        Element element = getTypeUtils().asElement(getTypeUtils().erasure(type));
+        if (element instanceof TypeElement) {
+            // binary name, i.e. pkg.Outer$Inner, so the class can be loaded at runtime
+            return getElementUtils().getBinaryName((TypeElement) element).toString();
         }
         // this deals with primitive and array types
         return type.toString();

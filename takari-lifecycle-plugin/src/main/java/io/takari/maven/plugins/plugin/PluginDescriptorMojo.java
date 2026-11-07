@@ -141,9 +141,9 @@ public class PluginDescriptorMojo extends TakariLifecycleMojo {
                 }
                 Path otherEclipseMetadataFile = Path.of(resource.getDirectory(), PATH_METADATA_XML);
                 if (Files.isRegularFile(otherEclipseMetadataFile)) {
-                    throw new MojoExecutionException(String.format(
-                            "Unexpected Eclipse m2e metadata found %s. Did you mean to move it to %s",
-                            otherEclipseMetadataFile, eclipseMetadataFile));
+                    throw new MojoExecutionException(
+                            "Unexpected Eclipse m2e metadata found %s. Did you mean to move it to %s"
+                                    .formatted(otherEclipseMetadataFile, eclipseMetadataFile));
                 }
             }
 

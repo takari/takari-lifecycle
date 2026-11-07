@@ -17,16 +17,17 @@ import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerOutput;
 import io.takari.maven.plugins.compile.javac.CompilerJavacForked.CompilerOutputProcessor;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InterruptedIOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
-import org.apache.commons.exec.CommandLine;
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.ExecuteException;
-import org.apache.commons.exec.ShutdownHookProcessDestroyer;
 
 @Named(CompilerJavacLauncher.ID)
 public class CompilerJavacLauncher extends AbstractCompilerJavac {
@@ -74,40 +75,54 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
             executable = executable + ".exe";
         }
 
-        CommandLine cli = new CommandLine(executable);
+        List<String> cli = new ArrayList<>();
+        cli.add(executable);
 
         // jvm options
-        cli.addArguments(new String[] {"-cp", jar.getAbsolutePath()});
+        cli.add("-cp");
+        cli.add(jar.getAbsolutePath());
         if (meminitial != null) {
-            cli.addArgument("-Xms" + meminitial);
+            cli.add("-Xms" + meminitial);
         }
         if (maxmem != null) {
-            cli.addArgument("-Xmx" + maxmem);
+            cli.add("-Xmx" + maxmem);
         }
 
         // main class and program arguments
-        cli.addArgument(CompilerJavacForked.class.getName());
-        cli.addArgument(options.toAbsolutePath().toString(), false);
-        cli.addArgument(output.toAbsolutePath().toString(), false);
-
-        DefaultExecutor executor = new DefaultExecutor();
-        // ExecuteWatchdog watchdog = null;
-        // if (forkedProcessTimeoutInSeconds > 0) {
-        // watchdog = new ExecuteWatchdog(forkedProcessTimeoutInSeconds * 1000L);
-        // executor.setWatchdog(watchdog);
-        // }
-        // best effort to avoid orphaned child process
-        executor.setProcessDestroyer(new ShutdownHookProcessDestroyer());
-        executor.setWorkingDirectory(basedir);
+        cli.add(CompilerJavacForked.class.getName());
+        cli.add(options.toAbsolutePath().toString());
+        cli.add(output.toAbsolutePath().toString());
 
         log.debug("External java process command line:\n   {}", cli);
+        Process process = new ProcessBuilder(cli).directory(basedir).start();
+        // best effort to avoid orphaned child process
+        Thread destroyer = new Thread(process::destroy);
+        Runtime.getRuntime().addShutdownHook(destroyer);
+        int exitCode;
         try {
-            executor.execute(cli); // this throws ExecuteException if process return code != 0
-        } catch (ExecuteException e) {
+            process.getOutputStream().close();
+            // pump child output to this JVM's System.out/err, like commons-exec PumpStreamHandler did
+            Thread stderrPump = new Thread(() -> pump(process.getErrorStream(), System.err));
+            stderrPump.start();
+            pump(process.getInputStream(), System.out);
+            exitCode = process.waitFor();
+            stderrPump.join();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            process.destroy();
+            throw new InterruptedIOException("Interrupted while waiting for external java process");
+        } finally {
+            try {
+                Runtime.getRuntime().removeShutdownHook(destroyer);
+            } catch (IllegalStateException e) {
+                // JVM is already shutting down
+            }
+        }
+        if (exitCode != 0) {
             if (!log.isDebugEnabled()) {
                 log.info("External java process command line:\n   {}", cli);
             }
-            throw e;
+            throw new IOException("Process exited with an error: " + exitCode);
         }
 
         final Map<File, Output<File>> outputs = new HashMap<File, Output<File>>();
@@ -143,6 +158,15 @@ public class CompilerJavacLauncher extends AbstractCompilerJavac {
                 log.warn(message);
             }
         });
+    }
+
+    private static void pump(InputStream in, OutputStream out) {
+        try (in) {
+            in.transferTo(out);
+            out.flush();
+        } catch (IOException e) {
+            // child went away; nothing more to copy
+        }
     }
 
     public void setBasedir(File basedir) {

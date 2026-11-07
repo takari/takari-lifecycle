@@ -100,7 +100,7 @@ public class ExportPackageMojo extends TakariLifecycleMojo {
             if (!include.endsWith("/")) {
                 include = include + "/";
             }
-            include = include + "*.class";
+            includes.add(include + "*.class");
         }
         return includes;
     }

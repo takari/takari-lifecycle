@@ -10,7 +10,7 @@ import org.junit.Rule;
 import org.junit.runner.RunWith;
 
 @RunWith(MavenJUnitTestRunner.class)
-@MavenVersions({"3.6.3", "3.8.9", "3.9.14", "4.0.0-rc-5"})
+@MavenVersions({"3.9.13", "3.9.16", "4.0.0-rc-7"})
 public abstract class AbstractIntegrationTest {
 
     // TODO: a hack for MavenInstallationUtils; IT framework should support Maven4

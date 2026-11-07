@@ -26,8 +26,6 @@ package io.takari.maven.plugins.plugin;
  * under the License.
  */
 
-import java.util.Iterator;
-import java.util.List;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.metadata.AbstractRepositoryMetadata;
 import org.apache.maven.artifact.repository.metadata.Metadata;
@@ -72,20 +70,8 @@ class GroupRepositoryMetadata extends AbstractRepositoryMetadata {
         return null;
     }
 
-    public void addPluginMapping(String goalPrefix, String artifactId) {
-        addPluginMapping(goalPrefix, artifactId, artifactId);
-    }
-
     public void addPluginMapping(String goalPrefix, String artifactId, String name) {
-        List plugins = getMetadata().getPlugins();
-        boolean found = false;
-        for (Iterator i = plugins.iterator(); i.hasNext() && !found; ) {
-            Plugin plugin = (Plugin) i.next();
-            if (plugin.getPrefix().equals(goalPrefix)) {
-                found = true;
-            }
-        }
-        if (!found) {
+        if (getMetadata().getPlugins().stream().noneMatch(p -> p.getPrefix().equals(goalPrefix))) {
             Plugin plugin = new Plugin();
             plugin.setPrefix(goalPrefix);
             plugin.setArtifactId(artifactId);

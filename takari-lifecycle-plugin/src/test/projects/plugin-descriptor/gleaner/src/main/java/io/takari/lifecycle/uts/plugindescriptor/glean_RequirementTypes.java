@@ -6,7 +6,16 @@ import java.util.Map;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
 
-public class glean_RequirementTypes {
+public class glean_RequirementTypes extends glean_Generic<String> {
+
+  public static class Nested {}
+
+  @Parameter
+  private Nested nestedParameter;
+
+  @Component(role = Nested.class)
+  private Object nestedRoleRequirement;
+
 
   @Component
   private Map<String, String> mapRequirement;

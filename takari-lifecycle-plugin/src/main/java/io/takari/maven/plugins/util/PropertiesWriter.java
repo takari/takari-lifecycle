@@ -7,11 +7,9 @@
  */
 package io.takari.maven.plugins.util;
 
-import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -31,16 +29,17 @@ public class PropertiesWriter {
      * is not closed.
      */
     public static void write(Properties properties, String comment, OutputStream out) throws IOException {
-        StringWriter sw = new StringWriter();
-        properties.store(sw, comment);
-        List<String> lines = new ArrayList<>(Arrays.asList(sw.toString().split("\\R")));
+        // store(OutputStream) writes non-Latin-1 chars as unicode escapes, store(Writer) does not
+        ByteArrayOutputStream buf = new ByteArrayOutputStream();
+        properties.store(buf, comment);
+        List<String> lines =
+                new ArrayList<>(Arrays.asList(buf.toString(ENCODING).split("\\R")));
         lines.remove(comment != null ? 1 : 0);
         lines.sort(String::compareTo); // make lines ordering stable
-        BufferedWriter w = new BufferedWriter(new OutputStreamWriter(out, ENCODING));
+        StringBuilder sb = new StringBuilder();
         for (String line : lines) {
-            w.write(line);
-            w.newLine();
+            sb.append(line).append('\n'); // not platform line separator: output must be OS-independent
         }
-        w.flush();
+        out.write(sb.toString().getBytes(ENCODING));
     }
 }

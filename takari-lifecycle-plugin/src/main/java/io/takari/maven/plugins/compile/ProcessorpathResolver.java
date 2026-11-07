@@ -102,7 +102,11 @@ class ProcessorpathResolver {
             if (!errors.isEmpty()) {
                 StringBuilder msg = new StringBuilder();
                 errors.forEach(e -> msg.append(e.getMessage()).append(", "));
-                throw new MojoExecutionException("Could not resolve processorpath: ");
+                msg.setLength(msg.length() - 2);
+                MojoExecutionException ex =
+                        new MojoExecutionException("Could not resolve processorpath: " + msg, errors.get(0));
+                errors.stream().skip(1).forEach(ex::addSuppressed);
+                throw ex;
             }
 
             return processorpath;

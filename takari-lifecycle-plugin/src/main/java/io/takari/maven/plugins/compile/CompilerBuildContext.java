@@ -134,20 +134,6 @@ public class CompilerBuildContext extends AbstractBuildContext {
         return newResource(sourceFile);
     }
 
-    /**
-     * Returns sources registered during this build.
-     */
-    public Collection<ResourceMetadata<File>> getRegisteredSources() {
-        List<ResourceMetadata<File>> sources = new ArrayList<>();
-        for (Object resource : state.getResources().keySet()) {
-            if (isJavaSource(resource)) {
-                DefaultBuildContextState state = isProcessedResource(resource) ? this.state : this.oldState;
-                sources.add(newResourceMetadata(state, (File) resource));
-            }
-        }
-        return sources;
-    }
-
     public static boolean isJavaSource(Object resource) {
         return resource instanceof File && ((File) resource).getName().endsWith(".java"); // TODO find proper constant
     }

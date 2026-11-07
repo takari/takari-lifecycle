@@ -43,7 +43,7 @@ class MessagerImpl extends BaseMessagerImpl implements Messager {
 
     @Override
     public void printMessage(Kind kind, CharSequence msg, Element e, AnnotationMirror a) {
-        printMessage(kind, msg, e, null, null);
+        printMessage(kind, msg, e, a, null);
     }
 
     @Override

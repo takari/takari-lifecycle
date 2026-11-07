@@ -6,13 +6,13 @@ import static io.takari.maven.testing.TestResources.cp;
 import static io.takari.maven.testing.TestResources.rm;
 import static org.junit.Assert.fail;
 
-import com.google.common.collect.ImmutableList;
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 import io.takari.maven.testing.TestProperties;
 import io.takari.maven.testing.TestResources;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -310,7 +310,7 @@ public class PluginDescriptorMojoTest {
         dependencyArtifact.setScope(Artifact.SCOPE_COMPILE);
         pluginProject.getArtifacts().add(dependencyArtifact);
         MavenSession session = mojos.newMavenSession(pluginProject);
-        session.setProjects(ImmutableList.of(dependencyProject, pluginProject));
+        session.setProjects(List.of(dependencyProject, pluginProject));
         session.setCurrentProject(pluginProject);
         mojos.executeMojo(
                 session, pluginProject, "mojo-annotation-processor", newParameter("sourcepath", "reactorDependencies"));

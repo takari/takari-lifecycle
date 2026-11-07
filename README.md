@@ -15,10 +15,14 @@ To use it, declare the plugin as extension in your POM:
       <plugin>
         <groupId>io.takari.maven.plugins</groupId>
         <artifactId>takari-lifecycle-plugin</artifactId>
-        <version>2.3.0</version>
+        <version>2.4.0</version>
         <extensions>true</extensions>
       </plugin>
 ```
 
-Build time requirement of this project and projects using takari-lifecycle-plugin is Java17 (since 2.3.0+), 
-but the project can produce even Java 8 byte code by using the "release" compiler flag.
+Requirements for building this project and projects using takari-lifecycle-plugin:
+* Java 17 or newer (since 2.3.0); projects can still produce Java 8 bytecode by using the "release" compiler flag.
+* Maven 3.9.13 or newer (since 2.4.0; 2.3.x supports Maven 3.6.3+).
+
+Declaring the plugin with `<extensions>true</extensions>` is also required for `-DdeployAtEnd=true`;
+without it the build fails instead of silently skipping the deployment.

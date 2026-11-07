@@ -1,9 +1,9 @@
 package io.takari.maven.plugins.compile;
 
-import com.google.common.io.Files;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.HashSet;
 import java.util.Set;
 import org.hamcrest.BaseMatcher;
@@ -135,7 +135,7 @@ class ClassfileMatchers {
         @Override
         public final boolean matches(Object item) {
             File file = (File) item;
-            try (InputStream is = Files.asByteSource(file).openBufferedStream()) {
+            try (InputStream is = Files.newInputStream(file.toPath())) {
                 T visitor = newClassVisitor();
                 new ClassReader(is).accept(visitor, 0);
                 return matches(visitor);

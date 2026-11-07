@@ -45,8 +45,6 @@ public abstract class AbstractCompiler {
 
     private boolean parameters;
 
-    private File pom;
-
     private Charset sourceEncoding;
 
     private Map<String, String> annotationProcessorOptions;
@@ -166,14 +164,6 @@ public abstract class AbstractCompiler {
 
     protected boolean isParameters() {
         return parameters;
-    }
-
-    public void setPom(File pom) {
-        this.pom = pom;
-    }
-
-    protected File getPom() {
-        return pom;
     }
 
     public void setSourceEncoding(Charset sourceEncoding) {

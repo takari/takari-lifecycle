@@ -21,14 +21,6 @@ public class ArchiveConfiguration {
         return manifestFile;
     }
 
-    public void addManifestEntry(String key, String value) {
-        manifestEntries.put(key, value);
-    }
-
-    public void addManifestEntries(Map<String, String> map) {
-        manifestEntries.putAll(map);
-    }
-
     public Map<String, String> getManifestEntries() {
         return manifestEntries;
     }

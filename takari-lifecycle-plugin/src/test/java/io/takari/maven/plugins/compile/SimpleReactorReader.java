@@ -1,6 +1,5 @@
 package io.takari.maven.plugins.compile;
 
-import com.google.common.collect.ImmutableMap;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -33,13 +32,13 @@ class SimpleReactorReader implements MavenWorkspaceReader {
             String projectKey = ArtifactUtils.key(project.getGroupId(), project.getArtifactId(), project.getVersion());
             projectsByGAV.put(projectKey, project);
         }
-        this.projectsByGAV = ImmutableMap.copyOf(projectsByGAV);
+        this.projectsByGAV = Map.copyOf(projectsByGAV);
 
         Map<String, Artifact> artifactsByGAVCE = new LinkedHashMap<>();
         for (Artifact artifact : artifacts) {
             artifactsByGAVCE.put(keyGAVCE(artifact), artifact);
         }
-        this.artifactsByGAVCE = ImmutableMap.copyOf(artifactsByGAVCE);
+        this.artifactsByGAVCE = Map.copyOf(artifactsByGAVCE);
     }
 
     @Override

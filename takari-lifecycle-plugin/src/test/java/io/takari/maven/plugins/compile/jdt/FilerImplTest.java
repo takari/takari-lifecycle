@@ -2,7 +2,6 @@ package io.takari.maven.plugins.compile.jdt;
 
 import static io.takari.maven.testing.TestResources.create;
 
-import com.google.common.io.CharStreams;
 import io.takari.maven.plugins.compile.CompilerBuildContext;
 import io.takari.maven.plugins.compile.jdt.classpath.Classpath;
 import io.takari.maven.plugins.compile.jdt.classpath.ClasspathEntry;
@@ -12,7 +11,6 @@ import io.takari.maven.plugins.compile.jdt.classpath.MutableClasspathEntry;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -80,7 +78,7 @@ public class FilerImplTest {
 
     private static String toString(FileObject file) throws IOException {
         try (InputStream is = file.openInputStream()) {
-            return CharStreams.toString(new InputStreamReader(is, StandardCharsets.UTF_8));
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
         }
     }
 

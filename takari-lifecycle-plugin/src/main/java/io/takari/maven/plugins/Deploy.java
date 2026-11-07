@@ -10,23 +10,20 @@ package io.takari.maven.plugins;
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
 import io.takari.maven.plugins.install_deploy.DeployParticipant;
-import io.takari.maven.plugins.util.AetherUtils;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
+import org.apache.maven.RepositoryUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
-import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.deployment.DeployRequest;
 import org.eclipse.aether.deployment.DeploymentException;
 import org.eclipse.aether.repository.Authentication;
 import org.eclipse.aether.repository.AuthenticationSelector;
 import org.eclipse.aether.repository.RemoteRepository;
-import org.eclipse.aether.util.artifact.ArtifactIdUtils;
-import org.eclipse.aether.util.artifact.SubArtifact;
 
 /**
  * @author Jason van Zyl
@@ -59,32 +56,20 @@ public class Deploy extends TakariLifecycleMojo {
     }
 
     private void deployProject(MavenProject project) throws MojoExecutionException {
+        if (deployAtEnd && !deployParticipant.isActive()) {
+            throw new MojoExecutionException("deployAtEnd requires takari-lifecycle-plugin to be loaded as build"
+                    + " extension: declare it in the POM with <extensions>true</extensions>");
+        }
+
+        RemoteRepository repository = remoteRepository(project);
+        if (repository == null) {
+            throw new MojoExecutionException("Deployment failed: repository element was not specified in the POM inside"
+                    + " distributionManagement element or in -DaltDeploymentRepository=id::url parameter");
+        }
+
         DeployRequest deployRequest = new DeployRequest();
-
-        Artifact projectArtifact = AetherUtils.toArtifact(project.getArtifact());
-        Artifact pomArtifact = new SubArtifact(projectArtifact, "", "pom");
-        pomArtifact = pomArtifact.setFile(project.getFile());
-
-        if (ArtifactIdUtils.equalsId(pomArtifact, projectArtifact)) {
-            if (isFile(projectArtifact.getFile())) {
-                pomArtifact = projectArtifact;
-            }
-            projectArtifact = null;
-        }
-
-        deployRequest.addArtifact(pomArtifact);
-        if (projectArtifact != null) {
-            deployRequest.addArtifact(projectArtifact);
-        }
-
-        //
-        // Attached artifacts
-        //
-        for (org.apache.maven.artifact.Artifact attachedArtifact : project.getAttachedArtifacts()) {
-            deployRequest.addArtifact(AetherUtils.toArtifact(attachedArtifact));
-        }
-
-        deployRequest.setRepository(remoteRepository(project));
+        deployRequest.setArtifacts(projectArtifacts());
+        deployRequest.setRepository(repository);
 
         if (!deployAtEnd) {
             try {
@@ -140,6 +125,6 @@ public class Deploy extends TakariLifecycleMojo {
             return builder.build();
         }
 
-        return AetherUtils.toRepo(project.getDistributionManagementArtifactRepository());
+        return RepositoryUtils.toRepo(project.getDistributionManagementArtifactRepository());
     }
 }

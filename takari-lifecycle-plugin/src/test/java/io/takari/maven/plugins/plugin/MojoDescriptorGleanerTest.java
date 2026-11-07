@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.junit.Assert;
@@ -49,6 +50,45 @@ public class MojoDescriptorGleanerTest {
                 "java.lang.String[]", getParameter(d, "arrayParameter").getType());
 
         Assert.assertFalse(d.isTakariBuilder());
+
+        // nested types use binary name so they can be loaded at runtime
+        Assert.assertEquals(
+                "io.takari.lifecycle.uts.plugindescriptor.glean_RequirementTypes$Nested",
+                getParameter(d, "nestedParameter").getType());
+        Assert.assertEquals(
+                "io.takari.lifecycle.uts.plugindescriptor.glean_RequirementTypes$Nested",
+                getRequirement(d, "nestedRoleRequirement").getRole());
+
+        // type variable parameter is erased to its bound
+        MojoDescriptor generic = readDescriptor(basedir, "glean_Generic");
+        Assert.assertEquals(
+                "java.lang.Object", getParameter(generic, "genericParameter").getType());
+    }
+
+    @Test
+    public void testGleanerParameterAndComponent() throws Exception {
+        Path basedir = resources.getBasedir("plugin-descriptor/gleaner").toPath();
+        Files.writeString(
+                basedir.resolve("src/main/java/io/takari/lifecycle/uts/plugindescriptor/glean_Both.java"),
+                "package io.takari.lifecycle.uts.plugindescriptor;\n"
+                        + "public class glean_Both {\n"
+                        + "  @org.apache.maven.plugins.annotations.Parameter\n"
+                        + "  @org.apache.maven.plugins.annotations.Component\n"
+                        + "  private String both;\n"
+                        + "}\n");
+        MavenProject project = mojos.readMavenProject(basedir.toFile());
+        addDependency(project, "apache-plugin-annotations-jar");
+        mojos.executeMojo(project, "compile", newParameter("compilerId", "jdt"));
+        try {
+            mojos.executeMojo(project, "mojo-annotation-processor");
+            Assert.fail();
+        } catch (MojoExecutionException expected) {
+            // expected
+        }
+        mojos.assertMessages(
+                basedir.toFile(),
+                "src/main/java/io/takari/lifecycle/uts/plugindescriptor/glean_Both.java",
+                "ERROR glean_Both.java [5:18] @Parameter and @Component are mutually exclusive");
     }
 
     @Test
@@ -87,8 +127,10 @@ public class MojoDescriptorGleanerTest {
     private MojoDescriptor readDescriptor(Path basedir, String classname) throws IOException, XmlPullParserException {
         try (InputStream is = Files.newInputStream(basedir.resolve("target/classes/" + PATH_MOJOS_XML))) {
             PluginDescriptor descriptor = new PluginDescriptorXpp3Reader().read(is);
-            Assert.assertEquals(1, descriptor.getMojos().size());
-            return descriptor.getMojos().get(0);
+            return descriptor.getMojos().stream()
+                    .filter(m -> m.getImplementation().endsWith("." + classname))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("No such mojo " + classname));
         }
     }
 

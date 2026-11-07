@@ -163,8 +163,8 @@ class AnnotationProcessorManager extends BaseAnnotationProcessorManager {
 
     @Override
     public void reportProcessorException(Processor p, Exception e) {
-        String msg = String.format(
-                "Exception executing annotation processor %s: %s", p.getClass().getName(), e.getMessage());
+        String msg = "Exception executing annotation processor %s: %s"
+                .formatted(p.getClass().getName(), e.getMessage());
         context.addPomMessage(msg, MessageSeverity.ERROR, e);
         throw new AbortCompilation(null, e);
     }

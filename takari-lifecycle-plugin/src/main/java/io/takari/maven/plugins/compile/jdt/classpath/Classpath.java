@@ -101,8 +101,4 @@ public class Classpath implements INameEnvironment {
         }
         packages = newPackageIndex(entries);
     }
-
-    public List<ClasspathEntry> getEntries() {
-        return entries;
-    }
 }

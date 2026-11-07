@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.codehaus.plexus.languages.java.version.JavaVersion;
 
 public abstract class AbstractCompilerJavac extends AbstractCompiler {
 
@@ -64,7 +63,7 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
         options.add(getOutputDirectory().getAbsolutePath());
 
         // The --source and --target option cannot be used with --release
-        if (getRelease() != null && JavaVersion.JAVA_VERSION.isAtLeast("9")) {
+        if (getRelease() != null) {
             options.add("--release");
             options.add(getRelease());
         } else {
@@ -235,9 +234,8 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
     @Override
     public void setPrivatePackageReference(AccessRulesViolation accessRulesViolation) {
         if (accessRulesViolation == AccessRulesViolation.error) {
-            String msg = String.format(
-                    "Compiler %s does not support privatePackageReference=error, use compilerId=%s",
-                    getCompilerId(), CompilerJdt.ID);
+            String msg = "Compiler %s does not support privatePackageReference=error, use compilerId=%s"
+                    .formatted(getCompilerId(), CompilerJdt.ID);
             throw new IllegalArgumentException(msg);
         }
     }
@@ -245,9 +243,8 @@ public abstract class AbstractCompilerJavac extends AbstractCompiler {
     @Override
     public void setTransitiveDependencyReference(AccessRulesViolation accessRulesViolation) {
         if (accessRulesViolation == AccessRulesViolation.error) {
-            String msg = String.format(
-                    "Compiler %s does not support transitiveDependencyReference=error, use compilerId=%s",
-                    getCompilerId(), CompilerJdt.ID);
+            String msg = "Compiler %s does not support transitiveDependencyReference=error, use compilerId=%s"
+                    .formatted(getCompilerId(), CompilerJdt.ID);
             throw new IllegalArgumentException(msg);
         }
     }

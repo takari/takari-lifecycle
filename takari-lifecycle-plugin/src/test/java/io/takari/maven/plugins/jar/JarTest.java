@@ -9,9 +9,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
-import com.google.common.io.BaseEncoding;
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 import io.takari.maven.testing.TestResources;
 import java.io.BufferedInputStream;
@@ -22,10 +19,13 @@ import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -379,8 +379,8 @@ public class JarTest {
                 );
     }
 
-    private static String fingerprint(Path file) throws IOException {
-        Hasher hasher = Hashing.sha1().newHasher();
+    private static String fingerprint(Path file) throws IOException, NoSuchAlgorithmException {
+        MessageDigest digest = MessageDigest.getInstance("SHA-1");
         byte[] buffer = new byte[30 * 1024];
         try (ZipFile zip = new ZipFile(file.toFile())) {
             Enumeration<? extends ZipEntry> entries = zip.entries();
@@ -390,13 +390,13 @@ public class JarTest {
                     if (!entry.isDirectory()) {
                         try (InputStream in = new BufferedInputStream(zip.getInputStream(entry))) {
                             for (int count; (count = in.read(buffer)) != -1; ) {
-                                hasher.putBytes(buffer, 0, count);
+                                digest.update(buffer, 0, count);
                             }
                         }
                     }
                 }
             }
         }
-        return BaseEncoding.base16().encode(hasher.hash().asBytes()).toLowerCase();
+        return HexFormat.of().formatHex(digest.digest());
     }
 }

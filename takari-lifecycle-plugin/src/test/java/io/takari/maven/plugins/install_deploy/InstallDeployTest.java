@@ -15,6 +15,7 @@ import org.apache.maven.execution.DefaultMavenExecutionResult;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionResult;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.project.ProjectBuildingRequest;
@@ -202,6 +203,16 @@ public class InstallDeployTest {
         DeployParticipant deployParticipant = mojos.getContainer().lookup(DeployParticipant.class);
 
         Assert.assertEquals(0, deployParticipant.getDeployAtEndRequests().size());
+
+        // participant not activated by Maven (plugin not a build extension): deployAtEnd must fail
+        try {
+            mojos.executeMojo(session, project, "deploy");
+            Assert.fail();
+        } catch (MojoExecutionException e) {
+            Assert.assertTrue(e.getMessage().contains("<extensions>true</extensions>"));
+        }
+
+        deployParticipant.afterProjectsRead(session);
 
         for (MavenProject reactorProject : session.getProjects()) {
             session.setCurrentProject(reactorProject);

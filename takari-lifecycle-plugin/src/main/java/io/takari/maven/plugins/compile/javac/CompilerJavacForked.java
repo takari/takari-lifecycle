@@ -165,7 +165,7 @@ public class CompilerJavacForked {
         public void addLogMessage(String message) {
             try {
                 writer.write('L');
-                writer.write(message);
+                writer.write(URLEncoder.encode(message, StandardCharsets.UTF_8));
                 writer.write(EOL);
             } catch (IOException e) {
                 handleException(e);
@@ -198,7 +198,7 @@ public class CompilerJavacForked {
                             break;
                         }
                         case 'M': {
-                            String[] st = value.split(" ");
+                            String[] st = value.split(" ", -1);
                             String path = URLDecoder.decode(st[0], StandardCharsets.UTF_8);
                             int line = Integer.parseInt(st[1]);
                             int column = Integer.parseInt(st[2]);
@@ -208,7 +208,7 @@ public class CompilerJavacForked {
                             break;
                         }
                         case 'L': {
-                            callback.addLogMessage(value);
+                            callback.addLogMessage(URLDecoder.decode(value, StandardCharsets.UTF_8));
                             break;
                         }
                         default:
@@ -317,9 +317,8 @@ public class CompilerJavacForked {
                             diagnostic.getMessage(null),
                             kind);
                 } else {
-                    output.addLogMessage(String.format(
-                            "Unsupported compiler message on %s resource %s: %s",
-                            source.getKind(), source.toUri(), diagnostic.getMessage(null)));
+                    output.addLogMessage("Unsupported compiler message on %s resource %s: %s"
+                            .formatted(source.getKind(), source.toUri(), diagnostic.getMessage(null)));
                 }
             } else {
                 output.addMessage(".", 0, 0, diagnostic.getMessage(null), kind);

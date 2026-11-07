@@ -10,20 +10,22 @@ package io.takari.maven.plugins;
 import io.takari.incrementalbuild.Incremental;
 import io.takari.incrementalbuild.Incremental.Configuration;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
+import org.apache.maven.RepositoryUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.descriptor.MojoDescriptor;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.MavenProjectHelper;
-import org.apache.maven.settings.Settings;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
-import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.util.artifact.ArtifactIdUtils;
+import org.eclipse.aether.util.artifact.SubArtifact;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +39,9 @@ import org.slf4j.LoggerFactory;
 // offline model
 //
 public abstract class TakariLifecycleMojo extends AbstractMojo {
+
+    private static final String ALTERNATE_LIFECYCLE_PROVIDING_PRIMARY_ARTIFACT =
+            "@ALTERNATE_LIFECYCLE_PROVIDING_PRIMARY_ARTIFACT@";
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -54,29 +59,13 @@ public abstract class TakariLifecycleMojo extends AbstractMojo {
     @Incremental(configuration = Configuration.ignore)
     private MavenSession session;
 
-    @Parameter(defaultValue = "${reactorProjects}", readonly = true)
-    @Incremental(configuration = Configuration.ignore)
-    protected List<MavenProject> reactorProjects;
-
     @Parameter(defaultValue = "${repositorySystemSession}", readonly = true)
     @Incremental(configuration = Configuration.ignore)
     protected RepositorySystemSession repositorySystemSession;
 
-    @Parameter(defaultValue = "${project.remoteRepositories}", readonly = true)
-    @Incremental(configuration = Configuration.ignore)
-    protected List<RemoteRepository> remoteRepositories;
-
-    @Parameter(defaultValue = "${mojoExecution}", readonly = true)
-    @Incremental(configuration = Configuration.ignore)
-    protected MojoExecution mojoExecution;
-
     @Parameter(defaultValue = "${mojoExecution.mojoDescriptor}", readonly = true)
     @Incremental(configuration = Configuration.ignore)
     protected MojoDescriptor mojoDescriptor;
-
-    @Parameter(defaultValue = "${settings}", readonly = true)
-    @Incremental(configuration = Configuration.ignore)
-    protected Settings settings;
 
     @Parameter(defaultValue = "false", property = "skip")
     @Incremental(configuration = Configuration.ignore)
@@ -94,7 +83,7 @@ public abstract class TakariLifecycleMojo extends AbstractMojo {
         // skip actually doesn't work here because it's on a per mojo basis
 
         if (skip) {
-            logger.info(String.format("Skipping %s goal", mojoDescriptor.getGoal()));
+            logger.info("Skipping %s goal".formatted(mojoDescriptor.getGoal()));
             skipMojo();
             return;
         }
@@ -103,8 +92,8 @@ public abstract class TakariLifecycleMojo extends AbstractMojo {
     }
 
     protected boolean alternateLifecycleProvidingPrimaryArtifact() {
-        String alternateLifecycleProvidingPrimaryArtifact = session.getUserProperties()
-                .getProperty(TakariLifecycleFlags.ALTERNATE_LIFECYCLE_PROVIDING_PRIMARY_ARTIFACT);
+        String alternateLifecycleProvidingPrimaryArtifact =
+                session.getUserProperties().getProperty(ALTERNATE_LIFECYCLE_PROVIDING_PRIMARY_ARTIFACT);
         if (alternateLifecycleProvidingPrimaryArtifact != null
                 && alternateLifecycleProvidingPrimaryArtifact.equals("true")) {
             return true;
@@ -114,5 +103,32 @@ public abstract class TakariLifecycleMojo extends AbstractMojo {
 
     protected boolean isFile(File file) {
         return file != null && file.isFile();
+    }
+
+    /**
+     * Returns the artifacts to install/deploy for the project: pom, main artifact (if any) and attached artifacts.
+     */
+    protected List<Artifact> projectArtifacts() {
+        List<Artifact> result = new ArrayList<>();
+
+        Artifact projectArtifact = RepositoryUtils.toArtifact(project.getArtifact());
+        Artifact pomArtifact = new SubArtifact(projectArtifact, "", "pom");
+        pomArtifact = pomArtifact.setFile(project.getFile());
+
+        if (ArtifactIdUtils.equalsId(pomArtifact, projectArtifact)) {
+            if (isFile(projectArtifact.getFile())) {
+                pomArtifact = projectArtifact;
+            }
+            projectArtifact = null;
+        }
+
+        result.add(pomArtifact);
+        if (projectArtifact != null) {
+            result.add(projectArtifact);
+        }
+        for (org.apache.maven.artifact.Artifact attachedArtifact : project.getAttachedArtifacts()) {
+            result.add(RepositoryUtils.toArtifact(attachedArtifact));
+        }
+        return result;
     }
 }

@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.TreeSet;
 import org.codehaus.plexus.util.Os;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Rule;
@@ -74,6 +75,19 @@ public class ExportPackageMojoTest {
         mojos.executeMojo(basedir.toFile(), "export-package");
         mojos.assertBuildOutputs(basedir.toFile(), "target/classes/" + ExportPackageMojo.PATH_EXPORT_PACKAGE);
         assertExportedPackages(basedir, new String[0]);
+    }
+
+    @Test
+    public void testExportIncludes() throws Exception {
+        Path basedir = resources.getBasedir("exportpackage/basic").toPath();
+        mkfile(basedir, "target/classes/exported/Exported.class");
+        mkfile(basedir, "target/classes/other/Other.class");
+        Xpp3Dom includes = new Xpp3Dom("exportIncludes");
+        Xpp3Dom include = new Xpp3Dom("exportInclude");
+        include.setValue("exported");
+        includes.addChild(include);
+        mojos.executeMojo(basedir.toFile(), "export-package", includes);
+        assertExportedPackages(basedir, "exported");
     }
 
     @Test

@@ -3,8 +3,6 @@ package io.takari.maven.plugins.testproperties;
 import static io.takari.maven.testing.TestMavenRuntime.newParameter;
 import static org.hamcrest.CoreMatchers.containsString;
 
-import com.google.common.hash.HashCode;
-import com.google.common.hash.Hashing;
 import io.takari.incrementalbuild.maven.testing.IncrementalBuildRule;
 import io.takari.maven.testing.TestResources;
 import java.io.IOException;
@@ -12,7 +10,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
+import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import org.apache.maven.artifact.Artifact;
@@ -103,8 +103,8 @@ public class TestPropertiesMojoTest {
         FileTime testPropertiesLastmodified = Files.getLastModifiedTime(testProperties);
         FileTime workspaceStateLastmodified = Files.getLastModifiedTime(workspaceState);
 
-        HashCode testPropertiesSha1 = sha1(testProperties);
-        HashCode workspaceStateSha1 = sha1(workspaceState);
+        String testPropertiesSha1 = sha1(testProperties);
+        String workspaceStateSha1 = sha1(workspaceState);
 
         mojos.executeMojo(session, project, newMojoExecution());
         // mojos.assertCarriedOverOutputs(basedir, "target/test-classes/test.properties",
@@ -215,12 +215,12 @@ public class TestPropertiesMojoTest {
         Assert.assertEquals(basedir.toRealPath().resolve("target/classes").toString(), state.get("test:test:jar::1"));
     }
 
-    private HashCode sha1(Path basedir, String path) throws IOException {
+    private String sha1(Path basedir, String path) throws Exception {
         return sha1(basedir.resolve(path));
     }
 
-    private HashCode sha1(Path file) throws IOException {
-        return Hashing.sha1().hashBytes(Files.readAllBytes(file));
+    private String sha1(Path file) throws Exception {
+        return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-1").digest(Files.readAllBytes(file)));
     }
 
     private Map<String, String> readProperties(Path basedir) throws IOException {

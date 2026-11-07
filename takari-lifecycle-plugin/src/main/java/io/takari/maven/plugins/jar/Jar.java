@@ -7,7 +7,6 @@
  */
 package io.takari.maven.plugins.jar;
 
-import static io.takari.maven.plugins.TakariLifecycles.isJarProducingTakariLifecycle;
 import static java.util.Arrays.asList;
 
 import ca.vanzyl.provisio.archive.Archiver;
@@ -76,6 +75,16 @@ public class Jar extends TakariLifecycleMojo {
 
     private static final String MANIFEST_PATH = "META-INF/MANIFEST.MF";
 
+    // "jar": while testing we're not setting any specific Takari lifecycle explicitly in our tests so many
+    // of the JAR Mojo tests fail because we now explicitly want one of the Takari lifecycles to make
+    // the JAR produced by the JAR Mojo the primary artifact.
+    private static final Set<String> JAR_PRODUCING_TAKARI_LIFECYCLES =
+            Set.of("takari-jar", "takari-maven-plugin", "takari-maven-component", "jar");
+
+    private static boolean isJarProducingTakariLifecycle(String lifecycle) {
+        return lifecycle != null && JAR_PRODUCING_TAKARI_LIFECYCLES.contains(lifecycle);
+    }
+
     @Override
     protected void executeMojo() throws MojoExecutionException {
 
@@ -88,7 +97,7 @@ public class Jar extends TakariLifecycleMojo {
         if (mainJar) {
             File jar = outputDirectory
                     .toPath()
-                    .resolve(String.format("%s.jar", finalName))
+                    .resolve("%s.jar".formatted(finalName))
                     .toFile();
             InputSet registeredOutput = buildContext.newInputSet();
             try {
@@ -141,7 +150,7 @@ public class Jar extends TakariLifecycleMojo {
             final Map<File, List<File>> sources = new LinkedHashMap<>();
             File sourceJar = outputDirectory
                     .toPath()
-                    .resolve(String.format("%s-%s.jar", finalName, "sources"))
+                    .resolve("%s-%s.jar".formatted(finalName, "sources"))
                     .toFile();
             InputSet registeredOutput = buildContext.newInputSet();
             try {
@@ -181,7 +190,7 @@ public class Jar extends TakariLifecycleMojo {
         if (testJar && testClassesDirectory.isDirectory()) {
             File testJar = outputDirectory
                     .toPath()
-                    .resolve(String.format("%s-%s.jar", finalName, "tests"))
+                    .resolve("%s-%s.jar".formatted(finalName, "tests"))
                     .toFile();
             InputSet registeredOutput = buildContext.newInputSet();
             try {
@@ -290,7 +299,7 @@ public class Jar extends TakariLifecycleMojo {
 
     protected SourceEntry pomPropertiesSource(MavenProject project) throws IOException {
         String entryName =
-                String.format("META-INF/maven/%s/%s/pom.properties", project.getGroupId(), project.getArtifactId());
+                "META-INF/maven/%s/%s/pom.properties".formatted(project.getGroupId(), project.getArtifactId());
 
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
         Properties properties = new Properties();

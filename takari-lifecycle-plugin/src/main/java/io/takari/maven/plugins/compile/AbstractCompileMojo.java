@@ -238,10 +238,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
 
     //
 
-    @Parameter(defaultValue = "${project.file}", readonly = true)
-    @Incremental(configuration = Configuration.ignore)
-    private File pom;
-
     @Parameter(defaultValue = "${project.basedir}", readonly = true)
     @Incremental(configuration = Configuration.ignore)
     private File basedir;
@@ -318,9 +314,8 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
                         illegal.add(include);
                     }
                     if (!illegal.isEmpty()) {
-                        throw new MojoExecutionException(String.format(
-                                "<includes> patterns must end with %s. Illegal patterns: %s",
-                                Kind.SOURCE.extension, illegal.toString()));
+                        throw new MojoExecutionException("<includes> patterns must end with %s. Illegal patterns: %s"
+                                .formatted(Kind.SOURCE.extension, illegal.toString()));
                     }
                 }
             }
@@ -411,7 +406,6 @@ public abstract class AbstractCompileMojo extends AbstractMojo {
             compiler.setAnnotationProcessorOptions(annotationProcessorOptions);
             compiler.setVerbose(verbose);
             compiler.setParameters(parameters);
-            compiler.setPom(pom);
             compiler.setSourceEncoding(getSourceEncoding());
             compiler.setDebug(parseDebug(debug));
             compiler.setShowWarnings(showWarnings);

@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-class FilterResourcesProcessor extends AbstractResourceProcessor {
+class FilterResourcesProcessor {
     private static final String M_START = "${";
 
     private static final String M_END = "}";
@@ -85,7 +85,7 @@ class FilterResourcesProcessor extends AbstractResourceProcessor {
             Charset encoding,
             MissingPropertyAction mpa)
             throws IOException {
-        File outputFile = relativize(sourceDirectory, targetDirectory, input.getResource());
+        File outputFile = ResourcesProcessor.relativize(sourceDirectory, targetDirectory, input.getResource());
         Output<File> output = input.associateOutput(outputFile);
         try (Reader reader = newReader(input, encoding);
                 Writer writer = newWriter(output, encoding)) {

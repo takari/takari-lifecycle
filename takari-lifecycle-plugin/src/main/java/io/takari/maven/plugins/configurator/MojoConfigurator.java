@@ -9,26 +9,8 @@ package io.takari.maven.plugins.configurator;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
-import org.codehaus.plexus.classworlds.realm.ClassRealm;
 import org.codehaus.plexus.component.configurator.BasicComponentConfigurator;
-import org.codehaus.plexus.component.configurator.ComponentConfigurationException;
-import org.codehaus.plexus.component.configurator.ConfigurationListener;
-import org.codehaus.plexus.component.configurator.expression.ExpressionEvaluator;
-import org.codehaus.plexus.configuration.PlexusConfiguration;
 
 @Singleton
 @Named("takari")
-public class MojoConfigurator extends BasicComponentConfigurator {
-
-    @Override
-    public void configureComponent(
-            final Object mojoInstance, //
-            final PlexusConfiguration pluginConfigurationFromMaven, //
-            final ExpressionEvaluator evaluator, //
-            final ClassRealm realm, //
-            final ConfigurationListener listener)
-            throws ComponentConfigurationException {
-
-        super.configureComponent(mojoInstance, pluginConfigurationFromMaven, evaluator, realm, listener);
-    }
-}
+public class MojoConfigurator extends BasicComponentConfigurator {}

@@ -991,8 +991,7 @@ public class CompilerJdt extends AbstractCompiler implements ICompilerRequestor 
                 }
             }
         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            input.addMessage(0, 0, "Could not write class file: " + e.getMessage(), MessageSeverity.ERROR, e);
         }
         // XXX double check affected sources are recompiled when this source has errors
     }
