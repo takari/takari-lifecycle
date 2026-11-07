@@ -32,7 +32,7 @@ jobs:
       - run: ./mvnw clean install -e -B -V
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     needs: build
     if: (!cancelled()) && needs.build.result == 'success'
     strategy:
@@ -52,5 +52,6 @@ jobs:
         with:
           path: ~/.m2/repository
           key: maven-${{ hashFiles('**/pom.xml') }}
-      - run: ./mvnw verify -e -B -V -f takari-lifecycle-plugin-its
+      - run: ./mvnw verify -e -B -V
+        shell: bash
 
