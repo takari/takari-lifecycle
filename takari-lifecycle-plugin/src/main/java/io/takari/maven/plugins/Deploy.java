@@ -38,7 +38,7 @@ public class Deploy extends TakariLifecycleMojo {
     /**
      * Specifies an alternative repository to which the project artifacts should be deployed (other than those specified in {@code <distributionManagement>}).
      * <p/>
-     * Format: id::layout::url
+     * Format: id::url (legacy id::layout::url is also accepted)
      */
     @Parameter(property = "altDeploymentRepository")
     private String altDeploymentRepository;
@@ -84,38 +84,16 @@ public class Deploy extends TakariLifecycleMojo {
         }
     }
 
-    private static final Pattern MODERN_REPOSITORY_PATTERN = Pattern.compile("(.+)::(.+)");
-    private static final Pattern LEGACY_REPOSITORY_PATTERN = Pattern.compile("(.+)::(.+)::(.+)");
+    // reluctant patterns and legacy first, as in maven-deploy-plugin: the modern pattern also matches id::layout::url
+    private static final Pattern MODERN_REPOSITORY_PATTERN = Pattern.compile("(.+?)::(.+)");
+    private static final Pattern LEGACY_REPOSITORY_PATTERN = Pattern.compile("(.+?)::(.+?)::(.+)");
 
     //
     // All this logic about finding the right repository needs to be standardized
     //
     public RemoteRepository remoteRepository(MavenProject project) throws MojoExecutionException {
         if (altDeploymentRepository != null) {
-            String id = null;
-            String layout = "default";
-            String url = null;
-            Matcher matcher = MODERN_REPOSITORY_PATTERN.matcher(altDeploymentRepository);
-            if (matcher.matches()) {
-                id = matcher.group(1).trim();
-                url = matcher.group(2).trim();
-            } else {
-                matcher = LEGACY_REPOSITORY_PATTERN.matcher(altDeploymentRepository);
-                if (matcher.matches()) {
-                    id = matcher.group(1).trim();
-                    layout = matcher.group(2).trim();
-                    url = matcher.group(3).trim();
-                }
-            }
-
-            if (id == null || id.isEmpty() || url == null || url.isEmpty()) {
-                throw new MojoExecutionException(
-                        altDeploymentRepository,
-                        "Invalid syntax for repository.",
-                        "Invalid syntax for alternative repository. Use \"id::url\" or \"id::layout::url\".");
-            }
-
-            RemoteRepository.Builder builder = new RemoteRepository.Builder(id, layout, url);
+            RemoteRepository.Builder builder = altRepositoryBuilder(altDeploymentRepository);
 
             // Retrieve the appropriate authentication
             final AuthenticationSelector authenticationSelector = repositorySystemSession.getAuthenticationSelector();
@@ -126,5 +104,31 @@ public class Deploy extends TakariLifecycleMojo {
         }
 
         return RepositoryUtils.toRepo(project.getDistributionManagementArtifactRepository());
+    }
+
+    /** Parses {@code id::url} or legacy {@code id::layout::url}. */
+    static RemoteRepository.Builder altRepositoryBuilder(String altDeploymentRepository) throws MojoExecutionException {
+        String id = null;
+        String layout = "default";
+        String url = null;
+        Matcher matcher = LEGACY_REPOSITORY_PATTERN.matcher(altDeploymentRepository);
+        if (matcher.matches()) {
+            id = matcher.group(1).trim();
+            layout = matcher.group(2).trim();
+            url = matcher.group(3).trim();
+        } else {
+            matcher = MODERN_REPOSITORY_PATTERN.matcher(altDeploymentRepository);
+            if (matcher.matches()) {
+                id = matcher.group(1).trim();
+                url = matcher.group(2).trim();
+            }
+        }
+        if (id == null || id.isEmpty() || url == null || url.isEmpty()) {
+            throw new MojoExecutionException(
+                    altDeploymentRepository,
+                    "Invalid syntax for repository.",
+                    "Invalid syntax for alternative repository. Use \"id::url\" or \"id::layout::url\".");
+        }
+        return new RemoteRepository.Builder(id, layout, url);
     }
 }
