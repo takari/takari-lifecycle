@@ -32,11 +32,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Pattern;
 
 class FilterResourcesProcessor {
     private static final String M_START = "${";
 
     private static final String M_END = "}";
+
+    private static final Pattern WINDOWS_PATH = Pattern.compile("^(.*)[a-zA-Z]:\\\\(.*)", Pattern.DOTALL);
 
     private final BuildContext buildContext;
 
@@ -52,7 +55,8 @@ class FilterResourcesProcessor {
             Map<Object, Object> filterProperties,
             List<File> filters,
             Charset encoding,
-            MissingPropertyAction mpa)
+            MissingPropertyAction mpa,
+            boolean escapeWindowsPaths)
             throws IOException {
         Map<Object, Object> effectiveProperties = new HashMap<>(filterProperties);
         for (File filter : filters) {
@@ -63,7 +67,14 @@ class FilterResourcesProcessor {
             });
         }
         for (ResourceMetadata<File> metadata : buildContext.registerInputs(sourceDirectory, includes, excludes)) {
-            filterResource(metadata.process(), sourceDirectory, targetDirectory, effectiveProperties, encoding, mpa);
+            filterResource(
+                    metadata.process(),
+                    sourceDirectory,
+                    targetDirectory,
+                    effectiveProperties,
+                    encoding,
+                    mpa,
+                    escapeWindowsPaths);
         }
     }
 
@@ -83,21 +94,33 @@ class FilterResourcesProcessor {
             File targetDirectory,
             Map<Object, Object> filterProperties,
             Charset encoding,
-            MissingPropertyAction mpa)
+            MissingPropertyAction mpa,
+            boolean escapeWindowsPaths)
             throws IOException {
         File outputFile = ResourcesProcessor.relativize(sourceDirectory, targetDirectory, input.getResource());
         Output<File> output = input.associateOutput(outputFile);
         try (Reader reader = newReader(input, encoding);
                 Writer writer = newWriter(output, encoding)) {
-            filter(input, reader, writer, filterProperties, mpa);
+            filter(input, reader, writer, filterProperties, mpa, escapeWindowsPaths);
         }
     }
 
     public void filter(
             Resource resource, Reader reader, Writer writer, Map<Object, Object> properties, MissingPropertyAction mpa)
             throws IOException {
+        filter(resource, reader, writer, properties, mpa, false);
+    }
+
+    private void filter(
+            Resource resource,
+            Reader reader,
+            Writer writer,
+            Map<Object, Object> properties,
+            MissingPropertyAction mpa,
+            boolean escapeWindowsPaths)
+            throws IOException {
         NoEncodingMustacheFactory factory = new NoEncodingMustacheFactory();
-        factory.setObjectHandler(new MapReflectionObjectHandler(resource, mpa));
+        factory.setObjectHandler(new MapReflectionObjectHandler(resource, mpa, escapeWindowsPaths));
         Mustache mustache = factory.compile(reader, "maven", M_START, M_END);
         mustache.execute(writer, properties).close();
     }
@@ -131,9 +154,15 @@ class FilterResourcesProcessor {
 
         private final MissingPropertyAction missingPropertyAction;
 
-        public MapReflectionObjectHandler(final Resource resource, final MissingPropertyAction missingPropertyAction) {
+        private final boolean escapeWindowsPaths;
+
+        public MapReflectionObjectHandler(
+                final Resource resource,
+                final MissingPropertyAction missingPropertyAction,
+                final boolean escapeWindowsPaths) {
             this.resource = resource;
             this.missingPropertyAction = missingPropertyAction;
+            this.escapeWindowsPaths = escapeWindowsPaths;
         }
 
         @Override
@@ -179,7 +208,18 @@ class FilterResourcesProcessor {
             if (object instanceof File) {
                 return object.toString().replace('\\', '/'); // I <3 Windows
             }
-            return object.toString();
+            return escapeWindowsPaths ? escapeWindowsPath(object.toString()) : object.toString();
         }
+    }
+
+    /**
+     * Doubles backslashes in values that look like Windows paths ({@code C:\foo}) so they survive in
+     * {@code .properties} files; already doubled backslashes are kept as is. Same rule as maven-filtering.
+     */
+    static String escapeWindowsPath(String value) {
+        if (!WINDOWS_PATH.matcher(value).matches()) {
+            return value;
+        }
+        return value.replace("\\\\", "\\").replace("\\", "\\\\");
     }
 }

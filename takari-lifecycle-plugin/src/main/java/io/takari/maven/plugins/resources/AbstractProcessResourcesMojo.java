@@ -45,6 +45,15 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
     @Parameter
     protected MissingPropertyAction missingPropertyAction = MissingPropertyAction.DEFAULT;
 
+    /**
+     * Whether to escape backslashes in filtered values that look like Windows paths (e.g. {@code C:\foo}), so they
+     * survive in {@code .properties} files. Same as maven-resources-plugin {@code escapeWindowsPaths}.
+     *
+     * @since 2.4.0
+     */
+    @Parameter(property = "maven.resources.escapeWindowsPaths", defaultValue = "true")
+    protected boolean escapeWindowsPaths;
+
     @Parameter(defaultValue = "${project.properties}")
     @Incremental(configuration = Configuration.ignore)
     private Properties properties;
@@ -114,7 +123,8 @@ public abstract class AbstractProcessResourcesMojo extends TakariLifecycleMojo {
                             properties,
                             filters,
                             charset,
-                            missingPropertyAction);
+                            missingPropertyAction,
+                            escapeWindowsPaths);
                 } else {
                     processor.process(
                             sourceDirectory, targetDirectory, resource.getIncludes(), resource.getExcludes(), encoding);

@@ -74,10 +74,19 @@ public class ResourcesProcessor {
             Map<Object, Object> filterProperties,
             List<File> filters,
             Charset encoding,
-            MissingPropertyAction mpa)
+            MissingPropertyAction mpa,
+            boolean escapeWindowsPaths)
             throws IOException {
         filterProcessor.process(
-                sourceDirectory, targetDirectory, includes, excludes, filterProperties, filters, encoding, mpa);
+                sourceDirectory,
+                targetDirectory,
+                includes,
+                excludes,
+                filterProperties,
+                filters,
+                encoding,
+                mpa,
+                escapeWindowsPaths);
     }
 
     public void filter(

@@ -17,11 +17,9 @@ import io.takari.maven.plugins.compile.jdt.CompilerJdt;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
@@ -33,21 +31,21 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.runners.Parameterized.Parameters;
 
-public class AnnotationProcessingTest extends AbstractCompileTest {
+/**
+ * Runs once per compiler via the {@code AnnotationProcessing*Test} subclasses, so surefire can run the compilers in
+ * parallel JVMs.
+ */
+public abstract class AnnotationProcessingTest extends AbstractCompileTest {
 
-    public AnnotationProcessingTest(String compilerId) {
+    /**
+     * The test processor compiled once per JVM: compiling it is setup, not what these tests test. Tests get a fresh
+     * project copy with these classes copied in.
+     */
+    private static Path processorClasses;
+
+    protected AnnotationProcessingTest(String compilerId) {
         super(compilerId);
-    }
-
-    @Parameters(name = "{0}")
-    public static Iterable<Object[]> compilers() {
-        List<Object[]> compilers = new ArrayList<Object[]>();
-        compilers.add(new Object[] {"javac"});
-        compilers.add(new Object[] {"forked-javac"});
-        compilers.add(new Object[] {"jdt"});
-        return compilers;
     }
 
     private Path procCompile(String projectName, Proc proc, Xpp3Dom... parameters) throws Exception, IOException {
@@ -96,7 +94,18 @@ public class AnnotationProcessingTest extends AbstractCompileTest {
     }
 
     private Path compileAnnotationProcessor() throws Exception, IOException {
-        Path processor = compile("compile-proc/processor").toPath();
+        Path processor = resources.getBasedir("compile-proc/processor").toPath();
+        Path classes = processor.resolve("target/classes");
+        synchronized (AnnotationProcessingTest.class) {
+            if (processorClasses == null) {
+                compile(processor.toFile());
+                // unique per JVM: parallel surefire forks share target/
+                processorClasses = Files.createTempDirectory(Path.of("target"), "processor-classes");
+                FileUtils.copyDirectoryStructure(classes.toFile(), processorClasses.toFile());
+            } else {
+                FileUtils.copyDirectoryStructure(processorClasses.toFile(), classes.toFile());
+            }
+        }
         cp(
                 processor.toFile(),
                 "src/main/resources/META-INF/services/javax.annotation.processing.Processor",
