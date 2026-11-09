@@ -39,7 +39,7 @@
     <!-- Maven 3.9.13+ ships Sisu 1.0.0, which discovers Java 17 bytecode; JDT/ECJ needs Java 17 anyway -->
     <takari.javaSourceVersion>17</takari.javaSourceVersion>
 
-    <mavenVersion>3.9.16</mavenVersion>
+    <mavenVersion>3.10.0</mavenVersion>
     <aetherVersion>1.9.27</aetherVersion>
     <sisuVersion>1.1.1</sisuVersion>
     <incrementalbuild.version>1.0.4</incrementalbuild.version>
